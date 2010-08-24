@@ -1,6 +1,7 @@
 # Create your views here.
 
 from django.shortcuts import render_to_response, get_object_or_404
+from django.db.models import Q
 
 from h1ds_summary.models import Shot, SummaryAttribute, FloatAttributeInstance
 
@@ -25,30 +26,30 @@ def get_last_n(number_of_shots):
     return [i.shot for i in latest_shots]
 
 def process_shot_regex(shot_regex):
-    shot_list = []
+    shot_filter = Q()
     shot_ranges = shot_regex.split('+')
     for shot_range in shot_ranges:
         if shot_range.startswith("last"):
+            last_shot = get_last_n(1)[0]
             if shot_range == "last":                
-                shot_list.extend(get_last_n(1))
+                shot_filter = shot_filter | Q(shot=last_shot)                
             else:
-                shot_list.extend(get_last_n(int(shot_range[4:])))
+                shot_filter = shot_filter | (Q(shot__gt=(last_shot-int(shot_range[4:]))) & Q(shot__lte=int(last_shot)))
         else:
             limits = shot_range.split('-')
             if len(limits)==1:
-                shot_list.append(int(limits[0]))
+                shot_filter = shot_filter | Q(shot=int(limits[0]))
             else:
-                shot_list.extend(range(int(limits[0]),int(limits[1])+1))
-                          
-    return map(int,shot_list)
+                shot_filter = shot_filter | (Q(shot__gte=int(limits[0])) & Q(shot__lte=int(limits[1])))
+    return shot_filter
 
 
 def shot_overview(request, shot_regex):
-    shot_list = process_shot_regex(shot_regex)
-    latest_shots = Shot.objects.filter(shot__in=shot_list).order_by('-shot')
+    shot_filter = process_shot_regex(shot_regex)
+    shots = Shot.objects.filter(shot_filter).order_by('-shot')
     summ_att = SummaryAttribute.objects.all()
     shot_list = []
-    for s in latest_shots:
+    for s in shots:
         tmp_s = [s.shot]
         for a in summ_att:
             try:
