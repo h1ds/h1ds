@@ -20,23 +20,7 @@ def do_html_data(data, attr_list):
         output_data.append(row_data)
     return output_data
 
-def summary_overview(request):
-    [data,attr_list] = Shot.objects.summarydata("last10")
-    html_data = do_html_data(data, attr_list)
-    return render_to_response('summary/overview.html', {'data':html_data, 'attrs':attr_list})
-
-def shot_overview(request, shot_regex):
-    [data,attr_list] = Shot.objects.summarydata(shot_regex)
-    html_data = do_html_data(data, attr_list)
-    return render_to_response('summary/overview.html', {'data':html_data, 'attrs':attr_list})
-    
-def shot_data_overview(request, shot_regex, data_regex):
-    [data,attr_list] = Shot.objects.summarydata(shot_regex, attr_query=data_regex)
-    html_data = do_html_data(data, attr_list)
-    return render_to_response('summary/overview.html', {'data':html_data, 'attrs':attr_list})
-    
-def shot_data_filter_overview(request, shot_regex, data_regex, filter_regex):
+def overview(request, shot_regex="last10", data_regex="all", filter_regex=None):
     [data,attr_list] = Shot.objects.summarydata(shot_regex, attr_query=data_regex, filter_query=filter_regex)
     html_data = do_html_data(data, attr_list)
     return render_to_response('summary/overview.html', {'data':html_data, 'attrs':attr_list})
-

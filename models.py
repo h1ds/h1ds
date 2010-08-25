@@ -49,7 +49,7 @@ def get_shot_where(shot_q):
 
 
 class FilterManager(models.Manager):
-    def summarydata(self, shot_query, attr_query='all', filter_query=None):
+    def summarydata(self, shot_query="last10", attr_query='all', filter_query=None):
         if attr_query=='all':
             attr_list = SummaryAttribute.objects.all()
         else:
