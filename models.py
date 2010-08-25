@@ -57,7 +57,10 @@ class FilterManager(models.Manager):
             for sl in attr_query.split('+'):
                 attr_list.append(SummaryAttribute.objects.get(slug=sl))
         
-        shot_where_clause = get_shot_where(shot_query)
+        if shot_query.lower() == "all":
+            shot_where_clause = ""
+        else:
+            shot_where_clause = get_shot_where(shot_query)
         shot_table = 'h1ds_summary_shot'
 
         attr_select = ', '+', '.join(["att%d.value" %(a.id) for a in attr_list])
@@ -67,8 +70,9 @@ class FilterManager(models.Manager):
 
         if filter_query != None:
             filter_strings = filter_query.split("+")
-            for fs in filter_strings:
-                filter_where += " AND "
+            for fsi,fs in enumerate(filter_strings):
+                if not(fsi==0 and shot_where_clause==""):                    
+                    filter_where += " AND "
                 f = fs.split("__")
                 fattr = SummaryAttribute.objects.get(slug=f[0])
                 if not fattr in join_list:
@@ -85,8 +89,13 @@ class FilterManager(models.Manager):
                     filter_where += "att%d.value BETWEEN %f AND %f" %(fattr.id, float(f[2]), float(f[3])) 
 
         attr_tables = ' '.join(["INNER JOIN (SELECT shot_id,value FROM %(this_tbl)s WHERE attribute_id=%(att_id)d) AS att%(att_id)d ON %(shot_tbl)s.shot=att%(att_id)d.shot_id" %{'att_id':a.id,'this_tbl':a.get_att_class()._meta.db_table, 'shot_tbl':shot_table} for a in join_list])
+        
+        if shot_where_clause == "" and filter_where == "":
+            where_str = ""
+        else:
+            where_str = "WHERE"
 
-        query = """SELECT DISTINCT %(shot_table)s.shot%(attr_select)s FROM %(shot_table)s %(attr_tables)s WHERE %(shot_where)s %(filter_where)s ORDER BY %(shot_table)s.shot DESC""" %{'shot_table':shot_table, 'attr_select':attr_select, 'attr_tables':attr_tables, 'shot_where':shot_where_clause, 'filter_where':filter_where}
+        query = """SELECT DISTINCT %(shot_table)s.shot%(attr_select)s FROM %(shot_table)s %(attr_tables)s %(where_str)s %(shot_where)s %(filter_where)s ORDER BY %(shot_table)s.shot DESC""" %{'shot_table':shot_table, 'attr_select':attr_select, 'attr_tables':attr_tables, 'shot_where':shot_where_clause, 'filter_where':filter_where, 'where_str':where_str}
 
         cursor = connection.cursor()
         cursor.execute(query)
@@ -114,8 +123,9 @@ class SummaryAttribute(models.Model):
     source = models.CharField(max_length=1000, help_text="Path to script on the filesystem which takes a shot number as a single argument and returns the attribute value")
     description = models.TextField()
     data_type = models.CharField(max_length=1, choices=DATATYPE_CHOICES, help_text="Data type used to store attribute in database")
-    default_min = models.FloatField(null=True, blank=True, help_text="Default minimum value used for plots")
-    default_max = models.FloatField(null=True, blank=True, help_text="Default maximum value used for plots")
+    default_min = models.FloatField(null=True, blank=True, help_text="Optional. Default minimum value used for plots")
+    default_max = models.FloatField(null=True, blank=True, help_text="Optional. Default maximum value used for plots")
+    display_format = models.CharField(max_length=50,null=True, blank=True, help_text="Optional. Format to display data, e.g.  %%.3f will display 0.1234567 as 0.123.")
 
 
     def normalise(self, value):
