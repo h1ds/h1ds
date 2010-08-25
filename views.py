@@ -5,7 +5,22 @@ from django.db.models import Q
 
 from h1ds_summary.models import Shot, SummaryAttribute, FloatAttributeInstance
 
+def do_html_data(data, attr_list):
+    output_data = []
+    for row in data:
+        row_data = [row[0]]
+        for attr_i,attr_data in enumerate(row[1:]):
+            row_data.append({'val':attr_data, 'norm':int(100.0*attr_list[attr_i].normalise(attr_data)), 'col':attr_list[attr_i].colourise(attr_data)})
+        output_data.append(row_data)
+    return output_data
+
 def summary_overview(request):
+    [data,attr_list] = Shot.objects.summarydata("last10")
+    html_data = do_html_data(data, attr_list)
+    return render_to_response('summary/overview.html', {'data':html_data, 'attrs':attr_list})
+
+
+def old_summary_overview(request):
     latest_shots = Shot.objects.order_by('-shot')[:5]
     summ_att = SummaryAttribute.objects.all()
     shot_list = []
@@ -45,6 +60,12 @@ def process_shot_regex(shot_regex):
 
 
 def shot_overview(request, shot_regex):
+    [data,attr_list] = Shot.objects.summarydata(shot_regex)
+    html_data = do_html_data(data, attr_list)
+    return render_to_response('summary/overview.html', {'data':html_data, 'attrs':attr_list})
+    
+
+def old_shot_overview(request, shot_regex):
     shot_filter = process_shot_regex(shot_regex)
     shots = Shot.objects.filter(shot_filter).order_by('-shot')
     summ_att = SummaryAttribute.objects.all()
@@ -66,6 +87,11 @@ def process_data_regex(data_regex):
     return attr_list
 
 def shot_data_overview(request, shot_regex, data_regex):
+    [data,attr_list] = Shot.objects.summarydata(shot_regex, attr_query=data_regex)
+    return render_to_response('summary/overview.html', {'data':data, 'attrs':attr_list})
+    
+
+def old_shot_data_overview(request, shot_regex, data_regex):
     shot_list = process_shot_regex(shot_regex)
     attr_list = process_data_regex(data_regex)
     latest_shots = Shot.objects.filter(shot__in=shot_list).order_by('-shot')
@@ -109,7 +135,15 @@ def check_filter(shot_number, filter_info):
             return_val = True
     return return_val
 
+
+
+
 def shot_data_filter_overview(request, shot_regex, data_regex, filter_regex):
+    [data,attr_list] = Shot.objects.summarydata(shot_regex, attr_query=data_regex, filter_query=filter_regex)
+    html_data = do_html_data(data)
+    return render_to_response('summary/overview.html', {'data':data, 'attrs':attr_list})
+
+def old_shot_data_filter_overview(request, shot_regex, data_regex, filter_regex):
     shot_list = process_shot_regex(shot_regex)
     attr_list = process_data_regex(data_regex)
     latest_shots = Shot.objects.filter(shot__in=shot_list).order_by('-shot')
