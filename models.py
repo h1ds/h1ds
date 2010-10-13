@@ -1,4 +1,4 @@
-import subprocess, shlex, uuid
+import subprocess, shlex, uuid, datetime
 from django.db import models, connection
 from colorsys import hsv_to_rgb
 
@@ -11,17 +11,153 @@ DATATYPE_CHOICES = (
     ('T', 'Text'),
     )
 
+datetimeformatter = lambda x: datetime.datetime.strptime(x.strip(), "%d-%b-%Y %H:%M:%S.%f")
+
 datatype_python = {
     'F':float,
+    'I':int,
+    'D':datetimeformatter,
     }
+
+datatype_sql = {
+    'F':'float',
+    'I':'int',
+    'D':'datetime',
+    }
+
+def remove_att_from_single_table(attr_name, table="summary"):
+    cursor=connection.cursor()
+    cursor.execute("ALTER TABLE %s DROP COLUMN %s" %(table, attr_name))
+
+
+def add_attr_value_to_single_table(shot_number, attr_name, attr_value, table="summary"):
+    """ attr_value should be a string, get it using sqlrep()"""
+    cursor=connection.cursor()
+    cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" %(table, attr_name, attr_value, int(shot_number)))
+
+def add_shot_to_single_table(shot_number, table="summary"):
+    # just in case shot is already in table...
+    delete_shot_from_single_table(int(shot_number), table=table)
+
+    cursor = connection.cursor()
+    col_list = ['shot']
+    val_list = [str(shot_number)]
+    attr_list = SummaryAttribute.objects.all()
+    for attr in attr_list:
+        try:
+            v = attr.get_att_class().objects.get(attribute=attr, shot__shot=shot_number).sqlrep()
+        except:
+            raise Exception("%s, %d" %(attr.slug, int(shot_number)))
+        val_list.append(v)
+        col_list.append(attr.slug)
+    query = "INSERT INTO %(table)s (%(cols)s) VALUES(%(vals)s)" %{'table':table, 'cols':",".join(col_list), 'vals':",".join(val_list)}
+    cursor.execute(query)
+
+def update_attr_single_table(attr_name, attr_type, table="summary"):
+    cursor = connection.cursor()
+    ## check if attribute already exists.
+    cursor.execute("describe %s" %table)
+    attr_exists = False
+    correct_type = False
+    for r in cursor.fetchall():
+        if r[0] == attr_name:
+            attr_exists = True
+            if r[1].startswith(attr_type):
+                correct_type = True
+    if not attr_exists:
+        cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_name, attr_type))
+    elif not correct_type:
+        cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_name, attr_type))
+
+
+def delete_shot_from_single_table(shot_number, table="summary"):
+    cursor = connection.cursor()
+    cursor.execute("DELETE FROM %s WHERE shot=%d" %(table, shot_number))
+
+def compile_single_table(table="summary"):
+    """Create a single sql table with attributes as separate columns.
+
+    Use this table where possible to avoid joining attribute tables for 
+    each query."""
+    shot_table = 'h1ds_summary_shot'
+
+    cursor = connection.cursor()
+    attr_list = SummaryAttribute.objects.all()
+
+    # Because there is a MySQL limit of 61 joins in a query, we split
+    # the summary table creation into 2 steps, first making temporary tables
+    # with at most n_join attributes, and then joining those temporary tables 
+    # together. The attribute limit is therefore n_join*61, given n_join<=61
+    # the full limit is 3721.
+    n_join = 20
+
+    attr_index = range(len(attr_list))
+    step_tables = []
+    
+    tmp_attr_tables = []
+
+    # create separate attribute tables
+
+    for attr in attr_list:
+        tmp_name = 'tmp_'+attr.slug
+        tmp_attr_tables.append(tmp_name)
+        # remove tmp table if it exists
+        try:
+            cursor.execute("DROP TABLE %s" %tmp_name)
+        except:
+            pass
+        cursor.execute("CREATE TABLE %(tmp_name)s SELECT shot_id as shot,value as %(val_name)s FROM %(this_table)s WHERE attribute_id=%(att_id)d" %{'tmp_name':tmp_name, 'val_name':attr.slug, 'this_table':attr.get_att_class()._meta.db_table, 'att_id':attr.id})
+        cursor.execute("CREATE INDEX si ON %s(shot)" %(tmp_name))
+
+    step_table_attrs = {}
+    for attr_step in attr_index[::n_join]:
+        step_attrs = attr_list[attr_step:attr_step+n_join]
+        step_attr_tables = tmp_attr_tables[attr_step:attr_step+n_join]
+        step_tablename = table+str(attr_step)
+        step_tables.append(step_tablename)
+        step_table_attrs[step_tablename] = [a.slug for a in step_attrs]
+
+        # remove tmp table if it exists
+        try:
+            cursor.execute("DROP TABLE %s" %step_tablename)
+        except:
+            pass
+
+
+        attr_tables = ' '.join(["INNER JOIN %(att_table)s ON %(shot_tbl)s.shot=%(att_table)s.shot" %{'att_table':a, 'shot_tbl':shot_table} for a in step_attr_tables])
+
+        attr_select = shot_table+".shot, " + ','.join(["tmp_%(slug)s.%(slug)s" %{'slug':a.slug} for a in step_attrs])
+        query = """CREATE TABLE %(tablename)s SELECT %(attr_select)s FROM %(shot_table)s %(attr_tables)s""" %{'shot_table':shot_table, 'attr_tables':attr_tables, 'tablename':step_tablename, 'attr_select':attr_select}
+        cursor.execute(query)
+        cursor.execute("CREATE INDEX si on %s(shot)" %step_tablename)
+
+    inner_join_string = ' '.join(["INNER JOIN %(tbl)s ON %(shot_table)s.shot=%(tbl)s.shot" %{"shot_table":shot_table, "tbl":tbl} for tbl in step_tables])
+
+    select_str = shot_table+".shot"
+    for step_tablename in step_table_attrs.keys():
+        select_str += ', '
+        select_str += ', '.join([step_tablename+'.'+i for i in step_table_attrs[step_tablename]])
+    try:
+        cursor.execute("DROP TABLE %s" %table)
+    except:
+        pass
+    query = "CREATE TABLE %(tablename)s SELECT %(select)s FROM %(shot_table)s %(inner_joins)s" %{"tablename":table, "shot_table":shot_table, "inner_joins":inner_join_string, 'select':select_str}
+
+    cursor.execute(query)
+    cursor.execute("CREATE INDEX si on %s(shot)" %table)
+
+    # remove temporary tables
+    for tbl in tmp_attr_tables:
+        cursor.execute("DROP TABLE %s" %tbl)
+    for tbl in step_tables:
+        cursor.execute("DROP TABLE %s" %tbl)
 
 def get_last_n(number_of_shots):
     latest_shots = Shot.objects.order_by('-shot')[:number_of_shots]
     return [i.shot for i in latest_shots]
 
 
-def get_shot_where(shot_q):
-    shot_table = 'h1ds_summary_shot'
+def get_shot_where(shot_q, shot_table='h1ds_summary_shot'):
     shot_ranges = shot_q.split('+')
     individual_shots = []
     group_shots = []
@@ -49,8 +185,63 @@ def get_shot_where(shot_q):
 
 
 class FilterManager(models.Manager):
-    def summarydata(self, shot_query="last10", attr_query='all', filter_query=None):
-        if attr_query=='all':
+    def summarydata(self, shot_query="last10", attr_query='default', filter_query=None, table='slave'):
+        if table=="slave":
+            return self._summarydata_slave(shot_query=shot_query, attr_query=attr_query, filter_query=filter_query)
+        else:
+            return self._summarydata_master(shot_query=shot_query, attr_query=attr_query, filter_query=filter_query)
+
+    def _summarydata_slave(self, shot_query="last10", attr_query='default', filter_query=None):
+        if attr_query=='default':
+            attr_list = SummaryAttribute.objects.filter(is_default=True)
+        elif attr_query=='all':
+            attr_list = SummaryAttribute.objects.all()
+        else:
+            attr_list = []
+            for sl in attr_query.split('+'):
+                attr_list.append(SummaryAttribute.objects.get(slug=sl))
+        table_name = "summary"
+        
+        if shot_query.lower() == "all":
+            shot_where_clause = ""
+        else:
+            shot_where_clause = get_shot_where(shot_query, shot_table=table_name)
+        attr_select = ', '+', '.join(["%s" %(a.slug) for a in attr_list])
+
+        filter_where = ""
+
+        if filter_query != None:
+            filter_strings = filter_query.split("+")
+            for fsi,fs in enumerate(filter_strings):
+                if not(fsi==0 and shot_where_clause==""):                    
+                    filter_where += " AND "
+                f = fs.split("__")
+                if f[1].lower() == 'gt':
+                    filter_where += "%s > %f" %(f[0], float(f[2])) 
+                elif f[1].lower() == 'lt':
+                    filter_where += "%s < %f" %(f[0], float(f[2])) 
+                elif f[1].lower() == 'gte':
+                    filter_where += "%s >= %f" %(f[0], float(f[2])) 
+                elif f[1].lower() == 'lte':
+                    filter_where += "%s <= %f" %(f[0], float(f[2])) 
+                elif f[1].lower() in ['bw', 'between']:
+                    filter_where += "%s BETWEEN %f AND %f" %(f[0], float(f[2]), float(f[3])) 
+
+        if shot_where_clause == "" and filter_where == "":
+            where_str = ""
+        else:
+            where_str = "WHERE"
+
+        query = """SELECT shot%(attr_select)s FROM %(table_name)s %(where_str)s %(shot_where)s %(filter_where)s ORDER BY shot DESC""" %{'table_name':table_name, 'attr_select':attr_select, 'shot_where':shot_where_clause, 'filter_where':filter_where, 'where_str':where_str}
+
+        cursor = connection.cursor()
+        cursor.execute(query)
+        return [cursor.fetchall(), attr_list]
+
+    def _summarydata_master(self, shot_query="last10", attr_query='default', filter_query=None):
+        if attr_query=='default':
+            attr_list = SummaryAttribute.objects.filter(is_default=True)
+        elif attr_query=='all':
             attr_list = SummaryAttribute.objects.all()
         else:
             attr_list = []
@@ -106,11 +297,65 @@ class FloatAttributeInstance(models.Model):
     attribute = models.ForeignKey("SummaryAttribute")
     value = models.FloatField(null=True, blank=True)
 
+    def sqlrep(self):
+        if self.value == None:
+            return "NULL"
+        else:
+            return str(self.value)
+
     def __unicode__(self):
         return unicode(self.shot) + ' / ' + self.attribute.slug + ' / ' + unicode(self.value)
 
+    def save(self, *args, **kwargs):
+        super(FloatAttributeInstance, self).save(*args, **kwargs)
+        add_attr_value_to_single_table(self.shot.shot, self.attribute.slug, self.sqlrep())
+
+
+class IntegerAttributeInstance(models.Model):
+    shot = models.ForeignKey("Shot")
+    attribute = models.ForeignKey("SummaryAttribute")
+    value = models.IntegerField(null=True, blank=True)
+    
+    def sqlrep(self):
+        if self.value == None:
+            return "NULL"
+        else:
+            return str(self.value)
+
+    def __unicode__(self):
+        return unicode(self.shot) + ' / ' + self.attribute.slug + ' / ' + unicode(self.value)
+
+    def save(self, *args, **kwargs):
+        super(IntegerAttributeInstance, self).save(*args, **kwargs)
+        add_attr_value_to_single_table(self.shot.shot, self.attribute.slug, self.sqlrep())
+    
+    
+
+
+class DateTimeAttributeInstance(models.Model):
+    shot = models.ForeignKey("Shot")
+    attribute = models.ForeignKey("SummaryAttribute")
+    value = models.DateTimeField(null=True, blank=True)
+
+    def sqlrep(self):
+        if self.value == None:
+            return "NULL"
+        else:
+            return "'%s'" %str(self.value)
+
+    def __unicode__(self):
+        return unicode(self.shot) + ' / ' + self.attribute.slug + ' / ' + unicode(self.value)
+
+
+    def save(self, *args, **kwargs):
+        super(DateTimeAttributeInstance, self).save(*args, **kwargs)
+        add_attr_value_to_single_table(self.shot.shot, self.attribute.slug, self.sqlrep())
+
+
 datatype_class_mapping = {
     'F':FloatAttributeInstance,
+    'I':IntegerAttributeInstance,
+    'D':DateTimeAttributeInstance,
     }
 
 def RGBToHTMLColor(rgb_tuple):
@@ -121,20 +366,39 @@ class SummaryAttribute(models.Model):
     slug = models.SlugField(max_length=100, help_text="Name of the attribute as it appears in the URL")
     name = models.CharField(max_length=500, help_text="Full name of the attribute")
     source = models.CharField(max_length=1000, help_text="Path to script on the filesystem which takes a shot number as a single argument and returns the attribute value")
-    description = models.TextField()
+    short_description = models.TextField()
+    full_description = models.TextField()
     data_type = models.CharField(max_length=1, choices=DATATYPE_CHOICES, help_text="Data type used to store attribute in database")
     default_min = models.FloatField(null=True, blank=True, help_text="Optional. Default minimum value used for plots")
     default_max = models.FloatField(null=True, blank=True, help_text="Optional. Default maximum value used for plots")
     display_format = models.CharField(max_length=50,null=True, blank=True, help_text="Optional. Format to display data, e.g.  %%.3f will display 0.1234567 as 0.123.")
+    is_default = models.BooleanField(default=False, blank=True, help_text="If true, this attribute will be shown in the default list, e.g. for shot summary.")
 
 
+    def save(self, *args, **kwargs):
+        super(SummaryAttribute, self).save(*args, **kwargs)
+        update_attr_single_table(self.slug, datatype_sql[self.data_type])
+
+    def delete(self, *args, **kwargs):
+        remove_att_from_single_table(self.slug)
+        super(SummaryAttribute, self).delete(*args, **kwargs)
+        
+        
     def normalise(self, value):
-        if value <= self.default_min:
+        if value == None or self.default_min == None or self.default_max == None:
+            return 0.0
+        elif value <= self.default_min:
             return 0.0
         elif value >= self.default_max:
             return 1.0
         else:
             return (value-self.default_min)/(self.default_max-self.default_min)
+
+    def show_barplot(self):
+        if self.default_min != None and self.default_max != None:
+            return True
+        else:
+            return False
 
     def colourise(self, value):
         norm = (-2.0/3*self.normalise(value)) + 2.0/3
@@ -164,10 +428,13 @@ class SummaryAttribute(models.Model):
         data = f.read()
         f.close()
         sub = subprocess.call('/bin/rm %s' %tmpname, shell=True)        
-        if data.strip().lower() in ['null', 'none']:
+        try:
+            if data.strip().lower() in ['null', 'none']:
+                return None
+            else:
+                return datatype_python[self.data_type](data)
+        except ValueError:
             return None
-        else:
-            return datatype_python[self.data_type](data)
 
     def _get_value(self, shot_number):
         # we write to a temp file in the filesystem rather than give webserver privs to pipe
@@ -186,12 +453,14 @@ class SummaryAttribute(models.Model):
 class Shot(models.Model):
     shot = models.IntegerField(primary_key=True)
 
-
     objects = FilterManager()
 
     def __unicode__(self):
         return unicode(self.shot)
 
+    def delete(self):
+        delete_shot_from_single_table(self.shot)
+        super(Shot, self).delete()
 
 from h1ds_summary.tasks import generate_shot
 
