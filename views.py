@@ -81,11 +81,12 @@ def overview(request, shot_regex=DEFAULT_SHOT_REGEX, data_regex="default", filte
 @never_cache
 def latest_shot(request, format="html"):
     latest_shot = cache.get("latest_summary_shot", 0)
+    view = request.GET.get('view', 'html')
     if not latest_shot > 0:
         latest_shot = Shot.objects.aggregate(Max('shot'))['shot__max']
         #cache.set("latest_summary_shot", latest_shot, 60*60*6)
         cache.set("latest_summary_shot", latest_shot, 3)
-    if format == 'xml':
+    if view == 'xml':
         xmlstr = """<?xml version="1.0" encoding="UTF-8" ?>
         <shot>
         <number>%d</number>
