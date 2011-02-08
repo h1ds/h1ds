@@ -5,6 +5,9 @@ from django.views.decorators.cache import never_cache
 from django.utils import simplejson
 from django.http import HttpResponse
 from django.template import RequestContext
+from django import forms
+from django.db import connection
+
 from h1ds_summary.models import Shot, SummaryAttribute
 
 DEFAULT_SHOT_REGEX = "last10"
@@ -107,3 +110,42 @@ def ajax_latest_shot(request):
 
     d = {'shot':latest_shot}
     return HttpResponse(simplejson.dumps(d))
+
+class RawSqlForm(forms.Form):
+    select = forms.CharField(widget=forms.Textarea)
+    where = forms.CharField(widget=forms.Textarea)
+
+
+def raw_sql(request, tablename="summary"):
+    """Provide a form for users to request a raw SQL query and display the results."""
+    if request.method == 'POST':
+        form = RawSqlForm(request.POST)
+        if form.is_valid():
+            cursor=connection.cursor()
+            cursor.execute("SELECT %s FROM %s WHERE %s" %(form.cleaned_data['select'], tablename, form.cleaned_data['where']))
+            data = cursor.fetchall()
+            return render_to_response('summary/raw_sql.html', {
+                    'form': form, 'tablename':tablename, 'data':data, 'labels':form.cleaned_data['select'].split(',')}, context_instance=RequestContext(request))
+    elif request.method == 'GET':
+        select_str = request.GET.get('select', '')
+        where_str = request.GET.get('where', '')
+        if not '' in [select_str, where_str]:
+            cursor=connection.cursor()
+            cursor.execute("SELECT %s FROM %s WHERE %s" %(select_str, tablename, where_str))
+            data = cursor.fetchall()
+            form = RawSqlForm({'select':select_str, 'where':where_str})
+            view = request.GET.get('view', 'html')
+            if view.lower() == 'raw':
+                return HttpResponse(data, mimetype='text/plain')
+
+            else:
+                return render_to_response('summary/raw_sql.html', {
+                        'form': form, 'tablename':tablename, 'data':data, 'labels':select_str.split(',')}, context_instance=RequestContext(request))
+            
+            
+    form = RawSqlForm()
+
+    return render_to_response('summary/raw_sql.html', {
+            'form': form, 'tablename':tablename}, context_instance=RequestContext(request))
+
+    
