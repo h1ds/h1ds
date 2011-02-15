@@ -34,10 +34,13 @@ def remove_att_from_single_table(attr_name, table="summary"):
     cursor=connection.cursor()
     cursor.execute("ALTER TABLE %s DROP COLUMN %s" %(table, attr_name))
 
-def add_attr_value_to_single_table(shot_number, attr_name, attr_value, table="summary"):
+def add_attr_value_to_single_table(shot_number, attr_name, 
+                                   attr_value, table="summary"):
     """ attr_value should be a string, get it using sqlrep()"""
     cursor=connection.cursor()
-    cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" %(table, attr_name, attr_value, int(shot_number)))
+    cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" %(table, attr_name, 
+                                                         attr_value, 
+                                                         int(shot_number)))
 
 def add_shot_to_single_table(shot_number, table="summary"):
     # just in case shot is already in table...
