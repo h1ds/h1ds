@@ -19,8 +19,6 @@ def generate_shot(shot_number):
     # remove any Shot with same shot number
     if Shot.objects.filter(shot=shot_number).count() > 0:
         Shot.objects.filter(shot=shot_number).delete()
-
-
     
     s = Shot()
     s.shot = shot_number

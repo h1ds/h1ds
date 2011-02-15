@@ -4,21 +4,26 @@ from colorsys import hsv_to_rgb
 
 from h1ds_interface.signals import new_shot_signal
 
+# Map the single-character codes stored in the database to user-friendly strings
+# for the web interface.
 DATATYPE_CHOICES = (
     ('F', 'Float'),
     ('I', 'Integer'),
     ('D', 'Date and time'),
     ('T', 'Text'),
     )
-
-datetimeformatter = lambda x: datetime.datetime.strptime(x.strip(), "%d-%b-%Y %H:%M:%S.%f")
-
+# Return a datetime instance for the specific date string returned by MDSplus
+datetimeformatter = lambda x: datetime.datetime.strptime(x.strip(), 
+                                                         "%d-%b-%Y %H:%M:%S.%f")
+# For each datatype stored in the database, provide a function which converts
+# a string representation to the correct python class. 
 datatype_python = {
     'F':float,
     'I':int,
     'D':datetimeformatter,
     }
-
+# Map the single-character datatype codes to the strings required to manipulate
+# SQL databases (e.g. for creating columns in the compiled table)
 datatype_sql = {
     'F':'float',
     'I':'int',
@@ -28,7 +33,6 @@ datatype_sql = {
 def remove_att_from_single_table(attr_name, table="summary"):
     cursor=connection.cursor()
     cursor.execute("ALTER TABLE %s DROP COLUMN %s" %(table, attr_name))
-
 
 def add_attr_value_to_single_table(shot_number, attr_name, attr_value, table="summary"):
     """ attr_value should be a string, get it using sqlrep()"""
