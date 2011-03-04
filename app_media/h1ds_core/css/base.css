@@ -1,0 +1,370 @@
+body {
+	margin:0;
+	padding:0;
+	border:0;			/* This removes the border around the viewport in old versions of IE */
+	width:100%;
+	background:#fff;
+	min-width:600px;		/* Minimum width of layout - remove line if not required */
+					/* The min-width property does not work in old versions of Internet Explorer */
+	font-size:90%;
+}
+a {
+	color:#369;
+}
+a:hover {
+	color:#fff;
+	background:#369;
+	text-decoration:none;
+}
+h1, h2, h3 {
+	margin:.8em 0 .2em 0;
+	padding:0;
+}
+p {
+	margin:.4em 0 .8em 0;
+	padding:0;
+}
+img {
+	margin:10px 0 5px;
+}
+#ads img {
+	display:block;
+	padding-top:10px;
+}
+
+/* Header styles */
+#header {
+	clear:both;
+	float:left;
+	width:100%;
+	text-align:right;
+}
+#header {
+	border-bottom:1px solid #000;
+}
+#header p,
+#header h1,
+#header h1 {
+	text-align:left;
+}
+
+#header h2 {
+	padding:.4em 15px 0 15px;
+	margin:0;
+}
+#header ul {
+	clear:left;
+	float:left;
+	width:100%;
+	list-style:none;
+	margin:10px 0 0 0;
+	padding:0;
+}
+#header ul li {
+	display:inline;
+	list-style:none;
+	margin:0;
+	padding:0;
+}
+#header ul li a {
+	display:block;
+	float:left;
+	margin:0 0 0 1px;
+	padding:3px 10px;
+	text-align:center;
+	background:#eee;
+	color:#000;
+	text-decoration:none;
+	position:relative;
+	left:15px;
+	line-height:1.3em;
+}
+#header ul li a:hover {
+	background:#369;
+	color:#fff;
+}
+#header ul li a.active,
+#header ul li a.active:hover {
+	color:#fff;
+	background:#000;
+	font-weight:bold;
+}
+#header ul li a span {
+	display:block;
+}
+/* 'widths' sub menu */
+#layoutdims {
+	clear:both;
+	background:#eee;
+	border-top:4px solid #000;
+	margin:0;
+	padding:6px 15px !important;
+	text-align:right;
+}
+/* column container */
+.colmask {
+	position:relative;	/* This fixes the IE7 overflow hidden bug */
+	clear:both;
+	float:left;
+	width:100%;			/* width of whole page */
+	overflow:hidden;		/* This chops off any overhanging divs */
+}
+/* common column settings */
+.colright,
+.colmid,
+.colleft {
+	float:left;
+	width:100%;			/* width of page */
+	position:relative;
+}
+.col1,
+.col2,
+.col3 {
+	float:left;
+	position:relative;
+	padding:0 0 1em 0;	/* no left and right padding on columns, we just make them narrower instead 
+					only padding top and bottom is included here, make it whatever value you need */
+	overflow:hidden;
+}
+/* 3 Column settings */
+.threecol {
+	background:#eee;		/* right column background colour */
+}
+.threecol .colmid {
+	right:25%;			/* width of the right column */
+	background:#fff;		/* center column background colour */
+}
+.threecol .colleft {
+	right:60%;			/* width of the middle column */
+	background:#f4f4f4;	/* left column background colour */
+}
+.threecol .col1 {
+	width:58%;			/* width of center column content (column width minus padding on either side) */
+	left:101%;			/* 100% plus left padding of center column */
+}
+.threecol .col2 {
+	width:13%;			/* Width of left column content (column width minus padding on either side) */
+	left:28%;			/* width of (right column) plus (center column left and right padding) plus (left column left padding) */
+}
+.threecol .col3 {
+	width:23%;			/* Width of right column content (column width minus padding on either side) */
+	left:90%;			/* Please make note of the brackets here:
+					(100% - left column width) plus (center column left and right padding) plus (left column left and right padding) plus (right column left padding) */
+}
+/* Footer styles */
+#footer {
+	clear:both;
+	float:left;
+	width:100%;
+	border-top:1px solid #000;
+}
+#footer p {
+	padding:10px;
+	margin:0;
+}
+
+
+
+table td.chartbarCell {
+    padding: 0;
+}
+
+div.chartbar span {
+    display: block;
+    height: 5px;
+    margin: 0 3px 0 0;
+    padding: 3px 0.5em 0 0.5em;
+    background: #71b7e6;
+    color: #000;
+    overflow: hidden;
+}
+
+.sidebarimg {
+    width:100%;
+}
+.centreimg {
+    width:50%;
+}
+
+
+
+
+table.data th
+{ border-bottom: 2px solid #6699CC;
+border-left: 1px solid #6699CC;
+background-color: #f0f0f0;
+text-align: center;
+padding-top:8px;
+padding-bottom:8px;
+color: #404040; }
+
+table.data td
+{ 
+border-bottom: 1px solid #9CF;
+border-top: 0px;
+border-left: 1px solid #9CF;
+border-right: 0px;
+padding-top:10px;
+padding-bottom:5px;
+text-align: left;
+text-indent: 3px;
+color: #404040;
+}
+
+
+
+table.data
+{ text-align: left;
+color: #404040;
+width: 100%;;
+background-color: #fafafa;
+border: 1px #6699CC solid;
+border-collapse: collapse;
+border-spacing: 0px; 
+margin-top:30px;
+margin-bottom:30px;
+}
+
+tr.row1
+{
+background-color: #ffffff;
+}
+
+tr.row2
+{
+background-color: #f5f5f5;
+}
+
+tr.ticket-priority-Now
+{
+background-color: #f3c1c1;
+}
+
+tr.ticket-priority-Soon
+{
+background-color: #f3d3c1;
+}
+
+tr.ticket-priority-Someday
+{
+background-color: #f1f3c1;
+}
+
+tr.ticket-status-Closed
+{
+background-color: #c1d6f3;
+}
+
+#mdsplus-breadcrumb
+{
+    background-color: #f5f5f5;
+    margin: 5px;
+    padding: 5px;
+    text-align: center;
+}
+
+table.side-table {
+    font-size:75%;
+}
+
+#placeholder .button {
+    position: absolute;
+    cursor: pointer;
+}
+#placeholder div.button {
+    font-size: smaller;
+    color: #999;
+    background-color: #eee;
+    padding: 2px;
+}
+
+div.item {
+    background-color:#fafaff;
+    margin: 15px;
+    padding:2em;
+}
+
+a.item-link {
+    font-size:large;
+}
+
+#title {
+    font-size:large;
+    text-align:left;
+    padding-left:2em;
+    padding-bottom:0.5em;
+}
+
+#subtitle {
+    font-size:small;
+}
+
+table.event-list th
+{ border-bottom: 2px solid #6699CC;
+border-left: 1px solid #6699CC;
+background-color: #f0f0f0;
+text-align: center;
+padding-top:8px;
+padding-bottom:8px;
+color: #404040; }
+
+table.event-list td
+{ 
+border-bottom: 1px solid #9CF;
+border-top: 0px;
+border-left: 1px solid #9CF;
+border-right: 0px;
+padding-top:10px;
+padding-bottom:5px;
+text-align: left;
+text-indent: 3px;
+color: #404040;
+}
+
+
+
+table.event-list
+{ text-align: left;
+color: #404040;
+width: 100%;;
+background-color: #fafafa;
+border: 1px #6699CC solid;
+border-collapse: collapse;
+border-spacing: 0px; 
+margin-top:30px;
+margin-bottom:30px;
+}
+
+table.event-list th.event-id {
+display: none;
+}
+table.event-list td.event-id {
+display: none;
+}
+
+ul.mds-tree {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+}
+
+ul.mds-tree li:before {
+    content: "\00BB \0020";
+}
+
+span.mds-node-id {
+display:none;
+}
+
+ul.hidden  {
+display:none;
+}
+
+.mds-node-tree {
+    display:none;
+}
+
+.unpopulated {
+    background-color:#bababa;
+}

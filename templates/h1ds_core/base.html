@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> 
+  <head> 
+    <title>{% block title%}H-1 data system{% endblock %}</title>
+    <link href='http://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+      <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}h1ds_core/css/base.css" media="screen">
+	<script type="text/javascript" src="/media/js/jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="/media/js/jquery-ui-1.8.7.custom.min.js"></script>
+	<script type="text/javascript" src="/media/js/tiny_mce/tiny_mce.js"></script> 
+	<!--[if IE]><script language="javascript" type="text/javascript" src="/media/js/flot/excanvas.pack.js"></script><![endif]-->
+	<script type="text/javascript" src="/media/js/flot/jquery.flot.js"></script> 
+	<script type="text/javascript" src="/media/js/h1ds.js"></script> 
+	<script language="javascript" type="text/javascript" src="/media/js/flot/jquery.flot.navigate.js"></script> 
+	{% block extrahead %}{% endblock %}
+   </head>
+   <body>
+     <div id="header">
+       {% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="/logout">logout</a> {% else %}<a href="/openid/login">Log in </a>{% endif %} // <a href="/about/">about</a> // <a href="/development/">bug reports and feature requests</a>
+       <div id="title">
+	 <a href="/">H1 Data Server</a>
+	 <div id="subtitle">
+	   <a href="/summary">summary</a> &middot; 
+	   <a href="/wiki">wiki</a> &middot; 
+	   <a href="/mdsplus">mdsplus</a> &middot; 
+	   <a href="/code">code</a> &middot; 
+	   <a href="/meta/log">metadata</a>
+       </div></div>
+     </div>
+     <div class="colmask threecol">
+       <div class="colmid">
+	 <div class="colleft">
+	   <div class="col1">
+	     {% block content %}
+	     {% endblock %}
+	   </div>
+	   <div class="col2">
+	     {% block leftpanel%}
+	     {% endblock %}
+	   </div>
+	   <div class="col3">
+	     {% block rightpanel %}
+	     {% endblock %}
+	   </div>
+	 </div>
+       </div>
+     </div>
+     <div id="footer">
+       <a href="/">H1 Data Server</a> &middot; 
+	   <a href="/summary">summary</a> &middot; 
+	   <a href="/wiki">wiki</a> &middot; 
+	   <a href="/mdsplus">mdsplus</a> &middot; 
+	   <a href="/code">code</a> &middot; 
+	   <a href="/meta/log">metadata</a>
+
+     </div>
+
+{% block extrascript %}
+{% endblock %}
+   </body>
+</html>
+    
