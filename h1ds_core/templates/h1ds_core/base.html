@@ -1,7 +1,8 @@
+{% load h1ds_headfoot %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> 
   <head> 
-    <title>{% block title%}H-1 data system{% endblock %}</title>
+    <title>{% block title%}{% h1ds_title %}{% endblock %}</title>
     <link href='http://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
       <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}h1ds_core/css/base.css" media="screen">
 	<script type="text/javascript" src="/media/js/jquery-1.4.2.min.js"></script>
@@ -16,16 +17,8 @@
    <body>
      <div id="header">
        {% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="/logout">logout</a> {% else %}<a href="/openid/login">Log in </a>{% endif %}</a>
-       <div id="title">
-	 <a href="/">H1 Data Server</a>
-	 <div id="subtitle">
-	   <a href="/summary">summary</a> &middot; 
-	   <a href="/wiki">wiki</a> &middot; 
-	   <a href="/mdsplus">mdsplus</a> &middot; 
-	   <a href="/code">code</a> &middot; 
-	   <a href="/meta/log">metadata</a>
-       </div></div>
-     </div>
+       {% h1ds_header %}
+   </div>
      <div class="colmask threecol">
        <div class="colmid">
 	 <div class="colleft">
@@ -45,7 +38,6 @@
        </div>
      </div>
      <div id="footer">
-       {% load h1ds_footer %}
        {% h1ds_footer %}
      </div>
 
