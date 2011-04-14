@@ -1,0 +1,58 @@
+{% extends "h1ds_core/base.html"%}
+
+{% block title %}Sign in with your OpenID{% endblock %}
+
+
+{% block content %}
+
+<h1>Sign in with your OpenID</h1>
+{% if form.errors %}
+<p class="errors">Please correct errors below:<br />
+    {% if form.openid_identifier.errors %}
+    <span class="error">{{ form.openid_identifier.errors|join:", " }}</span>
+    {% endif %}
+    {% if form.next.errors %}
+    <span class="error">{{ form.next.errors|join:", " }}</span>
+    {% endif %}
+</p>
+{% endif %}
+<form name="fopenid" action="{{ action }}" method="post">
+    {% csrf_token %}
+    <fieldset>
+        <legend>Sign In Using Your OpenID</legend>
+        <div class="form-row">
+            <label for="id_openid_identifier">OpenID:</label><br />
+            {{ form.openid_identifier }}
+        </div>
+        <div class="submit-row ">
+            <input name="bsignin" type="submit" value="Sign in">
+        </div>
+ {% if next %}
+        <input type="hidden" name="next" value="{{ next }}" />
+ {% endif %}
+    </fieldset>
+</form>
+
+<br/>
+<p>
+You may already have an OpenID if you have a Google, Yahoo!, Flickr, Myspace, etc account. Some examples:
+<ul>
+  <li>Google ID: https://www.google.com/accounts/o8/id (while logged in to your Google account)</li>
+  <li>Google profile: http://google.com/profiles/mark.oliphant (or, while logged in, go to http://google.com/profiles/me in a browser.)</li>
+  <li>Livejournal: http://mark_oliphant.livejournal.com</li>
+  <li>Blogger: http://mark_oliphants_blog.blogspot.com</li>
+</ul>
+More are listed <a href="http://en.wikipedia.org/wiki/OpenID_providers">here</a>.
+</p>
+<p>If you don't have an exiting openID account, you can create one here: <a href="https://www.myopenid.com/signup">https://www.myopenid.com/signup</a></p>
+<p>
+After you have logged in for the first time:
+<ul> 
+<li>click on [edit] in the top right of the screen and change your username to FirstnameLastname (First letters capitalised, with no spaces) -- e.g. MarkOliphant</li>
+<li>you will need to request write access to the H-1 wiki. Contact the data system administrator for this.</li>
+</ul>
+</p>
+<p>
+Note that within ANU you can often abbreviate URLs in your browser, i.e. http://h1svr.anu.edu.au/wiki as http://h1svr/wiki. The OpenID login will recognise whichever URL format you use when you login (i.e. whether you log in from http://h1svr.anu.edu.au/openid/login or http://h1svr/openid/login). There is no problem with logging in to both, just be aware that if you suddenly appear to be logged out, this could be the reason.
+</p>
+{% endblock %}
