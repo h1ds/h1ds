@@ -45,13 +45,8 @@
        </div>
      </div>
      <div id="footer">
-       <a href="/">H1 Data Server</a> &middot; 
-	   <a href="/summary">summary</a> &middot; 
-	   <a href="/wiki">wiki</a> &middot; 
-	   <a href="/mdsplus">mdsplus</a> &middot; 
-	   <a href="/code">code</a> &middot; 
-	   <a href="/meta/log">metadata</a>
-
+       {% load h1ds_footer %}
+       {% h1ds_footer %}
      </div>
 
 {% block extrascript %}
