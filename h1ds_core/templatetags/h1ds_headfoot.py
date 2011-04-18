@@ -32,9 +32,9 @@ class H1DSFooterNode(template.Node):
         for app in h1ds_installed_apps:
             try:
                 app_module =  __import__('.'.join([app, 'version']), globals(), locals(), [])
-                app_strings.append("%s %s" %(app, app_module.version.get_version()))
+                app_strings.append("<strong>%s</strong> %s" %(app, app_module.version.get_version()))
             except:
-                app_strings.append(app)
+                app_strings.append("<strong>%s</strong>" %app)
         return " &middot; ".join(app_strings)
 
 def do_h1ds_footer(parser, token):

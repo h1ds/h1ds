@@ -16,7 +16,7 @@ from os.path import abspath, dirname
 def git_sha():
     loc = abspath(dirname(__file__))
     p = Popen(
-        "cd \"%s\" && git log -1 --format=format:%%h" % loc,
+        "cd \"%s\" && git log -1 --format=format:%%h\ /\ %%cD" % loc,
         shell=True,
         stdout=PIPE,
         stderr=PIPE
@@ -51,7 +51,7 @@ def get_version(form='short'):
     type_num = VERSION[4]
     firsts = "".join([x[0] for x in type_.split()])
     sha = git_sha()
-    sha1 = (" (%s)" % sha) if sha else ""
+    sha1 = (" / %s" % sha) if sha else ""
 
     # Branch
     versions['branch'] = branch
