@@ -15,6 +15,7 @@ class H1DSTitleNode(template.Node):
             return ""
 
 def do_h1ds_title(parser, token):
+    """Returns the value of H1DS_TITLE in settings.py"""
     return H1DSTitleNode()
 
 class H1DSHeaderNode(template.Node):
@@ -38,6 +39,7 @@ class H1DSHeaderNode(template.Node):
         return return_string
 
 def do_h1ds_header(parser, token):
+    """This populates the H1DS header, providing links to H1DS modules."""
     return H1DSHeaderNode()
 
 class H1DSFooterNode(template.Node):
@@ -52,6 +54,7 @@ class H1DSFooterNode(template.Node):
         return " &middot; ".join(app_strings)
 
 def do_h1ds_footer(parser, token):
+    """This populates the H1DS footer, showing registered H1DS modules with version numbers."""
     return H1DSFooterNode()
 
 register.tag('h1ds_title', do_h1ds_title)

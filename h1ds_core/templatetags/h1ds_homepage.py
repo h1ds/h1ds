@@ -21,6 +21,7 @@ class H1DSHomepageNode(template.Node):
         return tag_string
 
 def do_h1ds_homepage(parser, token):
+    """Populates H1DS homepage with links and descriptions of registered H1DS modules."""
     return H1DSHomepageNode()
 
 register.tag('h1ds_homepage', do_h1ds_homepage)
