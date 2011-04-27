@@ -1,0 +1,44 @@
+{% extends 'h1ds_core/base.html' %}
+
+{% block content %}
+
+<table class="event-list">
+<tr>
+<th class="event-id">id</th>
+<th>Name</th>
+<th>Time</th>
+</tr>
+{% for s in signals %}
+<tr class="update-row">
+<td class="event-id">{{s.id}}</td>
+<td class="name">{{s.signal.name}}</td>
+<td class="time">{{s.time|date:"Y-m-d H:i:s"}}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}
+
+{% block extrascript %}
+<script>
+function updateEvents() {
+ $.getJSON('/dashboard/', function(data){
+  $.each(data, function(eventID) {
+   var topRowId=parseInt($(".event-id").eq(1).text());
+   if (parseInt(data[eventID].pk) > topRowId) {
+    $("tr").eq(0).after('<tr><td class="event-id">'+data[eventID].pk+'</td><td class="name">'+data[eventID].fields.signal+'</td><td class="time">'+data[eventID].fields.time+'</td></tr>');
+    $("tr").eq(1).effect("highlight", {color:"#ff6600"}, 300000);
+   } // end if
+  }); // end each
+ }); // end getJSON
+} // end function
+
+function autoUpdate() {
+setInterval(updateEvents, 2000);
+}
+
+$(document).ready(function() {
+autoUpdate();
+});
+</script>
+{% endblock %}
