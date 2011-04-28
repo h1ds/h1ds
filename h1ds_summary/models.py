@@ -2,7 +2,7 @@ import subprocess, shlex, uuid, datetime
 from django.db import models, connection
 from colorsys import hsv_to_rgb
 
-from h1ds_interface.signals import new_shot_signal
+from h1ds_core.signals import h1ds_signal
 
 # Map the single-character codes stored in the database to user-friendly strings
 # for the web interface.
@@ -471,8 +471,11 @@ class Shot(models.Model):
 
 from h1ds_summary.tasks import generate_shot
 
+
 def new_shot_callback(sender, **kwargs):
     """generate new shot when new_shot_signal is received."""
     result = generate_shot.delay(kwargs['shot'])
 
-new_shot_signal.connect(new_shot_callback)
+## TODO: hook up to h1ds_signal - where to specify h1ds_signal name? should we have a dedicated new shot signal?
+#new_shot_signal.connect(new_shot_callback)
+
