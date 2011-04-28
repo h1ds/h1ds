@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 from views import overview, latest_shot, ajax_latest_shot, raw_sql
 
 urlpatterns = patterns('',
-                       url(r'^$', overview, name="summaryoverview"),
+                       url(r'^$', overview, name="h1ds-summary-homepage"),
                        url(r'^latest_shot/$', latest_shot, name="latestshot"),
                        url(r'^ajax_latest_shot/$', ajax_latest_shot, name="ajaxlatestshot"),
                        url(r'^raw_sql/$', raw_sql, name="raw-sql"),
