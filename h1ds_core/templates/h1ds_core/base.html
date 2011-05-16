@@ -5,10 +5,11 @@
     <title>{% block title%}{% h1ds_title %}{% endblock %}</title>
     <link href='http://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
       <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}h1ds_core/css/base.css" media="screen">
-	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/jquery-1.6.min.js"></script>
+	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/jquery-1.6.1.min.js"></script>
 	<!--[if IE]><script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/excanvas.pack.js"></script><![endif]-->
 	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.js"></script> 
 	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.fillbetween.js"></script> 
+	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.selection.js"></script> 
 	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/h1ds.js"></script> 
 	<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.navigate.js"></script> 
 	{% block extrahead %}{% endblock %}
