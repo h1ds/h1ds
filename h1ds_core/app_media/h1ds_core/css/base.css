@@ -391,3 +391,27 @@ display:none;
     margin: 0.5em;
     padding: 0.5em;
 }
+
+
+.mds-filter {
+    background-color:white;
+    margin: 3px;
+    padding: 5px;
+    overflow:hidden;
+    color:#555;
+
+}
+
+.mds-filter span.left {
+    float:left;
+}
+
+.mds-filter span.right {
+    float:right;
+}
+
+.mds-filter input {
+  border: 1px solid #bbb;
+  color:#555;
+}
+
