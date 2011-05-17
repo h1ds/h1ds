@@ -413,5 +413,7 @@ display:none;
 .mds-filter input {
   border: 1px solid #bbb;
   color:#555;
+  display:inline;
+  margin: 0 0 0 3px;
 }
 
