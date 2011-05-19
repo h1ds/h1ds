@@ -428,7 +428,7 @@ display:none;
     padding: 5px;
     overflow:hidden;
     color:#555;
-
+    width:100%;
 }
 
 #request-shot span.left {
@@ -443,6 +443,68 @@ display:none;
   border: 1px solid #bbb;
   color:#555;
   display:inline;
-  margin: 0 0 0 3px;
+  margin: 0 1em 0 0;
 }
 
+/* Small 3 col layout for sidebar */
+
+/* column container */
+.scolmask {
+    background-color:white;
+    margin: 3px;
+    padding: 5px;
+    color:#555;
+
+	position:relative;	/* This fixes the IE7 overflow hidden bug */
+	clear:both;
+	float:left;
+	width:100%;			/* width of whole page */
+	overflow:hidden;		/* This chops off any overhanging divs */
+}
+/* common column settings */
+.scolright,
+.scolmid,
+.scolleft {
+	float:left;
+	width:100%;			/* width of page */
+	position:relative;
+}
+.scol1,
+.scol2,
+.scol3 {
+	float:left;
+	position:relative;
+	overflow:hidden;
+}
+/* 3 Column settings */
+.sthreecol {
+	background:white;		/* right column background colour */
+}
+.sthreecol .scolmid {
+	right:25%;			/* width of the right column */
+	background:white;		/* center column background colour */
+}
+.sthreecol .scolleft {
+	right:60%;			/* width of the middle column */
+	background:white;	/* left column background colour */
+}
+.sthreecol .scol1 {
+	width:58%;			/* width of center column content (column width minus padding on either side) */
+	left:105%;			/* 100% plus left padding of center column */
+	text-align:center;
+}
+.sthreecol .scol2 {
+	width:13%;			/* Width of left column content (column width minus padding on either side) */
+	left:28%;			/* width of (right column) plus (center column left and right padding) plus (left column left padding) */
+}
+.sthreecol .scol3 {
+	width:23%;			/* Width of right column content (column width minus padding on either side) */
+	left:95%;			/* Please make note of the brackets here:
+					(100% - left column width) plus (center column left and right padding) plus (left column left and right padding) plus (right column left padding) */
+}
+
+.scolmask input {
+  border: 1px solid #bbb;
+  color:#555;
+  display:inline;
+}
