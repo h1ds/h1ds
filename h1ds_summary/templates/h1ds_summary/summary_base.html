@@ -4,3 +4,9 @@
 {% block summarycontent%}{% endblock summarycontent %}
 
 {% endblock content %}
+
+{% block rightpanel %}
+{% if perms.h1ds_summary.add_summaryattribute %}
+add an attribute...
+{% endif %}
+{% endblock %}
