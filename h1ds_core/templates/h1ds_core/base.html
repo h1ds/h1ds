@@ -15,15 +15,17 @@
    </head>
    <body>
      <div id="header">
-       {% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="{% url h1ds-logout %}">logout</a> {% else %}<a href="/openid/login">Log in </a>{% endif %}</a>
+       <p>{% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="{% url h1ds-logout %}">logout</a> {% else %}<a href="/openid/login">Log in </a>{% endif %}</p>
        {% h1ds_header %}
    </div>
      <div class="colmask threecol">
        <div class="colmid">
 	 <div class="colleft">
-	   <div class="col1">
-	     {% block content %}
-	     {% endblock %}
+	   <div class="col1wrap">
+	     <div class="col1">
+	       {% block content %}
+	       {% endblock %}
+	     </div>
 	   </div>
 	   <div class="col2">
 	     {% block leftpanel%}

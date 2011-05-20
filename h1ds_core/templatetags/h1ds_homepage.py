@@ -3,7 +3,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 register = template.Library()
 
-item_template = '<div class="item"><a class="item-link" href="%(url)s">%(name)s</a><p>%(description)s</p></div>'
+item_template = '<div class="bigcentreinfobox"><a href="%(url)s">%(name)s</a><p>%(description)s</p></div>'
 
 class H1DSHomepageNode(template.Node):
     def render(self, context):

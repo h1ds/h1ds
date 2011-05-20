@@ -51,7 +51,7 @@ class H1DSFooterNode(template.Node):
                 app_strings.append("<strong>%s</strong> %s" %(app, app_module.version.get_version()))
             except:
                 app_strings.append("<strong>%s</strong>" %app)
-        return " &middot; ".join(app_strings)
+        return "<p>%s</p>" %" &middot; ".join(app_strings)
 
 def do_h1ds_footer(parser, token):
     """This populates the H1DS footer, showing registered H1DS modules with version numbers."""
