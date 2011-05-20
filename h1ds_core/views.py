@@ -1,8 +1,9 @@
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.core import serializers
 from django.http import HttpResponse
-
+from django.contrib.auth import logout
+    
 from h1ds_core.models import H1DSSignalInstance
 
 def homepage(request):
@@ -19,3 +20,9 @@ def dashboard(request):
     return render_to_response('h1ds_core/dashboard.html',{'signals':signals}, 
                               context_instance=RequestContext(request))
 
+
+def logout_view(request):
+    """Log the user out of H1DS."""
+    logout(request)
+    return redirect('/')
+            

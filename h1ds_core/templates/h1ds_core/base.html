@@ -15,7 +15,7 @@
    </head>
    <body>
      <div id="header">
-       {% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="/logout">logout</a> {% else %}<a href="/openid/login">Log in </a>{% endif %}</a>
+       {% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="{% url h1ds-logout %}">logout</a> {% else %}<a href="/openid/login">Log in </a>{% endif %}</a>
        {% h1ds_header %}
    </div>
      <div class="colmask threecol">
