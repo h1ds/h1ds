@@ -1,5 +1,9 @@
 {% extends "h1ds_core/base.html" %}
 
+{% block leftpanel %}
+<h3>attributes</h3>
+
+{% endblock leftpanel %}
 {% block content %}
 {% block summarycontent%}{% endblock summarycontent %}
 
@@ -7,6 +11,14 @@
 
 {% block rightpanel %}
 {% if perms.h1ds_summary.add_summaryattribute %}
-add an attribute...
+<h3>add attribute</h3>
+<div class="sidebarcontent">
+<FORM action="{% url add-summary-attribute %}" method="post">{% csrf_token %}
+    <span class="left">url</span>
+    <span class="right">
+    <INPUT type="text" size=20 id="url" name="url">
+    <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
+ </FORM>
+</div>
 {% endif %}
-{% endblock %}
+{% endblock rightpanel %}

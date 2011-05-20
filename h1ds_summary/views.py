@@ -1,9 +1,10 @@
+
 from django.shortcuts import render_to_response
 from django.core.cache import cache
 from django.db.models import Max
 from django.views.decorators.cache import never_cache
 from django.utils import simplejson
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django import forms
 from django.db import connection
@@ -152,4 +153,31 @@ def raw_sql(request, tablename="summary"):
     return render_to_response('summary/raw_sql.html', {
             'form': form, 'tablename':tablename}, context_instance=RequestContext(request))
 
+    
+# NEW CODE:::::
+
+from urlparse import urlparse
+import json
+from django.core.urlresolvers import resolve
+from django.http import QueryDict
+
+def add_summaryattribute(request):
+    """Take JSON URL from mdsplus web service."""
+
+    attr_url = request.POST['url']
+
+    parsed_url = urlparse(attr_url)
+
+    view, args, kwargs = resolve(urlparse(attr_url)[2])
+
+    new_query = QueryDict(parsed_url[4]).copy()
+    new_query.update({'view':'json'})
+    request.GET = new_query
+    
+    kwargs['request'] = request
+
+    d = view(*args, **kwargs)
+    print d
+
+    return HttpResponseRedirect('/')
     
