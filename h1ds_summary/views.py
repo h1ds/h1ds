@@ -8,6 +8,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django import forms
 from django.db import connection
+from django.core.urlresolvers import reverse
 
 from h1ds_summary.models import Shot, SummaryAttribute
 
@@ -161,23 +162,93 @@ import json
 from django.core.urlresolvers import resolve
 from django.http import QueryDict
 
-def add_summaryattribute(request):
-    """Take JSON URL from mdsplus web service."""
+# Map mdsplus datatypes to MySQL datatypes
+# TODO: This should not depend on the database type, check that we don't
+# restrict ourselves to MySQL over postgres, etc
+# The single-character SQL type codes are mapped to the actual types in h1ds_summary.models.sql_type_codes
+mds_sql_map = {
+    'DTYPE_FLOAT':'N',
+    }
 
+
+
+from h1ds_summary.forms import SummaryAttributeForm
+
+def add_summary_attribute(request):
+    # Take a HTTP post with  a filled SummaryAttributeForm, and create a
+    # SummaryAttribute instance.
+    # TODO: provide forms with return url, especially when 
+    if request.method == 'POST':
+        summary_attribute_form = SummaryAttributeForm(request.POST)
+        if summary_attribute_form.is_valid():
+            summary_attribute_form.save()
+            return_url = request.POST.get('return_url', reverse("h1ds-summary-homepage"))
+            return HttpResponseRedirect(return_url)            
+        else:
+            return render_to_response('h1ds_summary/form.html',
+                                      {'form': summary_attribute_form,
+                                       'submit_url':reverse('add-summary-attribute')},
+                                      context_instance=RequestContext(request))
+            
+    else:
+        return HttpResponseRedirect(reverse("h1ds-summary-homepage"))
+    
+
+def get_summary_attribute_form_from_url(request):
+    """Take a H1DS mdsplus web URL and return a SummaryAttributeForm.
+
+    The request should contain a 'url' POST query with a URL pointing to
+    a mdsplus data node (can include  filters).  The URL must point to a
+    path in the same django instance.
+
+    We first call the URL and check what datatype is returned so we know
+    which SQL datatype to use, then we pre-fill a form to be complete by
+    the user.
+    """
+    # Get the requested URL from the POST data
     attr_url = request.POST['url']
 
+    # Split URL into [scheme, netloc, path, params, query, fragments]
     parsed_url = urlparse(attr_url)
 
+    # Get the django view function corresponding to the URL path
     view, args, kwargs = resolve(urlparse(attr_url)[2])
 
+    # Create a  new query  dict from the  queries in the  requested URL,
+    # i.e. data filters, etc, and add ?view=json
     new_query = QueryDict(parsed_url[4]).copy()
     new_query.update({'view':'json'})
-    request.GET = new_query
-    
+
+    # Insert our new query dict into the request sent to this view...
+    request.GET = new_query    
+
+    # ...and use this request to call the view function and get the data
+    # for the requested URL.
     kwargs['request'] = request
+    url_response = view(*args, **kwargs)
 
-    d = view(*args, **kwargs)
-    print d
+    # url_response content is a string, let's convert it to a dictionary
+    # using the json parser.
+    json_data = json.loads(url_response.content)    
 
-    return HttpResponseRedirect('/')
+    # Determine from  the MDSplus datatype which SQL  datatype should be
+    # used
+    mds_dtype = json_data['mds_dtype']
+    sql_dtype = mds_sql_map[mds_dtype]
+
+    # Now we generalise the URL  for any shot, replacing the shot number
+    # with %(shot)d
+    general_url = attr_url.replace(kwargs['shot'], "%(shot)d")
+
+    # Create a SummaryAttributeForm with URL and data type entries pre-filled
+    summary_attribute_form = SummaryAttributeForm(initial={'source_url':general_url, 'data_type':sql_dtype})
+
+    # If the request is from AJAX, return form in JSON format
+    # TODO: provide ajax / sidebar attribute adding.
+    # if request.is_ajax():
+
+    # Otherwise, forward user to form entry page
+    return render_to_response('h1ds_summary/form.html',
+                              {'form': summary_attribute_form, 'submit_url':reverse('add-summary-attribute')},
+                              context_instance=RequestContext(request))
     

@@ -1,9 +1,13 @@
 import subprocess, shlex, uuid, datetime
 from django.db import models, connection
 from colorsys import hsv_to_rgb
+from django.db.utils import DatabaseError
 
 from h1ds_core.signals import h1ds_signal
 
+SUMMARY_TABLE_NAME = "summary"
+
+"""
 # Map the single-character codes stored in the database to user-friendly strings
 # for the web interface.
 DATATYPE_CHOICES = (
@@ -29,6 +33,12 @@ datatype_sql = {
     'I':'int',
     'D':'datetime',
     }
+"""
+# Mapping of single character SQL datatype codes to the actual data type names
+sql_type_codes = {
+    'N':'NUMERIC',
+    }
+
 
 def remove_att_from_single_table(attr_name, table="summary"):
     cursor=connection.cursor()
@@ -60,23 +70,33 @@ def add_shot_to_single_table(shot_number, table="summary"):
     query = "INSERT INTO %(table)s (%(cols)s) VALUES(%(vals)s)" %{'table':table, 'cols':",".join(col_list), 'vals':",".join(val_list)}
     cursor.execute(query)
 
-def update_attr_single_table(attr_name, attr_type, table="summary"):
+def update_attr_single_table(attr_name, attr_type, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
     ## check if attribute already exists.
-    cursor.execute("describe %s" %table)
-    attr_exists = False
-    correct_type = False
-    for r in cursor.fetchall():
-        if r[0] == attr_name:
-            attr_exists = True
-            if r[1].startswith(attr_type):
-                correct_type = True
-    if not attr_exists:
-        cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_name, attr_type))
-    elif not correct_type:
-        cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_name, attr_type))
-
-
+    try:
+        cursor.execute("DESCRIBE %s" %table)
+        table_exists = True
+    except DatabaseError:
+        # table needs to be created
+        table_exists = False
+    if table_exists:
+        attr_exists = False
+        correct_type = False
+        for r in cursor.fetchall():
+            if r[0] == attr_name:
+                attr_exists = True
+                if r[1].startswith(attr_type):
+                    correct_type = True
+        if not attr_exists:
+            cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_name, attr_type))
+        elif not correct_type:
+            cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_name, attr_type))
+    else:
+        cursor.execute("CREATE TABLE %(table)s (%(name)s %(type)s)" %{'table':table,
+                                                                      'name':attr_name,
+                                                                      'type':attr_type})
+        
+        
 def delete_shot_from_single_table(shot_number, table="summary"):
     cursor = connection.cursor()
     cursor.execute("DELETE FROM %s WHERE shot=%d" %(table, shot_number))
@@ -372,19 +392,19 @@ def RGBToHTMLColor(rgb_tuple):
 class SummaryAttribute(models.Model):
     slug = models.SlugField(max_length=100, help_text="Name of the attribute as it appears in the URL")
     name = models.CharField(max_length=500, help_text="Full name of the attribute")
-    source = models.CharField(max_length=1000, help_text="Path to script on the filesystem which takes a shot number as a single argument and returns the attribute value")
-    short_description = models.TextField()
-    full_description = models.TextField()
-    data_type = models.CharField(max_length=1, choices=DATATYPE_CHOICES, help_text="Data type used to store attribute in database")
-    default_min = models.FloatField(null=True, blank=True, help_text="Optional. Default minimum value used for plots")
-    default_max = models.FloatField(null=True, blank=True, help_text="Optional. Default maximum value used for plots")
-    display_format = models.CharField(max_length=50,null=True, blank=True, help_text="Optional. Format to display data, e.g.  %%.3f will display 0.1234567 as 0.123.")
+    source_url = models.URLField(max_length=1000,
+                                 verify_exists=False,
+                                 help_text="URL from H1DS MDSplus web service")
+
+    description = models.TextField()
+    data_type = models.CharField(max_length=1, help_text="Data type used to store attribute in database")
     is_default = models.BooleanField(default=False, blank=True, help_text="If true, this attribute will be shown in the default list, e.g. for shot summary.")
 
 
     def save(self, *args, **kwargs):
         super(SummaryAttribute, self).save(*args, **kwargs)
-        update_attr_single_table(self.slug, datatype_sql[self.data_type])
+        #update_attr_single_table(self.slug, datatype_sql[self.data_type])
+        update_attr_single_table(self.slug, sql_type_codes[self.data_type])
 
     def delete(self, *args, **kwargs):
         remove_att_from_single_table(self.slug)

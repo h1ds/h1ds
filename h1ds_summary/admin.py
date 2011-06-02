@@ -23,9 +23,9 @@ reload_attribute.short_description = "Reload attribute for all shots in summary 
 
 class SummaryAttributeAdmin(admin.ModelAdmin):
     actions = [reload_attribute]
-    list_display = ('slug', 'name', 'is_default', 'data_type', 'default_min', 'default_max', 'display_format', 'source')
+    list_display = ('slug', 'name', 'is_default', 'data_type', 'source_url')
     list_display_links = ('slug',)
-    list_editable = ('name', 'data_type', 'is_default', 'default_min', 'default_max', 'display_format', 'source')
+    list_editable = ('name', 'data_type', 'is_default', 'source_url')
 admin.site.register(SummaryAttribute, SummaryAttributeAdmin)
 
 class ShotAdmin(admin.ModelAdmin):
