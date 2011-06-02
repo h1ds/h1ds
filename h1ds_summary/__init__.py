@@ -1,1 +1,2 @@
 MODULE_DOC_NAME = "Summary"
+SUMMARY_TABLE_NAME = "summary"

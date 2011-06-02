@@ -4,8 +4,8 @@ from colorsys import hsv_to_rgb
 from django.db.utils import DatabaseError
 
 from h1ds_core.signals import h1ds_signal
-
-SUMMARY_TABLE_NAME = "summary"
+from h1ds_summary.utils import update_attribute_in_summary_table
+from h1ds_summary import SUMMARY_TABLE_NAME
 
 """
 # Map the single-character codes stored in the database to user-friendly strings
@@ -70,32 +70,6 @@ def add_shot_to_single_table(shot_number, table="summary"):
     query = "INSERT INTO %(table)s (%(cols)s) VALUES(%(vals)s)" %{'table':table, 'cols':",".join(col_list), 'vals':",".join(val_list)}
     cursor.execute(query)
 
-def update_attr_single_table(attr_name, attr_type, table=SUMMARY_TABLE_NAME):
-    cursor = connection.cursor()
-    ## check if attribute already exists.
-    try:
-        cursor.execute("DESCRIBE %s" %table)
-        table_exists = True
-    except DatabaseError:
-        # table needs to be created
-        table_exists = False
-    if table_exists:
-        attr_exists = False
-        correct_type = False
-        for r in cursor.fetchall():
-            if r[0] == attr_name:
-                attr_exists = True
-                if r[1].startswith(attr_type):
-                    correct_type = True
-        if not attr_exists:
-            cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_name, attr_type))
-        elif not correct_type:
-            cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_name, attr_type))
-    else:
-        cursor.execute("CREATE TABLE %(table)s (%(name)s %(type)s)" %{'table':table,
-                                                                      'name':attr_name,
-                                                                      'type':attr_type})
-        
         
 def delete_shot_from_single_table(shot_number, table="summary"):
     cursor = connection.cursor()
@@ -403,8 +377,7 @@ class SummaryAttribute(models.Model):
 
     def save(self, *args, **kwargs):
         super(SummaryAttribute, self).save(*args, **kwargs)
-        #update_attr_single_table(self.slug, datatype_sql[self.data_type])
-        update_attr_single_table(self.slug, sql_type_codes[self.data_type])
+        update_attribute_in_summary_table(self.slug, sql_type_codes[self.data_type])
 
     def delete(self, *args, **kwargs):
         remove_att_from_single_table(self.slug)

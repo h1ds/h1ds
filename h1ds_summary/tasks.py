@@ -1,7 +1,40 @@
-from celery.decorators import task
-from django.core.cache import cache
+import json
+from datetime import timedelta
 
-from models import Shot, SummaryAttribute, FloatAttributeInstance, datatype_class_mapping, add_shot_to_single_table, IntegerAttributeInstance, DateTimeAttributeInstance, add_attr_value_to_single_table
+from celery.decorators import task, periodic_task
+from celery.task.schedules import crontab
+from django.core.cache import cache
+from django.core.urlresolvers import reverse, resolve
+
+from h1ds_summary.models import Shot, SummaryAttribute, FloatAttributeInstance, datatype_class_mapping, add_shot_to_single_table, IntegerAttributeInstance, DateTimeAttributeInstance, add_attr_value_to_single_table
+
+from h1ds_mdsplus.utils import get_latest_shot
+from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
+
+
+# Time between summary table synchronisations
+sync_timedelta = timedelta(minutes=1)
+
+# need to run celery in beat mode for periodic tasks (-B), e.g. /manage.py celeryd -v 2 -B -s celery -E -l INFO  
+@periodic_task(run_every=sync_timedelta)
+def sync_summary_table():
+    """Check that the summary table is up to date.
+
+    If the summary table has not been altered since the last sync, check
+    that  the latest  shot in  the summary  database matches  the latest
+    MDSplus  shot. If  not, backfill  the  summary table  from the  most
+    recent MDSplus shot.
+    """
+    
+    print "getting latest MDSplus shot..."
+    latest_shot = get_latest_shot()
+    print latest_shot
+    print "... latest SQL shot"
+    latest_sql_shot = get_latest_shot_from_summary_table()
+    print latest_sql_shot
+    print sync_timedelta
+    print 'latest_timestamp, ', time_since_last_summary_table_modification()
+
 
 @task()
 def generate_shot(shot_number):
