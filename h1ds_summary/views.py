@@ -157,7 +157,7 @@ def raw_sql(request, tablename="summary"):
     
 # NEW CODE:::::
 
-from urlparse import urlparse
+from urlparse import urlparse, urlunparse
 import json
 from django.core.urlresolvers import resolve
 from django.http import QueryDict
@@ -167,7 +167,7 @@ from django.http import QueryDict
 # restrict ourselves to MySQL over postgres, etc
 # The single-character SQL type codes are mapped to the actual types in h1ds_summary.models.sql_type_codes
 mds_sql_map = {
-    'DTYPE_FLOAT':'N',
+    'DTYPE_FLOAT':'F',
     }
 
 
@@ -211,13 +211,21 @@ def get_summary_attribute_form_from_url(request):
     # Split URL into [scheme, netloc, path, params, query, fragments]
     parsed_url = urlparse(attr_url)
 
+    # parsed_url is an immutable ParseResult instance, copy it to a (mutable) list
+    parsed_url_list = [i for i in parsed_url]
+
+    # Now we can update the URL query string to enforce the JSON view.
+    parsed_url_list[4] = '&'.join([parsed_url[4], 'view=json'])
+
+    # And here is our original URL with view=json query added
+    attr_url_json = urlunparse(parsed_url_list)
+
     # Get the django view function corresponding to the URL path
-    view, args, kwargs = resolve(urlparse(attr_url)[2])
+    view, args, kwargs = resolve(parsed_url_list[2])
 
     # Create a  new query  dict from the  queries in the  requested URL,
-    # i.e. data filters, etc, and add ?view=json
-    new_query = QueryDict(parsed_url[4]).copy()
-    new_query.update({'view':'json'})
+    # i.e. data filters, etc...
+    new_query = QueryDict(parsed_url_list[4]).copy()
 
     # Insert our new query dict into the request sent to this view...
     request.GET = new_query    
@@ -238,7 +246,7 @@ def get_summary_attribute_form_from_url(request):
 
     # Now we generalise the URL  for any shot, replacing the shot number
     # with %(shot)d
-    general_url = attr_url.replace(kwargs['shot'], "%(shot)d")
+    general_url = attr_url_json.replace(kwargs['shot'], "%(shot)d")
 
     # Create a SummaryAttributeForm with URL and data type entries pre-filled
     summary_attribute_form = SummaryAttributeForm(initial={'source_url':general_url, 'data_type':sql_dtype})

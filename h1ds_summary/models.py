@@ -1,10 +1,9 @@
-import subprocess, shlex, uuid, datetime
+import subprocess, shlex, uuid, datetime, urllib2, json
 from django.db import models, connection
 from colorsys import hsv_to_rgb
 from django.db.utils import DatabaseError
 
 from h1ds_core.signals import h1ds_signal
-from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary import SUMMARY_TABLE_NAME
 
 """
@@ -37,6 +36,7 @@ datatype_sql = {
 # Mapping of single character SQL datatype codes to the actual data type names
 sql_type_codes = {
     'N':'NUMERIC',
+    'F':'FLOAT',
     }
 
 
@@ -363,6 +363,28 @@ def RGBToHTMLColor(rgb_tuple):
     """ convert an (R, G, B) tuple to #RRGGBB """
     return '#%02x%02x%02x' % rgb_tuple
 
+def update_attribute_in_summary_table(attr_name, attr_type, table=SUMMARY_TABLE_NAME):
+    cursor = connection.cursor()
+    ## check if attribute already exists.
+    try:
+        cursor.execute("DESCRIBE %s" %table)
+    except DatabaseError:
+        # table needs to be created
+        generate_base_summary_table(cursor)
+        cursor.execute("DESCRIBE %s" %table)        
+    attr_exists = False
+    correct_type = False
+    for r in cursor.fetchall():
+        if r[0] == attr_name:
+            attr_exists = True
+            if r[1].startswith(attr_type):
+                correct_type = True
+    if not attr_exists:
+        cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_name, attr_type))
+    elif not correct_type:
+        cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_name, attr_type))
+
+
 class SummaryAttribute(models.Model):
     slug = models.SlugField(max_length=100, help_text="Name of the attribute as it appears in the URL")
     name = models.CharField(max_length=500, help_text="Full name of the attribute")
@@ -380,7 +402,7 @@ class SummaryAttribute(models.Model):
         update_attribute_in_summary_table(self.slug, sql_type_codes[self.data_type])
 
     def delete(self, *args, **kwargs):
-        remove_att_from_single_table(self.slug)
+        #remove_att_from_single_table(self.slug)
         super(SummaryAttribute, self).delete(*args, **kwargs)
         
         
@@ -421,34 +443,13 @@ class SummaryAttribute(models.Model):
         self.get_instances().delete()
 
     def get_value(self, shot_number):
-        # we write to a temp file in the filesystem rather than give webserver privs to pipe
-        tmpname = '/tmp/'+uuid.uuid4().hex
-        sub = subprocess.call(self.source+' '+str(shot_number)+' > %s' %tmpname, shell=True)
-        f = open(tmpname)
-        data = f.read()
-        f.close()
-        sub = subprocess.call('/bin/rm %s' %tmpname, shell=True)        
-        try:
-            if data.strip().lower() in ['null', 'none']:
-                return None
-            else:
-                return datatype_python[self.data_type](data)
-        except ValueError:
-            return None
-
-    def _get_value(self, shot_number):
-        # we write to a temp file in the filesystem rather than give webserver privs to pipe
-        tmpname = '/tmp/'+uuid.uuid4().hex
-        sub = subprocess.call('/home/datasys/code/test/dummy_data.py'+' '+str(shot_number)+' > %s' %tmpname, shell=True)
-        f = open(tmpname)
-        data = f.read()
-        f.close()
-        sub = subprocess.call('/bin/rm %s' %tmpname, shell=True)        
-        if data.strip().lower() in ['null', 'none']:
-            return None
-        else:
-            return datatype_python[self.data_type](data)
-
+        fetch_url = self.source_url %{'shot':shot_number}
+        request = urllib2.Request(fetch_url)
+        response = json.loads(urllib2.urlopen(request).read())
+        value = response['data']
+        if value == None:
+            value = 'NULL'
+        return value
 
 class Shot(models.Model):
     shot = models.IntegerField(primary_key=True)

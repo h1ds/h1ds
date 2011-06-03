@@ -5,15 +5,52 @@ from celery.decorators import task, periodic_task
 from celery.task.schedules import crontab
 from django.core.cache import cache
 from django.core.urlresolvers import reverse, resolve
+from django.db import connection, transaction
 
-from h1ds_summary.models import Shot, SummaryAttribute, FloatAttributeInstance, datatype_class_mapping, add_shot_to_single_table, IntegerAttributeInstance, DateTimeAttributeInstance, add_attr_value_to_single_table
+from h1ds_summary.models import SummaryAttribute
 
 from h1ds_mdsplus.utils import get_latest_shot
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
+from h1ds_summary import SUMMARY_TABLE_NAME, MINIMUM_SUMMARY_TABLE_SHOT
 
 
 # Time between summary table synchronisations
 sync_timedelta = timedelta(minutes=1)
+#sync_timedelta = timedelta(seconds=10)
+
+def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
+    cursor=connection.cursor()
+    if attributes=='all':
+        attributes = SummaryAttribute.objects.all()
+    if len(attributes) > 0:
+        attr_names = tuple(a.name for a in attributes)
+        attr_name_str = '('+','.join(['shot', ','.join((a.name for a in attributes))]) + ')'
+        for shot in shots:
+            values = tuple(str(a.get_value(shot)) for a in attributes)
+            values_str = '('+','.join([str(shot), ','.join(values)])+')'
+            update_str = ','.join(('%s=%s' %(a, values[ai]) for ai, a in enumerate(attr_names)))
+            cursor.execute("INSERT INTO %(table)s %(attrs)s VALUES %(vals)s ON DUPLICATE KEY UPDATE %(update)s" %{'table':table,
+                                                                                                                  'attrs':attr_name_str,
+                                                                                                                  'vals':values_str,
+                                                                                                                  'update':update_str,
+                                                                                                                  })
+            transaction.commit_unless_managed()
+
+def get_sync_info():
+    sync_info = {'do_sync':False,
+                 'latest_mds_shot':None,
+                 'latest_sql_shot':None,
+                 'time_since_last_mod':None,
+                 }
+    # get time since last summary table modification...
+    sync_info['time_since_last_mod'] = time_since_last_summary_table_modification()
+    if sync_info['time_since_last_mod'] > sync_timedelta:
+        # Check if the latest summary table shot is up to date.
+        sync_info['latest_mds_shot'] = get_latest_shot()
+        sync_info['latest_sql_shot'] = max(get_latest_shot_from_summary_table(), MINIMUM_SUMMARY_TABLE_SHOT)        
+        if sync_info['latest_sql_shot'] < sync_info['latest_mds_shot']:
+            sync_info['do_sync'] = True
+    return sync_info
 
 # need to run celery in beat mode for periodic tasks (-B), e.g. /manage.py celeryd -v 2 -B -s celery -E -l INFO  
 @periodic_task(run_every=sync_timedelta)
@@ -25,15 +62,14 @@ def sync_summary_table():
     MDSplus  shot. If  not, backfill  the  summary table  from the  most
     recent MDSplus shot.
     """
-    
-    print "getting latest MDSplus shot..."
-    latest_shot = get_latest_shot()
-    print latest_shot
-    print "... latest SQL shot"
-    latest_sql_shot = get_latest_shot_from_summary_table()
-    print latest_sql_shot
-    print sync_timedelta
-    print 'latest_timestamp, ', time_since_last_summary_table_modification()
+    sync_info = get_sync_info()
+
+    if sync_info['do_sync']:
+        # TODO, replace shot range with latest mds to latest sql
+        shot_range = range(sync_info['latest_sql_shot'], sync_info['latest_mds_shot'])
+        shot_range.reverse()
+        populate_summary_table(shot_range)
+        
 
 
 @task()
