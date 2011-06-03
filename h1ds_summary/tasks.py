@@ -109,3 +109,13 @@ def update_attribute(shot, summary_attribute):
     new_attr.attribute = summary_attribute
     new_attr.value = summary_attribute.get_value(shot.shot)
     new_attr.save()
+
+#from h1ds_summary.tasks import generate_shot
+
+#def new_shot_callback(sender, **kwargs):
+#    """generate new shot when new_shot_signal is received."""
+#    result = generate_shot.delay(kwargs['shot'])
+
+## TODO: hook up to h1ds_signal - where to specify h1ds_signal name? should we have a dedicated new shot signal?
+#new_shot_signal.connect(new_shot_callback)
+

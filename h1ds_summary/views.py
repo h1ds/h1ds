@@ -10,7 +10,7 @@ from django import forms
 from django.db import connection
 from django.core.urlresolvers import reverse
 
-from h1ds_summary.models import Shot, SummaryAttribute
+from h1ds_summary.models import SummaryAttribute
 
 DEFAULT_SHOT_REGEX = "last10"
 
@@ -154,25 +154,43 @@ def raw_sql(request, tablename="summary"):
     return render_to_response('summary/raw_sql.html', {
             'form': form, 'tablename':tablename}, context_instance=RequestContext(request))
 
-    
-# NEW CODE:::::
+########################################################################    
+##################### NEW CODE ######################################### 
+########################################################################
 
-from urlparse import urlparse, urlunparse
 import json
+from urlparse import urlparse, urlunparse
+
 from django.core.urlresolvers import resolve
 from django.http import QueryDict
 
-# Map mdsplus datatypes to MySQL datatypes
-# TODO: This should not depend on the database type, check that we don't
-# restrict ourselves to MySQL over postgres, etc
-# The single-character SQL type codes are mapped to the actual types in h1ds_summary.models.sql_type_codes
-mds_sql_map = {
-    'DTYPE_FLOAT':'F',
-    }
-
-
-
+from h1ds_summary import MDS_SQL_MAP, SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
+from h1ds_summary.utils import parse_shot_str
+
+def summary(request, shot_str="last10", attr_str="default",
+            filter_str=None, table=SUMMARY_TABLE_NAME):
+    """Main summary database view.
+
+    ..."""
+    attrs = SummaryAttribute.objects.filter(is_default=True)
+
+    select_list = ['shot']
+    select_list.extend(a.name for a in attrs)
+    
+    select_str = ",".join(select_list)
+
+    shot_where = parse_shot_str(shot_str)
+    print shot_where
+    where = 'AND'.join([shot_where]) #TODO: add attr and filter wheres.
+    
+    cursor = connection.cursor()
+    cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
+    data = cursor.fetchall()
+
+    return render_to_response('h1ds_summary/summary_table.html',
+                              {'data':data, 'attrs':select_list},
+                              context_instance=RequestContext(request))
 
 def add_summary_attribute(request):
     # Take a HTTP post with  a filled SummaryAttributeForm, and create a
@@ -242,7 +260,7 @@ def get_summary_attribute_form_from_url(request):
     # Determine from  the MDSplus datatype which SQL  datatype should be
     # used
     mds_dtype = json_data['mds_dtype']
-    sql_dtype = mds_sql_map[mds_dtype]
+    sql_dtype = MDS_SQL_MAP[mds_dtype]
 
     # Now we generalise the URL  for any shot, replacing the shot number
     # with %(shot)d

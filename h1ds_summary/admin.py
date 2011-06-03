@@ -1,7 +1,8 @@
 from django.contrib import admin
-from h1ds_summary.models import SummaryAttribute, Shot, FloatAttributeInstance, IntegerAttributeInstance, DateTimeAttributeInstance
+from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.tasks import update_attribute
 
+"""
 admin.site.disable_action('delete_selected')
 
 def reload_attribute(modeladmin, request, queryset):
@@ -20,28 +21,11 @@ def reload_attribute(modeladmin, request, queryset):
 
         
 reload_attribute.short_description = "Reload attribute for all shots in summary database."
+"""
 
 class SummaryAttributeAdmin(admin.ModelAdmin):
-    actions = [reload_attribute]
+    #actions = [reload_attribute]
     list_display = ('slug', 'name', 'is_default', 'data_type', 'source_url')
     list_display_links = ('slug',)
     list_editable = ('name', 'data_type', 'is_default', 'source_url')
 admin.site.register(SummaryAttribute, SummaryAttributeAdmin)
-
-class ShotAdmin(admin.ModelAdmin):
-    pass
-admin.site.register(Shot, ShotAdmin)
-
-class FloatAttributeInstanceAdmin(admin.ModelAdmin):
-    pass
-admin.site.register(FloatAttributeInstance, FloatAttributeInstanceAdmin)
-
-
-class IntegerAttributeInstanceAdmin(admin.ModelAdmin):
-    pass
-admin.site.register(IntegerAttributeInstance, IntegerAttributeInstanceAdmin)
-
-class DateTimeAttributeInstanceAdmin(admin.ModelAdmin):
-    pass
-admin.site.register(DateTimeAttributeInstance, DateTimeAttributeInstanceAdmin)
-

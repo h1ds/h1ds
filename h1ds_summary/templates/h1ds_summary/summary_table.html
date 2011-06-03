@@ -1,0 +1,12 @@
+{% extends "h1ds_summary/summary_base.html" %}
+
+{% block summarycontent%}
+<table class="main-table">
+<tr>{% for a in attrs %}<th>{{a}}</th>{% endfor %}</tr>
+{% for drow in data %}
+<tr>
+{% for d in drow %}<td>{{d}}</td>{% endfor %}
+</tr>  
+{% endfor %}
+</table>
+{% endblock summarycontent %}
