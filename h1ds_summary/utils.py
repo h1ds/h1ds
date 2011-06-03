@@ -33,12 +33,22 @@ def get_latest_shot_from_summary_table(table = SUMMARY_TABLE_NAME):
 def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
     """Parse the URL path component corresponding to the requested shots."""
 
+    # Put the shot string into lower case so we can easily match 'last'
     shot_str = shot_str.lower()
+    
     if 'last' in shot_str:
+        # Only touch the database if we need to...
         latest_shot = int(get_latest_shot_from_summary_table(table=table))
+
+    # We'll put  shot ranges (e.g. "35790-35800" )  and individual shots
+    # into separate lists as they  require different handling in the SQL
+    # WHERE syntax.
+
     individual_shots = []
     shot_ranges = []
     
+    # Now split the query into the separate components
+    # i.e. "123+345-350" -> ["123", "345-350"]
     shot_components = shot_str.split('+')
 
     for shot_comp in shot_components:
@@ -49,22 +59,16 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
         else:
             individual_shots.append(shot_comp)
     
-    use_individual = False
-    use_ranges = False
+    # Note that the SQL BETWEEN  operator requires the first argument to
+    # be smaller than the second
+    shot_where = " OR ".join("shot BETWEEN %d and %d" %(min(i), max(i)) for i in shot_ranges)
+
     if len(individual_shots) > 0:
-        individual_shot_where = "shot IN (%s)" %(','.join(i for i in individual_shots))
-        use_individual = True
-    if len(shot_ranges) > 0:
-        shot_range_where = " OR ".join("shot BETWEEN %d and %d" %(min(i), max(i)) for i in shot_ranges)
-        use_ranges = True
-    if use_individual and use_ranges:
-        return " OR ".join((shot_range_where, individual_shot_where))
-    elif use_individual:
-        return individual_shot_where
-    elif use_ranges:
-        return shot_range_where
-    else:
-        return ""
+        if shot_where != '':
+            shot_where += " OR "
+        shot_where += "shot IN (%s)" %(','.join(i for i in individual_shots))
+
+    return shot_where
             
         
 
