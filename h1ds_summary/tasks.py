@@ -7,11 +7,13 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse, resolve
 from django.db import connection, transaction
 
-from h1ds_summary.models import SummaryAttribute
-
-from h1ds_mdsplus.utils import get_latest_shot
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
+from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary import SUMMARY_TABLE_NAME, MINIMUM_SUMMARY_TABLE_SHOT
+
+import h1ds_summary.models
+from h1ds_mdsplus.utils import get_latest_shot
+
 
 
 # Time between summary table synchronisations
@@ -21,7 +23,7 @@ sync_timedelta = timedelta(minutes=1)
 def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
     cursor=connection.cursor()
     if attributes=='all':
-        attributes = SummaryAttribute.objects.all()
+        attributes = h1ds_summary.models.SummaryAttribute.objects.all()
     if len(attributes) > 0:
         attr_names = tuple(a.slug for a in attributes)
         attr_name_str = '('+','.join(['shot', ','.join((a.slug for a in attributes))]) + ')'
@@ -69,44 +71,27 @@ def sync_summary_table():
         populate_summary_table(shot_range)
         
 
+def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
+    """Update the column for all shots in the summary database."""
+    # get summary instance
+    attr_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
+    # get shot list
+    cursor = connection.cursor()
+    cursor.execute("SELECT shot from %(table)s GROUP BY -shot" %{'table':table})
+    shot_list = [int(i[0]) for i in cursor.fetchall()]
+    for shot in shot_list:
+        value = attr_instance.get_value(shot)
+        cursor.execute("UPDATE %(table)s SET %(attr)s=%(val)s WHERE shot=%(shot)d" %{'table':table,
+                                                                                     'attr':attr_slug,
+                                                                                     'val':value,
+                                                                                     'shot':shot})
+        transaction.commit_unless_managed()
+
 
 @task()
-def generate_shot(shot_number):
-    # remove any instances for the shot
+def populate_attribute_task(attr_slug):
+    populate_attribute(attr_slug)
 
-    if FloatAttributeInstance.objects.filter(shot__shot=shot_number).count() > 0:
-        FloatAttributeInstance.objects.filter(shot__shot=shot_number).delete()
-        
-    if IntegerAttributeInstance.objects.filter(shot__shot=shot_number).count() > 0:
-        IntegerAttributeInstance.objects.filter(shot__shot=shot_number).delete()
-        
-    if DateTimeAttributeInstance.objects.filter(shot__shot=shot_number).count() > 0:
-        DateTimeAttributeInstance.objects.filter(shot__shot=shot_number).delete()
-
-    # remove any Shot with same shot number
-    if Shot.objects.filter(shot=shot_number).count() > 0:
-        Shot.objects.filter(shot=shot_number).delete()
-    
-    s = Shot()
-    s.shot = shot_number
-    s.save()
-    for summary_attr in SummaryAttribute.objects.all():
-        new_attr = datatype_class_mapping[summary_attr.data_type]()
-        new_attr.shot = s
-        new_attr.attribute = summary_attr
-        new_attr.value = summary_attr.get_value(s.shot)
-        new_attr.save()
-    cache.delete("latest_summary_shot")
-    add_shot_to_single_table(shot_number)
-
-@task()
-def update_attribute(shot, summary_attribute):
-    """ shot is Shot instance, not shot number"""
-    new_attr = summary_attribute.get_att_class()()
-    new_attr.shot = shot
-    new_attr.attribute = summary_attribute
-    new_attr.value = summary_attribute.get_value(shot.shot)
-    new_attr.save()
 
 #from h1ds_summary.tasks import generate_shot
 

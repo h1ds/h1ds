@@ -2,7 +2,8 @@ import urllib2, json
 from django.db import models
 
 from h1ds_summary import SQL_TYPE_CODES
-from h1ds_summary.utils import update_attribute_in_summary_table, delete_attr_from_summary_table
+from h1ds_summary.utils import delete_attr_from_summary_table, update_attribute_in_summary_table
+from h1ds_summary.tasks import populate_attribute_task
 
 class SummaryAttribute(models.Model):
     slug = models.SlugField(max_length=100, unique=True,
@@ -30,6 +31,7 @@ class SummaryAttribute(models.Model):
     def save(self, *args, **kwargs):
         super(SummaryAttribute, self).save(*args, **kwargs)
         update_attribute_in_summary_table(self.slug, SQL_TYPE_CODES[self.data_type])
+        populate_attribute_task.delay(self.slug)
 
     def delete(self, *args, **kwargs):
         delete_attr_from_summary_table(self.slug)

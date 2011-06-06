@@ -2,7 +2,7 @@
 from datetime import datetime, MINYEAR
 from colorsys import hsv_to_rgb
 
-from django.db import connection
+from django.db import connection, transaction
 from django.db.utils import DatabaseError
 
 from h1ds_summary import SUMMARY_TABLE_NAME, SQL_TYPE_CODES
@@ -123,6 +123,8 @@ def time_since_last_summary_table_modification(table = SUMMARY_TABLE_NAME):
     return datetime.now() - latest_timestamp
     
 
+    
+
 def update_attribute_in_summary_table(attr_name, attr_type, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
     ## check if attribute already exists.
@@ -143,3 +145,4 @@ def update_attribute_in_summary_table(attr_name, attr_type, table=SUMMARY_TABLE_
         cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_name, attr_type))
     elif not correct_type:
         cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_name, attr_type))
+
