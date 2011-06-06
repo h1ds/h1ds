@@ -32,7 +32,7 @@ img {
     margin:10px 0 5px;
 }
 
-input {
+input,textarea {
     border: 1px solid #bbb;
     color:#555;
     display:inline;
@@ -155,7 +155,7 @@ input {
     padding-bottom:1em; /* Centre column bottom padding. Leave it out if it's zero */
 }
 .threecol .col1 {
-    margin:0 23em 0 19em;     /* Centre column side padding:
+    margin:1em 23em 0 19em;     /* Centre column side padding:
                           Left padding = left column width + centre column left padding width
                           Right padding = right column width + centre column right padding width */
     position:relative;
@@ -265,3 +265,51 @@ span.right {
 table.side-table {
     font-size:small;
 }
+
+table.main-table {
+    width:100%;
+}
+
+table.main-table th {
+    text-align:center;
+    border-style:solid;
+    border-width:1px;
+    border-color:#eee;
+    margin: 0.2em 0;
+    padding: 0.5em;
+    background: #eee;
+}
+
+table.main-table td {
+    text-align:center;
+    border-style:solid;
+    border-width:1px;
+    border-color:#eee;
+    margin: 0.2em 0;
+    padding: 0.5em;
+
+}
+
+
+.genericform form p {
+    border-style:solid;
+    border-width:1px;
+    border-color:#eee;
+    margin: 0.2em 0;
+    padding: 0.5em;
+    color: #777;
+}
+
+.error {
+    background-color:#ffcccc;
+}
+
+.genericform form input,textarea {
+    display:block;
+    margin: 0.5em 0em 0.5em 2em;
+}
+
+.genericform form label {
+    color: #333;
+}
+

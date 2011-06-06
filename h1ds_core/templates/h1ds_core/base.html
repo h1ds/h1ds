@@ -3,47 +3,47 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> 
   <head> 
     <title>{% block title%}{% h1ds_title %}{% endblock %}</title>
-      <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}h1ds_core/css/base.css" media="screen">
-	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/jquery-1.6.1.min.js"></script>
-	<!--[if IE]><script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/excanvas.pack.js"></script><![endif]-->
-	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.js"></script> 
-	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.fillbetween.js"></script> 
-	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.selection.js"></script> 
-	<script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/h1ds.js"></script> 
-	<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.navigate.js"></script> 
-	{% block extrahead %}{% endblock %}
-   </head>
-   <body>
-     <div id="header">
-       <p>{% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="{% url h1ds-logout %}">logout</a> {% else %}<a href="/openid/login">Log in </a>{% endif %}</p>
-       {% h1ds_header %}
-   </div>
-     <div class="colmask threecol">
-       <div class="colmid">
-	 <div class="colleft">
-	   <div class="col1wrap">
-	     <div class="col1">
-	       {% block content %}
-	       {% endblock %}
-	     </div>
-	   </div>
-	   <div class="col2">
-	     {% block leftpanel%}
-	     {% endblock %}
-	   </div>
-	   <div class="col3">
-	     {% block rightpanel %}
-	     {% endblock %}
-	   </div>
-	 </div>
-       </div>
-     </div>
-     <div id="footer">
-       {% h1ds_footer %}
-     </div>
-
-{% block extrascript %}
-{% endblock %}
-   </body>
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}h1ds_core/css/base.css" media="screen" />
+    <script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/jquery-1.6.1.min.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/excanvas.pack.js"></script><![endif]-->
+    <script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.js"></script> 
+    <script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.fillbetween.js"></script> 
+    <script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.selection.js"></script> 
+    <script type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/h1ds.js"></script> 
+    <script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}h1ds_core/js/flot/jquery.flot.navigate.js"></script> 
+    {% block extrahead %}{% endblock %}
+  </head>
+  <body>
+    <div id="header">
+      <p>
+	{% if user.is_authenticated %}logged in as {{ user.username }} <a href="/interface/profile/{{user.username}}">[edit]</a> // <a href="{% url h1ds-logout %}">logout</a> 
+	{% else %}<a href="/openid/login">Log in </a>
+	{% endif %}
+      </p>
+      {% h1ds_header %}
+    </div>
+    <div class="colmask threecol">
+      <div class="colmid">
+	<div class="colleft">
+	  <div class="col1wrap">
+	    <div class="col1">
+	      {% block content %}
+	      {% endblock %}
+	    </div>
+	  </div>
+	  <div class="col2">
+	    {% block leftpanel%}
+	    {% endblock %}
+	  </div>
+	  <div class="col3">
+	    {% block rightpanel %}
+	    {% endblock %}
+	  </div>
+	</div>
+      </div>
+    </div>
+    <div id="footer">{% h1ds_footer %}</div>
+    {% block extrascript %}{% endblock %}
+  </body>
 </html>
     
