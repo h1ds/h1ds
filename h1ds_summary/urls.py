@@ -10,6 +10,6 @@ urlpatterns = patterns('',
                        url(r'^ajax_latest_shot/$', ajax_latest_shot, name="ajaxlatestshot"),
                        url(r'^raw_sql/$', raw_sql, name="raw-sql"),
                        url(r'^(?P<shot_str>[^/]+)/$', summary, name="shotoverview"),
-                       url(r'^(?P<shot_str>[^/]+)/(?P<data_regex>[^/]+)/$', summary, name="sdsummary"),
-                       url(r'^(?P<shot_str>[^/]+)/(?P<data_regex>[^/]+)/(?P<filter_regex>[^/]+)/$', summary, name="sdfsummary"),
+                       url(r'^(?P<shot_str>[^/]+)/(?P<attr_str>[^/]+)/$', summary, name="sdsummary"),
+                       url(r'^(?P<shot_str>[^/]+)/(?P<attr_str>[^/]+)/(?P<filter_regex>[^/]+)/$', summary, name="sdfsummary"),
 )

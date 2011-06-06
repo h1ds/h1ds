@@ -1,10 +1,11 @@
 import urllib2, json
 from django.db import models
 
-from h1ds_summary.utils import update_attribute_in_summary_table
+from h1ds_summary import SQL_TYPE_CODES
+from h1ds_summary.utils import update_attribute_in_summary_table, delete_attr_from_summary_table
 
 class SummaryAttribute(models.Model):
-    slug = models.SlugField(max_length=100,
+    slug = models.SlugField(max_length=100, unique=True,
                             help_text="Name of the attribute as it appears in the URL")
     name = models.CharField(max_length=500,
                             help_text="Full name of the attribute")
@@ -28,10 +29,10 @@ class SummaryAttribute(models.Model):
 
     def save(self, *args, **kwargs):
         super(SummaryAttribute, self).save(*args, **kwargs)
-        update_attribute_in_summary_table(self.slug, sql_type_codes[self.data_type])
+        update_attribute_in_summary_table(self.slug, SQL_TYPE_CODES[self.data_type])
 
     def delete(self, *args, **kwargs):
-        #remove_att_from_single_table(self.slug)
+        delete_attr_from_summary_table(self.slug)
         super(SummaryAttribute, self).delete(*args, **kwargs)
     
     def __unicode__(self):

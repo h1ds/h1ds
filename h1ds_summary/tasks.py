@@ -23,8 +23,8 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
     if attributes=='all':
         attributes = SummaryAttribute.objects.all()
     if len(attributes) > 0:
-        attr_names = tuple(a.name for a in attributes)
-        attr_name_str = '('+','.join(['shot', ','.join((a.name for a in attributes))]) + ')'
+        attr_names = tuple(a.slug for a in attributes)
+        attr_name_str = '('+','.join(['shot', ','.join((a.slug for a in attributes))]) + ')'
         for shot in shots:
             values = tuple(str(a.get_value(shot)) for a in attributes)
             values_str = '('+','.join([str(shot), ','.join(values)])+')'
@@ -63,10 +63,8 @@ def sync_summary_table():
     recent MDSplus shot.
     """
     sync_info = get_sync_info()
-
     if sync_info['do_sync']:
-        # TODO, replace shot range with latest mds to latest sql
-        shot_range = range(sync_info['latest_sql_shot'], sync_info['latest_mds_shot'])
+        shot_range = range(sync_info['latest_sql_shot'], sync_info['latest_mds_shot']+1)
         shot_range.reverse()
         populate_summary_table(shot_range)
         

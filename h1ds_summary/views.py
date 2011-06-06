@@ -166,30 +166,24 @@ from django.http import QueryDict
 
 from h1ds_summary import MDS_SQL_MAP, SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
-from h1ds_summary.utils import parse_shot_str
+from h1ds_summary.utils import parse_shot_str, parse_attr_str
 
 def summary(request, shot_str="last10", attr_str="default",
             filter_str=None, table=SUMMARY_TABLE_NAME):
     """Main summary database view.
 
     ..."""
-    attrs = SummaryAttribute.objects.filter(is_default=True)
-
-    select_list = ['shot']
-    select_list.extend(a.name for a in attrs)
-    
-    select_str = ",".join(select_list)
-
+    select_str = parse_attr_str(attr_str)
     shot_where = parse_shot_str(shot_str)
-    print shot_where
-    where = 'AND'.join([shot_where]) #TODO: add attr and filter wheres.
+
+    where = 'AND'.join([shot_where]) #TODO: add filter wheres.
     
     cursor = connection.cursor()
     cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
     data = cursor.fetchall()
 
     return render_to_response('h1ds_summary/summary_table.html',
-                              {'data':data, 'attrs':select_list},
+                              {'data':data, 'attrs':select_str.split(',')},
                               context_instance=RequestContext(request))
 
 def add_summary_attribute(request):

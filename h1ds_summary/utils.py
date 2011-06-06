@@ -30,6 +30,10 @@ def get_latest_shot_from_summary_table(table = SUMMARY_TABLE_NAME):
     latest_shot = cursor.fetchone()[0]
     return latest_shot
 
+########################################################################
+## URL path parsers for summary database                              ##
+########################################################################
+
 def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
     """Parse the URL path component corresponding to the requested shots."""
 
@@ -69,8 +73,34 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
         shot_where += "shot IN (%s)" %(','.join(i for i in individual_shots))
 
     return shot_where
-            
-        
+
+def parse_attr_str(attr_str):
+    """Parse URL component corresponding to selected attributes.
+
+    If attr_str is:
+     * default: only SummaryAttributes with is_default = True are used.
+     * all:     All SummaryAttributes are used
+     * a+b+c+d: Attributes named 'a', 'b', 'c' and 'd' are used.
+    """
+    if attr_str.lower() == 'default':
+        attrs = h1ds_summary.models.SummaryAttribute.objects.filter(is_default=True)
+        attr_select = ','.join(['shot',','.join(i.slug for i in attrs)])        
+    elif attr_str.lower() == 'all':
+        attrs = h1ds_summary.models.SummaryAttribute.objects.all()
+        attr_select = ','.join(['shot',','.join(i.slug for i in attrs)])
+    else:
+        attr_select = ','.join(['shot', ','.join(attr_str.lower().split('+'))])
+    return attr_select
+
+#########################################################################
+#########################################################################
+#########################################################################
+
+
+def delete_attr_from_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
+    cursor = connection.cursor()
+    cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" %{'table':table, 'col':attr_slug})
+    
 
 def RGBToHTMLColor(rgb_tuple):
     """ convert an (R, G, B) tuple to #RRGGBB """
