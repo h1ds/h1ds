@@ -166,7 +166,7 @@ from django.http import QueryDict
 
 from h1ds_summary import MDS_SQL_MAP, SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
-from h1ds_summary.utils import parse_shot_str, parse_attr_str
+from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
 
 def summary(request, shot_str="last10", attr_str="default",
             filter_str=None, table=SUMMARY_TABLE_NAME):
@@ -176,7 +176,11 @@ def summary(request, shot_str="last10", attr_str="default",
     select_str = parse_attr_str(attr_str)
     shot_where = parse_shot_str(shot_str)
 
-    where = 'AND'.join([shot_where]) #TODO: add filter wheres.
+    if filter_str == None:
+        where = shot_where
+    else:
+        filter_where = parse_filter_str(filter_str)
+        where = ' AND '.join([shot_where, filter_where])
     
     cursor = connection.cursor()
     cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})

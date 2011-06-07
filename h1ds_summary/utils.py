@@ -92,6 +92,30 @@ def parse_attr_str(attr_str):
         attr_select = ','.join(['shot', ','.join(attr_str.lower().split('+'))])
     return attr_select
 
+
+def parse_filter_str(filter_str):
+    """Parse URL path component corresponding to SQL queries.
+    
+    SQL queries are separated by '+', and query components by '__' e.g.:
+      mean_mirnov__gt__1.2+n_e__bw__0.5__1.5
+    """
+    filter_where_list = []
+    filter_queries = filter_str.split("+")
+    for filter_query_number,filter_query in enumerate(filter_queries):
+        f = filter_query.split("__")
+        if f[1].lower() == 'gt':
+            filter_where_list.append("%s > %f" %(f[0], float(f[2])))
+        elif f[1].lower() == 'lt':
+            filter_where_list.append("%s < %f" %(f[0], float(f[2])))
+        elif f[1].lower() == 'gte':
+            filter_where_list.append("%s >= %f" %(f[0], float(f[2])))
+        elif f[1].lower() == 'lte':
+            filter_where_list.append("%s <= %f" %(f[0], float(f[2])))
+        elif f[1].lower() in ['bw', 'between']:
+            filter_where_list.append("%s BETWEEN %f AND %f" %(f[0], float(f[2]), float(f[3])))
+    filter_where_string = " AND ".join(filter_where_list)
+    return filter_where_string
+
 #########################################################################
 #########################################################################
 #########################################################################
