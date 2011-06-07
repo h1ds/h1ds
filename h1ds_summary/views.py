@@ -163,7 +163,7 @@ from urlparse import urlparse, urlunparse
 
 from django.core.urlresolvers import resolve
 from django.http import QueryDict
-
+from django.shortcuts import redirect
 from h1ds_summary import MDS_SQL_MAP, SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
@@ -173,7 +173,38 @@ def summary(request, shot_str="last10", attr_str="default",
     """Main summary database view.
 
     ..."""
-    select_str = parse_attr_str(attr_str)
+
+    attribute_slugs = parse_attr_str(attr_str)
+
+    # read in the GET query string, to add or remove any attrs from the attr string and try again...
+    if request.method == 'GET':        
+        enable_attrs = request.GET.get('enable_attr', None)
+        disable_attrs = request.GET.get('disable_attr', None)
+        if enable_attrs or disable_attrs:
+            if enable_attrs:
+                new_attrs = enable_attrs.split('+')
+                attribute_slugs.extend(new_attrs)
+            if disable_attrs:
+                for a in disable_attrs.split('+'):
+                    try:
+                        attribute_slugs.remove(a)
+                    except ValueError:
+                        pass
+            if len(attribute_slugs) == 0:
+                new_attr_str = "default"
+            else:
+                new_attr_str = '+'.join(attribute_slugs)
+            if filter_str:
+                return redirect(summary, shot_str=shot_str, attr_str=new_attr_str, filter_str = filter_str)
+            else:
+                return redirect(summary, shot_str=shot_str, attr_str=new_attr_str)
+
+    select_list = ['shot']
+    select_list.extend(attribute_slugs)
+    select_str = ','.join(select_list)
+
+    excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
+
     shot_where = parse_shot_str(shot_str)
 
     if filter_str == None:
@@ -187,7 +218,9 @@ def summary(request, shot_str="last10", attr_str="default",
     data = cursor.fetchall()
 
     return render_to_response('h1ds_summary/summary_table.html',
-                              {'data':data, 'attrs':select_str.split(',')},
+                              {'data':data, 'data_headers':select_str.split(','),
+                               'included_attrs':attribute_slugs,
+                               'excluded_attrs':excluded_attribute_slugs},
                               context_instance=RequestContext(request))
 
 def add_summary_attribute(request):

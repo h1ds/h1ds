@@ -81,16 +81,19 @@ def parse_attr_str(attr_str):
      * default: only SummaryAttributes with is_default = True are used.
      * all:     All SummaryAttributes are used
      * a+b+c+d: Attributes named 'a', 'b', 'c' and 'd' are used.
+
+    Return a list of attribute slug names. 
     """
-    if attr_str.lower() == 'default':
-        attrs = h1ds_summary.models.SummaryAttribute.objects.filter(is_default=True)
-        attr_select = ','.join(['shot',','.join(i.slug for i in attrs)])        
-    elif attr_str.lower() == 'all':
-        attrs = h1ds_summary.models.SummaryAttribute.objects.all()
-        attr_select = ','.join(['shot',','.join(i.slug for i in attrs)])
-    else:
-        attr_select = ','.join(['shot', ','.join(attr_str.lower().split('+'))])
-    return attr_select
+    if 'all' in attr_str.lower():
+        return list(h1ds_summary.models.SummaryAttribute.objects.values_list('slug', flat=True))
+
+    attr_slugs = []
+    for attr_slug in attr_str.lower().split('+'):
+        if attr_slug == 'default':
+            attr_slugs.extend(list(h1ds_summary.models.SummaryAttribute.objects.filter(is_default=True).values_list('slug', flat=True)))
+        else:
+            attr_slugs.append(attr_slug)
+    return attr_slugs
 
 
 def parse_filter_str(filter_str):
