@@ -58,7 +58,13 @@
 <tr>{% for dh in data_headers %}<th>{{dh}}</th>{% endfor %}</tr>
 {% for drow in data %}
 <tr>
-{% for d in drow %}<td>{{d}}</td>{% endfor %}
+{% for d in drow %}
+{% if forloop.first %}
+<td>{{d.0}}</td>
+{% else %}
+<td><a href="{% url summary-go-to-source d.1 drow.0.0 %}">{{d.0}}</a></td>
+{% endif %}
+{% endfor %}
 </tr>  
 {% endfor %}
 </table>

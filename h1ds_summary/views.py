@@ -217,8 +217,17 @@ def summary(request, shot_str="last10", attr_str="default",
     cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
     data = cursor.fetchall()
 
+    # This seems a bit messy, but it's not clear to me how to refer to a summary data value's attribute slug name from within the template, so let's attach it here...
+    new_data = []
+    data_headers = select_str.split(',')
+    for d in data:
+        new_row = []
+        for j_i, j in enumerate(d):
+            new_row.append((j, data_headers[j_i]))
+        new_data.append(new_row)
+
     return render_to_response('h1ds_summary/summary_table.html',
-                              {'data':data, 'data_headers':select_str.split(','),
+                              {'data':new_data, 'data_headers':select_str.split(','),
                                'included_attrs':attribute_slugs,
                                'excluded_attrs':excluded_attribute_slugs},
                               context_instance=RequestContext(request))
@@ -309,3 +318,19 @@ def get_summary_attribute_form_from_url(request):
                               {'form': summary_attribute_form, 'submit_url':reverse('add-summary-attribute')},
                               context_instance=RequestContext(request))
     
+def go_to_source(request, slug, shot):
+    """Go to the MDSplus web interface corresponding to the summary data."""
+
+    
+    attr = SummaryAttribute.objects.get(slug=slug)
+    source_url = attr.source_url %{'shot':int(shot)}
+
+    # add view=html HTML query
+    
+    parsed_url_list = [i for i in urlparse(source_url)]
+    
+    parsed_url_list[4] = '&'.join([parsed_url_list[4], 'view=html'])
+    
+    source_html_url = urlunparse(parsed_url_list)
+
+    return HttpResponseRedirect(source_html_url)
