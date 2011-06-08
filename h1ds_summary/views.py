@@ -117,42 +117,6 @@ def ajax_latest_shot(request):
     d = {'shot':latest_shot}
     return HttpResponse(simplejson.dumps(d))
 
-class RawSqlForm(forms.Form):
-    select = forms.CharField(widget=forms.Textarea)
-    where = forms.CharField(widget=forms.Textarea)
-
-
-def raw_sql(request, tablename="summary"):
-    """Provide a form for users to request a raw SQL query and display the results."""
-    if request.method == 'POST':
-        form = RawSqlForm(request.POST)
-        if form.is_valid():
-            cursor=connection.cursor()
-            cursor.execute("SELECT %s FROM %s WHERE %s" %(form.cleaned_data['select'], tablename, form.cleaned_data['where']))
-            data = cursor.fetchall()
-            return render_to_response('summary/raw_sql.html', {
-                    'form': form, 'tablename':tablename, 'data':data, 'labels':form.cleaned_data['select'].split(',')}, context_instance=RequestContext(request))
-    elif request.method == 'GET':
-        select_str = request.GET.get('select', '')
-        where_str = request.GET.get('where', '')
-        if not '' in [select_str, where_str]:
-            cursor=connection.cursor()
-            cursor.execute("SELECT %s FROM %s WHERE %s" %(select_str, tablename, where_str))
-            data = cursor.fetchall()
-            form = RawSqlForm({'select':select_str, 'where':where_str})
-            view = request.GET.get('view', 'html')
-            if view.lower() == 'raw':
-                return HttpResponse(data, mimetype='text/plain')
-
-            else:
-                return render_to_response('summary/raw_sql.html', {
-                        'form': form, 'tablename':tablename, 'data':data, 'labels':select_str.split(',')}, context_instance=RequestContext(request))
-            
-            
-    form = RawSqlForm()
-
-    return render_to_response('summary/raw_sql.html', {
-            'form': form, 'tablename':tablename}, context_instance=RequestContext(request))
 
 ########################################################################    
 ##################### NEW CODE ######################################### 
@@ -227,7 +191,7 @@ def summary(request, shot_str="last10", attr_str="default",
         new_data.append(new_row)
 
     return render_to_response('h1ds_summary/summary_table.html',
-                              {'data':new_data, 'data_headers':select_str.split(','),
+                              {'data':new_data, 'data_headers':data_headers,
                                'included_attrs':attribute_slugs,
                                'excluded_attrs':excluded_attribute_slugs},
                               context_instance=RequestContext(request))
@@ -334,3 +298,46 @@ def go_to_source(request, slug, shot):
     source_html_url = urlunparse(parsed_url_list)
 
     return HttpResponseRedirect(source_html_url)
+
+
+class RawSqlForm(forms.Form):
+    select = forms.CharField(widget=forms.Textarea)
+    where = forms.CharField(widget=forms.Textarea)
+
+
+def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
+    """Provide a form for users to request a raw SQL query and display the results.
+    
+    """
+    # to protect against SQL injection attacks, only allow users with permissions to do raw SQL queries.
+    # TODO: separate permission for raw sql? add summaryattribute should catch all users in editor group...
+    if not request.user.has_perm('h1ds_summary.add_summaryattribute'):
+        return HttpResponseRedirect("/")
+    
+    if request.method == 'POST':
+        form = RawSqlForm(request.POST)
+        if form.is_valid():
+            cursor=connection.cursor()
+            select_list = form.cleaned_data['select'].split(',')
+            if select_list[0] != 'shot':
+                _select_list = ['shot']
+                _select_list.extend(select_list)
+                select_list = _select_list
+            cursor.execute("SELECT %s FROM %s WHERE %s" %(','.join(select_list), tablename, form.cleaned_data['where']))
+            data = cursor.fetchall()
+
+            new_data = []
+            data_headers = select_list
+            for d in data:
+                new_row = []
+                for j_i, j in enumerate(d):
+                    new_row.append((j, data_headers[j_i]))
+                new_data.append(new_row)
+
+            return render_to_response('h1ds_summary/summary_table.html',
+                                      {'data':new_data, 'data_headers':data_headers, 'select':','.join(select_list), 'where':form.cleaned_data['where']},
+                                       context_instance=RequestContext(request))
+
+    if request.method == 'GET':
+        return HttpResponseRedirect("/")
+

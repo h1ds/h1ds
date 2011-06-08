@@ -1,57 +1,6 @@
 {% extends "h1ds_summary/summary_base.html" %}
 
-{% load templatetable %}
 
-{% block leftpanel %}
-
-<h3>enable attributes</h3>
-<table width="100%" class="side-table">
-  {% table item excluded_attrs 2 %}
-  {% if table.startrow %}
-  {% if table.oddrow %}
-  <tr class="highlight">
-    {% else %}
-  <tr>
-    {% endif %}
-    {% endif %}
-    {% if table.lastcellinrow %}
-    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
-      {% else %}
-    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
-      {% endif %}
-      <div class="options displayNone"></div>
-      <a href="?enable_attr={{item}}">{{item}}</a>
-    </td>
-    {% if table.endrow %}
-  </tr>
-  {% endif %}
-  {% endtable %}
-</table>
-
-<h3>disable attributes</h3>
-<table width="100%" class="side-table">
-  {% table item included_attrs 2 %}
-  {% if table.startrow %}
-  {% if table.oddrow %}
-  <tr class="highlight">
-    {% else %}
-  <tr>
-    {% endif %}
-    {% endif %}
-    {% if table.lastcellinrow %}
-    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
-      {% else %}
-    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
-      {% endif %}
-      <div class="options displayNone"></div>
-      <a href="?disable_attr={{item}}">{{item}}</a>
-    </td>
-    {% if table.endrow %}
-  </tr>
-  {% endif %}
-  {% endtable %}
-</table>
-{% endblock %}
 
 {% block summarycontent%}
 <table class="main-table">
