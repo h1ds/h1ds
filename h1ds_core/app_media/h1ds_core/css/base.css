@@ -222,6 +222,7 @@ span.right {
     color:#555;
 }
 
+
 /* centre panel content blocks */
 
 .warning {
@@ -313,3 +314,6 @@ table.main-table td {
     color: #333;
 }
 
+.fullform form input, textarea {
+    margin:1px;
+}
