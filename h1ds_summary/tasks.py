@@ -28,9 +28,10 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
         attr_names = tuple(a.slug for a in attributes)
         attr_name_str = '('+','.join(['shot', ','.join((a.slug for a in attributes))]) + ')'
         for shot in shots:
-            values = tuple(str(a.get_value(shot)) for a in attributes)
+            values = tuple(str(a.get_value(shot)[0]) for a in attributes)
             values_str = '('+','.join([str(shot), ','.join(values)])+')'
             update_str = ','.join(('%s=%s' %(a, values[ai]) for ai, a in enumerate(attr_names)))
+            print update_str
             cursor.execute("INSERT INTO %(table)s %(attrs)s VALUES %(vals)s ON DUPLICATE KEY UPDATE %(update)s" %{'table':table,
                                                                                                                   'attrs':attr_name_str,
                                                                                                                   'vals':values_str,
@@ -80,7 +81,7 @@ def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
     cursor.execute("SELECT shot from %(table)s GROUP BY -shot" %{'table':table})
     shot_list = [int(i[0]) for i in cursor.fetchall()]
     for shot in shot_list:
-        value = attr_instance.get_value(shot)
+        value = attr_instance.get_value(shot)[0]
         cursor.execute("UPDATE %(table)s SET %(attr)s=%(val)s WHERE shot=%(shot)d" %{'table':table,
                                                                                      'attr':attr_slug,
                                                                                      'val':value,

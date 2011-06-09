@@ -1,7 +1,6 @@
 import urllib2, json
 from django.db import models
 
-from h1ds_summary import SQL_TYPE_CODES
 from h1ds_summary.utils import delete_attr_from_summary_table, update_attribute_in_summary_table
 from h1ds_summary.tasks import populate_attribute_task
 
@@ -15,8 +14,6 @@ class SummaryAttribute(models.Model):
                                  help_text="URL from H1DS MDSplus web service")
 
     description = models.TextField()
-    data_type = models.CharField(max_length=1,
-                                 help_text="Data type used to store attribute in database")
     is_default = models.BooleanField(default=False,
                                      blank=True,
                                      help_text="If true, this attribute will be shown in the default list, e.g. for shot summary.")
@@ -30,7 +27,7 @@ class SummaryAttribute(models.Model):
 
     def save(self, *args, **kwargs):
         super(SummaryAttribute, self).save(*args, **kwargs)
-        update_attribute_in_summary_table(self.slug, SQL_TYPE_CODES[self.data_type])
+        update_attribute_in_summary_table(self.slug)
         populate_attribute_task.delay(self.slug)
 
     def delete(self, *args, **kwargs):
@@ -45,6 +42,7 @@ class SummaryAttribute(models.Model):
         request = urllib2.Request(fetch_url)
         response = json.loads(urllib2.urlopen(request).read())
         value = response['data']
+        dtype = response['summary_dtype']
         if value == None:
             value = 'NULL'
-        return value
+        return (value, dtype)

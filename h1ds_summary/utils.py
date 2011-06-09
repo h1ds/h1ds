@@ -5,13 +5,13 @@ from colorsys import hsv_to_rgb
 from django.db import connection, transaction
 from django.db.utils import DatabaseError
 
-from h1ds_summary import SUMMARY_TABLE_NAME, SQL_TYPE_CODES
+from h1ds_summary import SUMMARY_TABLE_NAME
 import h1ds_summary.models 
 
 
 def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
     attrs = h1ds_summary.models.SummaryAttribute.objects.all()
-    attr_string = ",".join(("%s %s" %(a.name, SQL_TYPE_CODES[a.data_type]) for a in attrs))
+    attr_string = ",".join(("%s %s" %(a.name, a.get_value(0)[1]) for a in attrs))
     cols = ("shot MEDIUMINT UNSIGNED PRIMARY KEY",
             "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
             attr_string,
@@ -126,6 +126,7 @@ def parse_filter_str(filter_str):
 
 def delete_attr_from_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
+    print "deleting ", attr_slug
     cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" %{'table':table, 'col':attr_slug})
     
 
@@ -152,7 +153,8 @@ def time_since_last_summary_table_modification(table = SUMMARY_TABLE_NAME):
 
     
 
-def update_attribute_in_summary_table(attr_name, attr_type, table=SUMMARY_TABLE_NAME):
+def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
+    # TODO: need to get dtype from data source...
     cursor = connection.cursor()
     ## check if attribute already exists.
     try:
@@ -161,15 +163,20 @@ def update_attribute_in_summary_table(attr_name, attr_type, table=SUMMARY_TABLE_
         # table needs to be created
         generate_base_summary_table(cursor)
         cursor.execute("DESCRIBE %s" %table)        
+    
+    attribute_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
+    latest_shot = get_latest_shot_from_summary_table()
+    attr_dtype = attribute_instance.get_value(latest_shot)[1]
+
     attr_exists = False
-    correct_type = False
+    correct_dtype = False
     for r in cursor.fetchall():
-        if r[0] == attr_name:
+        if r[0] == attr_slug:
             attr_exists = True
-            if r[1].startswith(attr_type):
-                correct_type = True
+            if r[1].startswith(attr_dtype):
+                correct_dtype = True
     if not attr_exists:
-        cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_name, attr_type))
-    elif not correct_type:
-        cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_name, attr_type))
+        cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_slug, attr_dtype))
+    elif not correct_dtype:
+        cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
 

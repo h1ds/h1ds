@@ -261,17 +261,12 @@ def get_summary_attribute_form_from_url(request):
     # using the json parser.
     json_data = json.loads(url_response.content)    
 
-    # Determine from  the MDSplus datatype which SQL  datatype should be
-    # used
-    mds_dtype = json_data['mds_dtype']
-    sql_dtype = MDS_SQL_MAP[mds_dtype]
-
     # Now we generalise the URL  for any shot, replacing the shot number
     # with %(shot)d
     general_url = attr_url_json.replace(kwargs['shot'], "%(shot)d")
 
     # Create a SummaryAttributeForm with URL and data type entries pre-filled
-    summary_attribute_form = SummaryAttributeForm(initial={'source_url':general_url, 'data_type':sql_dtype})
+    summary_attribute_form = SummaryAttributeForm(initial={'source_url':general_url})
 
     # If the request is from AJAX, return form in JSON format
     # TODO: provide ajax / sidebar attribute adding.
