@@ -170,6 +170,8 @@ def summary(request, shot_str="last10", attr_str="default",
     excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
 
     shot_where = parse_shot_str(shot_str)
+    if shot_where == None:
+        return render_to_response('h1ds_summary/no_shots.html', {}, context_instance=RequestContext(request))
 
     if filter_str == None:
         where = shot_where

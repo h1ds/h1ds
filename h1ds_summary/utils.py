@@ -42,8 +42,11 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
     
     if 'last' in shot_str:
         # Only touch the database if we need to...
-        latest_shot = int(get_latest_shot_from_summary_table(table=table))
-        # TODO: if this fails, should return a no-shots-in-database screen
+        latest_shot = get_latest_shot_from_summary_table(table=table)
+        if latest_shot == None:
+            return None
+        else:
+            latest_shot = int(get_latest_shot_from_summary_table(table=table))
         
     # We'll put  shot ranges (e.g. "35790-35800" )  and individual shots
     # into separate lists as they  require different handling in the SQL
