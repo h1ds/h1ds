@@ -12,10 +12,10 @@ import h1ds_summary.models
 def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
     attrs = h1ds_summary.models.SummaryAttribute.objects.all()
     attr_string = ",".join(("%s %s" %(a.name, a.get_value(0)[1]) for a in attrs))
-    cols = ("shot MEDIUMINT UNSIGNED PRIMARY KEY",
-            "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
-            attr_string,
-            )
+    cols = ["shot MEDIUMINT UNSIGNED PRIMARY KEY",
+            "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"]
+    if attr_string != "":
+        cols.append(attr_string)
     col_str = ','.join(cols)
     cursor.execute("CREATE TABLE %(table)s (%(cols)s)" %{'table':table, 'cols':col_str})    
 
@@ -43,7 +43,8 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
     if 'last' in shot_str:
         # Only touch the database if we need to...
         latest_shot = int(get_latest_shot_from_summary_table(table=table))
-
+        # TODO: if this fails, should return a no-shots-in-database screen
+        
     # We'll put  shot ranges (e.g. "35790-35800" )  and individual shots
     # into separate lists as they  require different handling in the SQL
     # WHERE syntax.
@@ -126,7 +127,6 @@ def parse_filter_str(filter_str):
 
 def delete_attr_from_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
-    print "deleting ", attr_slug
     cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" %{'table':table, 'col':attr_slug})
     
 
@@ -165,8 +165,8 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
         cursor.execute("DESCRIBE %s" %table)        
     
     attribute_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
-    latest_shot = get_latest_shot_from_summary_table()
-    attr_dtype = attribute_instance.get_value(latest_shot)[1]
+    #latest_shot = get_latest_shot_from_summary_table()
+    attr_dtype = attribute_instance.get_value(0)[1]
 
     attr_exists = False
     correct_dtype = False
