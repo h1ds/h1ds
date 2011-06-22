@@ -1,0 +1,13 @@
+These scripts assume you have virtualenv and virtualenvwrapper.
+
+basic install on dave's linux - more extensive instructions will follow:
+
+$ mkvirtualenv --distribute h1ds
+
+we require python 2.X, if you need to specify this explicitly use, e.g.
+$ mkvirtualenv -p python2 --distribute h1ds
+$ cd ~/.virtualenvs/h1ds
+$ git clone git://code.h1svr.anu.edu.au/h1ds/h1ds.git
+$ cd h1ds
+$ ./bootstrap.py
+
