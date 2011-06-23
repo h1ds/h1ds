@@ -6,8 +6,15 @@ $ mkvirtualenv --distribute h1ds
 
 we require python 2.X, if you need to specify this explicitly use, e.g.
 $ mkvirtualenv -p python2 --distribute h1ds
+
+or, for development, it can be useful to make sure you aren't relying on any system libraries by using
+$ mkvirtualenv -p python2 --no-site-packages --distribute h1ds
+
+then:
+
 $ cd ~/.virtualenvs/h1ds
 $ git clone git://code.h1svr.anu.edu.au/h1ds/h1ds.git
+(if you're dave, you can do git via ssh: git clone git@code.h1svr.anu.edu.au:h1ds/h1ds.git )
 $ cd h1ds
 $ ./bootstrap.py
 
