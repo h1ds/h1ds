@@ -5,14 +5,14 @@ fabric
 south
 django-celery
 python-openid
--e git+git@code.h1svr.anu.edu.au/h1ds/django-openid-auth.git#egg=django_openid_auth
+-e git+git@code.h1svr.anu.edu.au:h1ds/django-openid-auth.git#egg=django_openid_auth
 -e git+git://github.com/ashchristopher/django-concurrent-server.git#egg=django-concurrent-server
--e git+git@code.h1svr.anu.edu.au/h1ds/h1ds_core.git#egg=h1ds_core
+-e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_core.git#egg=h1ds_core
 
 # requirements for h1ds_mdsplus
 numpy
 http://people.physics.anu.edu.au/~dgp112/python-mdsplus/MDSplus-0.5.tgz
--e git+git@code.h1svr.anu.edu.au/h1ds/h1ds_mdsplus.git#egg=h1ds_mdsplus
+-e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_mdsplus.git#egg=h1ds_mdsplus
 
 #requirements for h1ds_summary
--e git+git@code.h1svr.anu.edu.au/h1ds/h1ds_summary.git#egg=h1ds_summary
+-e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_summary.git#egg=h1ds_summary
