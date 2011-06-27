@@ -259,8 +259,20 @@ span.right {
     border-style:solid;
     border-width:1px;
     border-color:#eee;
-    margin: 0.2em 0;
-    padding: 0.5em;
+    margin: 1em 0;
+}
+.centrecontent .label {
+    position: relative; 
+    top : -0.75em;
+    margin-left: 80%;
+    display: inline; 
+    background-color: white; 
+    color:#aaa;
+}
+
+.centrecontent .data {
+    padding: 1em 1em 0.75em 1em;
+
 }
 
 table.side-table {
