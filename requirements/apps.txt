@@ -4,6 +4,7 @@ fabric
 # requirements for h1ds core
 south
 django-celery
+python-openid
 -e git+git://code.h1svr.anu.edu.au/h1ds/django-openid-auth.git#egg=django_openid_auth
 -e git+git://github.com/ashchristopher/django-concurrent-server.git#egg=django-concurrent-server
 -e git+git://code.h1svr.anu.edu.au/h1ds/h1ds_core.git#egg=h1ds_core

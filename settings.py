@@ -1,5 +1,7 @@
 # Django settings for h1ds project.
 
+import djcelery
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -149,3 +151,4 @@ LOGGING = {
     }
 }
 
+djcelery.setup_loader()

@@ -7,3 +7,10 @@
 *.o
 # emacs hash filenames
 \#*
+*.db
+
+# links setup for static files in in django 1.2 version of h1ds
+h1ds_core
+h1ds_mdsplus
+
+celery
