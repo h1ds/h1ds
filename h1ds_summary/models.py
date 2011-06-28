@@ -38,11 +38,15 @@ class SummaryAttribute(models.Model):
         return self.name
 
     def get_value(self, shot_number):
-        fetch_url = self.source_url %{'shot':shot_number}
-        request = urllib2.Request(fetch_url)
-        response = json.loads(urllib2.urlopen(request).read())
-        value = response['data']
-        dtype = response['summary_dtype']
-        if value == None:
-            value = 'NULL'
-        return (value, dtype)
+        # TODO: handle errors better
+        try:
+            fetch_url = self.source_url %{'shot':shot_number}
+            request = urllib2.Request(fetch_url)
+            response = json.loads(urllib2.urlopen(request).read())
+            value = response['data']
+            dtype = response['summary_dtype']
+            if value == None:
+                value = 'NULL'
+            return (value, dtype)
+        except:
+            return ('NULL', 'NULL')
