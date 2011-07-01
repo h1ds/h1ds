@@ -160,3 +160,7 @@ LOGGING = {
 }
 
 djcelery.setup_loader()
+
+H1DS_MDSPLUS_NODE_BLACKLIST = (
+    "\\H1DATA::TOP.OPERATIONS.MAGNETSUPPLY:VPATCH_10",
+    )
