@@ -82,5 +82,41 @@
       "slug": "gas1_M", 
       "name": "gas1_M"
     }
+  }, 
+  {
+    "pk": 8, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "mains", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/OPERATIONS/V240_RMS/?f4_divide=2.35&f3_multiply=2.4&f2_mean=&f1_dim_range=-4.1__-3.5&view=json", 
+      "is_default": false, 
+      "slug": "mains", 
+      "name": "mains"
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "mag_fl1", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/ELECTR_DENS/%(shot)d/TOP/CAMAC/A14_5/INPUT_4/?f1_dim_range=0.005__0.075&f2_peak_to_peak=&view=json", 
+      "is_default": false, 
+      "slug": "mag_fl1", 
+      "name": "mag_fl1"
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "rfptop", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/RF/P_FWD_TOP/?f2_max_val=&f1_prl_lpn=20__1&view=json", 
+      "is_default": false, 
+      "slug": "rfptop", 
+      "name": "rfptop"
+    }
   }
 ]
