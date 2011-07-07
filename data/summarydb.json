@@ -6,7 +6,7 @@
       "description": "tt_sec", 
       "display_order": 1000, 
       "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/TT/?&view=json", 
-      "is_default": true, 
+      "is_default": false, 
       "slug": "tt_sec", 
       "name": "tt_sec"
     }
@@ -18,7 +18,7 @@
       "description": "rga_imax", 
       "display_order": 1000, 
       "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/OPERATIONS/RGA_I/?f1_max_val=&view=json", 
-      "is_default": true, 
+      "is_default": false, 
       "slug": "rga_imax", 
       "name": "rga_imax"
     }
@@ -45,6 +45,42 @@
       "is_default": true, 
       "slug": "i_ring", 
       "name": "i_ring"
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "la_slit", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/SPECTROSCOPY/SURVEY/SLIT_WIDTH/?&view=json", 
+      "is_default": false, 
+      "slug": "la_slit", 
+      "name": "la_slit"
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "ech_ib", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/ECH/I_COLL/?f1_max_val=&view=json", 
+      "is_default": false, 
+      "slug": "ech_ib", 
+      "name": "ech_ib"
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "gas1_M", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/LOG/MACHINE/GAS1_Z/?f1_element=1&view=json", 
+      "is_default": false, 
+      "slug": "gas1_M", 
+      "name": "gas1_M"
     }
   }
 ]

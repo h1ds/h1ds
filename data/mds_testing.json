@@ -18,5 +18,15 @@
       "name": "spectroscopy", 
       "description": "test data"
     }
+  },
+  {
+    "pk": 3, 
+    "model": "h1ds_mdsplus.mdsplustree", 
+    "fields": {
+      "path": "/home/dave/data", 
+      "display_order": 30, 
+      "name": "electr_dens", 
+      "description": "test data"
+    }
   }
 ]
