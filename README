@@ -12,9 +12,12 @@ $ mkvirtualenv -p python2 --no-site-packages --distribute h1ds
 
 then:
 
-$ cd ~/.virtualenvs/h1ds
+$ cd $VIRTUAL_ENV
 $ git clone git://code.h1svr.anu.edu.au/h1ds/h1ds.git
 (if you're dave, you can do git via ssh: git clone git@code.h1svr.anu.edu.au:h1ds/h1ds.git )
 $ cd h1ds
 $ ./bootstrap.py
 
+# fixtures are generated with, e.g.
+$ cd $VIRTUAL_ENV/h1ds
+$ python manage.py dumpdata h1ds_summary --indent 2 --settings=h1ds.settings_development > data/summarydb.json

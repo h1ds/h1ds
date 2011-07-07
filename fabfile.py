@@ -20,5 +20,6 @@ def setup():
         local("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
         local("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
         local("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
+        local("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
     else:
         pass

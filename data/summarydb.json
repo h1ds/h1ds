@@ -1,0 +1,50 @@
+[
+  {
+    "pk": 1, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "tt_sec", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/TT/?&view=json", 
+      "is_default": true, 
+      "slug": "tt_sec", 
+      "name": "tt_sec"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "rga_imax", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/OPERATIONS/RGA_I/?f1_max_val=&view=json", 
+      "is_default": true, 
+      "slug": "rga_imax", 
+      "name": "rga_imax"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "th_main", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/OPERATIONS/MAGNETSUPPLY/LCU/LOG/THERMAL_MAIN/?&view=json", 
+      "is_default": false, 
+      "slug": "th_main", 
+      "name": "th_main"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "i_ring", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/%(shot)d/TOP/OPERATIONS/I_RING/?f2_mean=&f1_dim_range=-0.1__-0.05&view=json", 
+      "is_default": true, 
+      "slug": "i_ring", 
+      "name": "i_ring"
+    }
+  }
+]
