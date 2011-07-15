@@ -130,5 +130,281 @@
       "slug": "wg_bolo", 
       "name": "wg_bolo"
     }
+  }, 
+  {
+    "pk": 12, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "th_sec", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/LOG/THERMAL_SEC/?&view=json", 
+      "is_default": false, 
+      "slug": "th_sec", 
+      "name": "th_sec"
+    }
+  }, 
+  {
+    "pk": 13, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "v_main", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V_MAIN/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.6&view=json", 
+      "is_default": false, 
+      "slug": "v_main", 
+      "name": "v_main"
+    }
+  }, 
+  {
+    "pk": 14, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "v_sec", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V_SEC/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.6&view=json", 
+      "is_default": false, 
+      "slug": "v_sec", 
+      "name": "v_sec"
+    }
+  }, 
+  {
+    "pk": 15, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "HDB_del", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=first_pulse&f1_arg0=mid&view=json", 
+      "is_default": false, 
+      "slug": "HDB_del", 
+      "name": "HDB_del"
+    }
+  }, 
+  {
+    "pk": 16, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "im1", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I1/?&view=json", 
+      "is_default": false, 
+      "slug": "im1", 
+      "name": "im1"
+    }
+  }, 
+  {
+    "pk": 17, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "gas3_flow", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS3_FLOW/?&view=json", 
+      "is_default": false, 
+      "slug": "gas3_flow", 
+      "name": "gas3_flow"
+    }
+  }, 
+  {
+    "pk": 18, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "is2", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I2/?&view=json", 
+      "is_default": false, 
+      "slug": "is2", 
+      "name": "is2"
+    }
+  }, 
+  {
+    "pk": 19, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "is1", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I1/?&view=json", 
+      "is_default": false, 
+      "slug": "is1", 
+      "name": "is1"
+    }
+  }, 
+  {
+    "pk": 20, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "mains droop", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V240_RMS/?f3_name=subtract&f1_name=dim_range&f4_name=divide&f2_name=mean&f4_arg0=2.35&f1_arg1=-0.1&f1_arg0=-0.6&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FV240_RMS%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D-3.5%26f1_arg0%3D-4.1&view=json", 
+      "is_default": false, 
+      "slug": "mains_droop", 
+      "name": "mains_droop"
+    }
+  }, 
+  {
+    "pk": 21, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "RF drive", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/RF_DRIVE/?f1_name=dim_range&f2_name=mean&f1_arg1=0.05&f1_arg0=0&view=json", 
+      "is_default": false, 
+      "slug": "rf_drive", 
+      "name": "rf_drive"
+    }
+  }, 
+  {
+    "pk": 22, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "t_mid", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f3_name=mean&f1_name=exponent&f2_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FI_FAULT%2F%3Ff1_name%3Ddim_of&f4_name=divide&f2_name=multiply&f4_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FI_FAULT%2F%3Ff1_name%3Dexponent%26f1_arg0%3D10%26f2_name%3Dmean&f1_arg0=10&view=json", 
+      "is_default": false, 
+      "slug": "t_mid", 
+      "name": "t_mid"
+    }
+  }, 
+  {
+    "pk": 23, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "gas1_Z", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS1_Z/?f1_name=element&f1_arg0=0&view=json", 
+      "is_default": false, 
+      "slug": "gas1_Z", 
+      "name": "gas1_Z"
+    }
+  }, 
+  {
+    "pk": 24, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "ech_vb", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/V_BEAM/?f1_name=slanted_baseline&f1_arg0=200&f2_name=max_val&view=json", 
+      "is_default": false, 
+      "slug": "ech_vb", 
+      "name": "ech_vb"
+    }
+  }, 
+  {
+    "pk": 25, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "gas 3 Z", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS3_Z/?&view=json", 
+      "is_default": false, 
+      "slug": "gas3_z", 
+      "name": "gas3_z"
+    }
+  }, 
+  {
+    "pk": 26, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "P iong", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/IONG_300T/?f3_name=multiply&f1_name=dim_range&f2_name=mean&f1_arg1=-3.5&f1_arg0=-4.1&f3_arg0=1000000&view=json", 
+      "is_default": false, 
+      "slug": "p_iong", 
+      "name": "p_iong"
+    }
+  }, 
+  {
+    "pk": 27, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "rf tune 2", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE2/?&view=json", 
+      "is_default": false, 
+      "slug": "rftune2", 
+      "name": "rftune2"
+    }
+  }, 
+  {
+    "pk": 28, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "i_f_sl", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=0.5&view=json", 
+      "is_default": false, 
+      "slug": "i_f_sl", 
+      "name": "i_f_sl"
+    }
+  }, 
+  {
+    "pk": 29, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "gas2_flow", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS2_FLOW/?&view=json", 
+      "is_default": false, 
+      "slug": "gas2_flow", 
+      "name": "gas2_flow"
+    }
+  }, 
+  {
+    "pk": 30, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "la_int", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/SURVEY/LARRY/?f1_name=max_val&view=json", 
+      "is_default": false, 
+      "slug": "la_int", 
+      "name": "la_int"
+    }
+  }, 
+  {
+    "pk": 31, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "puff_v", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/PUFF_135/?f1_name=peak_to_peak&view=json", 
+      "is_default": false, 
+      "slug": "puff_v", 
+      "name": "puff_v"
+    }
+  }, 
+  {
+    "pk": 32, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "RF Peak", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_FWD_TOP/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=200&view=json", 
+      "is_default": false, 
+      "slug": "rf_peak", 
+      "name": "f_peak"
+    }
+  }, 
+  {
+    "pk": 33, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "is3", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I3/?&view=json", 
+      "is_default": false, 
+      "slug": "is3", 
+      "name": "is3"
+    }
+  }, 
+  {
+    "pk": 34, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "t_snap (ignore the MDS path here, the old summary database just had a fixed value, here we multiply a scalar by 0, then add the value - the mds path which provides the scalar is not important or meaningful.)", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I3/?f1_name=multiply&f2_arg0=0.03&f2_name=add&f1_arg0=0.0&view=html&view=json", 
+      "is_default": false, 
+      "slug": "t_snap", 
+      "name": "t_snap"
+    }
   }
 ]
