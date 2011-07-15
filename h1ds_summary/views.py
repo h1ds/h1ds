@@ -264,8 +264,8 @@ def get_summary_attribute_form_from_url(request):
     json_data = json.loads(url_response.content)    
 
     # Now we generalise the URL  for any shot, replacing the shot number
-    # with %(shot)d
-    general_url = attr_url_json.replace(kwargs['shot'], "%(shot)d")
+    # with __shot__
+    general_url = attr_url_json.replace(kwargs['shot'], "__shot__")
 
     # Create a SummaryAttributeForm with URL and data type entries pre-filled
     summary_attribute_form = SummaryAttributeForm(initial={'source_url':general_url})
@@ -284,8 +284,8 @@ def go_to_source(request, slug, shot):
 
     
     attr = SummaryAttribute.objects.get(slug=slug)
-    source_url = attr.source_url %{'shot':int(shot)}
-
+    source_url = attr.source_url.replace('__shot__', str(shot))
+    
     # add view=html HTML query
     
     parsed_url_list = [i for i in urlparse(source_url)]
