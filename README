@@ -19,5 +19,11 @@ $ cd h1ds
 $ ./bootstrap.py
 
 # fixtures are generated with, e.g.
-$ cd $VIRTUAL_ENV/h1ds
-$ python manage.py dumpdata h1ds_summary --indent 2 --settings=h1ds.settings_development > data/summarydb.json
+cd $VIRTUAL_ENV/h1ds
+./manage.py dumpdata h1ds_summary --indent 2 --settings=h1ds.settings_development > data/summarydb.json
+
+## running celery ##
+start rabbitmq server
+then in a separate instance of the same h1ds virtualenv, do
+./manage.py celeryd -v 2 -B -s celery -E -l INFO --settings=h1ds.settings_development
+

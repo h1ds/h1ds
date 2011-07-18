@@ -406,5 +406,257 @@
       "slug": "t_snap", 
       "name": "t_snap"
     }
+  }, 
+  {
+    "pk": 35, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "dia_var", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/DIAMAG/?f1_name=dim_range&f2_name=peak_to_peak&f1_arg1=-0.01&f1_arg0=-0.06&view=json", 
+      "is_default": false, 
+      "slug": "dia_var", 
+      "name": "dia_var"
+    }
+  }, 
+  {
+    "pk": 36, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "gas2_z", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS2_Z/?&view=json", 
+      "is_default": false, 
+      "slug": "gas2_z", 
+      "name": "gas2_z"
+    }
+  }, 
+  {
+    "pk": 37, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "tt_main", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/TT/?&view=json", 
+      "is_default": false, 
+      "slug": "tt_main", 
+      "name": "tt_main"
+    }
+  }, 
+  {
+    "pk": 38, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "ne18_bmax", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ELECTR_DENS/NE_HET/NE_CENTRE/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=1000&view=json", 
+      "is_default": false, 
+      "slug": "ne18_bmax", 
+      "name": "ne18_bmax"
+    }
+  }, 
+  {
+    "pk": 39, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "b_p6", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/BASE_PRESS/?f1_name=multiply&f1_arg0=1000000&view=json", 
+      "is_default": false, 
+      "slug": "b_p6", 
+      "name": "b_p6"
+    }
+  }, 
+  {
+    "pk": 40, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "ech est", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/V_BEAM/?f6_name=max_val&f4_arg0=5&f1_name=slanted_baseline&f2_arg0=60&f5_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FECH%2FI_COLL%2F%3Ff1_name%3Dsubtract%26f1_arg0%3D4&f4_name=multiply&f3_name=max_of&f2_name=subtract&f1_arg0=200&f3_arg0=0&f5_name=multiply&view=json", 
+      "is_default": false, 
+      "slug": "ech_est", 
+      "name": "ech_est"
+    }
+  }, 
+  {
+    "pk": 41, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "ech pulse -- this is a hack- the previous summary db had a constant value of -1, here we take a scalar mds node, multiply by 0 and subtract 1.", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/BASE_PRESS/?f1_name=multiply&f1_arg0=0&f2_arg0=1&f2_name=subtract&view=json", 
+      "is_default": false, 
+      "slug": "ech_pulse", 
+      "name": "ech_pulse"
+    }
+  }, 
+  {
+    "pk": 42, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "rf tune 1", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE1/?&view=json", 
+      "is_default": false, 
+      "slug": "rftune1", 
+      "name": "rftune1"
+    }
+  }, 
+  {
+    "pk": 43, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "mag_fllf", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ELECTR_DENS/CAMAC/A14_5/INPUT_4/?f3_name=peak_to_peak&f1_name=prl_lpn&f2_arg0=0.005&f2_arg1=0.075&f2_name=dim_range&f1_arg1=1&f1_arg0=15000&view=json", 
+      "is_default": false, 
+      "slug": "mag_fllf", 
+      "name": "mag_fllf"
+    }
+  }, 
+  {
+    "pk": 44, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "rf tune 4", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE4/?&view=json", 
+      "is_default": false, 
+      "slug": "rftune4", 
+      "name": "rftune4"
+    }
+  }, 
+  {
+    "pk": 45, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "im3", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I3/?&view=json", 
+      "is_default": false, 
+      "slug": "im3", 
+      "name": "im3"
+    }
+  }, 
+  {
+    "pk": 46, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "im2", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I2/?&view=json", 
+      "is_default": false, 
+      "slug": "im2", 
+      "name": "im2"
+    }
+  }, 
+  {
+    "pk": 47, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "i_f_pk", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=10&view=json", 
+      "is_default": false, 
+      "slug": "i_f_pk", 
+      "name": "i_f_pk"
+    }
+  }, 
+  {
+    "pk": 48, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "HDB_num", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=pulse_number&f1_arg0=mid&view=json", 
+      "is_default": false, 
+      "slug": "HDB_num", 
+      "name": "HDB_num"
+    }
+  }, 
+  {
+    "pk": 49, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "HDB_wid", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=pulse_width&f1_arg0=mid&view=json", 
+      "is_default": false, 
+      "slug": "HDB_wid", 
+      "name": "HDB_wid"
+    }
+  }, 
+  {
+    "pk": 50, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "la_trim", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/SPECTROSCOPY/SURVEY/TRIM/?&view=json", 
+      "is_default": false, 
+      "slug": "la_trim", 
+      "name": "la_trim"
+    }
+  }, 
+  {
+    "pk": 51, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "i_main", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_RING/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.2&view=json", 
+      "is_default": false, 
+      "slug": "i_main", 
+      "name": "i_main"
+    }
+  }, 
+  {
+    "pk": 52, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "secondary current", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_SEC/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
+      "is_default": false, 
+      "slug": "i_sec", 
+      "name": "i_sec"
+    }
+  }, 
+  {
+    "pk": 53, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "I fault", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
+      "is_default": false, 
+      "slug": "i_fault", 
+      "name": "i_fault"
+    }
+  }, 
+  {
+    "pk": 54, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "i_top", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/I_TOP/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.024&view=json", 
+      "is_default": false, 
+      "slug": "i_top", 
+      "name": "i_top"
+    }
+  }, 
+  {
+    "pk": 55, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "i_bot", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/I_BOT/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
+      "is_default": false, 
+      "slug": "i_bot", 
+      "name": "i_bot"
+    }
   }
 ]
