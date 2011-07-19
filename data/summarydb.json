@@ -702,9 +702,33 @@
       "description": "kappa_h", 
       "display_order": 1000, 
       "source": "h1nf.KappaH",
-      "is_default": false, 
+      "is_default": true, 
       "slug": "kappa_h", 
       "name": "kappa_h"
+    }
+  },
+  {
+    "pk": 60, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "kappa_v", 
+      "display_order": 1000, 
+      "source": "h1nf.KappaV",
+      "is_default": true, 
+      "slug": "kappa_v", 
+      "name": "kappa_v"
+    }
+  },
+  {
+    "pk": 61, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "kappa_i", 
+      "display_order": 1000, 
+      "source": "h1nf.KappaI",
+      "is_default": false, 
+      "slug": "kappa_i", 
+      "name": "kappa_i"
     }
   }
 ]
