@@ -9,7 +9,7 @@ admin.site.disable_action('delete_selected')
 
 class SummaryAttributeAdmin(admin.ModelAdmin):
     #actions = [reload_attribute]
-    list_display = ('slug', 'name', 'is_default', 'source_url', 'display_order')
+    list_display = ('slug', 'name', 'is_default', 'source', 'display_order')
     list_display_links = ('slug',)
-    list_editable = ('name', 'is_default', 'source_url', 'display_order')
+    list_editable = ('name', 'is_default', 'source', 'display_order')
 admin.site.register(SummaryAttribute, SummaryAttributeAdmin)

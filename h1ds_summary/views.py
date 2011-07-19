@@ -268,7 +268,7 @@ def get_summary_attribute_form_from_url(request):
     general_url = attr_url_json.replace(kwargs['shot'], "__shot__")
 
     # Create a SummaryAttributeForm with URL and data type entries pre-filled
-    summary_attribute_form = SummaryAttributeForm(initial={'source_url':general_url})
+    summary_attribute_form = SummaryAttributeForm(initial={'source':general_url})
 
     # If the request is from AJAX, return form in JSON format
     # TODO: provide ajax / sidebar attribute adding.
@@ -284,16 +284,19 @@ def go_to_source(request, slug, shot):
 
     
     attr = SummaryAttribute.objects.get(slug=slug)
-    source_url = attr.source_url.replace('__shot__', str(shot))
+    if attr.source.startswith('http://'):
+        source_url = attr.source.replace('__shot__', str(shot))
     
-    # add view=html HTML query
+        # add view=html HTML query
     
-    parsed_url_list = [i for i in urlparse(source_url)]
-    
-    parsed_url_list[4] = '&'.join([parsed_url_list[4], 'view=html'])
-    
-    source_html_url = urlunparse(parsed_url_list)
-
+        parsed_url_list = [i for i in urlparse(source_url)]
+        
+        parsed_url_list[4] = '&'.join([parsed_url_list[4], 'view=html'])
+        
+        source_html_url = urlunparse(parsed_url_list)
+    else:
+        # TODO: don't annoy user with this - remove link on attributes which don't come from MDS interface.
+        source_html_url = "/summary?message='Attribute from source code...'"
     return HttpResponseRedirect(source_html_url)
 
 
