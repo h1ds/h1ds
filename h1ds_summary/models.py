@@ -55,5 +55,5 @@ class SummaryAttribute(models.Model):
             split_name = self.source.split('.')
             module_name = '.'.join(['h1ds_summary.attributes', '.'.join(split_name[:-1])])
             class_name = split_name[-1]
-            source_class = __import__(module_name, globals(), locals(), [class_name], -1)[class_name]
-            return source_class.do_script(shot_number)
+            source_class = __import__(module_name, globals(), locals(), [class_name], -1).__getattribute__(class_name)
+            return source_class(shot_number).do_script()
