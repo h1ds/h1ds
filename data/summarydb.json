@@ -658,5 +658,41 @@
       "slug": "i_bot", 
       "name": "i_bot"
     }
+  }, 
+  {
+    "pk": 56, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "ne18_bar", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/ELECTR_DENS/__shot__/TOP/NE_HET/NE_CENTRE/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FELECTR_DENS%2F__shot__%2FTOP%2FNE_HET%2FNE_CENTRE%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
+      "is_default": false, 
+      "slug": "ne18_bar", 
+      "name": "ne18_bar"
+    }
+  }, 
+  {
+    "pk": 57, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "w_dia", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/DIAMAG/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FDIAMAG%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
+      "is_default": false, 
+      "slug": "w_dia", 
+      "name": "w_dia"
+    }
+  }, 
+  {
+    "pk": 58, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "rf_power", 
+      "display_order": 1000, 
+      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_RF_NET/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FRF%2FP_RF_NET%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
+      "is_default": false, 
+      "slug": "rf_power", 
+      "name": "rf_power"
+    }
   }
 ]
