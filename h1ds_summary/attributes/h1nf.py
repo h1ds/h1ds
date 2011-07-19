@@ -1,23 +1,17 @@
 """Summary attribute functions for H1NF."""
 
 import os
-import MDSplus
 
+from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_summary.attributes import AttributeScript
-
-if not 'mdsplus' in os.environ["PATH"]:
-    os.environ["PATH"] += ':/usr/local/mdsplus/bin'
-    os.environ["MDSPLUS_DIR"] = "/usr/local/mdsplus"
-    os.environ["MDS_PATH"] = "/usr/local/mdsplus"
-    os.environ["h1data_path"] = "h1data.anu.edu.au::"
-
 
 class Kappa(AttributeScript):
     """Base class for kappa_h, v..."""
 
     def __init__(self, shot):
         super(Kappa, self).__init__(shot)
-        self.t = MDSplus.Tree('h1data', self.shot)
+        h1data_model = MDSPlusTree.objects.get(name__iexact='h1data')
+        self.t = h1data_model.get_tree(self.shot)
         
 
     def get_coil_data(self):
@@ -62,7 +56,7 @@ class KappaH(Kappa):
             kappa = float(coil_data[2])/float(coil_data[4])
         except:
             kappa = float(self.t.getNode('.OPERATIONS:K_H').data())
-        return kappa
+        return (kappa, 'FLOAT')
 
 class KappaV(Kappa):
 
@@ -72,7 +66,7 @@ class KappaV(Kappa):
             kappa = float(coil_data[0])/float(coil_data[4])
         except:
             kappa = float(self.t.getNode('.OPERATIONS:K_OVF').data())
-        return kappa
+        return (kappa, 'FLOAT')
 
 class KappaI(Kappa):
 
@@ -82,4 +76,4 @@ class KappaI(Kappa):
             kappa = float(coil_data[1])/float(coil_data[4])
         except:
             kappa = float(self.t.getNode('.OPERATIONS:K_I').data())
-        return kappa
+        return (kappa, 'FLOAT')
