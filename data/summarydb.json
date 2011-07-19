@@ -5,7 +5,7 @@
     "fields": {
       "description": "tt_sec", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/TT/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/TT/?&view=json", 
       "is_default": false, 
       "slug": "tt_sec", 
       "name": "tt_sec"
@@ -17,7 +17,7 @@
     "fields": {
       "description": "rga_imax", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/RGA_I/?f1_name=max_val&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/RGA_I/?f1_name=max_val&view=json", 
       "is_default": false, 
       "slug": "rga_imax", 
       "name": "rga_imax"
@@ -29,7 +29,7 @@
     "fields": {
       "description": "th_main", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/LOG/THERMAL_MAIN/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/LOG/THERMAL_MAIN/?&view=json", 
       "is_default": false, 
       "slug": "th_main", 
       "name": "th_main"
@@ -41,7 +41,7 @@
     "fields": {
       "description": "i_ring", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_RING/?f2_name=mean&f1_name=dim_range&f1_arg1=-0.1&f1_arg2=-0.05&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_RING/?f2_name=mean&f1_name=dim_range&f1_arg1=-0.1&f1_arg2=-0.05&view=json", 
       "is_default": true, 
       "slug": "i_ring", 
       "name": "i_ring"
@@ -53,7 +53,7 @@
     "fields": {
       "description": "la_slit", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/SPECTROSCOPY/SURVEY/SLIT_WIDTH/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/SPECTROSCOPY/SURVEY/SLIT_WIDTH/?&view=json", 
       "is_default": false, 
       "slug": "la_slit", 
       "name": "la_slit"
@@ -65,7 +65,7 @@
     "fields": {
       "description": "ech_ib", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/I_COLL/?f1_name=max_val&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/I_COLL/?f1_name=max_val&view=json", 
       "is_default": false, 
       "slug": "ech_ib", 
       "name": "ech_ib"
@@ -77,7 +77,7 @@
     "fields": {
       "description": "gas1_M", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS1_Z/?f1_name=element&f1_arg1=1&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS1_Z/?f1_name=element&f1_arg1=1&view=json", 
       "is_default": false, 
       "slug": "gas1_M", 
       "name": "gas1_M"
@@ -89,7 +89,7 @@
     "fields": {
       "description": "mains", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V240_RMS/?f4_name=divide&f4_arg1=2.35&f3_name=multiply&f3_arg1=2.4&f2_name=mean&f1_name=dim_range&f1_arg1=-4.1&f1_arg2=-3.5&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V240_RMS/?f4_name=divide&f4_arg1=2.35&f3_name=multiply&f3_arg1=2.4&f2_name=mean&f1_name=dim_range&f1_arg1=-4.1&f1_arg2=-3.5&view=json", 
       "is_default": false, 
       "slug": "mains", 
       "name": "mains"
@@ -101,7 +101,7 @@
     "fields": {
       "description": "mag_fl1", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/ELECTR_DENS/__shot__/TOP/CAMAC/A14_5/INPUT_4/?f1_name=dim_range&f1_arg1=0.005&f1_arg2=0.075&f2_name=peak_to_peak&view=json", 
+      "source": "http://localhost:8105/mdsplus/ELECTR_DENS/__shot__/TOP/CAMAC/A14_5/INPUT_4/?f1_name=dim_range&f1_arg1=0.005&f1_arg2=0.075&f2_name=peak_to_peak&view=json", 
       "is_default": false, 
       "slug": "mag_fl1", 
       "name": "mag_fl1"
@@ -113,7 +113,7 @@
     "fields": {
       "description": "rfptop", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_FWD_TOP/?f2_name=max_val&f1_name=prl_lpn&f1_arg1=20&f1_arg2=1&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_FWD_TOP/?f2_name=max_val&f1_name=prl_lpn&f1_arg1=20&f1_arg2=1&view=json", 
       "is_default": false, 
       "slug": "rfptop", 
       "name": "rfptop"
@@ -125,7 +125,7 @@
     "fields": {
       "description": "wg_bolo", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/WG_BOLO/?f3_name=subtract&f1_name=prl_lpn&f4_name=multiply&f2_name=max_val&f4_arg0=1000&f1_arg1=2&f1_arg0=1&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FECH%2FWG_BOLO%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D-0.1%26f1_arg0%3D-1.1&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/WG_BOLO/?f3_name=subtract&f1_name=prl_lpn&f4_name=multiply&f2_name=max_val&f4_arg0=1000&f1_arg1=2&f1_arg0=1&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FECH%2FWG_BOLO%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D-0.1%26f1_arg0%3D-1.1&view=json", 
       "is_default": false, 
       "slug": "wg_bolo", 
       "name": "wg_bolo"
@@ -137,7 +137,7 @@
     "fields": {
       "description": "th_sec", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/LOG/THERMAL_SEC/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/LOG/THERMAL_SEC/?&view=json", 
       "is_default": false, 
       "slug": "th_sec", 
       "name": "th_sec"
@@ -149,7 +149,7 @@
     "fields": {
       "description": "v_main", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V_MAIN/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.6&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V_MAIN/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.6&view=json", 
       "is_default": false, 
       "slug": "v_main", 
       "name": "v_main"
@@ -161,7 +161,7 @@
     "fields": {
       "description": "v_sec", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V_SEC/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.6&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V_SEC/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.6&view=json", 
       "is_default": false, 
       "slug": "v_sec", 
       "name": "v_sec"
@@ -173,7 +173,7 @@
     "fields": {
       "description": "HDB_del", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=first_pulse&f1_arg0=mid&view=json", 
+      "source": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=first_pulse&f1_arg0=mid&view=json", 
       "is_default": false, 
       "slug": "HDB_del", 
       "name": "HDB_del"
@@ -185,7 +185,7 @@
     "fields": {
       "description": "im1", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I1/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I1/?&view=json", 
       "is_default": false, 
       "slug": "im1", 
       "name": "im1"
@@ -197,7 +197,7 @@
     "fields": {
       "description": "gas3_flow", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS3_FLOW/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS3_FLOW/?&view=json", 
       "is_default": false, 
       "slug": "gas3_flow", 
       "name": "gas3_flow"
@@ -209,7 +209,7 @@
     "fields": {
       "description": "is2", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I2/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I2/?&view=json", 
       "is_default": false, 
       "slug": "is2", 
       "name": "is2"
@@ -221,7 +221,7 @@
     "fields": {
       "description": "is1", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I1/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I1/?&view=json", 
       "is_default": false, 
       "slug": "is1", 
       "name": "is1"
@@ -233,7 +233,7 @@
     "fields": {
       "description": "mains droop", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V240_RMS/?f3_name=subtract&f1_name=dim_range&f4_name=divide&f2_name=mean&f4_arg0=2.35&f1_arg1=-0.1&f1_arg0=-0.6&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FV240_RMS%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D-3.5%26f1_arg0%3D-4.1&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/V240_RMS/?f3_name=subtract&f1_name=dim_range&f4_name=divide&f2_name=mean&f4_arg0=2.35&f1_arg1=-0.1&f1_arg0=-0.6&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FV240_RMS%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D-3.5%26f1_arg0%3D-4.1&view=json", 
       "is_default": false, 
       "slug": "mains_droop", 
       "name": "mains_droop"
@@ -245,7 +245,7 @@
     "fields": {
       "description": "RF drive", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/RF_DRIVE/?f1_name=dim_range&f2_name=mean&f1_arg1=0.05&f1_arg0=0&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/RF_DRIVE/?f1_name=dim_range&f2_name=mean&f1_arg1=0.05&f1_arg0=0&view=json", 
       "is_default": false, 
       "slug": "rf_drive", 
       "name": "rf_drive"
@@ -257,7 +257,7 @@
     "fields": {
       "description": "t_mid", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f3_name=mean&f1_name=exponent&f2_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FI_FAULT%2F%3Ff1_name%3Ddim_of&f4_name=divide&f2_name=multiply&f4_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FI_FAULT%2F%3Ff1_name%3Dexponent%26f1_arg0%3D10%26f2_name%3Dmean&f1_arg0=10&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f3_name=mean&f1_name=exponent&f2_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FI_FAULT%2F%3Ff1_name%3Ddim_of&f4_name=divide&f2_name=multiply&f4_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FI_FAULT%2F%3Ff1_name%3Dexponent%26f1_arg0%3D10%26f2_name%3Dmean&f1_arg0=10&view=json", 
       "is_default": false, 
       "slug": "t_mid", 
       "name": "t_mid"
@@ -269,7 +269,7 @@
     "fields": {
       "description": "gas1_Z", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS1_Z/?f1_name=element&f1_arg0=0&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS1_Z/?f1_name=element&f1_arg0=0&view=json", 
       "is_default": false, 
       "slug": "gas1_Z", 
       "name": "gas1_Z"
@@ -281,7 +281,7 @@
     "fields": {
       "description": "ech_vb", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/V_BEAM/?f1_name=slanted_baseline&f1_arg0=200&f2_name=max_val&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/V_BEAM/?f1_name=slanted_baseline&f1_arg0=200&f2_name=max_val&view=json", 
       "is_default": false, 
       "slug": "ech_vb", 
       "name": "ech_vb"
@@ -293,7 +293,7 @@
     "fields": {
       "description": "gas 3 Z", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS3_Z/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS3_Z/?&view=json", 
       "is_default": false, 
       "slug": "gas3_z", 
       "name": "gas3_z"
@@ -305,7 +305,7 @@
     "fields": {
       "description": "P iong", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/IONG_300T/?f3_name=multiply&f1_name=dim_range&f2_name=mean&f1_arg1=-3.5&f1_arg0=-4.1&f3_arg0=1000000&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/IONG_300T/?f3_name=multiply&f1_name=dim_range&f2_name=mean&f1_arg1=-3.5&f1_arg0=-4.1&f3_arg0=1000000&view=json", 
       "is_default": false, 
       "slug": "p_iong", 
       "name": "p_iong"
@@ -317,7 +317,7 @@
     "fields": {
       "description": "rf tune 2", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE2/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE2/?&view=json", 
       "is_default": false, 
       "slug": "rftune2", 
       "name": "rftune2"
@@ -329,7 +329,7 @@
     "fields": {
       "description": "i_f_sl", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=0.5&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=0.5&view=json", 
       "is_default": false, 
       "slug": "i_f_sl", 
       "name": "i_f_sl"
@@ -341,7 +341,7 @@
     "fields": {
       "description": "gas2_flow", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS2_FLOW/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS2_FLOW/?&view=json", 
       "is_default": false, 
       "slug": "gas2_flow", 
       "name": "gas2_flow"
@@ -353,7 +353,7 @@
     "fields": {
       "description": "la_int", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/SURVEY/LARRY/?f1_name=max_val&view=json", 
+      "source": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/SURVEY/LARRY/?f1_name=max_val&view=json", 
       "is_default": false, 
       "slug": "la_int", 
       "name": "la_int"
@@ -365,7 +365,7 @@
     "fields": {
       "description": "puff_v", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/PUFF_135/?f1_name=peak_to_peak&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/PUFF_135/?f1_name=peak_to_peak&view=json", 
       "is_default": false, 
       "slug": "puff_v", 
       "name": "puff_v"
@@ -377,7 +377,7 @@
     "fields": {
       "description": "RF Peak", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_FWD_TOP/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=200&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_FWD_TOP/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=200&view=json", 
       "is_default": false, 
       "slug": "rf_peak", 
       "name": "f_peak"
@@ -389,7 +389,7 @@
     "fields": {
       "description": "is3", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I3/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I3/?&view=json", 
       "is_default": false, 
       "slug": "is3", 
       "name": "is3"
@@ -401,7 +401,7 @@
     "fields": {
       "description": "t_snap (ignore the MDS path here, the old summary database just had a fixed value, here we multiply a scalar by 0, then add the value - the mds path which provides the scalar is not important or meaningful.)", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I3/?f1_name=multiply&f2_arg0=0.03&f2_name=add&f1_arg0=0.0&view=html&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_SEC/I3/?f1_name=multiply&f2_arg0=0.03&f2_name=add&f1_arg0=0.0&view=html&view=json", 
       "is_default": false, 
       "slug": "t_snap", 
       "name": "t_snap"
@@ -413,7 +413,7 @@
     "fields": {
       "description": "dia_var", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/DIAMAG/?f1_name=dim_range&f2_name=peak_to_peak&f1_arg1=-0.01&f1_arg0=-0.06&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/DIAMAG/?f1_name=dim_range&f2_name=peak_to_peak&f1_arg1=-0.01&f1_arg0=-0.06&view=json", 
       "is_default": false, 
       "slug": "dia_var", 
       "name": "dia_var"
@@ -425,7 +425,7 @@
     "fields": {
       "description": "gas2_z", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS2_Z/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/GAS2_Z/?&view=json", 
       "is_default": false, 
       "slug": "gas2_z", 
       "name": "gas2_z"
@@ -437,7 +437,7 @@
     "fields": {
       "description": "tt_main", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/TT/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/TT/?&view=json", 
       "is_default": false, 
       "slug": "tt_main", 
       "name": "tt_main"
@@ -449,7 +449,7 @@
     "fields": {
       "description": "ne18_bmax", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ELECTR_DENS/NE_HET/NE_CENTRE/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=1000&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ELECTR_DENS/NE_HET/NE_CENTRE/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=1000&view=json", 
       "is_default": false, 
       "slug": "ne18_bmax", 
       "name": "ne18_bmax"
@@ -461,7 +461,7 @@
     "fields": {
       "description": "b_p6", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/BASE_PRESS/?f1_name=multiply&f1_arg0=1000000&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/BASE_PRESS/?f1_name=multiply&f1_arg0=1000000&view=json", 
       "is_default": false, 
       "slug": "b_p6", 
       "name": "b_p6"
@@ -473,7 +473,7 @@
     "fields": {
       "description": "ech est", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/V_BEAM/?f6_name=max_val&f4_arg0=5&f1_name=slanted_baseline&f2_arg0=60&f5_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FECH%2FI_COLL%2F%3Ff1_name%3Dsubtract%26f1_arg0%3D4&f4_name=multiply&f3_name=max_of&f2_name=subtract&f1_arg0=200&f3_arg0=0&f5_name=multiply&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ECH/V_BEAM/?f6_name=max_val&f4_arg0=5&f1_name=slanted_baseline&f2_arg0=60&f5_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FECH%2FI_COLL%2F%3Ff1_name%3Dsubtract%26f1_arg0%3D4&f4_name=multiply&f3_name=max_of&f2_name=subtract&f1_arg0=200&f3_arg0=0&f5_name=multiply&view=json", 
       "is_default": false, 
       "slug": "ech_est", 
       "name": "ech_est"
@@ -485,7 +485,7 @@
     "fields": {
       "description": "ech pulse -- this is a hack- the previous summary db had a constant value of -1, here we take a scalar mds node, multiply by 0 and subtract 1.", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/BASE_PRESS/?f1_name=multiply&f1_arg0=0&f2_arg0=1&f2_name=subtract&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/MACHINE/BASE_PRESS/?f1_name=multiply&f1_arg0=0&f2_arg0=1&f2_name=subtract&view=json", 
       "is_default": false, 
       "slug": "ech_pulse", 
       "name": "ech_pulse"
@@ -497,7 +497,7 @@
     "fields": {
       "description": "rf tune 1", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE1/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE1/?&view=json", 
       "is_default": false, 
       "slug": "rftune1", 
       "name": "rftune1"
@@ -509,7 +509,7 @@
     "fields": {
       "description": "mag_fllf", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ELECTR_DENS/CAMAC/A14_5/INPUT_4/?f3_name=peak_to_peak&f1_name=prl_lpn&f2_arg0=0.005&f2_arg1=0.075&f2_name=dim_range&f1_arg1=1&f1_arg0=15000&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/ELECTR_DENS/CAMAC/A14_5/INPUT_4/?f3_name=peak_to_peak&f1_name=prl_lpn&f2_arg0=0.005&f2_arg1=0.075&f2_name=dim_range&f1_arg1=1&f1_arg0=15000&view=json", 
       "is_default": false, 
       "slug": "mag_fllf", 
       "name": "mag_fllf"
@@ -521,7 +521,7 @@
     "fields": {
       "description": "rf tune 4", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE4/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/LOG/HEATING/RFTUNE4/?&view=json", 
       "is_default": false, 
       "slug": "rftune4", 
       "name": "rftune4"
@@ -533,7 +533,7 @@
     "fields": {
       "description": "im3", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I3/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I3/?&view=json", 
       "is_default": false, 
       "slug": "im3", 
       "name": "im3"
@@ -545,7 +545,7 @@
     "fields": {
       "description": "im2", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I2/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/MAGNETSUPPLY/LCU/SETUP_MAIN/I2/?&view=json", 
       "is_default": false, 
       "slug": "im2", 
       "name": "im2"
@@ -557,7 +557,7 @@
     "fields": {
       "description": "i_f_pk", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=10&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=10&view=json", 
       "is_default": false, 
       "slug": "i_f_pk", 
       "name": "i_f_pk"
@@ -569,7 +569,7 @@
     "fields": {
       "description": "HDB_num", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=pulse_number&f1_arg0=mid&view=json", 
+      "source": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=pulse_number&f1_arg0=mid&view=json", 
       "is_default": false, 
       "slug": "HDB_num", 
       "name": "HDB_num"
@@ -581,7 +581,7 @@
     "fields": {
       "description": "HDB_wid", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=pulse_width&f1_arg0=mid&view=json", 
+      "source": "http://localhost:8105/mdsplus/SPECTROSCOPY/__shot__/TOP/LINE_RATIO/RAW_SIGNALS/PULSE/?f1_name=pulse_width&f1_arg0=mid&view=json", 
       "is_default": false, 
       "slug": "HDB_wid", 
       "name": "HDB_wid"
@@ -593,7 +593,7 @@
     "fields": {
       "description": "la_trim", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/SPECTROSCOPY/SURVEY/TRIM/?&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/SPECTROSCOPY/SURVEY/TRIM/?&view=json", 
       "is_default": false, 
       "slug": "la_trim", 
       "name": "la_trim"
@@ -605,7 +605,7 @@
     "fields": {
       "description": "i_main", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_RING/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.2&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_RING/?f1_name=dim_range&f2_name=mean&f1_arg1=-0.1&f1_arg0=-0.2&view=json", 
       "is_default": false, 
       "slug": "i_main", 
       "name": "i_main"
@@ -617,7 +617,7 @@
     "fields": {
       "description": "secondary current", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_SEC/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_SEC/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
       "is_default": false, 
       "slug": "i_sec", 
       "name": "i_sec"
@@ -629,7 +629,7 @@
     "fields": {
       "description": "I fault", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/I_FAULT/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
       "is_default": false, 
       "slug": "i_fault", 
       "name": "i_fault"
@@ -641,7 +641,7 @@
     "fields": {
       "description": "i_top", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/I_TOP/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.024&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/I_TOP/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.024&view=json", 
       "is_default": false, 
       "slug": "i_top", 
       "name": "i_top"
@@ -653,7 +653,7 @@
     "fields": {
       "description": "i_bot", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/I_BOT/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/I_BOT/?f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&view=json", 
       "is_default": false, 
       "slug": "i_bot", 
       "name": "i_bot"
@@ -665,7 +665,7 @@
     "fields": {
       "description": "ne18_bar", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/ELECTR_DENS/__shot__/TOP/NE_HET/NE_CENTRE/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FELECTR_DENS%2F__shot__%2FTOP%2FNE_HET%2FNE_CENTRE%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
+      "source": "http://localhost:8105/mdsplus/ELECTR_DENS/__shot__/TOP/NE_HET/NE_CENTRE/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FELECTR_DENS%2F__shot__%2FTOP%2FNE_HET%2FNE_CENTRE%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
       "is_default": false, 
       "slug": "ne18_bar", 
       "name": "ne18_bar"
@@ -677,7 +677,7 @@
     "fields": {
       "description": "w_dia", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/DIAMAG/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FDIAMAG%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/OPERATIONS/DIAMAG/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FOPERATIONS%2FDIAMAG%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
       "is_default": false, 
       "slug": "w_dia", 
       "name": "w_dia"
@@ -689,10 +689,22 @@
     "fields": {
       "description": "rf_power", 
       "display_order": 1000, 
-      "source_url": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_RF_NET/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FRF%2FP_RF_NET%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
+      "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_RF_NET/?f3_name=subtract&f1_name=dim_range&f2_name=mean&f1_arg1=0.035&f1_arg0=0.025&f3_arg0=http%3A%2F%2Flocalhost%3A8105%2Fmdsplus%2FH1DATA%2F__shot__%2FTOP%2FRF%2FP_RF_NET%2F%3Ff1_name%3Ddim_range%26f2_name%3Dmean%26f1_arg1%3D0%26f1_arg0%3D-0.005&view=json", 
       "is_default": false, 
       "slug": "rf_power", 
       "name": "rf_power"
+    }
+  }
+  {
+    "pk": 59, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "kappa_h", 
+      "display_order": 1000, 
+      "source": "h1nf.KappaH",
+      "is_default": false, 
+      "slug": "kappa_h", 
+      "name": "kappa_h"
     }
   }
 ]
