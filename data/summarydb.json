@@ -694,7 +694,7 @@
       "slug": "rf_power", 
       "name": "rf_power"
     }
-  }
+  },
   {
     "pk": 59, 
     "model": "h1ds_summary.summaryattribute", 
