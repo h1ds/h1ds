@@ -380,7 +380,7 @@
       "source": "http://localhost:8105/mdsplus/H1DATA/__shot__/TOP/RF/P_FWD_TOP/?f1_name=prl_lpn&f2_name=max_val&f1_arg1=1&f1_arg0=200&view=json", 
       "is_default": false, 
       "slug": "rf_peak", 
-      "name": "f_peak"
+      "name": "rf_peak"
     }
   }, 
   {
