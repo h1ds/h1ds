@@ -742,5 +742,65 @@
       "slug": "recorded", 
       "name": "recorded"
     }
+  },
+ {
+    "pk": 63, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "lcu_gas_1_flow", 
+      "display_order": 1000, 
+      "source": "h1nf.Gas1Flow",
+      "is_default": true, 
+      "slug": "lcu_gas_1_flow", 
+      "name": "lcu_gas_1_flow"
+    }
+  },
+ {
+    "pk": 64, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "lcu_gas_2_flow", 
+      "display_order": 1000, 
+      "source": "h1nf.Gas2Flow",
+      "is_default": true, 
+      "slug": "lcu_gas_2_flow", 
+      "name": "lcu_gas_2_flow"
+    }
+  },
+ {
+    "pk": 65, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "lcu_gas_3_flow", 
+      "display_order": 1000, 
+      "source": "h1nf.Gas3Flow",
+      "is_default": true, 
+      "slug": "lcu_gas_3_flow", 
+      "name": "lcu_gas_3_flow"
+    }
+  },
+ {
+    "pk": 66, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "lcu_gas_4_flow", 
+      "display_order": 1000, 
+      "source": "h1nf.Gas4Flow",
+      "is_default": false, 
+      "slug": "lcu_gas_4_flow", 
+      "name": "lcu_gas_4_flow"
+    }
+  },
+ {
+    "pk": 67, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "lcu_gas_5_flow", 
+      "display_order": 1000, 
+      "source": "h1nf.Gas5Flow",
+      "is_default": false, 
+      "slug": "lcu_gas_5_flow", 
+      "name": "lcu_gas_5_flow"
+    }
   }
 ]
