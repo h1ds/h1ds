@@ -18,6 +18,9 @@ class H1DSHomepageNode(template.Node):
             app_description = app_module.__doc__
 
             tag_string += (item_template %{'url':homepage_url, 'name':app_doc_name, 'description':app_description})
+        if hasattr(settings, 'H1DS_EXTRA_SUBLINKS'):
+            for link in settings.H1DS_EXTRA_SUBLINKS:
+                tag_string += (item_template %{'url':link[1], 'name':link[0], 'description':link[2]})
         return tag_string
 
 def do_h1ds_homepage(parser, token):
