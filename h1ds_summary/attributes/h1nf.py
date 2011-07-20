@@ -6,14 +6,15 @@ from datetime import datetime
 from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_summary.attributes import AttributeScript
 
-class Kappa(AttributeScript):
-    """Base class for kappa_h, v..."""
-
+class H1DataAttributeScript(AttributeScript):
     def __init__(self, shot):
-        super(Kappa, self).__init__(shot)
+        super(H1DataAttributeScript, self).__init__(shot)
         h1data_model = MDSPlusTree.objects.get(name__iexact='h1data')
         self.t = h1data_model.get_tree(self.shot)
-        
+
+
+class Kappa(H1DataAttributeScript):
+    """Base class for kappa_h, v..."""
 
     def get_coil_data(self):
         if self.shot > 37042:
@@ -80,13 +81,8 @@ class KappaI(Kappa):
         return (kappa, 'FLOAT')
 
 
-class GetTime(AttributeScript):
+class GetTime(H1DataAttributeScript):
     
-    def __init__(self, shot):
-        super(GetTime, self).__init__(shot)
-        h1data_model = MDSPlusTree.objects.get(name__iexact='h1data')
-        self.t = h1data_model.get_tree(self.shot)
-
     def do_script(self):
         n = self.t.getNode("\\h1data::top.operations:h18212sl:input_07")
         mds_time = n.getTimeInserted()
@@ -94,3 +90,42 @@ class GetTime(AttributeScript):
         time_inserted = datetime.strptime(str(mds_time._getDate()), "%d-%b-%Y %H:%M:%S.%f")
 
         return ("'%s'" %time_inserted.strftime("%Y-%m-%d %H:%M:%S"), "DATETIME")
+
+class GasFlow(H1DataAttributeScript):
+
+    def do_script_for_gas_number(self, gas_number):
+        try:
+            mds_node = self.t.getNode('.operations.magnetsupply.lcu:setup_main:i2') #sign if it has been logged.
+            if mds_node.dtype == 211: # Gas flow data not stored in setup, get from log instead.
+                gas_node = self.t.getNode(".LOG.MACHINE:GAS%d_FLOW" %gas_number)
+                return (gas_node.data(), 'FLOAT')
+            else:
+                gas_node = self.t.getNode('.operations.magnetsupply.lcu:log:gas%d_set' %gas_number)
+                return (0.01*gas_node.data(), 'FLOAT')
+        except:
+            return ('null', 'FLOAT')
+
+class Gas1Flow(GasFlow):
+    
+    def do_script(self):
+        return self.do_script_for_gas_number(1)
+
+class Gas2Flow(GasFlow):
+    
+    def do_script(self):
+        return self.do_script_for_gas_number(2)
+
+class Gas3Flow(GasFlow):
+    
+    def do_script(self):
+        return self.do_script_for_gas_number(3)
+
+class Gas4Flow(GasFlow):
+    
+    def do_script(self):
+        return self.do_script_for_gas_number(4)
+
+class Gas5Flow(GasFlow):
+    
+    def do_script(self):
+        return self.do_script_for_gas_number(5)
