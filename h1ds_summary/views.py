@@ -128,7 +128,7 @@ from urlparse import urlparse, urlunparse
 from django.core.urlresolvers import resolve
 from django.http import QueryDict
 from django.shortcuts import redirect
-from h1ds_summary import MDS_SQL_MAP, SUMMARY_TABLE_NAME
+from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
 

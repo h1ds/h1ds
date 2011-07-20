@@ -31,23 +31,15 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
             values = tuple(str(a.get_value(shot)[0]) for a in attributes)
             values_str = '('+','.join([str(shot), ','.join(values)])+')'
             update_str = ','.join(('%s=%s' %(a, values[ai]) for ai, a in enumerate(attr_names)))
-            print update_str
-            if connection.vendor == 'sqlite':
-                cursor.execute("INSERT OR IGNORE INTO %(table)s %(attrs)s VALUES %(vals)s" %{'table':table,
-                                                                                             'attrs':attr_name_str,
-                                                                                             'vals':values_str,
-                                                                                             })
-                update_str = update_str + ",timestamp=datetime('now')"
-                cursor.execute("UPDATE %(table)s SET %(update)s WHERE shot=%(shot)d" %{'table':table,
-                                                                                       'update':update_str,
-                                                                                       'shot':shot,
-                                                                                       })
-            else:
-                cursor.execute("INSERT INTO %(table)s %(attrs)s VALUES %(vals)s ON DUPLICATE KEY UPDATE %(update)s" %{'table':table,
-                                                                                                                      'attrs':attr_name_str,
-                                                                                                                      'vals':values_str,
-                                                                                                                      'update':update_str,
-                                                                                                                      })
+            cursor.execute("INSERT OR IGNORE INTO %(table)s %(attrs)s VALUES %(vals)s" %{'table':table,
+                                                                                         'attrs':attr_name_str,
+                                                                                         'vals':values_str,
+                                                                                         })
+            update_str = update_str + ",timestamp=datetime('now')"
+            cursor.execute("UPDATE %(table)s SET %(update)s WHERE shot=%(shot)d" %{'table':table,
+                                                                                   'update':update_str,
+                                                                                   'shot':shot,
+                                                                                   })
             transaction.commit_unless_managed()
 
 def get_sync_info():

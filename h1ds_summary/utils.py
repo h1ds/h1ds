@@ -12,12 +12,8 @@ import h1ds_summary.models
 def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
     attrs = h1ds_summary.models.SummaryAttribute.objects.all()
     attr_string = ",".join(("%s %s" %(a.name, a.get_value(0)[1]) for a in attrs))
-    if connection.vendor == 'sqlite':
-        cols = ["shot MEDIUMINT UNSIGNED PRIMARY KEY",
-                "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"]
-    else:
-        cols = ["shot MEDIUMINT UNSIGNED PRIMARY KEY",
-                "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"]
+    cols = ["shot MEDIUMINT UNSIGNED PRIMARY KEY",
+            "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"]
     if attr_string != "":
         cols.append(attr_string)
     col_str = ','.join(cols)
@@ -162,27 +158,23 @@ def time_since_last_summary_table_modification(table = SUMMARY_TABLE_NAME):
         diff = datetime.now() - latest_timestamp
     return diff
     
-
-    
-
+def get_attr_list(cursor, table=SUMMARY_TABLE_NAME):
+    try:
+        # horrid hack
+        cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
+        return [i for i in cursor.fetchall()[0][0][15+len(table):-1].split(',')]
+    except DatabaseError:
+        generate_base_summary_table(cursor)
+        cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
+        return [i for i in cursor.fetchall()[0][0][15+len(table):-1].split(',')]
+        
 def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     # TODO: need to get dtype from data source...
     cursor = connection.cursor()
+
     ## check if attribute already exists.
-    try:
-        if connection.vendor == 'sqlite':
-            ## horrid hack
-            cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
-            attr_list = [i for i in cursor.fetchall()[0][0][15+len(table):-1].split(',')]
-        else:
-            cursor.execute("DESCRIBE %s" %table)
-            attr_list = cursor.fetchall()
-    except DatabaseError:
-        # table needs to be created
-        generate_base_summary_table(cursor)
-        cursor.execute("DESCRIBE %s" %table)        
+    attr_list = get_attr_list(cursor, table)
     attribute_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
-    #latest_shot = get_latest_shot_from_summary_table()
     attr_dtype = attribute_instance.get_value(0)[1]
 
     attr_exists = False
