@@ -164,3 +164,9 @@ djcelery.setup_loader()
 H1DS_MDSPLUS_NODE_BLACKLIST = (
     "\\H1DATA::TOP.OPERATIONS.MAGNETSUPPLY:VPATCH_10",
     )
+
+# Extra links to be displayed in the header and on the frontpage.
+# Syntax: (name, url, description)
+H1DS_EXTRA_SUBLINKS = (
+    ("Code", "http://code.h1svr.anu.edu.au", "H1 code repository"),
+)
