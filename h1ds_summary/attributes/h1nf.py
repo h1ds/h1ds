@@ -1,6 +1,7 @@
 """Summary attribute functions for H1NF."""
 
 import os
+from datetime import datetime
 
 from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_summary.attributes import AttributeScript
@@ -77,3 +78,19 @@ class KappaI(Kappa):
         except:
             kappa = float(self.t.getNode('.OPERATIONS:K_I').data())
         return (kappa, 'FLOAT')
+
+
+class GetTime(AttributeScript):
+    
+    def __init__(self, shot):
+        super(GetTime, self).__init__(shot)
+        h1data_model = MDSPlusTree.objects.get(name__iexact='h1data')
+        self.t = h1data_model.get_tree(self.shot)
+
+    def do_script(self):
+        n = self.t.getNode("\\h1data::top.operations:h18212sl:input_07")
+        mds_time = n.getTimeInserted()
+        # convert MDSplus time into a Python dattime object
+        time_inserted = datetime.strptime(str(mds_time._getDate()), "%d-%b-%Y %H:%M:%S.%f")
+
+        return ("'%s'" %time_inserted.strftime("%Y-%m-%d %H:%M:%S"), "DATETIME")
