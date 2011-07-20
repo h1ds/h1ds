@@ -730,5 +730,17 @@
       "slug": "kappa_i", 
       "name": "kappa_i"
     }
+  },
+ {
+    "pk": 62, 
+    "model": "h1ds_summary.summaryattribute", 
+    "fields": {
+      "description": "recorded", 
+      "display_order": 1000, 
+      "source": "h1nf.GetTime",
+      "is_default": true, 
+      "slug": "recorded", 
+      "name": "recorded"
+    }
   }
 ]
