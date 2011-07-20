@@ -11,7 +11,7 @@ import h1ds_summary.models
 
 def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
     attrs = h1ds_summary.models.SummaryAttribute.objects.all()
-    attr_string = ",".join(("%s %s" %(a.name, a.get_value(0)[1]) for a in attrs))
+    attr_string = ",".join(("%s %s" %(a.slug, a.get_value(0)[1]) for a in attrs))
     cols = ["shot MEDIUMINT UNSIGNED PRIMARY KEY",
             "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"]
     if attr_string != "":
