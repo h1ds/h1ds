@@ -18,5 +18,5 @@ http://people.physics.anu.edu.au/~dgp112/python-mdsplus/MDSplus-0.5.tgz
 -e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_summary.git#egg=h1ds_summary
 
 #requirements for wiki
--e git+git@code.h1svr.anu.edu.au:h1ds/monmoin-h1ds.git#egg=MoinMoin
+-e git+git@code.h1svr.anu.edu.au:h1ds/monimoin-h1ds.git#egg=MoinMoin
 
