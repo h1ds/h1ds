@@ -17,4 +17,5 @@ http://people.physics.anu.edu.au/~dgp112/python-mdsplus/MDSplus-0.5.tgz
 #requirements for h1ds_summary
 -e git+git://code.h1svr.anu.edu.au/h1ds/h1ds_summary.git#egg=h1ds_summary
 
-
+# requirements for h1ds_wiki
+-e git+git://code.h1svr.anu.edu.au/h1ds/h1ds_wiki.git#egg=h1ds_wiki
