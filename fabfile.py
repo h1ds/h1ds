@@ -1,25 +1,55 @@
+"""Fabric scripts.
+
+Require mkvirtualenv to  be installed on all machines and  to be run in,
+and WORKON_HOME defined in .bash_profile.
+
+"""
 from __future__ import with_statement
 import os
 
 from fabric.api import *
 
-THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-env.home, env.project = os.path.split(THIS_DIR)
-
+env.project = "h1ds"
+env.git_url = "git@code.h1svr.anu.edu.au:h1ds/h1ds.git"
 
 def dev():
+    """localhost with django dev server"""
     env.environment = 'development'
-    env.root = env.home
-    env.code_root = THIS_DIR
-    env.settings = '%(project)s.settings_%(environment)s' % env
+    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+
+def staging():
+    """localhost with apache"""
+    env.environment = 'staging'
+    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+
+def production():
+    """h1svr with apache."""
+    pass
 
 def setup():
-    if env.environment == 'development':
-        local("./manage.py syncdb --settings=%(settings)s" % env)
-        local("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
-        local("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
-        local("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
-        local("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
-        local("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
-    else:
-        pass
+    env.venv = "%(project)s_%(environment)s" %env    
+    run('%(mkvirtualenv)s %(venv)s' % env)
+    with prefix('workon %(venv)s' %env):
+        run('cd $VIRTUAL_ENV && git clone %(git_url)s %(project)s' % env)
+
+
+def deploy():
+    env.settings = '%(project)s.settings_%(environment)s' % env
+    
+    with prefix('workon %(venv)s' %env):
+        with cd("$VIRTUAL_ENV/%(project)s" %env):
+            run("git pull")
+            if env.environment == 'development':
+                run("./bootstrap.py -d")
+            else:
+                run("./bootstrap.py")
+            run('./manage.py syncdb --settings=%(settings)s' % env)
+            run('./manage.py collectstatic --settings=%(settings)s' % env)
+            run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
+            run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
+            run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            if env.environment == 'development':
+                run("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
+                run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
+            else:
+                sudo('/etc/init.d/apache2 reload')
