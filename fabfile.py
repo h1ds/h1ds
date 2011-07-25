@@ -21,6 +21,7 @@ def staging():
     """localhost with apache"""
     env.environment = 'staging'
     env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+    env.hosts = ['localhost']
 
 def production():
     """h1svr with apache."""
@@ -35,14 +36,17 @@ def setup():
 
 def deploy():
     env.settings = '%(project)s.settings_%(environment)s' % env
+    env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s' %env):
-        with cd("$VIRTUAL_ENV/%(project)s" %env):
+        env.virtual_env = os.environ['VIRTUAL_ENV']
+        with cd("%(virtual_env)s/%(project)s" %env):
             run("git pull")
             if env.environment == 'development':
                 run("./bootstrap.py -d")
             else:
-                run("./bootstrap.py")
+                # TODO: remove the -d flag once git:// access is restored on code.h1svr
+                run("./bootstrap.py -d")
             run('./manage.py syncdb --settings=%(settings)s' % env)
             run('./manage.py collectstatic --settings=%(settings)s' % env)
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
