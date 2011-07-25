@@ -36,6 +36,7 @@ def setup():
         run('cd $VIRTUAL_ENV && git clone %(git_url)s %(project)s' % env)
         run('mkdir $VIRTUAL_ENV/src && cd $VIRTUAL_ENV/src && git clone %(moin_git_url)s moinmoin' % env)
         run('mkdir $VIRTUAL_ENV/wikidata')
+        run('mkdir $VIRTUAL_ENV/static')
         run('pip install fabric')
 
 def setup_moin():
