@@ -16,6 +16,7 @@ def dev():
     """localhost with django dev server"""
     env.environment = 'development'
     env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+    env.hosts = ['localhost']
 
 def staging():
     """localhost with apache"""
