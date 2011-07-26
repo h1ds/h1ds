@@ -38,6 +38,7 @@ def setup():
         run('mkdir $VIRTUAL_ENV/wikidata')
         run('mkdir $VIRTUAL_ENV/static')
         run('mkdir $VIRTUAL_ENV/log')
+        run('mkdir $VIRTUAL_ENV/db')
         run('pip install fabric')
 
 def setup_moin():
