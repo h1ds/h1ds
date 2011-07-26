@@ -59,6 +59,7 @@ def deploy():
     with prefix('workon %(venv)s' %env):
         env.virtual_env = os.environ['VIRTUAL_ENV']
         with cd("%(virtual_env)s/%(project)s" %env):
+            run("echo $PWD")
             run("git pull")
             if env.environment == 'development':
                 run("./bootstrap.py -d")
@@ -70,8 +71,11 @@ def deploy():
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            # TODO: shouldn't need to treat environs differently here....
             if env.environment == 'development':
                 run("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
                 run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
+            elif env.environment == 'staging':
+                sudo('/etc/rc.d/httpd reload')
             else:
                 sudo('/etc/init.d/apache2 reload')
