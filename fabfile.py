@@ -52,7 +52,7 @@ def setup_moin():
             run('python setup.py install --force --install-data=%(virtual_env)s/wikidata --record=install.log' % env)
     
 def deploy():
-    setup_moin()
+    #setup_moin()
     env.settings = '%(project)s.settings_%(environment)s' % env
     env.venv = "%(project)s_%(environment)s" %env    
     
