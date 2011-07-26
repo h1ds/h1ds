@@ -170,5 +170,6 @@ H1DS_MDSPLUS_NODE_BLACKLIST = (
 # Extra links to be displayed in the header and on the frontpage.
 # Syntax: (name, url, description)
 H1DS_EXTRA_SUBLINKS = (
+    ("Wiki", "/wiki", "H1 documentation wiki"),
     ("Code", "http://code.h1svr.anu.edu.au", "H1 code repository"),
 )
