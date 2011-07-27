@@ -57,8 +57,7 @@ def deploy():
     env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s' %env):
-        env.virtual_env = os.environ['VIRTUAL_ENV']
-        with cd("%(virtual_env)s/%(project)s" %env):
+        with cd("$VIRTUAL_ENV/%(project)s" %env):
             run("echo $PWD")
             run("git pull")
             if env.environment == 'development':
