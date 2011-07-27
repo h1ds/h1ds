@@ -18,12 +18,14 @@ def dev():
     env.environment = 'development'
     env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
+    env.venv_dir = '/home/dave/.virtualenvs'
 
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
     env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
+    env.venv_dir = '/home/dave/.virtualenvs'
 
 def production():
     """h1svr with apache."""
@@ -57,7 +59,7 @@ def deploy():
     env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s' %env):
-        with cd("$VIRTUAL_ENV/%(project)s" %env):
+        with cd("%(venv_dir)s/%(venv)s/%(project)s" %env):
             run("echo $PWD")
             run("git pull")
             if env.environment == 'development':
