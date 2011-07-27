@@ -45,7 +45,7 @@ class Config(multiconfig.DefaultConfig):
     # If that's not true, feel free to just set instance_dir to the real path
     # where data/ and underlay/ is located:
     #instance_dir = '/where/ever/your/instance/is'
-    instance_dir = wikiconfig_dir
+    instance_dir = os.path.join(os.path.dirname(os.path.dirname(wikiconfig_dir)), 'wikidata', 'share', 'moin')
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
@@ -59,13 +59,13 @@ class Config(multiconfig.DefaultConfig):
     # If you run your wiki script at the root of your site (/), just do NOT
     # use this setting and it will automatically work.
     # If you run your wiki script at /mywiki, you need to use this:
-    #url_prefix_static = '/mywiki' + url_prefix_static
+    url_prefix_static = '/wiki' + url_prefix_static
 
 
     # Wiki identity ----------------------------------------------------
 
     # Site name, used by default for wiki name-logo [Unicode]
-    sitename = u'Untitled Wiki'
+    sitename = u'H1DS'
 
     # Wiki logo. You can use an image, text or both. [Unicode]
     # For no logo or text, use '' - the default is to show the sitename.

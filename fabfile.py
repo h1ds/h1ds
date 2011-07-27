@@ -19,6 +19,8 @@ def dev():
     env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
+    env.server_user = 'dave'
+    env.server_group = 'dave'
 
 def staging():
     """localhost with apache"""
@@ -26,6 +28,8 @@ def staging():
     env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
+    env.server_user = 'http'
+    env.server_group = 'http'
 
 def production():
     """h1svr with apache."""
@@ -48,11 +52,13 @@ def setup_moin():
     env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s' %env):
-        env.virtual_env = os.environ['VIRTUAL_ENV']
-        with cd("%(virtual_env)s/src/moinmoin" %env):
+        with cd("%(venv_dir)s/src/moinmoin" %env):
             run('git pull')
             run('python setup.py install --force --install-data=%(virtual_env)s/wikidata --record=install.log' % env)
-    
+    with cd("%(venv_dir)s/wikidata/share/moin" %env):
+        run('tar xf underlay.tar')
+        sudo('chown -R %(server_user)s:%(server_group)s data underlay')
+
 def deploy():
     #setup_moin()
     env.settings = '%(project)s.settings_%(environment)s' % env

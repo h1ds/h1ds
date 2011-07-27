@@ -18,6 +18,8 @@
 """
 
 import sys, os
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+
 
 # a) Configuration of Python's code search path
 #    If you already have set up the PYTHONPATH environment variable for the
@@ -25,11 +27,12 @@ import sys, os
 
 # a1) Path of the directory where the MoinMoin code package is located.
 #     Needed if you installed with --prefix=PREFIX or you didn't use setup.py.
-#sys.path.insert(0, 'PREFIX/lib/python2.3/site-packages')
+#sys.path.insert(0, '/lib/python2.3/site-packages')
 
 # a2) Path of the directory where wikiconfig.py / farmconfig.py is located.
 #     See wiki/config/... for some sample config files.
-#sys.path.insert(0, '/path/to/wikiconfigdir')
+# TODO: don't use absolute path...
+sys.path.insert(0, THIS_DIR+'/../')
 #sys.path.insert(0, '/path/to/farmconfigdir')
 
 # b) Configuration of moin's logging
