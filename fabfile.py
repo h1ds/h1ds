@@ -89,6 +89,8 @@ def deploy():
             with cd("%(venv_dir)s/%(venv)s/%(project)s" %env):
                 run("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
                 run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
+
+    sudo('chmod -R 666 %(venv_dir)s/%(venv)s/db')
     elif env.environment == 'staging':
         sudo('/etc/rc.d/httpd reload')
     else:
