@@ -174,6 +174,15 @@ H1DS_EXTRA_SUBLINKS = (
     ("Code", "http://code.h1svr.anu.edu.au", "H1 code repository"),
 )
 
+AUTHENTICATION_BACKENDS = (
+    'django_openid_auth.auth.OpenIDBackend',
+    'django.contrib.auth.backends.ModelBackend',    
+    )
+
+OPENID_CREATE_USERS = True
+LOGIN_URL = '/openid/login'
+LOGIN_REDIRECT_URL = '/'
+
 try:
     from h1ds.local_settings import SECRET_KEY, DJANGO_SESSION_KEY
 except:

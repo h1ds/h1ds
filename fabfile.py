@@ -13,12 +13,12 @@ env.project = "h1ds"
 env.git_url = "git@code.h1svr.anu.edu.au:h1ds/h1ds.git"
 env.moin_git_url = "git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git"
 ## TODO: use introspection to get python dir for venv.
-env.python_dir = 'lib/python2.6'
+env.python_dir = 'lib/python2.7'
 
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
-    env.mkvirtualenv = "mkvirtualenv -p python26 --no-site-packages --distribute"
+    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
     env.server_user = 'dave'
@@ -27,7 +27,7 @@ def dev():
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
-    env.mkvirtualenv = "mkvirtualenv -p python26 --no-site-packages --distribute"
+    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
     env.server_user = 'http'
