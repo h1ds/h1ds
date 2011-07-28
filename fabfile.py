@@ -51,6 +51,7 @@ def setup_moin():
         sudo('chown -R %(server_user)s:%(server_group)s moin' %env)
         sudo('chmod -R ug+rwX moin')
         sudo('chmod -R o-rwX moin')
+    sudo("ln -s %(venv_dir)s/%(venv)s/%(project)s/conf/h1ds.py %(venv_dir)s/%(venv)s/wikidata/share/moin/data/plugin/theme/h1ds.py" %env)
 
 def setup():
     env.venv = "%(project)s_%(environment)s" %env    
