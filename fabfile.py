@@ -44,7 +44,7 @@ def setup_moin():
     with prefix('workon %(venv)s' %env):
         with cd("%(venv_dir)s/%(venv)s/src/moinmoin" %env):
             run('git pull')
-            run('python setup.py install --force --install-data=%(virtual_env)s/wikidata --record=install.log' % env)
+            run('python setup.py install --force --install-data=%(venv_dir)s/%(venv)s/wikidata --record=install.log' % env)
     with cd("%(venv_dir)s/%(venv)s/wikidata/share/moin" %env):
         run('tar xf underlay.tar')
     with cd("%(venv_dir)s/%(venv)s/wikidata/share" %env):
