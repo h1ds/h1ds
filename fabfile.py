@@ -13,12 +13,12 @@ env.project = "h1ds"
 env.git_url = "git@code.h1svr.anu.edu.au:h1ds/h1ds.git"
 env.moin_git_url = "git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git"
 ## TODO: use introspection to get python dir for venv.
-env.python_dir = 'lib/python2.7'
+env.python_dir = 'lib/python2.6'
 
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
-    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+    env.mkvirtualenv = "mkvirtualenv -p python26 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
     env.server_user = 'dave'
@@ -27,7 +27,7 @@ def dev():
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
-    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+    env.mkvirtualenv = "mkvirtualenv -p python26 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
     env.server_user = 'http'
@@ -36,18 +36,6 @@ def staging():
 def production():
     """h1svr with apache."""
     pass
-
-def setup():
-    env.venv = "%(project)s_%(environment)s" %env    
-    run('%(mkvirtualenv)s %(venv)s' % env)
-    with prefix('workon %(venv)s' %env):
-        run('cd $VIRTUAL_ENV && git clone %(git_url)s %(project)s' % env)
-        run('mkdir $VIRTUAL_ENV/src && cd $VIRTUAL_ENV/src && git clone %(moin_git_url)s moinmoin' % env)
-        run('mkdir $VIRTUAL_ENV/wikidata')
-        run('mkdir $VIRTUAL_ENV/static')
-        run('mkdir $VIRTUAL_ENV/log')
-        run('mkdir $VIRTUAL_ENV/db')
-        run('pip install fabric')
 
 def setup_moin():
     env.settings = '%(project)s.settings_%(environment)s' % env
@@ -63,9 +51,21 @@ def setup_moin():
         sudo('chown -R %(server_user)s:%(server_group)s moin')
         sudo('chmod -R ug+rwX moin')
         sudo('chmod -R o-rwX moin')
+
+def setup():
+    env.venv = "%(project)s_%(environment)s" %env    
+    run('%(mkvirtualenv)s %(venv)s' % env)
+    with prefix('workon %(venv)s' %env):
+        run('cd $VIRTUAL_ENV && git clone %(git_url)s %(project)s' % env)
+        run('mkdir $VIRTUAL_ENV/src && cd $VIRTUAL_ENV/src && git clone %(moin_git_url)s moinmoin' % env)
+        run('mkdir $VIRTUAL_ENV/wikidata')
+        run('mkdir $VIRTUAL_ENV/static')
+        run('mkdir $VIRTUAL_ENV/log')
+        run('mkdir $VIRTUAL_ENV/db')
+        run('pip install fabric')
+    setup_moin()
         
 def deploy():
-    #setup_moin()
     env.settings = '%(project)s.settings_%(environment)s' % env
     env.venv = "%(project)s_%(environment)s" %env    
     
