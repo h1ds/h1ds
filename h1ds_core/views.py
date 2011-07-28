@@ -3,6 +3,9 @@ from django.template import RequestContext
 from django.core import serializers
 from django.http import HttpResponse
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django import forms
     
 from h1ds_core.models import H1DSSignalInstance
 
@@ -26,3 +29,47 @@ def logout_view(request):
     logout(request)
     return redirect('/')
             
+
+class ChangeProfileForm(forms.Form):
+    username = forms.CharField(max_length=30)
+    first_name = forms.CharField(max_length=30)
+    last_name = forms.CharField(max_length=30)
+    email = forms.EmailField()
+
+
+@login_required
+def edit_profile(request, username=''):
+    if request.user.username == username:
+        if request.method == 'POST':
+            form = ChangeProfileForm(request.POST)
+            if form.is_valid():
+                u = User.objects.get(username=username)
+                u.username = form.cleaned_data['username']
+                u.first_name = form.cleaned_data['first_name']
+                u.last_name = form.cleaned_data['last_name']
+                u.email = form.cleaned_data['email']
+                u.save()
+                return redirect('/')
+                
+            else:
+                data = {'username':username, 
+                        'first_name':request.user.first_name,
+                        'last_name':request.user.last_name,
+                        'email':request.user.email}
+                user_form = ChangeProfileForm(data)
+                return render_to_response('h1ds_core/userprofile.html', 
+                                          {'form':user_form, 'return_url':'/user/profile/%s/' %username},
+                                          context_instance=RequestContext(request))
+        else:
+            data = {'username':username, 
+                    'first_name':request.user.first_name,
+                    'last_name':request.user.last_name,
+                    'email':request.user.email}
+            user_form = ChangeProfileForm(data)
+            return render_to_response('h1ds_core/userprofile.html', 
+                                      {'form':user_form},
+                                      context_instance=RequestContext(request))
+    else:
+        return redirect('/')
+
+
