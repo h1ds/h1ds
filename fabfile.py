@@ -42,12 +42,12 @@ def setup_moin():
     env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s' %env):
-        with cd("%(venv_dir)s/src/moinmoin" %env):
+        with cd("%(venv_dir)s/%(venv)s/src/moinmoin" %env):
             run('git pull')
             run('python setup.py install --force --install-data=%(virtual_env)s/wikidata --record=install.log' % env)
-    with cd("%(venv_dir)s/wikidata/share/moin" %env):
+    with cd("%(venv_dir)s/%(venv)s/wikidata/share/moin" %env):
         run('tar xf underlay.tar')
-    with cd("%(venv_dir)s/wikidata/share" %env):
+    with cd("%(venv_dir)s/%(venv)s/wikidata/share" %env):
         sudo('chown -R %(server_user)s:%(server_group)s moin')
         sudo('chmod -R ug+rwX moin')
         sudo('chmod -R o-rwX moin')
