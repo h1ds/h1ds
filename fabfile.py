@@ -48,7 +48,7 @@ def setup_moin():
     with cd("%(venv_dir)s/%(venv)s/wikidata/share/moin" %env):
         run('tar xf underlay.tar')
     with cd("%(venv_dir)s/%(venv)s/wikidata/share" %env):
-        sudo('chown -R %(server_user)s:%(server_group)s moin')
+        sudo('chown -R %(server_user)s:%(server_group)s moin' %env)
         sudo('chmod -R ug+rwX moin')
         sudo('chmod -R o-rwX moin')
 
