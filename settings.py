@@ -173,3 +173,8 @@ H1DS_EXTRA_SUBLINKS = (
     ("Wiki", "/wiki", "H1 documentation wiki"),
     ("Code", "http://code.h1svr.anu.edu.au", "H1 code repository"),
 )
+
+try:
+    from h1ds.local_settings import SECRET_KEY, DJANGO_SESSION_KEY
+except:
+    pass

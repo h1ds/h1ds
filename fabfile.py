@@ -12,6 +12,8 @@ from fabric.api import *
 env.project = "h1ds"
 env.git_url = "git@code.h1svr.anu.edu.au:h1ds/h1ds.git"
 env.moin_git_url = "git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git"
+## TODO: use introspection to get python dir for venv.
+env.python_dir = 'lib/python2.7'
 
 def dev():
     """localhost with django dev server"""
@@ -57,8 +59,11 @@ def setup_moin():
             run('python setup.py install --force --install-data=%(virtual_env)s/wikidata --record=install.log' % env)
     with cd("%(venv_dir)s/wikidata/share/moin" %env):
         run('tar xf underlay.tar')
-        sudo('chown -R %(server_user)s:%(server_group)s data underlay')
-
+    with cd("%(venv_dir)s/wikidata/share" %env):
+        sudo('chown -R %(server_user)s:%(server_group)s moin')
+        sudo('chmod -R ug+rwX moin')
+        sudo('chmod -R o-rwX moin')
+        
 def deploy():
     #setup_moin()
     env.settings = '%(project)s.settings_%(environment)s' % env

@@ -28,9 +28,22 @@
 import os
 
 from MoinMoin.config import multiconfig, url_prefix_static
-
+from h1ds.djangoAuth import DjangoAuth
+from MoinMoin.datastruct import ConfigGroups
 
 class Config(multiconfig.DefaultConfig):
+    ## django Authenticaion
+    auth = [DjangoAuth(autocreate=True)]
+    # +++ these are suggested changes to the user preferences form if the  external_cookie  is the only auth method
+    user_form_disable = ['name', 'aliasname', 'email',] # don't let the user change these, but show them:
+    user_form_remove = ['password', 'password2', 'css_url', 'logout', 'create', 'account_sendmail','jid'] # remove completely:
+    # ~ user_autocreate = True # +++ Moin will autocreate new user ID if none exists
+    cookie_lifetime = (12, 12)   # (anonymous,logged-in) default (0,12)  page trails for anonymous users moin 1.9
+
+    def groups(self, request):
+        groups = self.auth[0].get_django_groups(['EditorGroup'])
+        return ConfigGroups(request, groups)
+
 
     # Critical setup  ---------------------------------------------------
 
@@ -70,7 +83,9 @@ class Config(multiconfig.DefaultConfig):
     # Wiki logo. You can use an image, text or both. [Unicode]
     # For no logo or text, use '' - the default is to show the sitename.
     # See also url_prefix setting below!
-    logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
+    # logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
+    logo_string = u'<img src="/media/img/h1nflogo_tiny.png" alt="H-1NF Logo">'
+    logo_url = u'http://h1svr.anu.edu.au'
 
     # name of entry page / front page [Unicode], choose one of those:
 
@@ -78,7 +93,7 @@ class Config(multiconfig.DefaultConfig):
     #page_front_page = u"MyStartingPage"
 
     # b) if wiki content is maintained in many languages
-    #page_front_page = u"FrontPage"
+    page_front_page = u"FrontPage"
 
     # The interwiki name used in interwiki links
     #interwikiname = u'UntitledWiki'
@@ -92,6 +107,7 @@ class Config(multiconfig.DefaultConfig):
     # This is checked by some rather critical and potentially harmful actions,
     # like despam or PackageInstaller action:
     #superuser = [u"YourName", ]
+    superuser = [u"BoydBlackwell", "DavidPretty", "FentonGlass"]
 
     # IMPORTANT: grant yourself admin rights! replace YourName with
     # your user name. See HelpOnAccessControlLists for more help.
@@ -106,6 +122,8 @@ class Config(multiconfig.DefaultConfig):
     # Link spam protection for public wikis (Uncomment to enable)
     # Needs a reliable internet connection.
     #from MoinMoin.security.antispam import SecurityPolicy
+
+    from MoinMoin.security.autoadmin import SecurityPolicy
 
 
     # Mail --------------------------------------------------------------
@@ -140,7 +158,7 @@ class Config(multiconfig.DefaultConfig):
     ]
 
     # The default theme anonymous or new users get
-    theme_default = 'modernized'
+    theme_default = 'h1ds'
 
 
     # Language options --------------------------------------------------
@@ -169,3 +187,9 @@ class Config(multiconfig.DefaultConfig):
     # Enable graphical charts, requires gdchart.
     #chart_options = {'width': 600, 'height': 300}
 
+    navi_bar.insert(0,page_front_page)    # put H1Log first on navigation bar at top 
+    navi_bar.insert(1, u'H1Upgrade')      # park H1Upgrade next to H1Log tab 
+    navi_bar.append(u'CheatSheet')        # put CheatSheet after the standard
+
+
+    tz_offset = 11
