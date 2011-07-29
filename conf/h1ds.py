@@ -34,12 +34,12 @@ class Theme(ThemeBase):
 
             # Header
             u'<div id="header">',
-            self.logo(),
-            self.searchform(d),
+            #self.logo(),
             self.username(d),
             u'<a href="http://h1svr.anu.edu.au">Back to H1 data server</a>',
             login_logout(d['user_name']),
             u'<div id="locationline">',
+            self.searchform(d),
             self.interwiki(d),
             self.title(d),
             u'</div>',

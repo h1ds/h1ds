@@ -184,6 +184,6 @@ LOGIN_URL = '/openid/login'
 LOGIN_REDIRECT_URL = '/'
 
 try:
-    from h1ds.local_settings import SECRET_KEY, DJANGO_SESSION_KEY
+    from h1ds.local_settings import SECRET_KEY
 except:
     pass

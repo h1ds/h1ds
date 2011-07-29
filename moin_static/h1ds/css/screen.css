@@ -48,12 +48,21 @@ textarea {
 
 /* user interface styles */
 
-#header {
+/* #header {
     margin: 1px;
     padding: 1px;
-    /* background: #3D4551; */
     background: #E7E7E7;
     line-height: 1.1em;
+}
+*/
+#header {
+    clear:both;
+    float:left;
+    width:100%;
+    text-align:right;
+}
+#header {
+    border-bottom:1px solid #000;
 }
 
 #logo {
