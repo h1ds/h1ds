@@ -15,10 +15,15 @@ body {
     font-size: 90%;
 }
 
+a {
+    color:#369;
+    text-decoration:none;
+}
+
 a:link { text-decoration: none; }
 a:link:hover, a:link:active { text-decoration: underline; color: green; }
-a:visited { text-decoration: none; color: blue; }
-a:visited:hover { text-decoration: none; color: red; }
+/* a:visited { text-decoration: none; color: blue; } */
+/* a:visited:hover { text-decoration: none; color: red; } */
 
 a.download {
     font-size: 120%; 
@@ -544,4 +549,16 @@ input,textarea {
     color:#555;
     display:inline;
     margin: 0 0 0 3px;
+}
+
+#title {
+    font-size:large;
+    text-align:left;
+    padding-left:2em;
+    padding-bottom:0.5em;
+}
+
+#subtitle {
+    font-size:small;
+    padding-top:0.2em;
 }
