@@ -10,9 +10,9 @@
 
 def login_logout(username):
     if username == "":
-        return u'[<a href="/openid/login/">login</a>]'
+        return u'<a href="/openid/login/">login</a>'
     else:
-        return u'[<a href="/logout/">logout</a>]'
+        return u'<a href="/logout/">logout</a>'
         
 
 from MoinMoin.theme import ThemeBase
@@ -36,7 +36,7 @@ class Theme(ThemeBase):
             u'<div id="header">',
             #self.logo(),
             self.username(d),
-            u'<a href="http://h1svr.anu.edu.au">Back to H1 data server</a>',
+            u' // <a href="/user/profile">settings</a> //',
             login_logout(d['user_name']),
             u'<div id="locationline">',
             self.searchform(d),

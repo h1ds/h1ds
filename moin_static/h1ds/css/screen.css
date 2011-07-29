@@ -529,3 +529,10 @@ table.navigation {
     background-position: 0 50%;
     padding-left: 18px;
 }
+
+input,textarea {
+    border: 1px solid #bbb;
+    color:#555;
+    display:inline;
+    margin: 0 0 0 3px;
+}
