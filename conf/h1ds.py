@@ -8,11 +8,12 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-def login_logout(username):
-    if username == "":
-        return u'<a href="/openid/login/">login</a>'
+def login_logout(d):
+    if d["user_name"] == "":
+        return u'<p><a href="/openid/login/">Log in</a></p>'
     else:
-        return u'<a href="/logout/">logout</a>'
+        return u'<p>%s // <a href="/user/profile">settings</a> // <a href="/logout/">logout</a></p>' %(d["user_name"])
+
         
 
 from MoinMoin.theme import ThemeBase
@@ -35,9 +36,8 @@ class Theme(ThemeBase):
             # Header
             u'<div id="header">',
             #self.logo(),
-            self.username(d),
-            u' // <a href="/user/profile">settings</a> //',
-            login_logout(d['user_name']),
+            #self.username(d),
+            login_logout(d),
             u'<div id="locationline">',
             self.searchform(d),
             self.interwiki(d),
