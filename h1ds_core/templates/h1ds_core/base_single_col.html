@@ -1,0 +1,32 @@
+{% load h1ds_headfoot %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> 
+  <head> 
+    <title>{% block title%}{% h1ds_title %}{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css" media="screen" />
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.6.1.min.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/flot/excanvas.pack.js"></script><![endif]-->
+    <script type="text/javascript" src="{{ STATIC_URL }}js/flot/jquery.flot.js"></script> 
+    <script type="text/javascript" src="{{ STATIC_URL }}js/flot/jquery.flot.fillbetween.js"></script> 
+    <script type="text/javascript" src="{{ STATIC_URL }}js/flot/jquery.flot.selection.js"></script> 
+    <script type="text/javascript" src="{{ STATIC_URL }}js/h1ds.js"></script> 
+    <script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/flot/jquery.flot.navigate.js"></script> 
+    {% block extrahead %}{% endblock %}
+  </head>
+  <body>
+    <div id="header">
+      <p>
+	{% if user.is_authenticated %}{{ user.username }} // <a href="/user/settings/{{user.username}}">settings</a> // <a href="{% url h1ds-logout %}">logout</a> 
+	{% else %}<a href="/openid/login">Log in</a>
+	{% endif %}
+      </p>
+      {% h1ds_header %}
+    </div>
+    {% block full_content %}
+    <div id="full-content">{% block content %}{% endblock %}</div>
+    {% endblock %}
+    <div id="footer">{% h1ds_footer %}</div>
+    {% block extrascript %}{% endblock %}
+  </body>
+</html>
+    

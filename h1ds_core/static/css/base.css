@@ -329,3 +329,14 @@ table.main-table td {
 .fullform form input, textarea {
     margin:1px;
 }
+
+#full-content {
+    clear:both;
+    float:left;
+    width:100%;
+    margin:1em 3em 1em 3em;
+}
+
+.prefform {
+    margin-left:2em;
+}
