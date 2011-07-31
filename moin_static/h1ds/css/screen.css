@@ -315,13 +315,13 @@ textarea {
     float: right;
 }
 
-#header .editbar {
-    border-bottom: 1px dotted #9C9C9C;
+#wikibar .editbar {
+    border-bottom: 1px solid #aaa;
 }
 
 #footer .editbar {
-    border-top: 1px dotted #9C9C9C;
-    border-bottom: 1px solid #9C9C9C;
+    border-top: 1px solid #aaa;
+    border-bottom: 1px solid black;
 }
 
 .editbar a, .editbar a:visited { color: #0044B3; }
@@ -450,6 +450,9 @@ input.button {
     padding: 0;
 }
 
+#h1dsfooter {
+    text-align: center;
+}
 #credits, #version, #timings{
     margin: 5px 10px;
     padding: 0;
@@ -563,6 +566,4 @@ input,textarea {
     padding-top:0.2em;
 }
 
-#wikibar {
-    border-bottom: 1px solid #aaa;
-}
+

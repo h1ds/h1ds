@@ -17,6 +17,8 @@ def login_logout(d):
         
 
 from MoinMoin.theme import ThemeBase
+from h1ds_core.templatetags import h1ds_headfoot
+
 
 class Theme(ThemeBase):
 
@@ -88,6 +90,11 @@ class Theme(ThemeBase):
         ]
         return u'\n'.join(html)
 
+    def h1ds_footer(self, d, **keywords):
+        h1ds_footer = h1ds_headfoot.H1DSFooterNode()
+        context = ""
+        return unicode(h1ds_footer.render(context))
+    
     def footer(self, d, **keywords):
         """ Assemble wiki footer
 
@@ -108,8 +115,11 @@ class Theme(ThemeBase):
             # Footer
             u'<div id="footer">',
             self.editbar(d),
-            self.credits(d),
-            self.showversion(d, **keywords),
+            #self.credits(d),
+            #self.showversion(d, **keywords),
+            u'<div id="h1dsfooter">',
+            self.h1ds_footer(d, **keywords),
+            u'</div>',
             u'</div>',
 
             # Post footer custom html
