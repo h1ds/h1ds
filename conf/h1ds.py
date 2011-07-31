@@ -12,7 +12,7 @@ def login_logout(d):
     if d["user_name"] == "":
         return u'<p><a href="/openid/login/">Log in</a></p>'
     else:
-        return u'<p>%s // <a href="/user/profile">settings</a> // <a href="/logout/">logout</a></p>' %(d["user_name"])
+        return u'<p>%(username)s // <a href="/user/settings/%(username)s">settings</a> // <a href="/logout/">logout</a></p>' %{'username':d["user_name"]}
 
         
 
@@ -48,7 +48,9 @@ class Theme(ThemeBase):
             #self.trail(d),
             #self.navibar(d),
             #u'<hr id="pageline">',
-            u'<div id="pageline"><hr style="display:none;"></div>',
+            #u'<div id="pageline"><hr style="display:none;"></div>',
+            u'</div>',
+            u'<div id="wikibar">',
             self.msg(d),
             self.editbar(d),
             u'</div>',

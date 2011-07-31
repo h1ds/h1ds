@@ -296,7 +296,7 @@ textarea {
     margin: 0;
     padding: 0 8px;
     white-space: nowrap;
-    background: white;
+    background: #eee;
     font-size: 0.8em;
 }
 
@@ -331,7 +331,7 @@ textarea {
     margin: 0;
     padding: 5px 10px;
     border-bottom: 1px solid #c9c9c9;
-    background: #E6EAF0;
+    background: #FFFF99;
 }
 
 #message p {
@@ -561,4 +561,8 @@ input,textarea {
 #subtitle {
     font-size:small;
     padding-top:0.2em;
+}
+
+#wikibar {
+    border-bottom: 1px solid #aaa;
 }
