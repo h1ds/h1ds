@@ -304,6 +304,18 @@ table.main-table td {
 }
 
 
+table.data {
+    text-align: left;
+    color: #404040;
+    width: 100%;
+    background-color: #FAFAFA;
+    border: 1px #69C solid;
+    border-collapse: collapse;
+    border-spacing: 0px;
+    margin-top: 30px,
+    margin-bottom: 30px;
+}
+
 .genericform form p {
     border-style:solid;
     border-width:1px;
