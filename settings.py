@@ -171,6 +171,7 @@ H1DS_MDSPLUS_NODE_BLACKLIST = (
 # Syntax: (name, url, description)
 H1DS_EXTRA_SUBLINKS = (
     ("Wiki", "/wiki", "H1 documentation wiki"),
+    ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"),
     ("Code", "http://code.h1svr.anu.edu.au", "H1 code repository"),
 )
 
