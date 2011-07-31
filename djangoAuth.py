@@ -1,19 +1,5 @@
 from MoinMoin.auth import BaseAuth
 
-import base64
-import cPickle as pickle
-
-try:
-    import hashlib
-    md5_constructor = hashlib.md5
-    sha_constructor = hashlib.sha1
-except ImportError:
-    import md5
-    md5_constructor = md5.new
-    import sha
-    sha_constructor = sha.new
-
-
 # This is included in case you want to create a log file during testing
 import time
 def writeLog(*args):
@@ -67,23 +53,10 @@ class DjangoAuth(BaseAuth):
             #Has the session expired?
             if session.expire_date < datetime.now():
                 return False, ''
-            return True, session.session_data
+            return True, session #session.session_data
         except:
             return False, ''
 
-    def get_decoded(self, session_data):
-        from django.conf import settings
-        encoded_data = base64.decodestring(session_data)
-        pickled, tamper_check = encoded_data[:-32], encoded_data[-32:]
-        if md5_constructor(pickled + settings.DJANGO_SESSION_KEY).hexdigest() != tamper_check:
-            return {}
-        try:
-            return pickle.loads(pickled)
-        # Unpickling can cause a variety of exceptions. If something happens,
-        # just return an empty dictionary (an empty session).
-        except:
-            return {}
-    
     def request(self, request, user_obj, **kw):
         """Return (user-obj,False) if user is authenticated, else return (None,True). """
         # login = kw.get('login') # +++ example does not use this; login is expected in other application
@@ -102,11 +75,11 @@ class DjangoAuth(BaseAuth):
 
         if cookie and otherAppCookie in cookie: # having this cookie means user auth has already been done in other application
             #writeLog('cookie value:', cookie[otherAppCookie].value)
-            result, session_raw = self.get_session(cookie[otherAppCookie].value)
-            #writeLog('result, session_raw:', [result, session_raw])
+            result, session = self.get_session(cookie[otherAppCookie].value)
+            #writeLog('result, session:', [result, session])
             if not result:
                 return user, try_next
-            session_decoded = self.get_decoded(session_raw)
+            session_decoded = session.get_decoded()
             #writeLog('Session Decoded', session_decoded)
             
             try:            

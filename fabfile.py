@@ -12,13 +12,14 @@ from fabric.api import *
 env.project = "h1ds"
 env.git_url = "git@code.h1svr.anu.edu.au:h1ds/h1ds.git"
 env.moin_git_url = "git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git"
+env.moin_dl_url = "http://static.moinmo.in/files/moin-1.9.3.tar.gz"
 ## TODO: use introspection to get python dir for venv.
-env.python_dir = 'lib/python2.6'
+env.python_dir = 'lib/python2.7'
 
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
-    env.mkvirtualenv = "mkvirtualenv -p python26 --no-site-packages --distribute"
+    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
     env.server_user = 'dave'
@@ -27,7 +28,7 @@ def dev():
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
-    env.mkvirtualenv = "mkvirtualenv -p python26 --no-site-packages --distribute"
+    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
     env.hosts = ['localhost']
     env.venv_dir = '/home/dave/.virtualenvs'
     env.server_user = 'http'
@@ -42,8 +43,8 @@ def setup_moin():
     env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s' %env):
-        with cd("%(venv_dir)s/%(venv)s/src/moinmoin" %env):
-            run('git pull')
+        with cd("%(venv_dir)s/%(venv)s/src/moin-1.9.3" %env):
+            #run('git pull')
             run('python setup.py install --force --install-data=%(venv_dir)s/%(venv)s/wikidata --record=install.log' % env)
     with cd("%(venv_dir)s/%(venv)s/wikidata/share/moin" %env):
         run('tar xf underlay.tar')
@@ -51,13 +52,15 @@ def setup_moin():
         sudo('chown -R %(server_user)s:%(server_group)s moin' %env)
         sudo('chmod -R ug+rwX moin')
         sudo('chmod -R o-rwX moin')
+    sudo("ln -s %(venv_dir)s/%(venv)s/%(project)s/conf/h1ds.py %(venv_dir)s/%(venv)s/wikidata/share/moin/data/plugin/theme/h1ds.py" %env)
 
 def setup():
     env.venv = "%(project)s_%(environment)s" %env    
     run('%(mkvirtualenv)s %(venv)s' % env)
     with prefix('workon %(venv)s' %env):
         run('cd $VIRTUAL_ENV && git clone %(git_url)s %(project)s' % env)
-        run('mkdir $VIRTUAL_ENV/src && cd $VIRTUAL_ENV/src && git clone %(moin_git_url)s moinmoin' % env)
+        #run('mkdir $VIRTUAL_ENV/src && cd $VIRTUAL_ENV/src && git clone %(moin_git_url)s moinmoin' % env)
+        run('mkdir $VIRTUAL_ENV/src && cd $VIRTUAL_ENV/src && wget %(moin_dl_url)s -O moin.tar.gz && tar xf moin.tar.gz' % env)
         run('mkdir $VIRTUAL_ENV/wikidata')
         run('mkdir $VIRTUAL_ENV/static')
         run('mkdir $VIRTUAL_ENV/log')

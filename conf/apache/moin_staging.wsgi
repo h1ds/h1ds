@@ -47,6 +47,6 @@ from MoinMoin.web.serving import make_application
 # Creating the WSGI application
 # use shared=True to have moin serve the builtin static docs
 # use shared=False to not have moin serve static docs
-# use shared='/my/path/to/htdocs' to serve static docs from that path
-application = make_application(shared=True)
-
+#use shared='/my/path/to/htdocs' to serve static docs from that path
+#TODO: get path by intelligent means
+application = make_application(shared='/home/dave/.virtualenvs/h1ds_staging/h1ds/moin_static')
