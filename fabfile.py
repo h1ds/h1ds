@@ -81,6 +81,7 @@ def deploy():
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            #run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
 
     # TODO: shouldn't need to treat environs differently here....
     sudo('chmod -R ugo+rwX %(venv_dir)s/%(venv)s/db' %env)
