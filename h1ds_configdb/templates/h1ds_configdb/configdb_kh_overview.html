@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>kappa h = {{config}}</h1>
+
+<a href="{{previous_config}}">previous</a>
+<a href="{{next_config}}">next</a>
+
+<h2>Files</h2>
+<ul>
+{% for key,value in input_files.items %}
+<li><a href="{{value}}">{{key}}</a></li>
+{% endfor%}
+</ul>
+
+<h2>Plots</h2>
+<table class="data">
+{% for f in figures %}
+
+<tr>
+<td>{{f.name}}</td>
+<td><img src="{{f.image}}"></td>
+<td><ul>
+{% for link in f.links %}
+<li><a href="{{link.url}}">{{link.name}}</a></li>
+{% endfor %}</ul>
+</td>
+</tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}
