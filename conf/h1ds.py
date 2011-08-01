@@ -24,7 +24,8 @@ class Theme(ThemeBase):
 
     name = "h1ds"
 
-    html_head = '<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>'
+    def html_head(self, d):
+        return u'<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>'
 
     def header(self, d, **kw):
         """ Assemble wiki header
