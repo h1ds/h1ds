@@ -21,7 +21,7 @@ a:hover {
     background:#369;
 }
 h1, h2, h3 {
-    margin:.8em 0 .2em 0;
+    margin: 0 0 .2em 0;
     padding:0;
 }
 p {
@@ -130,6 +130,7 @@ input,textarea {
 /* 3 column settings */
 .threecol {
     background:#ddd;    /* Right column background colour */
+
 }
 .threecol .colmid {
     float:left;
@@ -168,6 +169,7 @@ input,textarea {
     width:16em;        /* Width of left column content (left column width minus left and right padding) */
     position:relative;
     right:1em;         /* Width of the left-had side padding on the left column */
+    padding-top:1em;
 }
 .threecol .col3 {
     float:left;
@@ -176,6 +178,7 @@ input,textarea {
     margin-right:3em;  /* Width of right column right-hand padding + left column left and right padding */
     position:relative;
     left:50%;
+    padding-top:1em;
 }
 
 .threecol .col2 h1,
@@ -351,4 +354,12 @@ table.data {
 
 .prefform {
     margin-left:2em;
+}
+
+#message {
+    clear: both;
+    margin: 0;
+    padding: 5px 10px;
+    border-bottom: 1px solid #C9C9C9;
+    background: #FF9;
 }
