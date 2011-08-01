@@ -14,7 +14,6 @@ env.git_url = "git@code.h1svr.anu.edu.au:h1ds/h1ds.git"
 env.moin_git_url = "git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git"
 env.moin_dl_url = "http://static.moinmo.in/files/moin-1.9.3.tar.gz"
 ## TODO: use introspection to get python dir for venv.
-env.python_dir = 'lib/python2.7'
 
 def dev():
     """localhost with django dev server"""
@@ -36,7 +35,13 @@ def staging():
 
 def production():
     """h1svr with apache."""
-    pass
+    env.environment = 'production'
+    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+    env.user = "datasys"
+    env.hosts = ['h1svr']
+    env.venv_dir = '/home/datasys/virtualenvs'
+    env.server_user = 'www-data'
+    env.server_group = 'www-data'
 
 def setup_moin():
     env.settings = '%(project)s.settings_%(environment)s' % env
