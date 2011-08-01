@@ -31,6 +31,11 @@ class Theme(ThemeBase):
         @rtype: unicode
         @return: page header html
         """
+        h1ds_header = h1ds_headfoot.H1DSHeaderNode()
+        context = ""
+        h1ds_header_string unicode(h1ds_footer.render(context))
+
+        
         html = [
             # Pre header custom html
             self.emit_custom_html(self.cfg.page_header1),
@@ -45,8 +50,7 @@ class Theme(ThemeBase):
             #self.interwiki(d),
             #self.title(d),
             #u'</div>',
-            #### TODO: get title and subtile from h1ds settings...
-            u'<div id="title"><a href="/">H1 Data Server</a><div id="subtitle"><a href="/mdsplus/">MDSPlus</a> &middot; <a href="/summary/">Summary</a> &middot; <a href="/wiki">Wiki</a> &middot; <a href="/wiki/RecentChanges">Activity</a> &middot; <a href="http://code.h1svr.anu.edu.au">Code</a></div></div>',
+            h1ds_header_string,
             #self.trail(d),
             #self.navibar(d),
             #u'<hr id="pageline">',
