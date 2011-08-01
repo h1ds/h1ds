@@ -114,6 +114,7 @@ class Config(multiconfig.DefaultConfig):
     # All acl_rights_xxx options must use unicode [Unicode]
     #acl_rights_before = u"YourName:read,write,delete,revert,admin"
 
+    acl_rights_before = u"BoydBlackwell:read,write,delete,revert,admin DavidPretty:read,write,delete,revert,admin FentonGlass:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
     # The default (ENABLED) password_checker will keep users from choosing too
     # short or too easy passwords. If you don't like this and your site has
     # rather low security requirements, feel free to DISABLE the checker by:
