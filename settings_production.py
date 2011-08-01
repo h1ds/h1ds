@@ -9,3 +9,5 @@ DATABASES = {
         'NAME': '/home/datasys/virtualenvs/h1ds_production/db/h1ds_production.db'
             }
     }
+
+VERBOSE=0
