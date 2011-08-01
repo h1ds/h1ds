@@ -60,16 +60,6 @@
 
 {% block rightpanel %}
 {% if perms.h1ds_summary.add_summaryattribute %}
-<h3>add attribute</h3>
-<div class="sidebarcontent">
-<FORM action="{% url get-summary-attribute-form-from-url %}" method="post">{% csrf_token %}
-    <span class="left">url</span>
-    <span class="right">
-    <INPUT type="text" size=20 id="url" name="url">
-    <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
- </FORM>
-</div>
-
 <h3>SQL query</h3>
 <div class="sidebarcontent fullform">
 <form action="{% url raw-sql %}" method="post">{% csrf_token %}
