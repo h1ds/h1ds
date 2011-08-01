@@ -50,6 +50,12 @@ input,textarea {
 #header {
     border-bottom:1px solid #000;
 }
+
+#loginlinks {
+    padding-top:5px;
+    padding-right:10px;
+}
+
 #header p,
 #header h1,
 #header h2 {
@@ -95,6 +101,10 @@ input,textarea {
 }
 #header ul li a span {
     display:block;
+}
+
+#header form {
+    display:inline-block;
 }
 
 #title {

@@ -15,11 +15,13 @@
   </head>
   <body>
     <div id="header">
-      <p>
-	{% if user.is_authenticated %}{{ user.username }} // <a href="/user/settings/{{user.username}}">settings</a> // <a href="{% url h1ds-logout %}">logout</a> 
-	{% else %}<a href="/openid/login">Log in</a>
+      <div id="loginlinks">
+	{% if user.is_authenticated %}{{ user.username }} // <a href="/user/settings/{{user.username}}">settings</a> // <a href="{% url h1ds-logout %}">log out</a> 
+	{% else %}<a href="/openid/login">log in</a> <form name="fopenid" action="/openid/login/" method="post">{% csrf_token %}
+    <input id="id_openid_identifier" type="hidden" class="required openid" name="openid_identifier" maxlength="255" value="https://www.google.com/accounts/o8/id"/>
+            <input name="bsignin" type="submit" value="w/ Google ID"></form>
 	{% endif %}
-      </p>
+	</div>
       {% h1ds_header %}
     </div>
     {% if messages %}
