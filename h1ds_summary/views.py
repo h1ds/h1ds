@@ -284,7 +284,7 @@ def go_to_source(request, slug, shot):
     """Go to the MDSplus web interface corresponding to the summary data."""
 
     
-    attr = SummaryAttribute.objects.get(slug=slug)
+    attr = SummaryAttribute.objects.get(slug__iexact=slug)
     if attr.source.startswith('http://'):
         source_url = attr.source.replace('__shot__', str(shot))
     
