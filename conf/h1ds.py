@@ -33,7 +33,7 @@ class Theme(ThemeBase):
         """
         h1ds_header = h1ds_headfoot.H1DSHeaderNode()
         context = ""
-        h1ds_header_string = unicode(h1ds_footer.render(context))
+        h1ds_header_string = unicode(h1ds_header.render(context))
 
         
         html = [
