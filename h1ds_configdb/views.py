@@ -21,36 +21,36 @@ def config_overview(request, config_id):
     previous_config = "/configurations/kh%.2f/" %(float(kh)-0.01)
     next_config = "/configurations/kh%.2f/" %(float(kh)+0.01)
     config_name = kh_val
-    input_files = {'HELIAC (inner surfaces)':'/media/configdb/hin/gHg110324-kh%.3f-kv1.000.hin' %float(kh),
-                   'HELIAC (outer surfaces)':'/media/configdb/hin/gHg110324-kh%.3f-kv1.000_outer.hin' %float(kh),
-                   'VMEC input file':'/media/configdb/vmec/input.h1ass027v1_0p%02d' %(int(100*float(kh))),
-                   'Boozer coordinates [NetCDF]':'/media/configdb/vmec/boozmn_h1ass027v1_0p%02d.nc' %(int(100*float(kh)))}
+    input_files = {'HELIAC (inner surfaces)':'/static/configdb/hin/gHg110324-kh%.3f-kv1.000.hin' %float(kh),
+                   'HELIAC (outer surfaces)':'/static/configdb/hin/gHg110324-kh%.3f-kv1.000_outer.hin' %float(kh),
+                   'VMEC input file':'/static/configdb/vmec/input.h1ass027v1_0p%02d' %(int(100*float(kh))),
+                   'Boozer coordinates [NetCDF]':'/static/configdb/vmec/boozmn_h1ass027v1_0p%02d.nc' %(int(100*float(kh)))}
     if (10*float(kh)).is_integer():
         # only for 0.1 steps
-        input_files['BLINE'] = '/media/configdb/bline/hnh3k%02d.txt' %(int(10*float(kh)))
-        input_files['BLINE pre-computed magnetic mesh [NetCDF] (large file: 328Mb)'] = '/media/configdb/bline/hnh3k%02d.nc' %(int(10*float(kh)))
+        input_files['BLINE'] = '/static/configdb/bline/hnh3k%02d.txt' %(int(10*float(kh)))
+        input_files['BLINE pre-computed magnetic mesh [NetCDF] (large file: 328Mb)'] = '/static/configdb/bline/hnh3k%02d.nc' %(int(10*float(kh)))
     figures = []
     figures.append({'name':'Rotational transform profile',
-                    'image':'/media/configdb/iotabar/iotabar_kh%s_small.png' %kh_val,
-                    'links':[{'name':'PNG (small)', 'url':'/media/configdb/iotabar/iotabar_kh%s_small.png' %kh_val},
-                             {'name':'PNG (large)', 'url':'/media/configdb/iotabar/iotabar_kh%s_large.png' %kh_val},
-                             {'name':'SVG', 'url':'/media/configdb/iotabar/iotabar_kh%s.svg' %kh_val},
+                    'image':'/static/configdb/iotabar/iotabar_kh%s_small.png' %kh_val,
+                    'links':[{'name':'PNG (small)', 'url':'/static/configdb/iotabar/iotabar_kh%s_small.png' %kh_val},
+                             {'name':'PNG (large)', 'url':'/static/configdb/iotabar/iotabar_kh%s_large.png' %kh_val},
+                             {'name':'SVG', 'url':'/static/configdb/iotabar/iotabar_kh%s.svg' %kh_val},
                              ]}
                    )
     figures.append({'name':'Magnetic well profile',
-                    'image':'/media/configdb/magwell/magwell_kh%s_small.png' %kh_val,
-                    'links':[{'name':'PNG (small)', 'url':'/media/configdb/magwell/magwell_kh%s_small.png' %kh_val},
-                             {'name':'PNG (large)', 'url':'/media/configdb/magwell/magwell_kh%s_large.png' %kh_val},
-                             {'name':'SVG', 'url':'/media/configdb/magwell/magwell_kh%s.svg' %kh_val},
+                    'image':'/static/configdb/magwell/magwell_kh%s_small.png' %kh_val,
+                    'links':[{'name':'PNG (small)', 'url':'/static/configdb/magwell/magwell_kh%s_small.png' %kh_val},
+                             {'name':'PNG (large)', 'url':'/static/configdb/magwell/magwell_kh%s_large.png' %kh_val},
+                             {'name':'SVG', 'url':'/static/configdb/magwell/magwell_kh%s.svg' %kh_val},
                              ]}
                    )
 
     for phi in range(0,121, 10):
         figures.append({'name':'Poincare plot (phi=%d)' %phi,
-                        'image':'/media/configdb/poincare/kh%s-phi%d_small.png' %(kh_val, phi),
-                        'links':[{'name':'PNG (small)', "url":'/media/configdb/poincare/kh%s-phi%d_small.png' %(kh_val, phi)},
-                                 {'name':'PNG (large)', 'url':'/media/configdb/poincare/kh%s-phi%d_large.png' %(kh_val, phi)},
-                                 {'name':'SVG', 'url':'/media/configdb/poincare/kh%s-phi%d.svg' %(kh_val, phi)},
+                        'image':'/static/configdb/poincare/kh%s-phi%d_small.png' %(kh_val, phi),
+                        'links':[{'name':'PNG (small)', "url":'/static/configdb/poincare/kh%s-phi%d_small.png' %(kh_val, phi)},
+                                 {'name':'PNG (large)', 'url':'/static/configdb/poincare/kh%s-phi%d_large.png' %(kh_val, phi)},
+                                 {'name':'SVG', 'url':'/static/configdb/poincare/kh%s-phi%d.svg' %(kh_val, phi)},
                                  ]}
                        )
         
