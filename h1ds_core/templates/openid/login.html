@@ -5,7 +5,20 @@
 
 {% block content %}
 
-<h1>Sign in with your OpenID</h1>
+<h1>Log in</h2>
+
+<br/>
+<form name="fopenid" action="/openid/login/" method="post">{% csrf_token %}
+    <input id="id_openid_identifier" type="hidden" class="required openid" name="openid_identifier" maxlength="255" value="https://www.google.com/accounts/o8/id"/>
+            <input name="bsignin" type="submit" value="sign in with your Google ID"></form>
+
+<br/>
+
+<strong>or</strong>
+
+<br/>
+<br/>
+
 {% if form.errors %}
 <p class="errors">Please correct errors below:<br />
     {% if form.openid_identifier.errors %}
