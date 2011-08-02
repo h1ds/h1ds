@@ -10,9 +10,9 @@
 
 def login_logout(d):
     if d["user_name"] == "":
-        return u'<p><a href="/openid/login/">Log in</a></p>'
+        return u'<div id="loginlinks"><a href="/openid/login/">log in</a></div>'
     else:
-        return u'<p>%(username)s // <a href="/user/settings/%(username)s">settings</a> // <a href="/logout/">logout</a></p>' %{'username':d["user_name"]}
+        return u'<div id="loginlinks">%(username)s // <a href="/user/settings/%(username)s">settings</a> // <a href="/logout/">logout</a></div>' %{'username':d["user_name"]}
 
         
 

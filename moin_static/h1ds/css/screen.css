@@ -68,6 +68,11 @@ textarea {
     text-align:right;
 }
 
+#loginlinks {
+    padding-top:5px;
+    padding-right:10px;
+}
+
 #header p,
 #header h1,
 #header h2 {
