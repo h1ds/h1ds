@@ -44,26 +44,25 @@ def setup_moin():
     env.settings = '%(project)s.settings_%(environment)s' % env
     env.venv = "%(project)s_%(environment)s" %env    
     
-    with prefix('workon %(venv)s' %env):
-        with prefix('cdvirtualenv'):
-            with cd("%(venv)s/src/moin-1.9.3" %env):
-                run('python setup.py install --force --install-data=$VIRTUAL_ENV/wikidata --record=install.log' % env)
-        with cd("%(venv)s/wikidata/share" %env):
+    with prefix('workon %(venv)s && cdvirtualenv' %env):
+        with cd("src/moin-1.9.3" %env):
+            run('python setup.py install --force --install-data=$VIRTUAL_ENV/wikidata --record=install.log' % env)
+        with cd("wikidata/share" %env):
             sudo('chown -R %(server_user)s:%(server_group)s moin' %env)
             sudo('chmod -R ug+rwX moin')
             sudo('chmod -R o-rwX moin')
-        sudo("ln -s %(venv)s/%(project)s/conf/h1ds.py %(venv)s/wikidata/share/moin/data/plugin/theme/h1ds.py" %env)
+        sudo("ln -s %(project)s/conf/h1ds.py wikidata/share/moin/data/plugin/theme/h1ds.py" %env)
 
 def setup():
     env.venv = "%(project)s_%(environment)s" %env    
     run('%(mkvirtualenv)s %(venv)s' % env)
-    with prefix('workon %(venv)s' %env):
-        run('cd $VIRTUAL_ENV && git clone %(git_url)s %(project)s' % env)
-        run('mkdir $VIRTUAL_ENV/src && cd $VIRTUAL_ENV/src && wget %(moin_dl_url)s -O moin.tar.gz && tar xf moin.tar.gz' % env)
-        run('mkdir $VIRTUAL_ENV/wikidata')
-        run('mkdir $VIRTUAL_ENV/static')
-        run('mkdir $VIRTUAL_ENV/log')
-        run('mkdir $VIRTUAL_ENV/db')
+    with prefix('workon %(venv)s && cdvirtualenv' %env):
+        run('git clone %(git_url)s %(project)s' % env)
+        run('mkdir src && cd src && wget %(moin_dl_url)s -O moin.tar.gz && tar xf moin.tar.gz' % env)
+        run('mkdir wikidata')
+        run('mkdir static')
+        run('mkdir log')
+        run('mkdir db')
         run('pip install fabric')
     setup_moin()
         
@@ -71,30 +70,28 @@ def deploy():
     env.settings = '%(project)s.settings_%(environment)s' % env
     env.venv = "%(project)s_%(environment)s" %env    
     
-    with prefix('workon %(venv)s' %env):
-        with prefix('cdvirtualenv'):
-            with cd("%(venv)s/%(project)s" %env):
-                run("git pull")
-                if env.environment == 'development':
-                    run("./bootstrap.py -d")
-                else:
-                    # TODO: remove the -d flag once git:// access is restored on code.h1svr
-                    run("./bootstrap.py -d")
-                run('./manage.py syncdb --settings=%(settings)s' % env)
-                run('./manage.py collectstatic --settings=%(settings)s' % env)
-                run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
-                run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
-                run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
-                # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
+    with prefix('workon %(venv)s && cdvirtualenv' %env):
+        with cd("%(project)s" %env):
+            run("git pull")
+            if env.environment == 'development':
+                run("./bootstrap.py -d")
+            else:
+                # TODO: remove the -d flag once git:// access is restored on code.h1svr
+                run("./bootstrap.py -d")
+            run('./manage.py syncdb --settings=%(settings)s' % env)
+            run('./manage.py collectstatic --settings=%(settings)s' % env)
+            run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
+            run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
+            run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
 
+        sudo('chmod -R ugo+rwX db' %env)
     # TODO: shouldn't need to treat environs differently here....
-            sudo('chmod -R ugo+rwX %(venv)s/db' %env)
     if env.environment == 'development':
-        with prefix('workon %(venv)s' %env):
-            with prefix('cdvirtualenv'):
-                with cd("%(venv)s/%(project)s" %env):
-                    run("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
-                    run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
+        with prefix('workon %(venv)s && cdvirtualenv' %env):
+            with cd("%(project)s" %env):
+                run("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
+                run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
 
     elif env.environment == 'staging':
         sudo('/etc/rc.d/httpd reload')
