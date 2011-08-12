@@ -56,6 +56,8 @@ def setup_moin():
 def setup():
     env.venv = "%(project)s_%(environment)s" %env    
     run('%(mkvirtualenv)s %(venv)s' % env)
+
+
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         run('git clone %(git_url)s %(project)s' % env)
         run('mkdir src && cd src && wget %(moin_dl_url)s -O moin.tar.gz && tar xf moin.tar.gz' % env)
@@ -69,7 +71,6 @@ def setup():
 def deploy():
     env.settings = '%(project)s.settings_%(environment)s' % env
     env.venv = "%(project)s_%(environment)s" %env    
-    
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with cd("%(project)s" %env):
             run("git pull")
