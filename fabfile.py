@@ -46,7 +46,7 @@ def setup_moin():
     
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with cd("src/moin-1.9.3" %env):
-            run('python setup.py install --force --install-data=$VIRTUAL_ENV/wikidata --record=install.log' % env)
+            run('python setup.py install --force --install-data=../../wikidata --record=install.log' % env)
         with cd("wikidata/share" %env):
             sudo('chown -R %(server_user)s:%(server_group)s moin' %env)
             sudo('chmod -R ug+rwX moin')
