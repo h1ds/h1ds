@@ -65,34 +65,32 @@ def setup():
         run('mkdir static')
         run('mkdir log')
         run('mkdir db')
+        sudo('chmod -R ugo+rwX db')
         run('pip install fabric')
     setup_moin()
         
 def deploy():
     env.settings = '%(project)s.settings_%(environment)s' % env
     env.venv = "%(project)s_%(environment)s" %env    
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
-        with cd("%(project)s" %env):
-            run("git pull")
-            if env.environment == 'development':
-                run("./bootstrap.py -d")
-            else:
-                # TODO: remove the -d flag once git:// access is restored on code.h1svr
-                run("./bootstrap.py -d")
-            run('./manage.py syncdb --settings=%(settings)s' % env)
-            run('./manage.py collectstatic --settings=%(settings)s' % env)
-            run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
-            run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
-            run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
-            # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
+    with prefix('workon %(venv)s && cdvirtualenv && cd %(project)s' %env):
+        run("git pull")
+        if env.environment == 'development':
+            run("./bootstrap.py -d")
+        else:
+            # TODO: remove the -d flag once git:// access is restored on code.h1svr
+            run("./bootstrap.py -d")
+        run('./manage.py syncdb --settings=%(settings)s' % env)
+        run('./manage.py collectstatic --settings=%(settings)s' % env)
+        run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
+        run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
+        run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+        # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
 
-        sudo('chmod -R ugo+rwX db' %env)
     # TODO: shouldn't need to treat environs differently here....
     if env.environment == 'development':
-        with prefix('workon %(venv)s && cdvirtualenv' %env):
-            with cd("%(project)s" %env):
-                run("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
-                run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
+        with prefix('workon %(venv)s && cdvirtualenv && cd %(project)s' %env):
+            run("./manage.py loaddata data/mds_testing.json --settings=%(settings)s" % env)
+            run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
 
     elif env.environment == 'staging':
         sudo('/etc/rc.d/httpd reload')
