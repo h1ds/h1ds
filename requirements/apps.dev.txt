@@ -1,25 +1,13 @@
--e svn+http://code.djangoproject.com/svn/django/branches/releases/1.3.X#egg=django
-fabric
-
-# requirements for h1ds core
-south
-django-celery
-python-openid
--e git+git@code.h1svr.anu.edu.au:h1ds/django-openid-auth.git#egg=django_openid_auth
--e git+git://github.com/dpretty/django-concurrent-server.git#egg=django-concurrent-server
--e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_core.git#egg=h1ds_core
-
-# requirements for h1ds_mdsplus
-numpy
+django==1.3
 http://people.physics.anu.edu.au/~dgp112/python-mdsplus/MDSplus-0.5.tgz
--e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_mdsplus.git#egg=h1ds_mdsplus
-
-#requirements for h1ds_summary
--e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_summary.git#egg=h1ds_summary
-
-#requirements for h1ds_configdb
--e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_configdb.git#egg=h1ds_configdb
-
-#requirements for wiki
-#-e git+git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git#egg=MoinMoin
-
+Fabric==1.2.0
+South==0.7.3
+celery==2.2.7
+django-celery==2.2.4
+-e git://github.com/dpretty/django-concurrent-server.git#egg=django_concurrent_server-dev
+-e git+git@code.h1svr.anu.edu.au:h1ds/django-openid-auth.git#egg=django_openid_auth-dev
+-e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_configdb.git#egg=h1ds_configdb-dev
+-e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_core.git#egg=h1ds_core-dev
+-e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_mdsplus.git#egg=h1ds_mdsplus-dev
+-e git+git@code.h1svr.anu.edu.au:h1ds/h1ds_summary.git#egg=h1ds_summary-dev
+numpy==1.6.1
