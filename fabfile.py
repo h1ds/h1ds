@@ -18,7 +18,7 @@ env.moin_dl_url = "http://static.moinmo.in/files/moin-1.9.3.tar.gz"
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
-    env.mkvirtualenv = "mkvirtualenv --distribute"
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
     env.hosts = ['localhost']
     env.server_user = 'dave'
     env.server_group = 'dave'
@@ -26,7 +26,7 @@ def dev():
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
-    env.mkvirtualenv = "mkvirtualenv --distribute"
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
     env.hosts = ['localhost']
     env.server_user = 'http'
     env.server_group = 'http'
@@ -45,9 +45,9 @@ def setup_moin():
     env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s && cdvirtualenv' %env):
-        with cd("src/moin-1.9.3" %env):
+        with prefix("cd src/moin-1.9.3" %env):
             run('python setup.py install --force --install-data=../../wikidata --record=install.log' % env)
-        with cd("wikidata/share" %env):
+        with prefix("cd wikidata/share" %env):
             sudo('chown -R %(server_user)s:%(server_group)s moin' %env)
             sudo('chmod -R ug+rwX moin')
             sudo('chmod -R o-rwX moin')
