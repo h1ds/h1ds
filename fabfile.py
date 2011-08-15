@@ -15,6 +15,7 @@ env.moin_git_url = "git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git"
 env.moin_dl_url = "http://static.moinmo.in/files/moin-1.9.3.tar.gz"
 ## TODO: use introspection to get python dir for venv.
 
+
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
@@ -45,9 +46,11 @@ def setup_moin():
     env.venv = "%(project)s_%(environment)s" %env    
     
     with prefix('workon %(venv)s && cdvirtualenv' %env):
+        env_dir = run('echo $PWD')
         with prefix("cd src/moin-1.9.3" %env):
             run('python setup.py install --force --install-data=../../wikidata --record=install.log' % env)
-        with prefix("cd wikidata/share" %env):
+    with cd(env_dir):
+        with prefix("cd wikidata/share"):
             sudo('chown -R %(server_user)s:%(server_group)s moin' %env)
             sudo('chmod -R ug+rwX moin')
             sudo('chmod -R o-rwX moin')
@@ -59,14 +62,17 @@ def setup():
 
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
+        ## Grab the dir so we can use sudo without workon
+        env_dir = run('echo $PWD')
         run('git clone %(git_url)s %(project)s' % env)
         run('mkdir src && cd src && wget %(moin_dl_url)s -O moin.tar.gz && tar xf moin.tar.gz' % env)
         run('mkdir wikidata')
         run('mkdir static')
         run('mkdir log')
         run('mkdir db')
-        sudo('chmod -R ugo+rwX db')
         run('pip install fabric')
+    with cd(env_dir):
+        sudo('chmod -R ugo+rwX db')
     setup_moin()
         
 def deploy():
