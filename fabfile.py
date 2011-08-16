@@ -99,6 +99,6 @@ def deploy():
             run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
 
     elif env.environment == 'staging':
-        sudo('/etc/rc.d/httpd reload')
+        sudo('/etc/init.d/apache2 reload')
     else:
         sudo('/etc/init.d/apache2 reload')
