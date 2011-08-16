@@ -104,7 +104,7 @@ def deploy():
     elif env.environment == 'staging':
         # check if we already have a symlink to apache conf
         h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
-        if not os.path.exists(h1ds_apache_conf)
+        if not os.path.exists(h1ds_apache_conf):
             sudo("ln -s %s/conf/apache/h1ds_staging.conf %s" %(project_dir, h1ds_apache_conf))
             sudo("a2ensite h1ds")
         sudo('/etc/init.d/apache2 reload')
