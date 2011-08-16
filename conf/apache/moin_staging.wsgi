@@ -49,4 +49,9 @@ from MoinMoin.web.serving import make_application
 # use shared=False to not have moin serve static docs
 #use shared='/my/path/to/htdocs' to serve static docs from that path
 #TODO: get path by intelligent means
-application = make_application(shared='/home/dave/.virtualenvs/h1ds_staging/h1ds/moin_static')
+static_dir = THIS_DIR
+for i in range(2):
+    static_dir = os.path.dirname(static_dir)
+static_dir = os.path.join(static_dir, 'moin_static')
+application = make_application(shared=static_dir)
+
