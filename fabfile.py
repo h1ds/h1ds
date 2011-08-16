@@ -87,7 +87,7 @@ def deploy():
             run("./bootstrap.py -d")
         else:
             # TODO: remove the -d flag once git:// access is restored on code.h1svr
-            run("./bootstrap.py -d")
+            run("./bootstrap.py")
         run('./manage.py syncdb --settings=%(settings)s' % env)
         run('./manage.py collectstatic --settings=%(settings)s' % env)
         run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
