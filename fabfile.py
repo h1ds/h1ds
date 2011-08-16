@@ -29,8 +29,8 @@ def staging():
     env.environment = 'staging'
     env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
     env.hosts = ['localhost']
-    env.server_user = 'http'
-    env.server_group = 'http'
+    env.server_user = 'www-data'
+    env.server_group = 'www-data'
 
 def production():
     """h1svr with apache."""
