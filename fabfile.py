@@ -3,6 +3,8 @@
 Require mkvirtualenv to  be installed on all machines and  to be run in,
 and WORKON_HOME defined in .bash_profile.
 
+This is configured for Ubuntu systems.
+
 """
 from __future__ import with_statement
 import os
@@ -79,6 +81,7 @@ def deploy():
     env.settings = '%(project)s.settings_%(environment)s' % env
     env.venv = "%(project)s_%(environment)s" %env    
     with prefix('workon %(venv)s && cdvirtualenv && cd %(project)s' %env):
+        project_dir = run('echo $PWD')
         run("git pull")
         if env.environment == 'development':
             run("./bootstrap.py -d")
@@ -99,6 +102,11 @@ def deploy():
             run("./manage.py loaddata data/summarydb.json --settings=%(settings)s" % env)
 
     elif env.environment == 'staging':
+        # check if we already have a symlink to apache conf
+        h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
+        if not os.path.exists(h1ds_apache_conf)
+            sudo("ln -s %s/conf/apache/h1ds_staging.conf %s" %(project_dir, h1ds_apache_conf))
+            sudo("a2ensite h1ds")
         sudo('/etc/init.d/apache2 reload')
     else:
         sudo('/etc/init.d/apache2 reload')
