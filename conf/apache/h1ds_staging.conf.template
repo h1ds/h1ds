@@ -1,0 +1,32 @@
+<VirtualHost *:80>
+    WSGIScriptReloading On
+    WSGIDaemonProcess h1ds-staging
+    WSGIProcessGroup h1ds-staging
+    WSGIApplicationGroup h1ds-staging
+    WSGIPassAuthorization On
+    
+    WSGIScriptAlias /wiki __venv_dir__/h1ds/conf/apache/moin_staging.wsgi/
+
+    WSGIScriptAlias / __venv_dir__/h1ds/conf/apache/h1ds_staging.wsgi/
+    
+    <Location "/">
+        Order Allow,Deny
+        Allow from all
+    </Location>
+    
+    <Location "/static">
+        SetHandler None
+    </Location>
+
+    Alias /static __venv_dir__/static
+    
+    <Location "/admin-media">
+        SetHandler None
+    </Location>
+    
+    Alias /admin-media __venv_dir__/h1ds/media/admin
+    
+    ErrorLog __venv_dir__/log/error.log
+    LogLevel info
+    CustomLog __venv_dir__/log/access.log combined
+</VirtualHost>

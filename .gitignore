@@ -16,3 +16,5 @@ h1ds_mdsplus
 celery
 
 local_settings.py
+
+conf/apache/h1ds_staging.conf
