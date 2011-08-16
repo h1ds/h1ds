@@ -5,6 +5,6 @@ DEBUG = False
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'h1ds_staging.db'
+        'NAME': os.path.join(VENV_DIR, 'db', 'h1ds_staging.db')
             }
     }

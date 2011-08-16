@@ -4,6 +4,7 @@ import os
 import djcelery
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+VENV_DIR = os.path.dirname(THIS_DIR)
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
