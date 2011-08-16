@@ -12,8 +12,7 @@ import os
 from fabric.api import *
 
 env.project = "h1ds"
-env.git_url = "git@code.h1svr.anu.edu.au:h1ds/h1ds.git"
-env.moin_git_url = "git@code.h1svr.anu.edu.au:h1ds/moinmoin-h1ds.git"
+env.git_url = "git://code.h1svr.anu.edu.au/h1ds/h1ds.git"
 env.moin_dl_url = "http://static.moinmo.in/files/moin-1.9.3.tar.gz"
 ## TODO: use introspection to get python dir for venv.
 
