@@ -1,3 +1,56 @@
+## Installation instructions for Ubuntu 11.04 ##
+
+# We're going to be installing python packages inside virtual environments so we don't have to worry about conflicting python library verions on the operating system (e.g. conflicting requirements with other sortware, etc).
+
+# First, install some required packages
+
+# In Ubuntu 11.04 there is a bug in with the virtuelenv package which causes problems when installing numpy with pip, so we'll just install virtualenv via the python installer instead. we also need a more recent version of fabric than is available in the ubuntu respoitory.
+
+$ sudo apt-get install python-pip
+
+$ sudo pip install virtualenv virtualenvwrapper fabric
+
+# We'll also need to install some other system packages.
+
+$ sudo apt-get install git ssh
+$ sudo apt-get install python-dev gfortran libatlas-base-dev
+## Note that libatlas-base-dev is optional, but will improve numpy performance.
+
+
+# NOTE: you can set your virtuale environment dir with the environment variable WORKON_HOME
+# By default WORKON_HOME is ~/.virtualenvs
+# open up $HOME/.bashrc in a text editor and add
+export WORKON_HOME=$HOME/v
+. /usr/local/bin/virtualenvwrapper.sh
+
+# or whatever directory you want to use for your virtual environments
+
+also, create or open   $HOME/.bash_profile and put the same two lines in there.
+
+
+
+# I you open a new terminal, the virtualenvwrapper script should now work.
+
+# First, if your WORKON_HOME directory doesn't exist yet, make it:
+$ mkdir -p $WORKON_HOME
+
+in a temporary directory, grab the fabric file and build out a development h1ds environment.
+# TODO, describe dev, staging, production environments...
+
+$ cd /tmp
+$ git clone git://code.h1svr.anu.edu.au/h1ds/h1ds.git
+$ cd h1ds
+$ fab dev setup
+$ fab dev deploy
+
+the fab setup script should only be run once in order to set up a virtual environment, the deploy script can be run multiple times, and should be run after any changes are made to the code.
+
+
+
+
+
+##################################################################################
+
 These scripts assume you have virtualenv and virtualenvwrapper.
 
 basic install on dave's linux - more extensive instructions will follow:
