@@ -67,8 +67,8 @@ def update():
         env_dir = run('echo $PWD')
         
     with cd(env_dir):
-        sudo('cp -r %(project)s/moin/underlay wiki')
-        sudo('cp %(project)s/conf/h1ds.py wiki/data/plugin/theme')
+        sudo('cp -r %(project)s/moin/underlay wiki' %env)
+        sudo('cp %(project)s/conf/h1ds.py wiki/data/plugin/theme' %env)
         sudo('chown -R %(server_user)s:%(server_group)s wiki' %env)
         sudo('chmod -R ug+rwX wiki')
         sudo('chmod -R o-rwX wiki')
