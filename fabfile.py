@@ -65,6 +65,8 @@ def update():
     
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         env_dir = run('echo $PWD')
+        with prefix('cd %(project)s' %env):
+            run("git pull")
         
     with cd(env_dir):
         sudo('cp -r %(project)s/moin/underlay wiki' %env)
@@ -75,7 +77,6 @@ def update():
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with prefix('cd %(project)s' %env):
-            run("git pull")
             if env.environment == 'development':
                 run("./bootstrap.py -d")
             else:
