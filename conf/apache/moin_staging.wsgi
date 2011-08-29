@@ -52,6 +52,6 @@ from MoinMoin.web.serving import make_application
 static_dir = THIS_DIR
 for i in range(2):
     static_dir = os.path.dirname(static_dir)
-static_dir = os.path.join(static_dir, 'moin_static')
+static_dir = os.path.join(static_dir, 'moin', 'static')
 application = make_application(shared=static_dir)
 

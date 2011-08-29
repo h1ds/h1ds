@@ -58,7 +58,7 @@ class Config(multiconfig.DefaultConfig):
     # If that's not true, feel free to just set instance_dir to the real path
     # where data/ and underlay/ is located:
     #instance_dir = '/where/ever/your/instance/is'
-    instance_dir = os.path.join(os.path.dirname(os.path.dirname(wikiconfig_dir)), 'wikidata', 'share', 'moin')
+    instance_dir = os.path.join(os.path.dirname(os.path.dirname(wikiconfig_dir)), 'wiki')
 
     # Where your own wiki pages are (make regular backups of this directory):
     data_dir = os.path.join(instance_dir, 'data', '') # path with trailing /
