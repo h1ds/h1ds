@@ -52,7 +52,8 @@ def initiate():
         ## Grab the dir so we can use sudo without workon
         env_dir = run('echo $PWD')
         run('git clone %(git_url)s %(project)s' % env)
-        run('mkdir -p wiki/data/plugin/theme static log db')
+        run('mkdir -p wiki/data/plugin/theme wiki/data/pages static log db')
+        run('touch wiki/data/plugin/__init__.py')
         run('pip install fabric')
     with cd(env_dir):
         sudo('chmod -R ugo+rwX db')
