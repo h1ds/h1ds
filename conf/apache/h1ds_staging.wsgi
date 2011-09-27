@@ -2,6 +2,9 @@ import os
 import sys
 
 import site
+os.environ["CELERY_LOADER"] = "django"
+os.environ["MDS_PATH"] = '/usr/local/mdsplus'
+os.environ["MDSPLUS_DIR"] = '/usr/local/mdsplus'
 
 # Find absolute path of project.
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
