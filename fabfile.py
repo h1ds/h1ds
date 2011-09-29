@@ -54,6 +54,7 @@ def initiate():
         run('git clone %(git_url)s %(project)s' % env)
         run('mkdir -p wiki/data/plugin/theme wiki/data/pages static log db')
         run('touch wiki/data/plugin/__init__.py')
+        run('touch wiki/data/plugin/theme/__init__.py')
         run('pip install fabric')
     with cd(env_dir):
         sudo('chmod -R ugo+rwX db')
