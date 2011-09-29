@@ -20,18 +20,18 @@ env.moin_dl_url = "http://static.moinmo.in/files/moin-1.9.3.tar.gz"
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
-    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.hosts = ['localhost']
     env.server_user = 'dave'
-    env.server_group = 'dave'
+    env.server_group = 'users'
 
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
-    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.hosts = ['localhost']
-    env.server_user = 'www-data'
-    env.server_group = 'www-data'
+    env.server_user = 'http'
+    env.server_group = 'http'
 
 def production():
     """h1svr with apache."""
@@ -106,11 +106,20 @@ def update():
         conf_file = open('%s/h1ds/conf/apache/h1ds_staging.conf' %env_dir, 'w')
         conf_file.write(conf_text)
         conf_file.close()
+        ## ubuntu settings...
         # check if we already have a symlink to apache conf
-        h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
+        #h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
+        #if not os.path.exists(h1ds_apache_conf):
+        #    sudo("ln -s %s/h1ds/conf/apache/h1ds_staging.conf %s" %(env_dir, h1ds_apache_conf))
+        #    sudo("a2ensite h1ds")
+        #sudo('/etc/init.d/apache2 reload')
+        # arch settings...
+        # check if we already have a symlink to apache conf
+        h1ds_apache_conf = '/etc/httpd/conf/vhosts/h1ds'
+        # TODO - you need to manually add Include line to http.conf
         if not os.path.exists(h1ds_apache_conf):
             sudo("ln -s %s/h1ds/conf/apache/h1ds_staging.conf %s" %(env_dir, h1ds_apache_conf))
-            sudo("a2ensite h1ds")
-        sudo('/etc/init.d/apache2 reload')
+        sudo('/etc/rc.d/httpd reload')
+
     else:
         sudo('/etc/init.d/apache2 reload')
