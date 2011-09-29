@@ -19,26 +19,3 @@
 
 {% endblock %}
 
-{% block extrascript %}
-<script>
-function updateEvents() {
- $.getJSON('/dashboard/', function(data){
-  $.each(data, function(eventID) {
-   var topRowId=parseInt($(".event-id").eq(1).text());
-   if (parseInt(data[eventID].pk) > topRowId) {
-    $("tr").eq(0).after('<tr><td class="event-id">'+data[eventID].pk+'</td><td class="name">'+data[eventID].fields.signal+'</td><td class="time">'+data[eventID].fields.time+'</td></tr>');
-    $("tr").eq(1).effect("highlight", {color:"#ff6600"}, 300000);
-   } // end if
-  }); // end each
- }); // end getJSON
-} // end function
-
-function autoUpdate() {
-setInterval(updateEvents, 2000);
-}
-
-$(document).ready(function() {
-autoUpdate();
-});
-</script>
-{% endblock %}
