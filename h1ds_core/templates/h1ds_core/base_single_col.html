@@ -41,24 +41,26 @@
 
   <div id="container">
     <header>
-      <div id="loginlinks">
+      <div id="loginlinks" class="clearfix fixed-centre">
 	{% if user.is_authenticated %}{{ user.username }} // <a href="/user/settings/{{user.username}}">settings</a> // <a href="{% url h1ds-logout %}">log out</a> 
 	{% else %}<a href="/openid/login">log in</a>
 	{% endif %}
-	</div>
+      </div>
       {% h1ds_header %}
     </header>
-    <div id="main" role="main">
-    {% if messages %}
-    <div id="message"><ul>
-      {% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}</ul>
-    </div>
-    {% endif %}
-    {% block full_content %}
-    <div id="full-content">{% block content %}{% endblock %}</div>
-    {% endblock %}
+    <div id="main" role="main" class="clearfix fixed-centre">
+      {% if messages %}
+      <div id="message"><ul>
+	  {% for message in messages %}
+	  <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+	  {% endfor %}</ul>
+      </div>
+      {% endif %}
+      <div id="full-content-container" class="clearfix">
+	{% block full_content %}
+	<div id="full-content" class="clearfix">{% block content %}{% endblock %}</div>
+	{% endblock %}
+      </div>
     </div>
     <footer>
       {% h1ds_footer %}

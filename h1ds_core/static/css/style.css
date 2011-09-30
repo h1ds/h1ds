@@ -51,7 +51,7 @@ body, button, input, select, textarea { font-family: sans-serif; color: #222; }
    ========================================================================== */
 
 a { color: #00e; }
-a:visited { color: #551a8b; }
+a:visited { color: color:#369;}
 a:hover { color: #06e; }
 a:focus { outline: thin dotted; }
 
@@ -211,90 +211,62 @@ td { vertical-align: top; }
    Author: Dave Pretty <david.pretty@anu.edu.au>
    ========================================================================== */
 
-header {
-    color:red;
-    clear:both;
-    float:left;
+/* general */
+
+h1 { font-size:120%;}
+h2 { font-size:110%;}
+h3 { font-size:105%;}
+
+#container {
     width:100%;
-    text-align:right;
-    border-bottom:1px solid #000;
 }
 
-#loginlinks {
-    padding-top:5px;
-    padding-right:10px;
+.fixed-centre {
+    width:320px;
+    margin:auto;
 }
 
-header p,
-header h1,
-header h2 {
-    padding:.4em 15px 0 15px;
-    margin:0;
-}
-header ul {
-    clear:left;
-    float:left;
+div.mbox {
     width:100%;
-    list-style:none;
-    margin:10px 0 0 0;
-    padding:0;
+    padding:4px;
+    margin: 2px;
+    border: 1px solid #eee;
 }
-header ul li {
-    display:inline;
-    list-style:none;
-    margin:0;
-    padding:0;
+
+div#main {
+    padding: 0 1em 0 1em;
 }
-header ul li a {
-    display:block;
-    float:left;
-    margin:0 0 0 1px;
-    padding:3px 10px;
-    text-align:center;
-    background:#eee;
-    color:#000;
+
+/* anchors */
+
+a {
+    color:#369;
     text-decoration:none;
-    position:relative;
-    left:15px;
-    line-height:1.3em;
 }
-header ul li a:hover {
-    background:#369;
+
+a:hover {
     color:#fff;
-}
-header ul li a.active,
-header ul li a.active:hover {
-    color:#fff;
-    background:#000;
-    font-weight:bold;
-}
-header ul li a span {
-    display:block;
+    background-color:#369;
 }
 
-header form {
-    display:inline-block;
+/* header */
+
+header {
+    padding: 1em;
+    border-bottom:2px solid #ccc;
+    margin-bottom:1em;
 }
 
-#title {
-    font-size:large;
-    text-align:left;
-    padding-left:2em;
-    padding-bottom:0.5em;
-}
-
-#subtitle {
-    font-size:small;
-    padding-top:0.2em;
+footer {
+    padding: 1em;
+    border-top:2px solid #ccc;
+    margin-top:1em;
 }
 
 
-
-
-
-
-
-
+header div#loginlinks {
+    text-align:right;
+}
 
 
 
@@ -334,15 +306,48 @@ header form {
    Modify as content requires.
    ========================================================================== */
 
+@media only screen and (min-width: 356px) { 
+  /* 320px is 90% of 356px - transition to 5% margins either side */
+
+.fixed-centre {
+    width:90%;
+    margin:auto;
+}
+
+
+
+}
+
 @media only screen and (min-width: 480px) {
   /* Style adjustments for viewports 480px and over go here */
+
 
 }
 
 @media only screen and (min-width: 768px) {
   /* Style adjustments for viewports 768px and over go here */
 
+div.mbox {
+    width:362px;
+    padding:8px;
+    margin: 2px;
 }
+
+
+}
+
+@media only screen and (min-width: 91067px) {
+  /* use 960px for max width, 960 is 90% of 1067 */
+
+.fixed-centre {
+    width:960px;
+}
+}
+
+
+
+
+
 
 
 

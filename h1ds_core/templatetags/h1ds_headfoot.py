@@ -32,9 +32,10 @@ class H1DSHeaderNode(template.Node):
             subtitle_string_list.extend(['<a href="%s">%s</a>' %(i[1], i[0]) for i in settings.H1DS_EXTRA_SUBLINKS])
         subtitle_strings = " &middot; ".join(subtitle_string_list)
         if hasattr(settings, 'H1DS_TITLE'):
-            return_string = '<div id="title"><a href="/">%s</a>' %(settings.H1DS_TITLE)
+            title = settings.H1DS_TITLE
         else:
-            return_string = '<div id="title"><a href="/">%s</a>' %('H1 Data Server')            
+            title = "H1 Data Server"            
+        return_string = '<div id="title" class="fixed-centre clearfix"><h1><a href="/">%s</a></h1>' %(title)
         return_string += '<div id="subtitle">'+subtitle_strings+'</div></div>'
         return return_string
 
@@ -51,7 +52,7 @@ class H1DSFooterNode(template.Node):
                 app_strings.append("<strong>%s</strong> %s" %(app, app_module.version.get_version()))
             except:
                 app_strings.append("<strong>%s</strong>" %app)
-        return "<p>%s</p>" %" &middot; ".join(app_strings)
+        return '<div class="fixed-centre clearfix"><p>%s</p></div>' %" &middot; ".join(app_strings)
 
 def do_h1ds_footer(parser, token):
     """This populates the H1DS footer, showing registered H1DS modules with version numbers."""

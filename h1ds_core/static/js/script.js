@@ -89,7 +89,7 @@ function formatDataForPlots(data) {
 } // end formatDataForPlots
 
 function plotSignals() {
-  var original_query = {{ request_query|safe }};
+  var original_query = " TODO: FIX {{ request_query|safe }}";
   var new_query = $.extend({}, original_query, {'view':'json', 'f999_ResampleMinMax':600})
   $.get(
     '',new_query,
@@ -127,6 +127,13 @@ function plotSignals() {
      'json'
   );
 }
+
+
+$('#full-content-container').masonry({
+    itemSelector: '.mbox',
+    columnWidth: 384
+});
+
 
 
 $(document).ready(function() {
