@@ -1,4 +1,4 @@
-// Custom javascript code for H1 data system
+﻿// Custom javascript code for H1 data system
 // David Pretty, 2010
 
 
@@ -128,13 +128,10 @@ function plotSignals() {
   );
 }
 
-
 $('#full-content-container').masonry({
     itemSelector: '.mbox',
     columnWidth: 384
 });
-
-
 
 $(document).ready(function() {
     updateLatestShot();
@@ -147,27 +144,5 @@ $(document).ready(function() {
 	populateMDSNav(tree, shot, $(this));
     });
 });
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

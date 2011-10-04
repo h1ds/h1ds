@@ -35,7 +35,7 @@ class H1DSHeaderNode(template.Node):
             title = settings.H1DS_TITLE
         else:
             title = "H1 Data Server"            
-        return_string = '<div id="title" class="fixed-centre clearfix"><h1><a href="/">%s</a></h1>' %(title)
+        return_string = '<div id="title"><h1><a href="/">%s</a></h1>' %(title)
         return_string += '<div id="subtitle">'+subtitle_strings+'</div></div>'
         return return_string
 
@@ -52,7 +52,7 @@ class H1DSFooterNode(template.Node):
                 app_strings.append("<strong>%s</strong> %s" %(app, app_module.version.get_version()))
             except:
                 app_strings.append("<strong>%s</strong>" %app)
-        return '<div class="fixed-centre clearfix"><p>%s</p></div>' %" &middot; ".join(app_strings)
+        return '<p>%s</p>' %" &middot; ".join(app_strings)
 
 def do_h1ds_footer(parser, token):
     """This populates the H1DS footer, showing registered H1DS modules with version numbers."""

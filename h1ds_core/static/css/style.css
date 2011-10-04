@@ -234,7 +234,63 @@ div.mbox {
 }
 
 div#main {
-    padding: 0 1em 0 1em;
+    padding: 1em;
+}
+
+input, textarea, select {
+    border: 1px solid #bbb;
+    color:#555;
+    display:inline;
+    margin: 0 0 0 3px;
+}
+
+/* moin */
+
+div.wikibar {
+    background: #eee;
+}
+
+div.messagebar {
+    background: #fff380;
+}
+
+ul.editbar {
+    margin: 0;
+    padding: 0;
+}
+
+ul.editbar li {
+    display: inline-block;
+    text-align:left;
+    clear: left;
+    padding: 0.3em 1em;
+}
+
+#searchform {
+    float: right;
+    margin: 5px 0 5px 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+*[dir="rtl"] #searchform {
+    float: left;
+}
+
+#searchform form div {
+    display: inline;
+}
+
+textarea#editor-textarea {
+    display:block;
+    margin-top:1em;
+    width:100%;
+}
+
+div#editor-help {
+    background: #eee;
+    padding: 1em;
+    color: #333;
 }
 
 /* anchors */
@@ -252,24 +308,23 @@ a:hover {
 /* header */
 
 header {
-    padding: 1em;
+    padding: 0.5em 1em 0 1em;
     border-bottom:2px solid #ccc;
-    margin-bottom:1em;
 }
 
 footer {
-    padding: 1em;
+    padding: 0 1em 0.5em 1em;
     border-top:2px solid #ccc;
-    margin-top:1em;
 }
 
+header div {
+    padding: 0.2em 0 0.2em 0;
+}
 
-header div#loginlinks {
+header div#loginlinks, header form {
     text-align:right;
+    display:block;
 }
-
-
-
 
 
 
