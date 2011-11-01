@@ -124,18 +124,18 @@ def update():
         conf_file.close()
         ## ubuntu settings...
         # check if we already have a symlink to apache conf
-        #h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
-        #if not os.path.exists(h1ds_apache_conf):
-        #    sudo("ln -s %s/h1ds/conf/apache/h1ds_staging.conf %s" %(env_dir, h1ds_apache_conf))
-        #    sudo("a2ensite h1ds")
-        #sudo('/etc/init.d/apache2 reload')
-        # arch settings...
-        # check if we already have a symlink to apache conf
-        h1ds_apache_conf = '/etc/httpd/conf/vhosts/h1ds'
-        # TODO - you need to manually add Include line to http.conf
+        h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
         if not os.path.exists(h1ds_apache_conf):
             sudo("ln -s %s/h1ds/conf/apache/h1ds_staging.conf %s" %(env_dir, h1ds_apache_conf))
-        sudo('/etc/rc.d/httpd reload')
+            sudo("a2ensite h1ds")
+        sudo('/etc/init.d/apache2 reload')
+        # arch settings...
+        # check if we already have a symlink to apache conf
+        #h1ds_apache_conf = '/etc/httpd/conf/vhosts/h1ds'
+        # TODO - you need to manually add Include line to http.conf
+        #if not os.path.exists(h1ds_apache_conf):
+        #    sudo("ln -s %s/h1ds/conf/apache/h1ds_staging.conf %s" %(env_dir, h1ds_apache_conf))
+        #sudo('/etc/rc.d/httpd reload')
 
     else:
         sudo('/etc/init.d/apache2 reload')
