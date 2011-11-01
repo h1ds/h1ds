@@ -7,7 +7,7 @@ This is configured for Ubuntu systems.
 
 """
 from __future__ import with_statement
-import os
+import os, platform
 
 from fabric.api import *
 
@@ -20,23 +20,38 @@ env.moin_dl_url = "http://static.moinmo.in/files/moin-1.9.3.tar.gz"
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
-    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
+    if platform.linux_distribution()[0] == 'Ubuntu':
+        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
+    else:
+        # assume Arch linux
+        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.hosts = ['localhost']
-    env.server_user = 'dave'
-    env.server_group = 'users'
+    env.server_user = os.getuid()
+    env.server_group = os.getgid()
 
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
-    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.hosts = ['localhost']
-    env.server_user = 'http'
-    env.server_group = 'http'
+    if platform.linux_distribution()[0] == 'Ubuntu':
+        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
+        env.server_user = 'www-data'
+        env.server_group = 'www-data'
+
+    else:
+        # assume Arch linux
+        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
+        env.server_user = 'http'
+        env.server_group = 'http'
 
 def production():
     """h1svr with apache."""
     env.environment = 'production'
-    env.mkvirtualenv = "mkvirtualenv -p python2 --no-site-packages --distribute"
+    if platform.linux_distribution()[0] == 'Ubuntu':
+        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
+    else:
+        # assume Arch linux
+        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.user = "datasys"
     env.hosts = ['h1svr']
     env.server_user = 'www-data'
