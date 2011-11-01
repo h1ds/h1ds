@@ -100,7 +100,7 @@ def update():
                 # TODO: remove the -d flag once git:// access is restored on code.h1svr
                 run("./bootstrap.py")
             run('./manage.py syncdb --settings=%(settings)s' % env)
-            run('./manage.py collectstatic --settings=%(settings)s' % env)
+            run('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
