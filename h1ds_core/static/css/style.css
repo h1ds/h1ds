@@ -326,6 +326,10 @@ header div#loginlinks, header form {
     display:block;
 }
 
+div.warning {
+    border: 1px solid #ff3333;
+    background: #ffdddd;
+}
 
 
 /* ==|== non-semantic helper classes ========================================
