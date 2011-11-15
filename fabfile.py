@@ -101,11 +101,12 @@ def update():
                 run("./bootstrap.py")
             # need server perms to run db through apache, so use sudo to modify db and 
             # make sure we chown the db after to be sure.
-            sudo('./manage.py syncdb --settings=%(settings)s' % env)
-            sudo('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
-            sudo("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
-            sudo("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
-            sudo("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            sudo('chown -R %s:%s ../db' (os.getuid(), os.getgid()))
+            run('./manage.py syncdb --settings=%(settings)s' % env)
+            run('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
+            run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
+            run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
+            run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
             # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
             sudo('chown -R %(server_user)s:%(server_group)s ../db' %env)
             
