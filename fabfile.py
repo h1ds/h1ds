@@ -99,13 +99,16 @@ def update():
             else:
                 # TODO: remove the -d flag once git:// access is restored on code.h1svr
                 run("./bootstrap.py")
-            run('./manage.py syncdb --settings=%(settings)s' % env)
-            run('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
-            run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
-            run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
-            run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            # need server perms to run db through apache, so use sudo to modify db and 
+            # make sure we chown the db after to be sure.
+            sudo('./manage.py syncdb --settings=%(settings)s' % env)
+            sudo('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
+            sudo("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
+            sudo("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
+            sudo("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
             # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
-
+            sudo('chown -R %(server_user)s:%(server_group)s ../db' %env)
+            
     # TODO: shouldn't need to treat environs differently here....
     if env.environment == 'development':
         with prefix('workon %(venv)s && cdvirtualenv && cd %(project)s' %env):
