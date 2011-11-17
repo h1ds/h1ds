@@ -135,10 +135,10 @@ function plotSignals() {
 
 
 
-$('#full-content-container').masonry({
-    itemSelector: '.mbox',
-    columnWidth: 384
-});
+$('#masonry-container').masonry({
+     itemSelector: '.mbox',
+     columnWidth: 384
+ });
 
 $(document).ready(function() {
     updateLatestShot();
