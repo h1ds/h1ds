@@ -109,8 +109,7 @@ def update():
             # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
             sudo('chown -R %(server_user)s:%(server_group)s ../db' %env)
 
-    with cd(env_dir):
-        if not os.path.exists('trac'):
+        if not os.path.exists(os.path.join(env_dir, 'trac')):            
             run('trac-admin trac initenv')
             sudo('chown -R %(server_user)s:%(server_group)s trac' %env)
             
