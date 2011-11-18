@@ -97,7 +97,6 @@ def update():
             if env.environment == 'development':
                 run("./bootstrap.py -d")
             else:
-                # TODO: remove the -d flag once git:// access is restored on code.h1svr
                 run("./bootstrap.py")
             # need server perms to run db through apache, so use sudo to modify db and 
             # make sure we chown the db after to be sure.
@@ -109,6 +108,10 @@ def update():
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
             # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
             sudo('chown -R %(server_user)s:%(server_group)s ../db' %env)
+
+        if not os.path.exists('trac'):
+            run('trac-admin trac initenv')
+            sudo('chown -R %(server_user)s:%(server_group)s trac' %env)
             
     # TODO: shouldn't need to treat environs differently here....
     if env.environment == 'development':
