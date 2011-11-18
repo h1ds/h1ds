@@ -82,15 +82,26 @@ def update():
     
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         env_dir = run('echo $PWD')
-        with prefix('cd %(project)s' %env):
+        project_dir = os.path.join(env_dir, '%(project)s' %env)
+        with cd(project_dir):
             run("git pull")
-        
+    
+    # set up / refresh wiki directories.
     with cd(env_dir):
         sudo('cp -r %(project)s/moin/underlay wiki' %env)
         sudo('cp %(project)s/conf/h1ds.py wiki/data/plugin/theme' %env)
         sudo('chown -R %(server_user)s:%(server_group)s wiki' %env)
         sudo('chmod -R ug+rwX wiki')
         sudo('chmod -R o-rwX wiki')
+
+    # Before we make any changes to the database, we change permissions of the db
+    # directory so we can run ./manage.py without sudo. Note that we shouldn't run sudo 
+    # within a virtual environment (i.e. with workon) as files like $WORKON_DIR/hook.log
+    # can have their permissions changed to those of the root user, which will cause problems
+    # when subsequent commands are run as a normal user.
+
+    with cd(env_dir):
+        sudo('chown -R %s:%s db' %(os.getuid(), os.getgid()))
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with prefix('cd %(project)s' %env):
@@ -100,19 +111,24 @@ def update():
                 run("./bootstrap.py")
             # need server perms to run db through apache, so use sudo to modify db and 
             # make sure we chown the db after to be sure.
-            sudo('chown -R %s:%s ../db' %(os.getuid(), os.getgid()))
             run('./manage.py syncdb --settings=%(settings)s' % env)
             run('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
             # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
-            sudo('chown -R %(server_user)s:%(server_group)s ../db' %env)
 
         if not os.path.exists(os.path.join(env_dir, 'trac')):            
             run('trac-admin trac initenv')
-            sudo('chown -R %(server_user)s:%(server_group)s trac' %env)
             
+    # Now that we have finished making changes to the database, change the permissions back
+    # to those appropriate for the server.
+    with cd(env_dir):
+        sudo('chown -R %(server_user)s:%(server_group)s db' %env)
+        # also make sure that the trac folder has permissions for the server.
+        sudo('chown -R %(server_user)s:%(server_group)s trac' %env)
+
+
     # TODO: shouldn't need to treat environs differently here....
     if env.environment == 'development':
         with prefix('workon %(venv)s && cdvirtualenv && cd %(project)s' %env):
