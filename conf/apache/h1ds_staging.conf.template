@@ -8,10 +8,18 @@
     WSGIScriptAlias /wiki __venv_dir__/h1ds/conf/apache/moin_staging.wsgi/
     WSGIScriptAlias /develop __venv_dir__/h1ds/conf/apache/trac_staging.wsgi/
     WSGIScriptAlias / __venv_dir__/h1ds/conf/apache/h1ds_staging.wsgi/
-    
+
     <Location "/">
         Order Allow,Deny
         Allow from all
+    </Location>
+
+    <Location "/trac/login">
+        AuthType Digest
+        AuthName "trac"
+	AuthDigestDomain /develop
+	AuthUserFile __venv_dir__/trac.htpasswd
+	Require valid-user
     </Location>
     
     <Location "/static">
