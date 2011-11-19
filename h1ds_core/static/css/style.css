@@ -706,6 +706,9 @@ table.data {
     margin-bottom: 30px;
 }
 
+table.side-table {
+    width: 100%;
+}
 
 /* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 
