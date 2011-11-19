@@ -14,7 +14,7 @@
         Allow from all
     </Location>
 
-    <Location "/trac/login">
+    <Location "/develop/login">
         AuthType Digest
         AuthName "trac"
 	AuthDigestDomain /develop
