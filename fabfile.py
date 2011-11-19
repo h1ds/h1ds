@@ -83,9 +83,10 @@ def update():
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         env_dir = run('echo $PWD')
         project_dir = os.path.join(env_dir, env.project)
-        
-        with cd(project_dir):
-            run("git pull")
+
+    # update the h1ds dir from the repository.
+    with cd(project_dir):
+        run("git pull")
     
     # set up / refresh wiki directories.
     with cd(env_dir):
