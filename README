@@ -87,3 +87,7 @@ notes
 cd $VIRTUAL_ENV/h1ds
 ./manage.py dumpdata h1ds_summary --indent 2 --settings=h1ds.settings_development > data/summarydb.json
 
+
+for staging, apache needs mod_wsgi, and mod_auth_digest (for trac authentication)
+
+
