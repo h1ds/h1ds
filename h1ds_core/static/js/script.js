@@ -141,17 +141,21 @@ $('#masonry-container').masonry({
  });
 
 
-// start from http://jqueryui.com/demos/sortable/#portlets
+// start: adapted from http://jqueryui.com/demos/sortable/#portlets
 
 $(function() {
-    $( ".column" ).sortable({
-	connectWith: ".column"
-    });
-    $( ".column-thin" ).sortable({
-	connectWith: ".column-thin, .column-wide"
-    });
-    $( ".column-wide" ).sortable({
-	connectWith: ".column-thin, .column-wide"
+    $(".column").each(function(i) {
+	var thisColumn = this;
+	$(thisColumn).sortable({
+	    connectWith: ".column",
+	    handle: ".portlet-header",
+	    update: function(e,ui) {
+		$.cookie("sortorder"+thisColumn.id, 
+			 $(thisColumn).sortable("toArray").join(), 
+			 {path:'/'});
+	    }
+	});
+	$(thisColumn).disableSelection();
     });
 
     $( ".portlet" ).addClass( "ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" )
@@ -163,19 +167,52 @@ $(function() {
 
     $( ".portlet-header .ui-icon" ).click(function() {
 	$( this ).toggleClass( "ui-icon-minusthick" ).toggleClass( "ui-icon-plusthick" );
-	$( this ).parents( ".portlet:first" ).find( ".portlet-content" ).toggle();
+	$( this ).parents( ".portlet:first" ).find( ".portlet-content" ).toggle(
+	    $.cookie($(this).parents(".portlet:first")[0].id, 
+		     $(this).parents(".portlet:first").find(".portlet-content").is(":hidden") ? 'expanded' : 'collapsed', 
+		     {path:'/'})
+	);
     });
 
-    $( ".column" ).disableSelection();
 });
 
-// end from http://jqueryui.com/demos/sortable/#portlets
+// end: adapted from http://jqueryui.com/demos/sortable/#portlets
 
+
+function loadCookie() {
+
+    // loop through all columns...
+    $('.column').each(function(i) {
+	var cookieItem = $.cookie("sortorder"+this.id);
+	var thisColumn = this;
+	if (cookieItem) {
+	    $(cookieItem.split(',')).each(function (i, id) {
+		$("#"+id).appendTo(thisColumn);
+	    });
+	}
+	$(this).sortable('options');
+    });
+
+    // also load toggle states
+
+    // find all portlet ids...
+    $('.portlet').each(function(i) {
+	var thisCookie = $.cookie(this.id);
+	if (thisCookie) {
+	    if (thisCookie === 'collapsed') {
+		$( this ).find('.ui-icon').toggleClass( "ui-icon-minusthick" ).toggleClass( "ui-icon-plusthick" );
+		$(this).find(".portlet-content").hide();
+	    }
+	}
+    });
+
+}
 
 $(document).ready(function() {
     updateLatestShot();
-    autoUpdateLatestShot();
-    autoUpdateEvents();
+    // autoUpdateLatestShot();
+    // autoUpdateEvents();
+    loadCookie();
     data = plotSignals();
     var shot=$('#mds-nav-shot').text();
     var tree=$('#mds-nav-treename').text();

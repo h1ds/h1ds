@@ -627,13 +627,99 @@ div.warning {
     background: #ffdddd;
 }
 
+span.left {
+    float:left;
+}
+
+span.right {
+    float:right;
+}
+
+#mds-shot-previous {
+    width:33%;
+    display:inline;
+    float:left;
+}
+
+#mds-shot-previous form {
+    display:inline;
+}
+
+#mds-shot-current {
+    width:33%;
+    float:left;
+    text-align:center;
+}
+#mds-shot-next {
+    width:32%;
+    float:right;
+}
+
+#mds-shot-next form {
+    display:inline;
+    float:right;
+}
+
+
+
+.sidebarcontent {
+    margin: 0.2em 0;
+    padding: 0.3em;
+    overflow:hidden;
+    color:#555;
+}
+
+table.main-table {
+    width:100%;
+}
+
+table.main-table th {
+    text-align:center;
+    border-style:solid;
+    border-width:1px;
+    border-color:#eee;
+    margin: 0.2em 0;
+    padding: 0.5em;
+    background: #eee;
+}
+
+table.main-table td {
+    text-align:center;
+    border-style:solid;
+    border-width:1px;
+    border-color:#eee;
+    margin: 0.2em 0;
+    padding: 0.5em;
+
+}
+
+
+table.data {
+    text-align: left;
+    color: #404040;
+    width: 100%;
+    background-color: #FAFAFA;
+    border: 1px #69C solid;
+    border-collapse: collapse;
+    border-spacing: 0px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+
 /* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 
    ============================================================ */
 
-.column { width: 33%; float: left; padding-bottom: 100px; }
+.column { float: left; padding-bottom: 100px; }
+.w20 { width: 20%}
+.w40 { width: 40%}
+.w60 { width: 60%}
+.w80 { width: 80%}
+.w100 { width: 100%}
 .column-thin { width: 20%; float: left; padding-bottom: 100px; }
 .column-wide { width: 60%; float: left; padding-bottom: 100px; }
+.column-wide-plus-thin { width: 80%; float: left; padding-bottom: 100px; }
 .portlet { margin: 0 1em 1em 0; }
 .portlet-header { margin: 0.3em; padding-bottom: 4px; padding-left: 0.2em; }
 .portlet-header .ui-icon { float: right; }
