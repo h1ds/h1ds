@@ -144,6 +144,7 @@ $('#masonry-container').masonry({
 // start: adapted from http://jqueryui.com/demos/sortable/#portlets
 
 $(function() {
+
     $(".column").each(function(i) {
 	var thisColumn = this;
 	$(thisColumn).sortable({
@@ -155,7 +156,8 @@ $(function() {
 			 {path:'/'});
 	    }
 	});
-	$(thisColumn).disableSelection();
+	// this breaks input forms in firefox..
+	// $(thisColumn).disableSelection();
     });
 
     $( ".portlet" ).addClass( "ui-widget ui-widget-content ui-helper-clearfix ui-corner-all" )
