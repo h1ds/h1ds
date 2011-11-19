@@ -6,7 +6,7 @@
     WSGIPassAuthorization On
     
     WSGIScriptAlias /wiki __venv_dir__/h1ds/conf/apache/moin_staging.wsgi/
-
+    WSGIScriptAlias /develop __venv_dir__/h1ds/conf/apache/trac_staging.wsgi/
     WSGIScriptAlias / __venv_dir__/h1ds/conf/apache/h1ds_staging.wsgi/
     
     <Location "/">
