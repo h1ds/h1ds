@@ -53,7 +53,7 @@ def production():
         # assume Arch linux
         env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.user = "datasys"
-    env.hosts = ['h1svr']
+    env.hosts = ['h1svr.anu.edu.au']
     env.server_user = 'www-data'
     env.server_group = 'www-data'
 
