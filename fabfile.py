@@ -82,7 +82,8 @@ def update():
     
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         env_dir = run('echo $PWD')
-        project_dir = os.path.join(env_dir, '%(project)s' %env)
+        project_dir = os.path.join(env_dir, env.project)
+        
         with cd(project_dir):
             run("git pull")
     
