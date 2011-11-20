@@ -120,19 +120,10 @@ def update():
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
             # run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
 
-        if not os.path.exists(os.path.join(env_dir, 'trac')):            
-            run('trac-admin trac initenv')
-            if env.environment != "development":
-                # we assume we have an apache configuration for staging and production environments.
-                print("Add admin user for Trac.")
-                run('htdigest -c trac.htpasswd trac admin')
-            
     # Now that we have finished making changes to the database, change the permissions back
     # to those appropriate for the server.
     with cd(env_dir):
         sudo('chown -R %(server_user)s:%(server_group)s db' %env)
-        # also make sure that the trac folder has permissions for the server.
-        sudo('chown -R %(server_user)s:%(server_group)s trac trac.htpasswd' %env)
 
 
     # TODO: shouldn't need to treat environs differently here....
