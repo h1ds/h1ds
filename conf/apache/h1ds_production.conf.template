@@ -6,7 +6,6 @@
     WSGIPassAuthorization On
     
     WSGIScriptAlias /wiki __venv_dir__/h1ds/conf/apache/moin_production.wsgi/
-    WSGIScriptAlias /develop __venv_dir__/h1ds/conf/apache/trac_production.wsgi/
     WSGIScriptAlias / __venv_dir__/h1ds/conf/apache/h1ds_production.wsgi/
 
     <Location "/">
@@ -14,14 +13,6 @@
         Allow from all
     </Location>
 
-    <Location "/develop/login">
-        AuthType Digest
-        AuthName "trac"
-	AuthDigestDomain /develop
-	AuthUserFile __venv_dir__/trac.htpasswd
-	Require valid-user
-    </Location>
-    
     <Location "/static">
         SetHandler None
     </Location>
