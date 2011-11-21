@@ -18,3 +18,4 @@ celery
 local_settings.py
 
 conf/apache/h1ds_staging.conf
+conf/apache/h1ds_production.conf
