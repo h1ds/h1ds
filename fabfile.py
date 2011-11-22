@@ -103,7 +103,7 @@ def update():
     # when subsequent commands are run as a normal user.
 
     with cd(env_dir):
-        sudo('chown -R %s:%s db' %(os.getuid(), os.getgid()))
+        sudo('chown -R --reference=$PWD db')
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with prefix('cd %(project)s' %env):
