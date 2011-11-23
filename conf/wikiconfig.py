@@ -85,8 +85,8 @@ class Config(multiconfig.DefaultConfig):
     # For no logo or text, use '' - the default is to show the sitename.
     # See also url_prefix setting below!
     # logo_string = u'<img src="%s/common/moinmoin.png" alt="MoinMoin Logo">' % url_prefix_static
-    logo_string = u'<img src="/media/img/h1nflogo_tiny.png" alt="H-1NF Logo">'
-    logo_url = u'http://h1svr.anu.edu.au'
+    logo_string = u''
+    logo_url = u''
 
     # name of entry page / front page [Unicode], choose one of those:
 

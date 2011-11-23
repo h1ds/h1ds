@@ -58,7 +58,7 @@ def staging():
         env.server_group = 'http'
 
 def production():
-    """h1svr with apache."""
+    """server with apache."""
     env.environment = 'production'
     if platform.linux_distribution()[0] == 'Ubuntu':
         env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
