@@ -1,4 +1,6 @@
 # Django settings for h1ds project.
+# Any of these settings can be overridden in 
+# settings_(development|staging|production).py
 
 import os
 import djcelery
@@ -90,6 +92,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
+# Be sure to override this setting in settings_production.py
 SECRET_KEY = 'p=5!o!*$hyfr*8ja=e1@s!n54%jofr2xhf%egs(=-97%79v8_4'
 
 # List of callables that know how to import templates from various sources.
@@ -167,16 +170,14 @@ LOGGING = {
 
 djcelery.setup_loader()
 
-H1DS_MDSPLUS_NODE_BLACKLIST = (
-    "\\H1DATA::TOP.OPERATIONS.MAGNETSUPPLY:VPATCH_10",
-    )
+# Any MDSPlus nodes to ignore (e.g. if they crash the server...)
+H1DS_MDSPLUS_NODE_BLACKLIST = []
 
 # Extra links to be displayed in the header and on the frontpage.
 # Syntax: (name, url, description)
 H1DS_EXTRA_SUBLINKS = (
-    ("Wiki", "/wiki", "H1 documentation wiki"),
+    ("Wiki", "/wiki", "Documentation wiki"),
     ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"),
-    ("Code", "http://code.h1svr.anu.edu.au", "H1 code repository"),
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -188,7 +189,3 @@ OPENID_CREATE_USERS = True
 LOGIN_URL = '/openid/login'
 LOGIN_REDIRECT_URL = '/'
 
-try:
-    from h1ds.local_settings import SECRET_KEY
-except:
-    pass

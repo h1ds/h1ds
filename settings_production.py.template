@@ -2,6 +2,8 @@ from h1ds.settings import *
 
 DEBUG = False
 
+SECRET_KEY = '***ChangeMeToSomethingUnique***'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
