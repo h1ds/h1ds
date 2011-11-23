@@ -1,10 +1,12 @@
 from h1ds.settings import *
 
-DEBUG = True
+DEBUG = False
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'h1ds_development.db'
+        'NAME': os.path.join(VENV_DIR, 'db', 'h1ds_production.db')
             }
     }
+
+VERBOSE=0
