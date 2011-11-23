@@ -50,7 +50,7 @@ class H1DSFooterNode(template.Node):
             try:
                 app_module =  __import__('.'.join([app, 'version']), globals(), locals(), [])
                 app_urls = app_module.version.get_module_urls()
-                app_strings.append('<a href="%s"><strong>%s</strong></a> %s (<a href="%s">[bug/feature request]</a>)' %(app_urls[0], app, app_module.version.get_version()), app_urls[1])
+                app_strings.append('<a href="%s"><strong>%s</strong></a> %s (<a href="%s">[bug/feature request]</a>)' %(app_urls[0], app, app_module.version.get_version(), app_urls[1]))
             except:
                 app_strings.append("<strong>%s</strong>" %app)
         return '<p>%s</p>' %" &middot; ".join(app_strings)
