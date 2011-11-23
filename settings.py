@@ -132,7 +132,6 @@ INSTALLED_APPS = (
     'django_openid_auth',
     'h1ds_mdsplus',
     'h1ds_summary',
-    'h1ds_configdb',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
