@@ -19,3 +19,11 @@ local_settings.py
 
 conf/apache/h1ds_staging.conf
 conf/apache/h1ds_production.conf
+
+# ignore files with custom settings
+# the templates for these files are kept in the repo
+# but not the customised versions.
+fabfile.py
+settings_development.py
+settings_staging.py
+settings_production.py
