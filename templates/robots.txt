@@ -1,0 +1,10 @@
+#
+# robots.txt for H1DS 
+#
+
+# Don't let robots trawl through data system.
+# There's no benefit to search engines in going though
+# the databases, and they put a heavy load on the server.
+User-agent: *
+Disallow: /mdsplus
+Disallow: /summary
