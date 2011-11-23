@@ -26,6 +26,9 @@ def git_sha():
 
 VERSION = (0, 8, 5, 'alpha', 0)
 
+def get_module_urls():
+    return ("https://code.h1svr.anu.edu.au/projects/h1ds-core", "https://code.h1svr.anu.edu.au/projects/h1ds-core/issues/new", )
+
 def get_version(form='short'):
     """
     Return a version string for this package, based on `VERSION`.
