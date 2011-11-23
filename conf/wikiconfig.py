@@ -30,6 +30,7 @@ import os
 from MoinMoin.config import multiconfig, url_prefix_static
 from h1ds.djangoAuth import DjangoAuth
 from MoinMoin.datastruct import ConfigGroups
+from django.conf import settings as django_settings
 
 class Config(multiconfig.DefaultConfig):
     ## django Authenticaion
@@ -41,7 +42,7 @@ class Config(multiconfig.DefaultConfig):
     cookie_lifetime = (12, 12)   # (anonymous,logged-in) default (0,12)  page trails for anonymous users moin 1.9
 
     def groups(self, request):
-        groups = self.auth[0].get_django_groups(['EditorGroup'])
+        groups = self.auth[0].get_django_groups(django_settings.WIKI_EDITOR_GROUPS)
         return ConfigGroups(request, groups)
 
 
@@ -107,14 +108,15 @@ class Config(multiconfig.DefaultConfig):
     # This is checked by some rather critical and potentially harmful actions,
     # like despam or PackageInstaller action:
     #superuser = [u"YourName", ]
-    superuser = [u"BoydBlackwell", "DavidPretty", "FentonGlass"]
+    superuser = django_settings.WIKI_SUPERUSERS
 
     # IMPORTANT: grant yourself admin rights! replace YourName with
     # your user name. See HelpOnAccessControlLists for more help.
     # All acl_rights_xxx options must use unicode [Unicode]
     #acl_rights_before = u"YourName:read,write,delete,revert,admin"
 
-    acl_rights_before = u"BoydBlackwell:read,write,delete,revert,admin DavidPretty:read,write,delete,revert,admin FentonGlass:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
+    acl_rights_before = django_settings.WIKI_ACL_RIGHTS_BEFORE
+
     # The default (ENABLED) password_checker will keep users from choosing too
     # short or too easy passwords. If you don't like this and your site has
     # rather low security requirements, feel free to DISABLE the checker by:

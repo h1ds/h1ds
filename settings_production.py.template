@@ -10,3 +10,14 @@ DATABASES = {
     }
 
 VERBOSE=0
+
+########################################################################
+## Wiki settings                                                      ##
+########################################################################
+
+WIKI_EDITOR_GROUPS = [u"EditorGroup", ]
+# Include MyUsername with users who should have admin rights
+# in the wiki. Please use CamelCase for all usernames.
+WIKI_SUPERUSERS = [u"MyUsername", ]
+WIKI_ACL_RIGHTS_BEFORE = u"MyUsername:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
+
