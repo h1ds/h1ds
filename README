@@ -47,6 +47,8 @@ $ cp settings_development.py{.template,}
 # make any edits to settings_development.py
 $ fab dev update
 
+you'll probably want to copy your fabfile.py across to your development environment so you can use fab dev update from there later on. (as well as setting up and updating staging and production environments from your development environment)
+
 the fab initiate script should only be run once in order to set up a virtual environment, the deploy script can be run multiple times, and should be run after any changes are made to the code.
 
 now move across to your development environment
