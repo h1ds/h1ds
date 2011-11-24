@@ -101,12 +101,19 @@ def update():
     # environment, and that it exists in the same directory as this file.
     # We'll attempt to copy it to the virtual environment, and abort if the copy fails.
     settings_filename = "settings_%(environment)s.py" %env
-    try:
-        put(settings_filename, project_dir)
-    except ValueError:
-        print "Cannot copy settings file [%s] to environment. " %settings_filename
-        print "Please make sure the file exists."
-        return False
+    with cd(project_dir):
+        try:
+            env_settings_md5 = run("md5sum "+settings_filename)
+        except:
+            env_settings_md5 = "dummy_checksum"
+    local_settings_md5 = local("md5sum "+settings_filename, capture=True)
+    if env_settings_md5 != local_settings_md5:
+        try:
+    	    put(settings_filename, project_dir)
+        except ValueError:
+            print "Cannot copy settings file [%s] to environment. " %settings_filename
+            print "Please make sure the file exists."
+            return False
 
     # update the h1ds dir from the repository.
     with cd(project_dir):
