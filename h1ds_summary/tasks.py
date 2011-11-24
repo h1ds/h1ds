@@ -11,7 +11,6 @@ from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_la
 from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary import SUMMARY_TABLE_NAME, MINIMUM_SUMMARY_TABLE_SHOT
 
-import h1ds_summary.models
 from h1ds_mdsplus.utils import get_latest_shot
 
 
@@ -21,6 +20,7 @@ sync_timedelta = timedelta(minutes=1)
 #sync_timedelta = timedelta(seconds=10)
 
 def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
+    import h1ds_summary.models
     cursor=connection.cursor()
     if attributes=='all':
         attributes = h1ds_summary.models.SummaryAttribute.objects.all()
@@ -77,6 +77,7 @@ def sync_summary_table():
 
 def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
     """Update the column for all shots in the summary database."""
+    import h1ds_summary.models
     # get summary instance
     attr_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
     # get shot list

@@ -6,10 +6,9 @@ from django.db import connection, transaction
 from django.db.utils import DatabaseError
 
 from h1ds_summary import SUMMARY_TABLE_NAME
-import h1ds_summary.models 
-
 
 def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
+    import h1ds_summary.models
     attrs = h1ds_summary.models.SummaryAttribute.objects.all()
     attr_string = ",".join(("%s %s" %(a.slug, a.get_value(0)[1]) for a in attrs))
     cols = ["shot MEDIUMINT UNSIGNED PRIMARY KEY",
@@ -79,6 +78,7 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
     return shot_where
 
 def parse_attr_str(attr_str):
+    import h1ds_summary.models
     """Parse URL component corresponding to selected attributes.
 
     If attr_str is:
@@ -169,6 +169,7 @@ def get_attr_list(cursor, table=SUMMARY_TABLE_NAME):
         return [i for i in cursor.fetchall()[0][0][15+len(table):-1].split(',')]
         
 def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
+    import h1ds_summary.models
     # TODO: need to get dtype from data source...
     cursor = connection.cursor()
 
