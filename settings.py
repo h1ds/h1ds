@@ -190,3 +190,7 @@ LOGIN_REDIRECT_URL = '/'
 
 # Customise this in your settings_(development|staging|production).py
 DEFAULT_MDS_TREE = "DefaultTree"
+# list of extra mds trees to load into environment
+# each entry should be a (name, path), for example
+# EXTRA_MDS_TREES = [('extratree1', 'mdsserver::'), ('anothertree', '/data/tree'),]
+EXTRA_MDS_TREES = []
