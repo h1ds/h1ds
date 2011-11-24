@@ -97,6 +97,8 @@ def update():
         env_dir = run('echo $PWD')
         project_dir = os.path.join(env_dir, env.project)
 
+    env.test_mds_dir = os.path.join(env_dir, 'test_mds_data')
+
     # We assume the user has created the settings file for the requested 
     # environment, and that it exists in the same directory as this file.
     # We'll attempt to copy it to the virtual environment, and abort if the copy fails.
@@ -149,6 +151,7 @@ def update():
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            run("./manage.py createtree %(test_mds_dir)s --settings=%(settings)s" % env)
 
     # Now that we have finished making changes to the database, change the permissions back
     # to those appropriate for the server.
