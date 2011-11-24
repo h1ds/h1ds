@@ -188,3 +188,5 @@ OPENID_CREATE_USERS = True
 LOGIN_URL = '/openid/login'
 LOGIN_REDIRECT_URL = '/'
 
+# Customise this in your settings_(development|staging|production).py
+DEFAULT_MDS_TREE = "DefaultTree"
