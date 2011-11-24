@@ -2,16 +2,14 @@
 
 import os
 from datetime import datetime
+import MDSplus
 
-from h1ds_mdsplus.models import MDSPlusTree
 from h1ds_summary.attributes import AttributeScript
 
 class H1DataAttributeScript(AttributeScript):
     def __init__(self, shot):
         super(H1DataAttributeScript, self).__init__(shot)
-        h1data_model = MDSPlusTree.objects.get(name__iexact='h1data')
-        self.t = h1data_model.get_tree(self.shot)
-
+        self.t = MDSplus.Tree('h1data', self.shot)
 
 class Kappa(H1DataAttributeScript):
     """Base class for kappa_h, v..."""
