@@ -93,14 +93,10 @@ function formatDataForPlots(data) {
 } // end formatDataForPlots
 
 function plotSignals() {
-    // TODO: there is a neater way (though perhaps not any quicker) to manipulate URL query strings...
-    if (window.location.search.length) {
-	var query_join_char = '&';
-    } else {
-	var query_join_char = '?';
-    }
-    var new_query = window.location.search + query_join_char + 'view=json&f999_name=resample_minmax&f999_arg1=600';
-    
+    // TODO: resample to window width - no longer fixed to 600px.
+    var query_char = window.location.search.length ? '&' : '?';
+    var new_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1=600';
+
     $.get(
 	new_query,
 	function (data) {
@@ -111,7 +107,8 @@ function plotSignals() {
 	    
 	    $("#signal-placeholder").bind("plotselected", function (event, ranges) {
 		// do the zooming
-		var new_query = window.location.search + query_join_char + 'view=json&f980_name=dim_range&f980_arg1='+ranges.xaxis.from+'&f980_arg2='+ranges.xaxis.to+'&f990_name=resample_minmax&f990_arg1=600';
+		// TODO: resample to window width - no longer fixed to 600px.
+		var new_query = window.location.search + query_char + 'view=json&f980_name=dim_range&f980_arg1='+ranges.xaxis.from+'&f980_arg2='+ranges.xaxis.to+'&f990_name=resample_minmax&f990_arg1=600';
 		$.get(new_query, function(newdata) {
 		    var new_d = formatDataForPlots(newdata);
 		    
