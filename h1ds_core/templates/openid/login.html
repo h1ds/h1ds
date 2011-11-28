@@ -11,6 +11,9 @@
 <br/>
 <form name="fopenid" action="/openid/login/" method="post">{% csrf_token %}
     <input id="id_openid_identifier" type="hidden" class="required openid" name="openid_identifier" maxlength="255" value="https://www.google.com/accounts/o8/id"/>
+ {% if next %}
+        <input type="hidden" name="next" value="{{ next }}" />
+ {% endif %}
             <input name="bsignin" type="submit" value="sign in with your Google ID"></form>
 
 <br/>
@@ -38,12 +41,12 @@
             <label for="id_openid_identifier">OpenID:</label><br />
             {{ form.openid_identifier }}
         </div>
-        <div class="submit-row ">
-            <input name="bsignin" type="submit" value="Sign in">
-        </div>
  {% if next %}
         <input type="hidden" name="next" value="{{ next }}" />
  {% endif %}
+        <div class="submit-row ">
+            <input name="bsignin" type="submit" value="Sign in">
+        </div>
     </fieldset>
 </form>
 

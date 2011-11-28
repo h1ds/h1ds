@@ -24,7 +24,7 @@
       <div class="fixed-centre">
 	<div id="loginlinks">
 	  {% if user.is_authenticated %}{{ user.username }} // <a href="/user/settings/{{user.username}}">settings</a> // <a href="{% url h1ds-logout %}">log out</a> 
-	  {% else %}<a href="/openid/login">log in</a>
+	  {% else %}<a href="/openid/login?next={{ request.get_full_path }}">log in</a>
 	  {% endif %}
 	</div>
 	{% h1ds_header %}
