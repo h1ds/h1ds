@@ -92,67 +92,67 @@ function formatDataForPlots(data) {
     }
 } // end formatDataForPlots
 
-function plotSignals() {
-    // if n_signals > n_signals_limit then the signal will be displayed as in image rather than traces.
-    var n_signals_limit = 1
+function plotSignal1D() {
     var query_char = window.location.search.length ? '&' : '?';
-    var plot_width = $("#signal-placeholder").width();
-    
+    var placeholder = $("#signal-1d-placeholder");
+    var overview = $("#signal-1d-overview");    
+    var plot_width = placeholder.width();    
     var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+plot_width;
-    var image_query = window.location.search + query_char + 'view=png';
-
-    $.getJSON(window.location.search + query_char + 'view=json&f999_name=n_signals',
-	      function(data) {
-		  dataReady(data.data);
-	      }); 
-
-    function dataReady(n_signals) {
-	if (n_signals > n_signals_limit) { // plot as image
-	    var data = [ [ [image_query, 0, 0, 200, 200] ] ];
-	    var options = {
-		series: { images: { show: true } },
-		xaxis: { min: 0, max: 200 },
-		yaxis: { min: 0, max: 200 }
-	    };
-
-	    $.plot.image.loadDataImages(data, options, function () {
-		$.plot($("#signal-placeholder"), data, options);
+    $.get(
+	trace_query,
+	function (data) {
+	    var dataset = formatDataForPlots(data);
+	    var options = {selection:{mode:"x"}};
+	    var sigplot = $.plot(placeholder,  dataset, options  );
+	    var overviewplot = $.plot(overview,  dataset , options  );
+	    
+	    placeholder.bind("plotselected", function (event, ranges) {
+		// do the zooming
+		var new_query = window.location.search + query_char + 'view=json&f980_name=dim_range&f980_arg1='+ranges.xaxis.from+'&f980_arg2='+ranges.xaxis.to+'&f990_name=resample_minmax&f990_arg1='+plot_width;
+		$.get(new_query, function(newdata) {
+		    var new_d = formatDataForPlots(newdata);
+		    
+		    sigplot = $.plot(placeholder, new_d, options);
+		    
+		});
+		
+		// don't fire event on the overview to prevent eternal loop
+		overviewplot.setSelection(ranges, true);
 	    });
-	}
-	else { // plot as traces
-	    $.get(
-		trace_query,
-		function (data) {
-		    var dataset = formatDataForPlots(data);
-		    var options = {selection:{mode:"x"}};
-		    var sigplot = $.plot($("#signal-placeholder"),  dataset, options  );
-		    var overviewplot = $.plot($("#signal-overview"),  dataset , options  );
-		    
-		    $("#signal-placeholder").bind("plotselected", function (event, ranges) {
-			// do the zooming
-			var new_query = window.location.search + query_char + 'view=json&f980_name=dim_range&f980_arg1='+ranges.xaxis.from+'&f980_arg2='+ranges.xaxis.to+'&f990_name=resample_minmax&f990_arg1='+plot_width;
-			$.get(new_query, function(newdata) {
-			    var new_d = formatDataForPlots(newdata);
-			    
-			    sigplot = $.plot($("#signal-placeholder"), new_d, options);
-			    
-			});
-			
-			// don't fire event on the overview to prevent eternal loop
-			overviewplot.setSelection(ranges, true);
-		    });
-		    
-		    $("#signal-overview").bind("plotselected", function (event, ranges) {
-			sigplot.setSelection(ranges);
-		    });
-		},
-		'json'
-	    );
-	}
-    }
+	    
+	    overview.bind("plotselected", function (event, ranges) {
+		sigplot.setSelection(ranges);
+	    });
+	},
+	'json'
+    );
 }
 
+function plotSignal2D() {
+    var query_char = window.location.search.length ? '&' : '?';
+    var placeholder = $("#signal-2d-placeholder");
+    var plot_width = placeholder.width();    
+    var plot_height = placeholder.height();    
+    var image_query = window.location.search + query_char + 'view=png';
+    var shape_query = window.location.search + query_char + 'view=json&f999_name=shape';
 
+    $.getJSON(shape_query, dataReady);
+
+    function dataReady(signal_shape) {
+	var aspect = (signal_shape.columns / signal_shape.rows);
+	placeholder.height( plot_width * aspect );
+	var data = [ [ [image_query, 0, 0, signal_shape.columns, signal_shape.rows] ] ];
+	var options = {
+	    series: { images: { show: true } },
+	    xaxis: { min: 0, max: signal_shape.columns },
+	    yaxis: { min: 0, max: signal_shape.rows }
+	};
+	
+	$.plot.image.loadDataImages(data, options, function () {
+	    $.plot(placeholder, data, options);
+	});
+    }
+}
 
 $('#masonry-container').masonry({
      itemSelector: '.mbox',
@@ -230,7 +230,7 @@ function loadCookie() {
 }
 
 $(document).ready(function() {
-    updateLatestShot();
+    // updateLatestShot();
     // autoUpdateLatestShot();
     // autoUpdateEvents();
     loadCookie();
@@ -239,8 +239,14 @@ $(document).ready(function() {
     $(".mds-node-item").each(function() {
 	populateMDSNav(tree, shot, $(this));
     });
-    if ($("#signal-placeholder").length) {
-	data = plotSignals();
+    if ($("#signal-1d-placeholder").length) {
+	data = plotSignal1D();
+    }
+    if ($("#signal-2d-placeholder").length) {
+	data = plotSignal2D();
+    }
+    if ($("#signal-3d-placeholder").length) {
+	data = plotSignal3D();
     }
 
 });
