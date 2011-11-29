@@ -3272,6 +3272,7 @@ range, so 1 is 100% (i.e. no change), 1.5 is 150% (zoom in), 0.7 is
 */
 
 
+
 // First two dependencies, jquery.event.drag.js and
 // jquery.mousewheel.js, we put them inline here to save people the
 // effort of downloading them.
@@ -3281,6 +3282,8 @@ jquery.event.drag.js ~ v1.5 ~ Copyright (c) 2008, Three Dub Media (http://threed
 Licensed under the MIT License ~ http://threedubmedia.googlecode.com/files/MIT-LICENSE.txt
 */
 (function(E){E.fn.drag=function(L,K,J){if(K){this.bind("dragstart",L)}if(J){this.bind("dragend",J)}return !L?this.trigger("drag"):this.bind("drag",K?K:L)};var A=E.event,B=A.special,F=B.drag={not:":input",distance:0,which:1,dragging:false,setup:function(J){J=E.extend({distance:F.distance,which:F.which,not:F.not},J||{});J.distance=I(J.distance);A.add(this,"mousedown",H,J);if(this.attachEvent){this.attachEvent("ondragstart",D)}},teardown:function(){A.remove(this,"mousedown",H);if(this===F.dragging){F.dragging=F.proxy=false}G(this,true);if(this.detachEvent){this.detachEvent("ondragstart",D)}}};B.dragstart=B.dragend={setup:function(){},teardown:function(){}};function H(L){var K=this,J,M=L.data||{};if(M.elem){K=L.dragTarget=M.elem;L.dragProxy=F.proxy||K;L.cursorOffsetX=M.pageX-M.left;L.cursorOffsetY=M.pageY-M.top;L.offsetX=L.pageX-L.cursorOffsetX;L.offsetY=L.pageY-L.cursorOffsetY}else{if(F.dragging||(M.which>0&&L.which!=M.which)||E(L.target).is(M.not)){return }}switch(L.type){case"mousedown":E.extend(M,E(K).offset(),{elem:K,target:L.target,pageX:L.pageX,pageY:L.pageY});A.add(document,"mousemove mouseup",H,M);G(K,false);F.dragging=null;return false;case !F.dragging&&"mousemove":if(I(L.pageX-M.pageX)+I(L.pageY-M.pageY)<M.distance){break}L.target=M.target;J=C(L,"dragstart",K);if(J!==false){F.dragging=K;F.proxy=L.dragProxy=E(J||K)[0]}case"mousemove":if(F.dragging){J=C(L,"drag",K);if(B.drop){B.drop.allowed=(J!==false);B.drop.handler(L)}if(J!==false){break}L.type="mouseup"}case"mouseup":A.remove(document,"mousemove mouseup",H);if(F.dragging){if(B.drop){B.drop.handler(L)}C(L,"dragend",K)}G(K,true);F.dragging=F.proxy=M.elem=false;break}return true}function C(M,K,L){M.type=K;var J=E.event.handle.call(L,M);return J===false?false:J||M.result}function I(J){return Math.pow(J,2)}function D(){return(F.dragging===false)}function G(K,J){if(!K){return }K.unselectable=J?"off":"on";K.onselectstart=function(){return J};if(K.style){K.style.MozUserSelect=J?"":"none"}}})(jQuery);
+
+
 
 
 /* jquery.mousewheel.min.js
@@ -3695,3 +3698,9 @@ jQuery.cookie = function (key, value, options) {
     var result, decode = options.raw ? function (s) { return s; } : decodeURIComponent;
     return (result = new RegExp('(?:^|; )' + encodeURIComponent(key) + '=([^;]*)').exec(document.cookie)) ? decode(result[1]) : null;
 };
+
+/*
+ * Flot image module.
+ */
+
+(function(c){var a={series:{images:{show:false,alpha:1,anchor:"corner"}}};c.plot.image={};c.plot.image.loadDataImages=function(g,f,k){var j=[],h=[];var i=f.series.images.show;c.each(g,function(l,m){if(!(i||m.images.show)){return}if(m.data){m=m.data}c.each(m,function(n,o){if(typeof o[0]=="string"){j.push(o[0]);h.push(o)}})});c.plot.image.load(j,function(l){c.each(h,function(n,o){var m=o[0];if(l[m]){o[0]=l[m]}});k()})};c.plot.image.load=function(h,i){var g=h.length,f={};if(g==0){i({})}c.each(h,function(k,j){var l=function(){--g;f[j]=this;if(g==0){i(f)}};c("<img />").load(l).error(l).attr("src",j)})};function d(q,o,l){var m=q.getPlotOffset();if(!l.images||!l.images.show){return}var r=l.datapoints.points,n=l.datapoints.pointsize;for(var t=0;t<r.length;t+=n){var y=r[t],w=r[t+1],g=r[t+2],v=r[t+3],f=r[t+4],h=l.xaxis,u=l.yaxis,x;if(!y||y.width<=0||y.height<=0){continue}if(w>v){x=v;v=w;w=x}if(g>f){x=f;f=g;g=x}if(l.images.anchor=="center"){x=0.5*(v-w)/(y.width-1);w-=x;v+=x;x=0.5*(f-g)/(y.height-1);g-=x;f+=x}if(w==v||g==f||w>=h.max||v<=h.min||g>=u.max||f<=u.min){continue}var k=0,s=0,j=y.width,p=y.height;if(w<h.min){k+=(j-k)*(h.min-w)/(v-w);w=h.min}if(v>h.max){j+=(j-k)*(h.max-v)/(v-w);v=h.max}if(g<u.min){p+=(s-p)*(u.min-g)/(f-g);g=u.min}if(f>u.max){s+=(s-p)*(u.max-f)/(f-g);f=u.max}w=h.p2c(w);v=h.p2c(v);g=u.p2c(g);f=u.p2c(f);if(w>v){x=v;v=w;w=x}if(g>f){x=f;f=g;g=x}x=o.globalAlpha;o.globalAlpha*=l.images.alpha;o.drawImage(y,k,s,j-k,p-s,w+m.left,g+m.top,v-w,f-g);o.globalAlpha=x}}function b(i,f,g,h){if(!f.images.show){return}h.format=[{required:true},{x:true,number:true,required:true},{y:true,number:true,required:true},{x:true,number:true,required:true},{y:true,number:true,required:true}]}function e(f){f.hooks.processRawData.push(b);f.hooks.drawSeries.push(d)}c.plot.plugins.push({init:e,options:a,name:"image",version:"1.1"})})(jQuery);

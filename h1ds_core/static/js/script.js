@@ -99,7 +99,7 @@ function plotSignals() {
     var plot_width = $("#signal-placeholder").width();
     
     var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+plot_width;
-    var image_query = window.location.search + query_char + 'view=json';
+    var image_query = window.location.search + query_char + 'view=png';
 
     $.getJSON(window.location.search + query_char + 'view=json&f999_name=n_signals',
 	      function(data) {
@@ -108,7 +108,16 @@ function plotSignals() {
 
     function dataReady(n_signals) {
 	if (n_signals > n_signals_limit) { // plot as image
-	    console.log('image');
+	    var data = [ [ [image_query, 0, 0, 200, 200] ] ];
+	    var options = {
+		series: { images: { show: true } },
+		xaxis: { min: 0, max: 200 },
+		yaxis: { min: 0, max: 200 }
+	    };
+
+	    $.plot.image.loadDataImages(data, options, function () {
+		$.plot($("#signal-placeholder"), data, options);
+	    });
 	}
 	else { // plot as traces
 	    $.get(
