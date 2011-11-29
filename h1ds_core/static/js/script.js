@@ -234,7 +234,6 @@ $(document).ready(function() {
     // autoUpdateLatestShot();
     // autoUpdateEvents();
     loadCookie();
-    data = plotSignals();
     var shot=$('#mds-nav-shot').text();
     var tree=$('#mds-nav-treename').text();
     $(".mds-node-item").each(function() {
