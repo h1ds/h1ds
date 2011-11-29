@@ -93,40 +93,54 @@ function formatDataForPlots(data) {
 } // end formatDataForPlots
 
 function plotSignals() {
+    // if n_signals > n_signals_limit then the signal will be displayed as in image rather than traces.
+    var n_signals_limit = 1
     var query_char = window.location.search.length ? '&' : '?';
     var plot_width = $("#signal-placeholder").width();
-    var new_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+plot_width;
+    
+    var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+plot_width;
+    var image_query = window.location.search + query_char + 'view=json';
 
-    $.get(
-	new_query,
-	function (data) {
-	    var dataset = formatDataForPlots(data);
-	    var options = {selection:{mode:"x"}};
-	    var sigplot = $.plot($("#signal-placeholder"),  dataset, options  );
-	    var overviewplot = $.plot($("#signal-overview"),  dataset , options  );
-	    
-	    $("#signal-placeholder").bind("plotselected", function (event, ranges) {
-		// do the zooming
-		var new_query = window.location.search + query_char + 'view=json&f980_name=dim_range&f980_arg1='+ranges.xaxis.from+'&f980_arg2='+ranges.xaxis.to+'&f990_name=resample_minmax&f990_arg1='+plot_width;
-		$.get(new_query, function(newdata) {
-		    var new_d = formatDataForPlots(newdata);
+    $.getJSON(window.location.search + query_char + 'view=json&f999_name=n_signals',
+	      function(data) {
+		  dataReady(data.data);
+	      }); 
+
+    function dataReady(n_signals) {
+	if (n_signals > n_signals_limit) { // plot as image
+	    console.log('image');
+	}
+	else { // plot as traces
+	    $.get(
+		trace_query,
+		function (data) {
+		    var dataset = formatDataForPlots(data);
+		    var options = {selection:{mode:"x"}};
+		    var sigplot = $.plot($("#signal-placeholder"),  dataset, options  );
+		    var overviewplot = $.plot($("#signal-overview"),  dataset , options  );
 		    
-		    sigplot = $.plot($("#signal-placeholder"), new_d, options);
+		    $("#signal-placeholder").bind("plotselected", function (event, ranges) {
+			// do the zooming
+			var new_query = window.location.search + query_char + 'view=json&f980_name=dim_range&f980_arg1='+ranges.xaxis.from+'&f980_arg2='+ranges.xaxis.to+'&f990_name=resample_minmax&f990_arg1='+plot_width;
+			$.get(new_query, function(newdata) {
+			    var new_d = formatDataForPlots(newdata);
+			    
+			    sigplot = $.plot($("#signal-placeholder"), new_d, options);
+			    
+			});
+			
+			// don't fire event on the overview to prevent eternal loop
+			overviewplot.setSelection(ranges, true);
+		    });
 		    
-		});
-		
-		// don't fire event on the overview to prevent eternal loop
-		overviewplot.setSelection(ranges, true);
-	    });
-	    
-	    $("#signal-overview").bind("plotselected", function (event, ranges) {
-		sigplot.setSelection(ranges);
-	    });
-	    
-	    
-	},
-	'json'
-    );
+		    $("#signal-overview").bind("plotselected", function (event, ranges) {
+			sigplot.setSelection(ranges);
+		    });
+		},
+		'json'
+	    );
+	}
+    }
 }
 
 
