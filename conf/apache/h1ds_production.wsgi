@@ -18,6 +18,9 @@ for dir in os.listdir(os.path.join(PROJECT_ROOT, 'lib')):
     if dir.startswith('python'):
        site.addsitedir(os.path.join(PROJECT_ROOT, 'lib', dir, 'site-packages'))
        
+# matplotlib conf dir
+os.environ["MPLCONFIGDIR"] = os.path.join(PROJECT_ROOT, 'serverfiles')
+
 sys.path.insert(0, PROJECT_ROOT)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'h1ds.settings_production'
 
