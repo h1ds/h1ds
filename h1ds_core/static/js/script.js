@@ -229,6 +229,39 @@ function loadCookie() {
 
 }
 
+
+function newplotSignal2D() {
+    // custom image manipulation for mds
+    var container  = $("#signal-2d-placeholder");
+    var query_char = window.location.search.length ? '&' : '?';
+    var image_query = window.location.search + query_char + 'view=json';
+
+    $.getJSON(image_query, dataReady);
+
+    function dataReady(signal_data) {
+	console.log(signal_data);
+	var canvas = document.createElement("canvas");
+	canvas.width = signal_data.dim[0].length;
+	canvas.height = signal_data.dim[1].length;
+	container.height(canvas.height);
+	var context = canvas.getContext('2d');
+	var imageData = context.getImageData(0,0,canvas.width, canvas.height);
+
+	for (var x = 0; x < imageData.width; x++) {
+	    for (var y = 0; y < imageData.height; y++) {
+		var index = 4 * (y * imageData.width + x);
+		var imval = 255*(signal_data.data[x][y] - signal_data.min)/(signal_data.max-signal_data.min);
+		imageData.data[index] = imval;
+		imageData.data[index + 1] = imval;
+		imageData.data[index + 2] = imval;
+		imageData.data[index + 3] = 255;
+	    }
+	}
+	context.putImageData(imageData, 0, 0);
+	container.append(canvas);
+    } // end: dataReady
+}
+
 $(document).ready(function() {
     // updateLatestShot();
     // autoUpdateLatestShot();
@@ -243,7 +276,8 @@ $(document).ready(function() {
 	data = plotSignal1D();
     }
     if ($("#signal-2d-placeholder").length) {
-	data = plotSignal2D();
+	// data = plotSignal2D();
+	newplotSignal2D();
     }
     if ($("#signal-3d-placeholder").length) {
 	data = plotSignal3D();
