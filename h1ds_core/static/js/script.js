@@ -1,6 +1,10 @@
 ﻿// Custom javascript code for H1 data system
 // David Pretty, 2010
 
+var isOdd = function(someNumber){
+    return (someNumber%2 == 0) ? false : true;
+};
+
 
 // Populate next level of mds tree navigation.
 
@@ -92,41 +96,6 @@ function formatDataForPlots(data) {
     }
 } // end formatDataForPlots
 
-function plotSignal1D() {
-    var query_char = window.location.search.length ? '&' : '?';
-    var placeholder = $("#signal-1d-placeholder");
-    var overview = $("#signal-1d-overview");    
-    var plot_width = placeholder.width();    
-    var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+plot_width;
-    $.get(
-	trace_query,
-	function (data) {
-	    var dataset = formatDataForPlots(data);
-	    var options = {selection:{mode:"x"}};
-	    var sigplot = $.plot(placeholder,  dataset, options  );
-	    var overviewplot = $.plot(overview,  dataset , options  );
-	    
-	    placeholder.bind("plotselected", function (event, ranges) {
-		// do the zooming
-		var new_query = window.location.search + query_char + 'view=json&f980_name=dim_range&f980_arg1='+ranges.xaxis.from+'&f980_arg2='+ranges.xaxis.to+'&f990_name=resample_minmax&f990_arg1='+plot_width;
-		$.get(new_query, function(newdata) {
-		    var new_d = formatDataForPlots(newdata);
-		    
-		    sigplot = $.plot(placeholder, new_d, options);
-		    
-		});
-		
-		// don't fire event on the overview to prevent eternal loop
-		overviewplot.setSelection(ranges, true);
-	    });
-	    
-	    overview.bind("plotselected", function (event, ranges) {
-		sigplot.setSelection(ranges);
-	    });
-	},
-	'json'
-    );
-}
 
 function plotSignal2D() {
     var query_char = window.location.search.length ? '&' : '?';
@@ -239,7 +208,6 @@ function newplotSignal2D() {
     $.getJSON(image_query, dataReady);
 
     function dataReady(signal_data) {
-	console.log(signal_data);
 	var canvas = document.createElement("canvas");
 	canvas.width = signal_data.dim[0].length;
 	canvas.height = signal_data.dim[1].length;
@@ -262,6 +230,206 @@ function newplotSignal2D() {
     } // end: dataReady
 }
 
+
+function getPlotWidth(id){
+    // for id selector, get with of plot and margins
+    var vis_width = $(id).width();
+    var plot_width = parseInt(0.9*vis_width);
+    var both_margins = vis_width - plot_width;
+    if (isOdd(both_margins)) {
+	plot_width -= 1;
+	both_margins += 1;
+    }
+    var margin = both_margins/2;
+    //return {'plot':plot_width, 'margin':margin}
+    var margin_left = 30;
+    var margin_right = 0;
+    return {'plot':vis_width-margin_left-margin_right, 'marginLeft':margin_left, 'marginRight':margin_right}
+}
+
+function fillPlot(data) {
+    // return a line of points from data object
+    // require data.dim, data.data=[[min,,,,], [max,,,,]]
+    
+    var d = Array(2*data.dim.length);
+
+    for( i=0; i < data.dim.length; i++){
+        d[i]=[data.dim[i],data.data[0][i]];
+        d[data.dim.length + i]=[data.dim[data.dim.length-(i+1)],data.data[1][data.dim.length-(i+1)]];
+    }
+    return d;
+}
+
+// If we have min and max signals, then we fill the area between them.
+function isMinMaxPlot(signal_data) {
+    return  (($.inArray("min", signal_data.labels) > -1) && 
+	     ($.inArray("max", signal_data.labels) > -1) && 
+	     (signal_data.labels.length == 2)) ? true : false;
+}
+
+
+
+function plotSignal1D(id) {
+    var width_data = getPlotWidth(id);
+    var query_char = window.location.search.length ? '&' : '?';
+    var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
+    var bottom_spacing = 20;
+    $.getJSON(trace_query, dataReady);
+
+    function dataReady(signal_data) {
+
+	// how far past the min and max data values should the axes plot?
+	// e.g. max y axis value = max_data + range_padding*(min_data - max_data)
+	var range_padding = 0.05;
+	// spacing between plots
+	var plot_spacing = 25;
+
+	// initially, the overview is the same as the signal data
+	var data = [{'name':'signal','data':signal_data, 'height':300},
+		    {'name':'overview','data':signal_data, 'height':100}]
+
+	var x = {}, y={};
+	var w = width_data.plot;// + 2*width_data.margin;
+	//var m = width_data.margin;
+	
+	// include additional info in data.
+	data.forEach( function(d, i) {
+	    if (i > 0) {
+		d.offset = d.height+data[i-1].offset+plot_spacing;
+	    } else {
+		d.offset = d.height;
+	    }
+	    d.is_minmax = isMinMaxPlot(d.data);
+	    d.min_data = d.is_minmax ? d3.min(d.data.data[0]) : d3.min(d.data.data);
+	    d.max_data = d.is_minmax ? d3.max(d.data.data[1]) : d3.max(d.data.data);
+	    d.delta_data = d.max_data - d.min_data;
+	    d.min_plot = d.min_data - range_padding*d.delta_data;
+	    d.max_plot = d.max_data + range_padding*d.delta_data;
+	    d.min_dim = d.data.dim[0];
+	    d.max_dim = d.data.dim[d.data.dim.length-1];
+	    y[d.name] = d3.scale.linear()
+		.domain([d.min_data, d.max_data]).range([0 + range_padding*d.height, d.height*(1-range_padding)]);
+	    x[d.name] = d3.scale.linear()
+		.domain([d.min_dim, d.max_dim]).range([0 + width_data.marginLeft, w - width_data.marginRight]);	    
+	});
+	// select the id and append an svg element for each plot
+	var svg = d3.select(id)
+	    .append("svg:svg")
+	    .attr("width", w)
+	    .attr("height", data[data.length -1].offset+bottom_spacing);
+	
+	$(id).height(data[data.length -1].offset+bottom_spacing);
+
+	var g = svg.selectAll("g").data(data).enter().append("svg:g")
+	    .attr("transform", function(d) {return "translate(0, "+d.offset+")" });
+
+	function doLine(d, i) {
+	    if (d.is_minmax) {
+		var fill_data = fillPlot(d.data);
+		var line = d3.svg.line()
+		    .x(function(a) {return x[d.name](a[0]); })
+		    .y(function(a) {return -1 * y[d.name](a[1]); });
+		return line(fill_data);
+	    } else {
+		var line = d3.svg.line()
+		    .x(function(a,j) { return x[d.name](d.data.dim[j]); })
+		    .y(function(a) { return -1 * y[d.name](a); });
+		return line(d.data.data);
+	    }
+	}
+
+
+	function minX(d) { return x[d.name](d.min_dim); }
+	function maxX(d) { return x[d.name](d.max_dim); }
+	function minY(d) { return -1 * y[d.name](d.min_plot); }
+	function maxY(d) { return -1 * y[d.name](d.max_plot); }
+
+	// x axis
+	g.append("svg:line")
+	    .attr("x1", minX)
+	    .attr("y1", minY)
+	    .attr("x2", maxX)
+	    .attr("y2", minY);
+	g.append("svg:line")
+	    .attr("x1", minX)
+	    .attr("y1", maxY)
+	    .attr("x2", maxX)
+	    .attr("y2", maxY);
+
+	// y axis
+	g.append("svg:line")
+	    .attr("x1", minX)
+	    .attr("y1", minY)
+	    .attr("x2", minX)
+	    .attr("y2", maxY);
+	g.append("svg:line")
+	    .attr("x1", maxX)
+	    .attr("y1", minY)
+	    .attr("x2", maxX)
+	    .attr("y2", maxY);
+
+	function xTicksWithData(d) {
+	    var t = [];
+	    var n = 5;
+	    var xticks = x[d.name].ticks(n);
+	    var xticklabels = x[d.name].tickFormat(n);
+	    for (var i=0; i < xticks.length; i++) t.push({'d':d, 't':xticks[i], 'lab':xticklabels});
+	    return t;
+	}
+	function yTicksWithData(d) {
+	    var t = [];
+	    var n = 5;
+	    var yticks = y[d.name].ticks(n);
+	    var yticklabels = y[d.name].tickFormat(n);
+	    for (var i=0; i < yticks.length; i++) t.push({'d':d, 't':yticks[i], 'lab':yticklabels});
+	    return t;
+	}
+
+	g.selectAll(".xLabel")
+	    .data(xTicksWithData)
+	    .enter().append("svg:text")
+	    .attr("class", "xLabel")
+	    .text(function(a) { return a.lab(a.t) })
+	    .attr("x", function(a) { return x[a.d.name](a.t) })
+	    .attr("y", function(a) { return -1*(y[a.d.name](a.d.min_plot)-10) })
+	    .attr("text-anchor", "middle");
+
+	g.selectAll(".yLabel")
+	    .data(yTicksWithData)
+	    .enter().append("svg:text")
+	    .attr("class", "yLabel")
+	    .text(function(a) { return a.lab(a.t) })
+	    .attr("x", function(a) { return x[a.d.name](a.d.min_dim)-30 })
+	    .attr("y", function(a) { return -1*y[a.d.name](a.t) } )
+	    .attr("text-anchor", "right")
+	    .attr("dy", 4);
+
+	g.selectAll(".xTicks")
+	    .data(xTicksWithData)
+	    .enter().append("svg:line")
+	    .attr("class", "xTicks")
+	    .attr("x1", function(a) { return x[a.d.name](a.t); })
+	    .attr("y1", function(a) { return -1 * y[a.d.name](a.d.min_plot) })
+	    .attr("x2", function(a) { return x[a.d.name](a.t); })
+	    .attr("y2", function(a) { return -1 * (y[a.d.name](a.d.max_plot))});
+
+	g.selectAll(".yTicks")
+	    .data(yTicksWithData)
+	    .enter().append("svg:line")
+	    .attr("class", "yTicks")
+	    .attr("y1", function(a) { return -1 * y[a.d.name](a.t); })
+	    .attr("x1", function(a) { return x[a.d.name](a.d.min_dim) })
+	    .attr("y2", function(a) { return -1 * y[a.d.name](a.t); })
+	    .attr("x2", function(a) { return x[a.d.name](a.d.max_dim) });
+
+	g.append("svg:path")
+	    .classed("path-filled", function(d) { return d.is_minmax })
+	    .attr("d", doLine);
+
+
+    }    
+}
+
 $(document).ready(function() {
     // updateLatestShot();
     // autoUpdateLatestShot();
@@ -273,7 +441,7 @@ $(document).ready(function() {
 	populateMDSNav(tree, shot, $(this));
     });
     if ($("#signal-1d-placeholder").length) {
-	data = plotSignal1D();
+	data = plotSignal1D("#signal-1d-placeholder");
     }
     if ($("#signal-2d-placeholder").length) {
 	// data = plotSignal2D();
