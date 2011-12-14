@@ -274,10 +274,11 @@ function plotSignal1D(id) {
     var query_char = window.location.search.length ? '&' : '?';
     var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
     var bottom_spacing = 20;
+    var signal_height = 300, overview_height = 100;
     $.getJSON(trace_query, dataReady);
 
     function dataReady(signal_data) {
-
+	var orig_data = signal_data;
 	// how far past the min and max data values should the axes plot?
 	// e.g. max y axis value = max_data + range_padding*(min_data - max_data)
 	var range_padding = 0.05;
@@ -285,15 +286,21 @@ function plotSignal1D(id) {
 	var plot_spacing = 25;
 
 	// initially, the overview is the same as the signal data
-	var data = [{'name':'signal','data':signal_data, 'height':300},
-		    {'name':'overview','data':signal_data, 'height':100}]
+	var data = [{'name':'signal','data':signal_data, 'height':signal_height},
+		    {'name':'overview','data':orig_data, 'height':overview_height}]
 
 	var x = {}, y={};
 	var w = width_data.plot;// + 2*width_data.margin;
 	//var m = width_data.margin;
+
+	function setupAxes(d, i) {
+	    y[d.name] = d3.scale.linear();
+	    x[d.name] = d3.scale.linear();
+	}
+
 	
 	// include additional info in data.
-	data.forEach( function(d, i) {
+	function updateData(d, i) {
 	    if (i > 0) {
 		d.offset = d.height+data[i-1].offset+plot_spacing;
 	    } else {
@@ -307,21 +314,116 @@ function plotSignal1D(id) {
 	    d.max_plot = d.max_data + range_padding*d.delta_data;
 	    d.min_dim = d.data.dim[0];
 	    d.max_dim = d.data.dim[d.data.dim.length-1];
-	    y[d.name] = d3.scale.linear()
-		.domain([d.min_data, d.max_data]).range([0 + range_padding*d.height, d.height*(1-range_padding)]);
-	    x[d.name] = d3.scale.linear()
-		.domain([d.min_dim, d.max_dim]).range([0 + width_data.marginLeft, w - width_data.marginRight]);	    
-	});
+	    y[d.name].domain([d.min_data, d.max_data]).range([0 + range_padding*d.height, d.height*(1-range_padding)]);
+	    x[d.name].domain([d.min_dim, d.max_dim]).range([0 + width_data.marginLeft, w - width_data.marginRight]);	    
+	}
+
+	data.forEach(setupAxes);
+	data.forEach(updateData);
+
 	// select the id and append an svg element for each plot
 	var svg = d3.select(id)
 	    .append("svg:svg")
 	    .attr("width", w)
 	    .attr("height", data[data.length -1].offset+bottom_spacing);
 	
+	function minX(d) { return x[d.name](d.min_dim); }
+	function maxX(d) { return x[d.name](d.max_dim); }
+	function minY(d) { return -1 * y[d.name](d.min_plot); }
+	function maxY(d) { return -1 * y[d.name](d.max_plot); }
+	
 	$(id).height(data[data.length -1].offset+bottom_spacing);
-
+	var br = d3.svg.brush()
+	    .on("brushstart", brushstart)
+	    .on("brush", brush)
+	    .on("brushend", brushend);
+	
 	var g = svg.selectAll("g").data(data).enter().append("svg:g")
 	    .attr("transform", function(d) {return "translate(0, "+d.offset+")" });
+	
+	// this should be added by brush.js?
+	// probably we just need something else with .background
+	// and brush.js will insert?
+
+	g.append("rect")
+            .attr("class", "background")
+            .style("visibility", "hidden")
+            .style("pointer-events", "all")
+            .style("cursor", "crosshair")
+	    .attr("x", minX)
+	    .attr("y", maxY)
+	    .attr("width", function(d) {return maxX(d)-minX(d)})
+	    .attr("height", function(d) {return minY(d)-maxY(d)}); 
+
+	g.each( function (d) { d3.select(this).call(br.x(x[d.name]))});
+
+	g.selectAll("rect.extent")
+	    .attr("y", maxY)
+	    .attr("height", function(d) {return minY(d)-maxY(d)});
+
+	
+	function brushstart(p) {
+	    g.classed("selecting", true);
+	    br.x(x[p.name]);
+	}
+
+	function brush() {
+	    var s = d3.event.target.extent();
+	    //circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
+	}
+	
+	function updatePlot(newdata) {
+	    //data = [{'name':'signal','data':newdata, 'height':signal_height}, data[1]];
+	    //data.forEach(updateData);
+	    
+	    var ndat = [{'name':'signal','data':newdata, 'height':signal_height},
+		    {'name':'overview', 'data':orig_data, 'height':overview_height}];
+	    ndat.forEach(updateData);
+
+	    g.data(ndat).select("path.plot")
+		.classed("path-filled", function(d, i) { return d.is_minmax })
+		.transition().duration(10).attr("d", doLine);
+	    
+	    /*
+	    g.selectAll("path")
+		.classed("path-filled", function(d) { return d.is_minmax })
+	    	.attr("d", doLine);
+	    */
+	 
+
+	    g.selectAll(".xLabel").remove();
+	    g.selectAll(".xTicks").remove();
+	    g.selectAll(".yLabel").remove();
+	    g.selectAll(".yTicks").remove();
+
+	    updateAxesMarkers();
+
+
+	    g.each(function(d,i) {
+		    d3.select(this).call(br.clear());
+		if (i == 1 ) {
+		    d3.select(this).selectAll("rect.highlight").remove();
+		    d3.select(this).append("rect")
+			.attr("class", "highlight")
+			.attr("x", x['overview'](ndat[0].min_dim))
+			.attr("width", x['overview'](ndat[0].max_dim)-x['overview'](ndat[0].min_dim) )
+			.attr("y", -1*y['overview'](ndat[1].max_plot))
+			.attr("height", -1*(y['overview'](ndat[1].min_plot) - y['overview'](ndat[1].max_plot)));
+		    
+		}
+	    });
+
+	}
+
+	function brushend() {
+	    g.classed("selecting", !d3.event.target.empty());
+	    var s = d3.event.target.extent();
+	    var new_data_url = window.location.search + query_char + 'f990_name=dim_range&f990_arg0='+s[0]+'&f990_arg1='+s[1]+'&view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
+	    d3.json(new_data_url, updatePlot);
+	    
+	}
+
+
 
 	function doLine(d, i) {
 	    if (d.is_minmax) {
@@ -337,12 +439,23 @@ function plotSignal1D(id) {
 		return line(d.data.data);
 	    }
 	}
+	function xTicksWithData(d) {
+	    var t = [];
+	    var n = 5;
+	    var xticks = x[d.name].ticks(n);
+	    var xticklabels = x[d.name].tickFormat(n);
+	    for (var i=0; i < xticks.length; i++) t.push({'d':d, 't':xticks[i], 'lab':xticklabels});
+	    return t;
+	}
+	function yTicksWithData(d) {
+	    var t = [];
+	    var n = 5;
+	    var yticks = y[d.name].ticks(n);
+	    var yticklabels = y[d.name].tickFormat(n);
+	    for (var i=0; i < yticks.length; i++) t.push({'d':d, 't':yticks[i], 'lab':yticklabels});
+	    return t;
+	}
 
-
-	function minX(d) { return x[d.name](d.min_dim); }
-	function maxX(d) { return x[d.name](d.max_dim); }
-	function minY(d) { return -1 * y[d.name](d.min_plot); }
-	function maxY(d) { return -1 * y[d.name](d.max_plot); }
 
 	// x axis
 	g.append("svg:line")
@@ -368,22 +481,7 @@ function plotSignal1D(id) {
 	    .attr("x2", maxX)
 	    .attr("y2", maxY);
 
-	function xTicksWithData(d) {
-	    var t = [];
-	    var n = 5;
-	    var xticks = x[d.name].ticks(n);
-	    var xticklabels = x[d.name].tickFormat(n);
-	    for (var i=0; i < xticks.length; i++) t.push({'d':d, 't':xticks[i], 'lab':xticklabels});
-	    return t;
-	}
-	function yTicksWithData(d) {
-	    var t = [];
-	    var n = 5;
-	    var yticks = y[d.name].ticks(n);
-	    var yticklabels = y[d.name].tickFormat(n);
-	    for (var i=0; i < yticks.length; i++) t.push({'d':d, 't':yticks[i], 'lab':yticklabels});
-	    return t;
-	}
+	function updateAxesMarkers() {
 
 	g.selectAll(".xLabel")
 	    .data(xTicksWithData)
@@ -422,9 +520,15 @@ function plotSignal1D(id) {
 	    .attr("y2", function(a) { return -1 * y[a.d.name](a.t); })
 	    .attr("x2", function(a) { return x[a.d.name](a.d.max_dim) });
 
+	}
+
+	updateAxesMarkers();
+
 	g.append("svg:path")
+	    .attr("class", "plot")
 	    .classed("path-filled", function(d) { return d.is_minmax })
 	    .attr("d", doLine);
+	
 
 
     }    

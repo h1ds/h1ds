@@ -759,7 +759,15 @@ text {
     font-size: 9pt;
 }
 
+rect.extent {
+    fill: pink;
+    fill-opacity:0.7;
+}
 
+rect.highlight {
+    fill: #F0BBE5;
+    fill-opacity:0.5;
+}
 
 /* ==|== non-semantic helper classes ========================================
    Please define your styles before this section.
