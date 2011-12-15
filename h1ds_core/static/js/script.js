@@ -97,32 +97,6 @@ function formatDataForPlots(data) {
 } // end formatDataForPlots
 
 
-function plotSignal2D() {
-    var query_char = window.location.search.length ? '&' : '?';
-    var placeholder = $("#signal-2d-placeholder");
-    var plot_width = placeholder.width();    
-    var plot_height = placeholder.height();    
-    var image_query = window.location.search + query_char + 'view=png';
-    var shape_query = window.location.search + query_char + 'view=json&f999_name=shape';
-
-    $.getJSON(shape_query, dataReady);
-
-    function dataReady(signal_shape) {
-	var aspect = (signal_shape.columns / signal_shape.rows);
-	placeholder.height( plot_width * aspect );
-	var data = [ [ [image_query, 0, 0, signal_shape.columns, signal_shape.rows] ] ];
-	var options = {
-	    series: { images: { show: true } },
-	    xaxis: { min: 0, max: signal_shape.columns },
-	    yaxis: { min: 0, max: signal_shape.rows }
-	};
-	
-	$.plot.image.loadDataImages(data, options, function () {
-	    $.plot(placeholder, data, options);
-	});
-    }
-}
-
 $('#masonry-container').masonry({
      itemSelector: '.mbox',
      columnWidth: 384
@@ -199,7 +173,7 @@ function loadCookie() {
 }
 
 
-function newplotSignal2D() {
+function plotSignal2D() {
     // custom image manipulation for mds
     var container  = $("#signal-2d-placeholder");
     var query_char = window.location.search.length ? '&' : '?';
@@ -274,10 +248,16 @@ function plotSignal1D(id) {
     var query_char = window.location.search.length ? '&' : '?';
     var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
     var bottom_spacing = 20;
-    var signal_height = 300, overview_height = 100;
-    $.getJSON(trace_query, dataReady);
+    var signal_height = 200, overview_height = 100;
+    $.getJSON(trace_query, getFourier);
 
-    function dataReady(signal_data) {
+    function getFourier(d) {
+	var fourier_query = window.location.search + query_char + 'view=json&f990_name=power_spectrum&f995_arg0=0.0&f995_arg1=0.5&f995_name=norm_dim_range&f999_name=resample_minmax&f999_arg1='+width_data.plot;
+	
+	$.getJSON(fourier_query, function(a) { dataReady(d,a) ;});
+    }
+
+    function dataReady(signal_data, fourier_data) {
 	var orig_data = signal_data;
 	// how far past the min and max data values should the axes plot?
 	// e.g. max y axis value = max_data + range_padding*(min_data - max_data)
@@ -287,7 +267,8 @@ function plotSignal1D(id) {
 
 	// initially, the overview is the same as the signal data
 	var data = [{'name':'signal','data':signal_data, 'height':signal_height},
-		    {'name':'overview','data':orig_data, 'height':overview_height}]
+		    {'name':'overview','data':orig_data, 'height':overview_height},
+		    {'name':'fourier','data':fourier_data, 'height':overview_height}]
 
 	var x = {}, y={};
 	var w = width_data.plot;// + 2*width_data.margin;
@@ -372,25 +353,18 @@ function plotSignal1D(id) {
 	    //circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
 	}
 	
-	function updatePlot(newdata) {
-	    //data = [{'name':'signal','data':newdata, 'height':signal_height}, data[1]];
-	    //data.forEach(updateData);
+	function updatePlot(newdata, newfourier) {
 	    
 	    var ndat = [{'name':'signal','data':newdata, 'height':signal_height},
-		    {'name':'overview', 'data':orig_data, 'height':overview_height}];
+			{'name':'overview', 'data':orig_data, 'height':overview_height},
+			{'name':'fourier','data':newfourier, 'height':overview_height}];
+
 	    ndat.forEach(updateData);
 
 	    g.data(ndat).select("path.plot")
 		.classed("path-filled", function(d, i) { return d.is_minmax })
 		.transition().duration(10).attr("d", doLine);
 	    
-	    /*
-	    g.selectAll("path")
-		.classed("path-filled", function(d) { return d.is_minmax })
-	    	.attr("d", doLine);
-	    */
-	 
-
 	    g.selectAll(".xLabel").remove();
 	    g.selectAll(".xTicks").remove();
 	    g.selectAll(".yLabel").remove();
@@ -419,8 +393,14 @@ function plotSignal1D(id) {
 	    g.classed("selecting", !d3.event.target.empty());
 	    var s = d3.event.target.extent();
 	    var new_data_url = window.location.search + query_char + 'f990_name=dim_range&f990_arg0='+s[0]+'&f990_arg1='+s[1]+'&view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
-	    d3.json(new_data_url, updatePlot);
-	    
+
+	    function updateFourier(d) {
+		var fourier_query = window.location.search + query_char + 'f980_name=dim_range&f980_arg0='+s[0]+'&f980_arg1='+s[1]+'&view=json&f990_name=power_spectrum&f995_arg0=0.0&f995_arg1=0.5&f995_name=norm_dim_range&f999_name=resample_minmax&f999_arg1='+width_data.plot;
+		
+		$.getJSON(fourier_query, function(a) { updatePlot(d,a) ;});
+	    }
+	    d3.json(new_data_url, updateFourier);
+
 	}
 
 
@@ -548,8 +528,7 @@ $(document).ready(function() {
 	data = plotSignal1D("#signal-1d-placeholder");
     }
     if ($("#signal-2d-placeholder").length) {
-	// data = plotSignal2D();
-	newplotSignal2D();
+	plotSignal2D();
     }
     if ($("#signal-3d-placeholder").length) {
 	data = plotSignal3D();
