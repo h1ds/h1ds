@@ -255,6 +255,10 @@ def get_summary_attribute_form_from_url(request):
     # Insert our new query dict into the request sent to this view...
     request.GET = new_query    
 
+    # use HTTP GET, not POST
+    request.method="GET"
+    request.POST = None
+    
     # ...and use this request to call the view function and get the data
     # for the requested URL.
     kwargs['request'] = request
