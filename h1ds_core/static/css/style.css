@@ -540,6 +540,8 @@ input, textarea, select {
     margin: 0 0 0 3px;
 }
 
+
+
 /* =============================================================================
    Moin moin styles
    ========================================================================== */
@@ -547,6 +549,44 @@ input, textarea, select {
 /* =============================================================================
    from common.css
    ========================================================================== */
+
+
+/* .comment css definition must be top of .red/.green/.blue or it won't work */
+.comment { color: #555555; background-color: #DDDDFF; }
+
+.red { background-color: #FFCCCC; }
+.green { background-color: #CCFFCC; }
+.blue { background-color: #CCCCFF; }
+.yellow { background-color: #FFF29F; }
+.orange { background-color: #FFD59B; }
+
+.solid { border: 2px solid #000000; padding: 2px; }
+.dashed { border: 2px dashed #000000; padding: 2px; }
+.dotted { border: 2px dotted #000000; padding: 2px; }
+
+.left { text-align: left; }
+.center { text-align: center; }
+.right { text-align: right; }
+.justify { text-align: justify; }
+
+table
+{
+    margin: 0.5em 0 0 0.5em;
+    border-collapse: collapse;
+}
+
+th, td
+{
+    padding: 0.25em 0.5em 0.25em 0.5em;
+    border: 1pt solid #ADB9CC;
+}
+
+td p {
+    margin: 0;
+    padding: 0;
+}
+
+
 
 /* TableOfContents macro */
 div.table-of-contents {
@@ -1041,6 +1081,11 @@ div#editor-help {
 /* =============================================================================
    End moinmoin
    ========================================================================== */
+
+table.side-table th, td {
+    border: 0;
+}
+
 
 /* anchors */
 
