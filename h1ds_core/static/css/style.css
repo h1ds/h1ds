@@ -34,7 +34,7 @@ html { font-size: 100%; overflow-y: scroll; -webkit-text-size-adjust: 100%; -ms-
 
 body { margin: 0; font-size: 13px; line-height: 1.231; }
 
-body, button, input, select, textarea { font-family: sans-serif; color: #222; }
+body, button, input, select, textarea { font-family: Verdana,Arial,sans-serif; color: #222; }
 
 /* 
  * Remove text-shadow in selection highlight: h5bp.com/i
@@ -509,9 +509,9 @@ td { vertical-align: top; }
 
 /* general */
 
-h1 { font-size:120%;}
-h2 { font-size:110%;}
-h3 { font-size:105%;}
+h1 { font-size:120%; font-family: Georgia, Times, "Times New Roman", serif;}
+h2 { font-size:110%; font-family: Georgia, Times, "Times New Roman", serif;}
+h3 { font-size:105%; font-family: Georgia, Times, "Times New Roman", serif;}
 
 #container {
     width:100%;
