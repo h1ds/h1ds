@@ -4,6 +4,8 @@ Fabric==1.2.0
 South==0.7.3
 celery==2.2.7
 django-celery==2.2.4
+kombu
+django-kombu
 python-openid==2.2.5
 -e git://github.com/dpretty/django-concurrent-server.git#egg=django_concurrent_server-dev
 -e git+git://code.h1svr.anu.edu.au/h1ds/django-openid-auth.git#egg=django_openid_auth-dev

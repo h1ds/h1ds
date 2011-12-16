@@ -3,13 +3,15 @@
 # settings_(development|staging|production).py
 
 import os
-import djcelery
+#import djcelery
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 VENV_DIR = os.path.dirname(THIS_DIR)
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+BROKER_URL = "django://"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -127,7 +129,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'concurrent_server',
     'h1ds_core',
-    'djcelery',
+    #'djcelery',
+    'djkombu',
     'south',
     'django_openid_auth',
     'h1ds_mdsplus',
@@ -167,7 +170,7 @@ LOGGING = {
     }
 }
 
-djcelery.setup_loader()
+#djcelery.setup_loader()
 
 # Any MDSPlus nodes to ignore (e.g. if they crash the server...)
 H1DS_MDSPLUS_NODE_BLACKLIST = []
