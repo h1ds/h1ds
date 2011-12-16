@@ -11,8 +11,6 @@ VENV_DIR = os.path.dirname(THIS_DIR)
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-BROKER_URL = "django://"
-
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -197,3 +195,10 @@ DEFAULT_MDS_TREE = "test"
 # each entry should be a (name, path), for example
 # EXTRA_MDS_TREES = [('extratree1', 'mdsserver::'), ('anothertree', '/data/tree'),]
 EXTRA_MDS_TREES = [('test', os.path.join(VENV_DIR, 'test_mds_data'))]
+
+BROKER_BACKEND = "djkombu.transport.DatabaseTransport"
+BROKER_HOST = "localhost"
+BROKER_PORT = 5672
+BROKER_USER = "guest"
+BROKER_PASSWORD = "guest"
+BROKER_VHOST = "/"
