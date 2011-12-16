@@ -162,7 +162,12 @@ def get_attr_list(cursor, table=SUMMARY_TABLE_NAME):
     try:
         # horrid hack
         cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
-        return [i for i in cursor.fetchall()[0][0][15+len(table):-1].split(',')]
+        fetchall = cursor.fetchall()
+        if not fetchall:
+            generate_base_summary_table(cursor)
+            cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
+            fetchall = cursor.fetchall()
+        return [i for i in fetchall[0][0][15+len(table):-1].split(',')]
     except DatabaseError:
         generate_base_summary_table(cursor)
         cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
