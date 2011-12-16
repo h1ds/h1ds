@@ -185,7 +185,8 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
 
     attr_exists = False
     correct_dtype = False
-    for r in attr_list:
+    for x in attr_list:
+        r = x.split()
         if r[0] == attr_slug:
             attr_exists = True
             if r[1].startswith(attr_dtype):
