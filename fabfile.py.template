@@ -7,9 +7,9 @@ This is configured for Ubuntu systems.
 
 """
 from __future__ import with_statement
-import os, platform, tempfile
+import os, platform, tempfile, time
 from fabric.api import *
-
+from fabric.contrib.files import exists
 ########################################################################
 ## Using Apache on a recent Ubuntu, you might get away with editing   ##
 ## just the user and host names                                       ##
@@ -70,6 +70,23 @@ def production():
     env.server_user = 'www-data'
     env.server_group = 'www-data'
 
+def reset_supervisord():
+    """supervisor is used to run celery as a background process.
+    
+    Kill and existing supervisord, then start a new one.
+    """
+    env.venv = "%(project)s_%(environment)s" %env    
+    with prefix('workon %(venv)s && cdvirtualenv' %env):
+        pid_filename = os.path.join("pid", "supervisord.pid")
+        if exists(pid_filename):
+            pid = int(run('cat %s' %pid_filename))
+            run('kill %d' %pid)
+            print("waiting for old supervisord to shut down")
+            while exists(pid_filename):
+                time.sleep(1)
+        run('supervisord -c h1ds/conf/celeryd.conf.%(environment)s' %env)
+            
+
 def initiate():
     """To be run once only. Non-idempotent."""
 
@@ -80,12 +97,13 @@ def initiate():
         ## Grab the dir so we can use sudo without workon
         env_dir = run('echo $PWD')
         run('git clone %(git_url)s %(project)s' % env)
-        run('mkdir -p wiki/data/plugin/theme wiki/data/pages wiki/data/user static log db')
+        run('mkdir -p wiki/data/plugin/theme wiki/data/pages wiki/data/user static log db serverfiles')
         run('touch wiki/data/plugin/__init__.py')
         run('touch wiki/data/plugin/theme/__init__.py')
         run('pip install fabric')
     with cd(env_dir):
         sudo('chmod -R ugo+rwX db')
+        sudo('chown -R %(server_user)s:%(server_group)s serverfiles' %env)
         
 def update():
     """Can be run multiple times. Idempotent."""
@@ -111,7 +129,7 @@ def update():
     local_settings_md5 = local("md5sum "+settings_filename, capture=True)
     if env_settings_md5 != local_settings_md5:
         try:
-    	    put(settings_filename, project_dir)
+            put(settings_filename, project_dir)
         except ValueError:
             print "Cannot copy settings file [%s] to environment. " %settings_filename
             print "Please make sure the file exists."
@@ -174,7 +192,11 @@ def update():
         ## ubuntu settings...
         # check if we already have a symlink to apache conf
         h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
-        if not os.path.exists(h1ds_apache_conf):
+        if not exists(h1ds_apache_conf):
             sudo("ln -s %s/h1ds/conf/apache/h1ds_%s.conf %s" %(env_dir, env.environment, h1ds_apache_conf))
             sudo("a2ensite h1ds")
         sudo('/etc/init.d/apache2 reload')
+
+    # restart supervisord
+    reset_supervisord()
+    

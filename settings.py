@@ -196,9 +196,6 @@ DEFAULT_MDS_TREE = "test"
 # EXTRA_MDS_TREES = [('extratree1', 'mdsserver::'), ('anothertree', '/data/tree'),]
 EXTRA_MDS_TREES = [('test', os.path.join(VENV_DIR, 'test_mds_data'))]
 
-BROKER_BACKEND = "djkombu.transport.DatabaseTransport"
-BROKER_HOST = "localhost"
-BROKER_PORT = 5672
-BROKER_USER = "guest"
-BROKER_PASSWORD = "guest"
-BROKER_VHOST = "/"
+# celery settings
+BROKER_URL = "django://"
+
