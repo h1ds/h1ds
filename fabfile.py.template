@@ -96,8 +96,8 @@ def update_dir_structure():
     # so we can update dir structure without sudo. They are set back 
     # to server perms when we've finished.
     server_perms = (
-        ('wiki'),
-        ('serverfiles'),
+        ('wiki',),
+        ('serverfiles',),
         )
     dirs = (
         ('wiki', 'data', 'plugin', 'theme'),
