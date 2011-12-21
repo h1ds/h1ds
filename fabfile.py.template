@@ -88,7 +88,7 @@ def stop_supervisord():
                 time.sleep(1)
             print "done"
 
-def reset_supervisord():
+def restart_supervisord():
     stop_supervisord()
     start_supervisord()
             
