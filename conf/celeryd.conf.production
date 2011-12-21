@@ -5,7 +5,7 @@ pidfile=%(here)s/../../pid/supervisord.pid
 [supervisorctl]
 
 [program:celery]
-command=%(here)s/../manage.py celeryd -v 2 -B --concurrency=8 --loglevel=WARNING --settings=h1ds.settings_producion
+command=%(here)s/../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=WARNING --settings=h1ds.settings_producion
 directory=%(here)s/../../
 user=nobody
 numprocs=1
