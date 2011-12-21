@@ -24,6 +24,8 @@ def main():
     file_path = os.path.dirname(__file__)
     subprocess.call(["pip", "install", "-E", virtualenv, "--requirement",
                      os.path.join(file_path, "requirements.txt")])
+    subprocess.call(["pip", "install", "-E", virtualenv, "--requirement",
+                     os.path.join(file_path, "recalcitrant_requirements.txt")])
 
 
 if __name__ == "__main__":

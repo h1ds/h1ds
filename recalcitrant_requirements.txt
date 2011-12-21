@@ -1,0 +1,8 @@
+# matplotlib won't install in requirments file when we start from 
+# scratch. My guess is that when pip uses q requirements file it 
+# builds each package before installing any; and that matplotlib
+# requires numpy to be installed before it will build. For now, lets
+# just put matplotlib in a separate requirements file so our fabric
+# script can try installing it after all the well-behaved packages 
+# are installed.
+matplotlib
