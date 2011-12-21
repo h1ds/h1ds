@@ -246,6 +246,5 @@ def update():
             sudo("a2ensite h1ds")
         sudo('/etc/init.d/apache2 reload')
 
-    # restart supervisord
-    reset_supervisord()
+    restart_supervisord()
     
