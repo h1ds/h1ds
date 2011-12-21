@@ -197,4 +197,4 @@ DEFAULT_MDS_TREE = "test"
 EXTRA_MDS_TREES = [('test', os.path.join(VENV_DIR, 'test_mds_data'))]
 
 # celery settings
-BROKER_URL = "django://"
+BROKER_BACKEND = "djkombu.transport.DatabaseTransport"
