@@ -73,20 +73,24 @@ def production():
     env.server_user = 'www-data'
     env.server_group = 'www-data'
 
-def reset_supervisord():
-    """supervisor is used to run celery as a background process.
-    
-    Kill and existing supervisord, then start a new one.
-    """
+def start_supervisord():
+    with prefix('workon %(venv)s && cdvirtualenv' %env):
+        run('supervisord -c h1ds/conf/celeryd.conf.%(environment)s' %env)
+
+def stop_supervisord():
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         pid_filename = os.path.join("pid", "supervisord.pid")
         if exists(pid_filename):
             pid = int(run('cat %s' %pid_filename))
             run('kill %d' %pid)
-            print("waiting for old supervisord to shut down")
+            print("waiting for supervisord to shut down")
             while exists(pid_filename):
                 time.sleep(1)
-        run('supervisord -c h1ds/conf/celeryd.conf.%(environment)s' %env)
+            print "done"
+
+def reset_supervisord():
+    stop_supervisord()
+    start_supervisord()
             
 
 def update_dir_structure():
