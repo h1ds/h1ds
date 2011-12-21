@@ -4,7 +4,10 @@ http://people.physics.anu.edu.au/~dgp112/python-mdsplus/MDSplus-0.5.tgz
 Fabric==1.2.0
 South==0.7.3
 celery==2.4.5
-django-celery==2.4.1
+# django-celery==2.4.1
+# latest django celery has a bug in migrations, checkout the bugfixed version - we'll swap 
+# back stable version when a new one comes out.
+-e git+git://github.com/ask/django-celery.git@346854806cfd5384453395a97eb676e4d6973d98#egg=djcelery
 django-kombu
 python-openid==2.2.5
 -e git://github.com/dpretty/django-concurrent-server.git#egg=django_concurrent_server-dev
