@@ -72,37 +72,6 @@ def get_hidden_attr_data(path, attr_list, n_cols=2):
         sorted_output.extend(sorted_list[j::n_rows])
     return sorted_output
 
-@never_cache
-def latest_shot(request, format="html"):
-    latest_shot = cache.get("latest_summary_shot", 0)
-    view = request.GET.get('view', 'html')
-    if not latest_shot > 0:
-        latest_shot = Shot.objects.aggregate(Max('shot'))['shot__max']
-        #cache.set("latest_summary_shot", latest_shot, 60*60*6)
-        cache.set("latest_summary_shot", latest_shot, 3)
-    if view == 'xml':
-        xmlstr = """<?xml version="1.0" encoding="UTF-8" ?>
-        <shot>
-        <number>%d</number>
-        <comment>Latest shot in summary database</comment>
-        </shot>""" %latest_shot
-        return HttpResponse(xmlstr, mimetype='text/xml; charset=utf-8')
-    else:
-        return render_to_response('summary/latest_shot.html', {'shot':latest_shot}, context_instance=RequestContext(request))
-
-
-@never_cache
-def ajax_latest_shot(request):
-    latest_shot = cache.get("latest_summary_shot", 0)
-    if not latest_shot > 0:
-        latest_shot = Shot.objects.aggregate(Max('shot'))['shot__max']
-        #cache.set("latest_summary_shot", latest_shot, 60*60*6)
-        cache.set("latest_summary_shot", latest_shot, 3)
-
-    d = {'shot':latest_shot}
-    return HttpResponse(simplejson.dumps(d))
-
-
 ########################################################################
 ### NEW CODE                                                         ###
 ########################################################################
