@@ -12,8 +12,8 @@
   </div>
 </div>
 <div class="column w20" id="summary-column-right">
-  <div class="portlet" id="summary-portlet-enable">
-    <div class="portlet-header">enable attributes</div>
+  <div class="portlet" id="summary-portlet-show">
+    <div class="portlet-header">show attributes</div>
     <div class="portlet-content">
       <div class="sidebarcontent">
 	<table width="100%" class="side-table">
@@ -31,7 +31,7 @@
 	    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
 	      {% endif %}
 	      <div class="options displayNone"></div>
-	      <a href="?enable_attr={{item}}">{{item}}</a>
+	      <a href="?show_attr={{item}}">{{item}}</a>
 	    </td>
 	    {% if table.endrow %}
 	  </tr>
@@ -42,8 +42,8 @@
     </div>
   </div>
 
-  <div class="portlet" id="summary-portlet-disable">
-    <div class="portlet-header">disable attributes</div>
+  <div class="portlet" id="summary-portlet-hide">
+    <div class="portlet-header">hide attributes</div>
     <div class="portlet-content">
       <div class="sidebarcontent">
 	<table width="100%" class="side-table">
@@ -61,7 +61,7 @@
 	    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
 	      {% endif %}
 	      <div class="options displayNone"></div>
-	      <a href="?disable_attr={{item}}">{{item}}</a>
+	      <a href="?hide_attr={{item}}">{{item}}</a>
 	    </td>
 	    {% if table.endrow %}
 	  </tr>

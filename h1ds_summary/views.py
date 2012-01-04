@@ -143,14 +143,14 @@ def summary(request, shot_str="last10", attr_str="default",
 
     # read in the GET query string, to add or remove any attrs from the attr string and try again...
     if request.method == 'GET':        
-        enable_attrs = request.GET.get('enable_attr', None)
-        disable_attrs = request.GET.get('disable_attr', None)
-        if enable_attrs or disable_attrs:
-            if enable_attrs:
-                new_attrs = enable_attrs.split('+')
+        show_attrs = request.GET.get('show_attr', None)
+        hide_attrs = request.GET.get('hide_attr', None)
+        if show_attrs or hide_attrs:
+            if show_attrs:
+                new_attrs = show_attrs.split('+')
                 attribute_slugs.extend(new_attrs)
-            if disable_attrs:
-                for a in disable_attrs.split('+'):
+            if hide_attrs:
+                for a in hide_attrs.split('+'):
                     try:
                         attribute_slugs.remove(a)
                     except ValueError:
