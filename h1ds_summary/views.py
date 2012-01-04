@@ -103,8 +103,8 @@ def ajax_latest_shot(request):
     return HttpResponse(simplejson.dumps(d))
 
 
-########################################################################    
-##################### NEW CODE ######################################### 
+########################################################################
+### NEW CODE                                                         ###
 ########################################################################
 
 import json
@@ -116,25 +116,29 @@ from django.shortcuts import redirect
 from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
+from django.views.generic import View
 
-def summary(request, shot_str="last10", attr_str="default",
-            filter_str=None, table=SUMMARY_TABLE_NAME):
-    """Main summary database view.
-
-    ..."""
-
+class SummaryView(View):
     
-    if SummaryAttribute.objects.count() == 0:
-        return render_to_response('h1ds_summary/no_attributes.html', {}, context_instance=RequestContext(request))
-        
- 
-    attribute_slugs = parse_attr_str(attr_str)
+    http_method_names = ['get']
 
- 
-    # read in the GET query string, to add or remove any attrs from the attr string and try again...
-    if request.method == 'GET':        
+    def get(self, request, *args, **kwargs):
+        shot_str=kwargs.get("shot_str", "last10")
+        attr_str=kwargs.get("attr_str", "default")
+        filter_str=kwargs.get("filter_str", None)
+        table=kwargs.get("table", SUMMARY_TABLE_NAME)
+        
+
+        # If there are no summary attributes, then tell the user
+        if SummaryAttribute.objects.count() == 0:
+            return render_to_response('h1ds_summary/no_attributes.html', {}, 
+                                      context_instance=RequestContext(request))
+        
+        attribute_slugs = parse_attr_str(attr_str)
+                                         
         show_attrs = request.GET.get('show_attr', None)
         hide_attrs = request.GET.get('hide_attr', None)
+
         if show_attrs or hide_attrs:
             if show_attrs:
                 new_attrs = show_attrs.split('+')
@@ -154,40 +158,45 @@ def summary(request, shot_str="last10", attr_str="default",
             else:
                 return redirect(summary, shot_str=shot_str, attr_str=new_attr_str)
 
-    select_list = ['shot']
-    select_list.extend(attribute_slugs)
-    select_str = ','.join(select_list)
+        select_list = ['shot']
+        select_list.extend(attribute_slugs)
+        select_str = ','.join(select_list)
 
-    excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
+        excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
 
-    shot_where = parse_shot_str(shot_str)
-    if shot_where == None:
-        return render_to_response('h1ds_summary/no_shots.html', {}, context_instance=RequestContext(request))
+        shot_where = parse_shot_str(shot_str)
+        if shot_where == None:
+            return render_to_response('h1ds_summary/no_shots.html', {}, context_instance=RequestContext(request))
 
-    if filter_str == None:
-        where = shot_where
-    else:
-        filter_where = parse_filter_str(filter_str)
-        where = ' AND '.join([shot_where, filter_where])
-    
-    cursor = connection.cursor()
-    cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
-    data = cursor.fetchall()
+        if filter_str == None:
+            where = shot_where
+        else:
+            filter_where = parse_filter_str(filter_str)
+            where = ' AND '.join([shot_where, filter_where])
 
-    # This seems a bit messy, but it's not clear to me how to refer to a summary data value's attribute slug name from within the template, so let's attach it here...
-    new_data = []
-    data_headers = select_str.split(',')
-    for d in data:
-        new_row = []
-        for j_i, j in enumerate(d):
-            new_row.append((j, data_headers[j_i]))
-        new_data.append(new_row)
+        cursor = connection.cursor()
+        cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
+        data = cursor.fetchall()
 
-    return render_to_response('h1ds_summary/summary_table.html',
-                              {'data':new_data, 'data_headers':data_headers,
-                               'included_attrs':attribute_slugs,
-                               'excluded_attrs':excluded_attribute_slugs},
-                              context_instance=RequestContext(request))
+        # This seems a bit messy, but  it's not clear to me how to refer
+        # to a summary data value's  attribute slug name from within the
+        # template, so let's attach it here...
+
+        new_data = []
+        data_headers = select_str.split(',')
+        for d in data:
+            new_row = []
+            for j_i, j in enumerate(d):
+                new_row.append((j, data_headers[j_i]))
+            new_data.append(new_row)
+
+        return render_to_response('h1ds_summary/summary_table.html',
+                                  {'data':new_data, 'data_headers':data_headers,
+                                   'included_attrs':attribute_slugs,
+                                   'excluded_attrs':excluded_attribute_slugs},
+                                  context_instance=RequestContext(request))
+
+
 
 def add_summary_attribute(request):
     # Take a HTTP post with  a filled SummaryAttributeForm, and create a
