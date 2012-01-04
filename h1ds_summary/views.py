@@ -123,8 +123,14 @@ def summary(request, shot_str="last10", attr_str="default",
 
     ..."""
 
+    
+    if SummaryAttribute.objects.count() == 0:
+        return render_to_response('h1ds_summary/no_attributes.html', {}, context_instance=RequestContext(request))
+        
+ 
     attribute_slugs = parse_attr_str(attr_str)
 
+ 
     # read in the GET query string, to add or remove any attrs from the attr string and try again...
     if request.method == 'GET':        
         show_attrs = request.GET.get('show_attr', None)
