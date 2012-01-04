@@ -72,22 +72,6 @@ def get_hidden_attr_data(path, attr_list, n_cols=2):
         sorted_output.extend(sorted_list[j::n_rows])
     return sorted_output
 
-def overview(request, shot_regex=DEFAULT_SHOT_REGEX, data_regex="default", filter_regex=None, format="html", n_cols_sidebar = 2):
-    if SummaryAttribute.objects.count() == 0:
-        return render_to_response('h1ds_summary/no_attributes.html', {}, context_instance=RequestContext(request))
-    if Shot.objects.count() == 0:
-        return render_to_response('h1ds_summary/no_shots.html', {}, context_instance=RequestContext(request))
-    [data,attr_list] = Shot.objects.summarydata(shot_regex, attr_query=data_regex, filter_query=filter_regex)
-    html_data = do_html_data(data, attr_list)
-    visible_attr_data = get_vis_attr_data(request.path, attr_list)
-    hidden_attr_data = get_hidden_attr_data(request.path, attr_list, n_cols=n_cols_sidebar)
-    if 'last' in shot_regex:
-        update=True
-    else:
-        update=False
-    latest_shot = Shot.objects.aggregate(Max('shot'))['shot__max']
-    return render_to_response('summary/overview.html', {'data':html_data, 'attrs':visible_attr_data, 'hidden':hidden_attr_data, 'update':update, 'latest_shot':latest_shot}, context_instance=RequestContext(request))
-
 @never_cache
 def latest_shot(request, format="html"):
     latest_shot = cache.get("latest_summary_shot", 0)
