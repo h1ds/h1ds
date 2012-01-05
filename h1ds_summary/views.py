@@ -25,12 +25,7 @@ class SummaryView(View):
     
     http_method_names = ['get']
 
-    def get(self, request, *args, **kwargs):
-        shot_str=kwargs.get("shot_str", "last10")
-        attr_str=kwargs.get("attr_str", "default")
-        filter_str=kwargs.get("filter_str", None)
-        table=kwargs.get("table", SUMMARY_TABLE_NAME)
-        
+    def get(self, request, shot_str="last10", attr_str="default", filter_str=None, table=SUMMARY_TABLE_NAME):
 
         # If there are no summary attributes, then tell the user
         if SummaryAttribute.objects.count() == 0:
@@ -57,9 +52,9 @@ class SummaryView(View):
             else:
                 new_attr_str = '+'.join(attribute_slugs)
             if filter_str:
-                return redirect(summary, shot_str=shot_str, attr_str=new_attr_str, filter_str = filter_str)
+                return HttpResponseRedirect(reverse('sdfsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str, 'filter_str':filter_str}))
             else:
-                return redirect(summary, shot_str=shot_str, attr_str=new_attr_str)
+                return HttpResponseRedirect(reverse('sdsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str}))
 
         select_list = ['shot']
         select_list.extend(attribute_slugs)
