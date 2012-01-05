@@ -95,12 +95,14 @@ class SummaryView(View):
                                   context_instance=RequestContext(request))
 
 
-
-def add_summary_attribute(request):
+class AddSummaryAttribiteView(View):
     # Take a HTTP post with  a filled SummaryAttributeForm, and create a
     # SummaryAttribute instance.
     # TODO: provide forms with return url, especially when 
-    if request.method == 'POST':
+
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
         summary_attribute_form = SummaryAttributeForm(request.POST)
         if summary_attribute_form.is_valid():
             summary_attribute_form.save()
@@ -112,9 +114,6 @@ def add_summary_attribute(request):
                                        'submit_url':reverse('add-summary-attribute')},
                                       context_instance=RequestContext(request))
             
-    else:
-        return HttpResponseRedirect(reverse("h1ds-summary-homepage"))
-    
 
 def get_summary_attribute_form_from_url(request):
     """Take a H1DS mdsplus web URL and return a SummaryAttributeForm.

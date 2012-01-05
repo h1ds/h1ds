@@ -1,12 +1,12 @@
 from django.conf.urls.defaults import *
 
-from h1ds_summary.views import raw_sql, add_summary_attribute, get_summary_attribute_form_from_url, go_to_source
-from h1ds_summary.views import SummaryView
+from h1ds_summary.views import raw_sql, get_summary_attribute_form_from_url, go_to_source
+from h1ds_summary.views import SummaryView, AddSummaryAttribiteView
 
 urlpatterns = patterns('',
                        url(r'^$', SummaryView.as_view(), name="h1ds-summary-homepage"),
                        url(r'^get_summary_attribute_form_from_url/$', get_summary_attribute_form_from_url, name="get-summary-attribute-form-from-url"),
-                       url(r'^add/$', add_summary_attribute, name="add-summary-attribute"),
+                       url(r'^add/$', AddSummaryAttribiteView.as_view(), name="add-summary-attribute"),
                        url(r'^go_to_source/(?P<slug>[^/]+)/(?P<shot>\d+)/$', go_to_source, name="summary-go-to-source"),
                        url(r'^raw_sql/$', raw_sql, name="raw-sql"),
                        url(r'^(?P<shot_str>[^/]+)/$', SummaryView.as_view(), name="shotoverview"),
