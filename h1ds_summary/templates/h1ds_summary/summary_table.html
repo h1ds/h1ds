@@ -9,7 +9,7 @@
 <tr>
 {% for d in drow %}
 {% if forloop.first %}
-<td>{{d.0}}</td>
+<td>{{d.0}} {% if perms.h1ds_summary.recompute_summaryattribute %} &#x27F3; {% endif %}</td>
 {% else %}
 <td><a href="{% url summary-go-to-source d.1 drow.0.0 %}">{{d.0}}</a></td>
 {% endif %}

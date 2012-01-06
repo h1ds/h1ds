@@ -34,6 +34,10 @@ class SummaryAttribute(models.Model):
     class Meta:
         ordering = ["display_order"]
 
+        permissions = (
+            ("recompute_summaryattribute", "Can recompute the summary attribute and update the database."),
+            )
+    
     def save(self, *args, **kwargs):
         super(SummaryAttribute, self).save(*args, **kwargs)
         update_attribute_in_summary_table(self.slug)
@@ -70,3 +74,5 @@ class SummaryAttribute(models.Model):
                                        locals(), [class_name], -1)
             source_class = source_module.__getattribute__(class_name)
             return source_class(shot_number).do_script()
+
+
