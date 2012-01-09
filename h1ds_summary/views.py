@@ -94,6 +94,9 @@ class SummaryView(View):
                                    'excluded_attrs':excluded_attribute_slugs},
                                   context_instance=RequestContext(request))
 
+class RecomputeSummaryView(View):
+    """Recompute requested subset of summary database."""
+    pass
 
 class AddSummaryAttribiteView(View):
     # Take a HTTP post with  a filled SummaryAttributeForm, and create a
