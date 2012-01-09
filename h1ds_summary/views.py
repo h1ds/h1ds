@@ -18,6 +18,7 @@ from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
+from h1ds_summary.tasks import populate_summary_table
 
 DEFAULT_SHOT_REGEX = "last10"
 
@@ -95,8 +96,20 @@ class SummaryView(View):
                                   context_instance=RequestContext(request))
 
 class RecomputeSummaryView(View):
-    """Recompute requested subset of summary database."""
-    pass
+    """Recompute requested subset of summary database.
+    """
+
+    http_method_names = ['post']
+    
+    def post(self, request, *args, **kwargs):
+        return_path = request.POST.get("return_path")
+        # TODO: support mulitple shots
+        shot = [int(request.POST.get("shots")),]
+        # TODO: put in celery queue / make asyncronous.
+        populate_summary_table(shot)
+        return HttpResponseRedirect(return_path)
+        
+
 
 class AddSummaryAttribiteView(View):
     # Take a HTTP post with  a filled SummaryAttributeForm, and create a

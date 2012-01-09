@@ -9,7 +9,7 @@
 <tr>
 {% for d in drow %}
 {% if forloop.first %}
-<td>{{d.0}} {% if perms.h1ds_summary.recompute_summaryattribute %} &#x27F3; {% endif %}</td>
+<td>{{d.0}} {% if perms.h1ds_summary.recompute_summaryattribute %} <form class="inline right" action="{% url summary-recompute %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="shots" value="{{d.0}}"><input type="submit" value="&#x27F3;"/></form> {% endif %}</td>
 {% else %}
 <td><a href="{% url summary-go-to-source d.1 drow.0.0 %}">{{d.0}}</a></td>
 {% endif %}

@@ -31,6 +31,7 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
             values = tuple(str(a.get_value(shot)[0]) for a in attributes)
             values_str = '('+','.join([str(shot), ','.join(values)])+')'
             update_str = ','.join(('%s=%s' %(a, values[ai]) for ai, a in enumerate(attr_names)))
+            # TODO: can we use INSERT OR UPDATE to avoid duplication?
             cursor.execute("INSERT OR IGNORE INTO %(table)s %(attrs)s VALUES %(vals)s" %{'table':table,
                                                                                          'attrs':attr_name_str,
                                                                                          'vals':values_str,
