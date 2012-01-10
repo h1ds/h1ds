@@ -517,6 +517,7 @@ h3 { font-size:120%; font-family: Georgia, Times, "Times New Roman", serif;}
     width:100%;
 }
 
+
 .fixed-centre {
     width:320px;
     margin:auto;
@@ -1207,6 +1208,14 @@ table.data {
 
 table.side-table {
     width: 100%;
+}
+
+form.inline {
+    display: inline;
+}
+
+form.right {
+    float: right;
 }
 
 /* ============================================================

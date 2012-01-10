@@ -31,7 +31,7 @@ def logout_view(request):
             
 
 class ChangeProfileForm(forms.Form):
-    username = forms.CharField(max_length=30)
+    username = forms.CharField(max_length=30, help_text="Please use CamelCase, with each word capitalised. For example: MarkOliphant or LymanSpitzer")
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
     email = forms.EmailField()
