@@ -4,12 +4,12 @@
 
 {% block summarycontent%}
 <table class="main-table">
-<tr>{% for dh in data_headers %}<th>{{dh}}</th>{% endfor %}</tr>
+<tr>{% for dh in data_headers %}<th>{{dh}} {% if not forloop.first %}{% if perms.h1ds_summary.recompute_summaryattribute %}<form class="inline right" action="{% url summary-recompute %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="attribute" value="{{dh}}"><input type="submit" value="&#x27F3;"/></form>{% endif %}{% endif %}</th>{% endfor %}</tr>
 {% for drow in data %}
 <tr>
 {% for d in drow %}
 {% if forloop.first %}
-<td>{{d.0}} {% if perms.h1ds_summary.recompute_summaryattribute %} <form class="inline right" action="{% url summary-recompute %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="shots" value="{{d.0}}"><input type="submit" value="&#x27F3;"/></form> {% endif %}</td>
+<td>{{d.0}} {% if perms.h1ds_summary.recompute_summaryattribute %} <form class="inline right" action="{% url summary-recompute %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="shot" value="{{d.0}}"><input type="submit" value="&#x27F3;"/></form> {% endif %}</td>
 {% else %}
 <td><a href="{% url summary-go-to-source d.1 drow.0.0 %}">{{d.0}}</a></td>
 {% endif %}

@@ -18,7 +18,7 @@ from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
-from h1ds_summary.tasks import populate_summary_table_task
+from h1ds_summary.tasks import populate_summary_table_task, populate_attribute_task
 
 DEFAULT_SHOT_REGEX = "last10"
 
@@ -97,15 +97,25 @@ class SummaryView(View):
 
 class RecomputeSummaryView(View):
     """Recompute requested subset of summary database.
+
+    Require a HTTP POST with two key-value pairs: 'return_path and either 'shot' or 'attribute'.
+       return_path - URL to be redirected to after we submit the processing task to the job queue.
+       shot - a single shot number, for which all attributes are recomputed.
+       attribute - name (slug) of an attribute to be recomputed for all shots.
+
+    If both shot and attribute are provided, the shot number will be processed and the attribute ignored.
     """
 
     http_method_names = ['post']
     
     def post(self, request, *args, **kwargs):
         return_path = request.POST.get("return_path")
-        # TODO: support mulitple shots
-        shot = [int(request.POST.get("shots")),]
-        populate_summary_table_task.delay(shot)
+        if request.POST.has_key("shot"):
+            shot = [int(request.POST.get("shot")),]
+            populate_summary_table_task.delay(shot)
+        elif request.POST.has_key("attribute"):
+            attribute = request.POST.get("attribute")
+            populate_attribute_task.delay(attribute)
         return HttpResponseRedirect(return_path)
         
 

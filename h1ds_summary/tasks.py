@@ -99,8 +99,8 @@ def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
 
 
 @task()
-def populate_attribute_task(attr_slug):
-    populate_attribute(attr_slug)
+def populate_attribute_task(attr_slug, table=SUMMARY_TABLE_NAME):
+    populate_attribute(attr_slug, table=table)
 
 
 #from h1ds_summary.tasks import generate_shot
