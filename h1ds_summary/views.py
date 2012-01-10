@@ -18,7 +18,7 @@ from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
-from h1ds_summary.tasks import populate_summary_table
+from h1ds_summary.tasks import populate_summary_table_task
 
 DEFAULT_SHOT_REGEX = "last10"
 
@@ -105,8 +105,7 @@ class RecomputeSummaryView(View):
         return_path = request.POST.get("return_path")
         # TODO: support mulitple shots
         shot = [int(request.POST.get("shots")),]
-        # TODO: put in celery queue / make asyncronous.
-        populate_summary_table(shot)
+        populate_summary_table_task.delay(shot)
         return HttpResponseRedirect(return_path)
         
 

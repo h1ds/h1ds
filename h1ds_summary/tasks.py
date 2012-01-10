@@ -43,6 +43,10 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
                                                                                    })
             transaction.commit_unless_managed()
 
+@task()
+def populate_summary_table_task(shots, attributes='all', table=SUMMARY_TABLE_NAME):
+    populate_summary_table(shots, attributes=attributes, table=table)
+
 def get_sync_info():
     sync_info = {'do_sync':False,
                  'latest_mds_shot':None,
