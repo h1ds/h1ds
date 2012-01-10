@@ -237,8 +237,7 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
     
     """
     # to protect against SQL injection attacks, only allow users with permissions to do raw SQL queries.
-    # TODO: separate permission for raw sql? add summaryattribute should catch all users in editor group...
-    if not request.user.has_perm('h1ds_summary.add_summaryattribute'):
+    if not request.user.has_perm('h1ds_summary.raw_sql_query_summaryattribute'):
         return HttpResponseRedirect("/")
     
     if request.method == 'POST':

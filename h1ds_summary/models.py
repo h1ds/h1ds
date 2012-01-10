@@ -36,6 +36,7 @@ class SummaryAttribute(models.Model):
 
         permissions = (
             ("recompute_summaryattribute", "Can recompute the summary attribute and update the database."),
+            ("raw_sql_query_summaryattribute", "Can query database with raw SQL."),
             )
     
     def save(self, *args, **kwargs):
