@@ -8,3 +8,6 @@
 User-agent: *
 Disallow: /mdsplus
 Disallow: /summary
+Disallow: /static
+Disallow: /configurations
+
