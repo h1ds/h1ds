@@ -1,6 +1,6 @@
 <VirtualHost *:80>
     WSGIScriptReloading On
-    WSGIDaemonProcess h1ds-production python-path=__venv_dir__:__venv_dir__/lib/python2.6/site-packages
+    WSGIDaemonProcess h1ds-production python-path=__venv_dir__:__venv_dir__/lib/python2.6/site-packages processes=5 threads=1
     WSGIProcessGroup h1ds-production
     WSGIApplicationGroup h1ds-production
     WSGIPassAuthorization On
