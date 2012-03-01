@@ -1,25 +1,80 @@
-{% extends "h1ds_core/base_single_col.html"%}
+{% load h1ds_headfoot %}
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>{% block title%}{% h1ds_title %}{% endblock %}</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="{{ STATIC_URL }}css/style.css">
+  <script src="{{ STATIC_URL }}js/libs/modernizr-2.0.6.min.js"></script>
+    <!--[if IE]><script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/flot/excanvas.pack.js"></script><![endif]-->
+    {% block extrahead %}{% endblock %}
+</head>
 
-{% block full_content %}
-    <div class="colmask threecol">
-      <div class="colmid">
-	<div class="colleft">
-	  <div class="col1wrap">
-	    <div class="col1">
-	      {% block warning %}{% endblock warning %}
-	      {% block content %}
-	      {% endblock %}
-	    </div>
-	  </div>
-	  <div class="col2">
-	    {% block leftpanel%}
-	    {% endblock %}
-	  </div>
-	  <div class="col3">
-	    {% block rightpanel %}
-	    {% endblock %}
-	  </div>
+<body>
+
+  <div id="container">
+    <header class="clearfix">
+      <div class="fixed-centre">
+	<div id="loginlinks">
+	  {% if user.is_authenticated %}{{ user.username }}{% if "openiduser" in user.username %} <a class="warning" href="/user/settings/{{user.username}}">(please click here to change your username)</a>{% endif %} // <a href="/user/settings/{{user.username}}">settings</a> // <a href="{% url h1ds-logout %}">log out</a> 
+	  {% else %}<a href="/openid/login?next={{ request.get_full_path }}">log in</a>
+	  {% endif %}
 	</div>
+	{% h1ds_header %}
+      </div>
+    </header>
+    <div id="main" role="main" class="clearfix fixed-centre">
+      {% if messages %}
+      <div id="message"><ul>
+	  {% for message in messages %}
+	  <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+	  {% endfor %}</ul>
+      </div>
+      {% endif %}
+      <div id="full-content-container" class="clearfix">
+	{% block full_content %}
+	{% block warning %}{% endblock warning %}
+	{% block content %}
+	{% endblock %}
+	{% block leftpanel%}
+	{% endblock %}
+	{% block rightpanel %}
+	{% endblock %}
+	{% endblock %}
       </div>
     </div>
-{% endblock %}
+    <footer>
+      {% h1ds_footer %}
+    </footer>
+  </div> <!--! end of #container -->
+
+
+  <!-- JavaScript at the bottom for fast page loading -->
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="{{ STATIC_URL }}js/libs/jquery-1.7.min.js"><\/script>')</script>
+
+
+  <!-- scripts concatenated and minified via ant build script-->
+  <script defer src="{{ STATIC_URL }}js/plugins.js"></script>
+  <script defer src="{{ STATIC_URL }}js/script.js"></script>
+  <!-- end scripts-->
+
+	
+  <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.
+       chromium.org/developers/how-tos/chrome-frame-getting-started -->
+  <!--[if lt IE 7 ]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+  
+</body>
+</html>
