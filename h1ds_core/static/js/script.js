@@ -8,8 +8,6 @@ var isOdd = function(someNumber){
 
 // Populate next level of mds tree navigation.
 
-
-
 function populateMDSNav(tree, shot, current_node) {
 	    if (current_node.hasClass("unpopulated")) {
 		var nid=current_node.children(".mds-node-id").text();
@@ -206,16 +204,18 @@ function plotSignal2D() {
 
 
 function getPlotWidth(id){
-    // for id selector, get with of plot and margins
+    //
+    // args: id selector of container div
+    // returns: margins and plot width
+    //
     var vis_width = $(id).width();
-    var plot_width = parseInt(0.9*vis_width);
-    var both_margins = vis_width - plot_width;
-    if (isOdd(both_margins)) {
-	plot_width -= 1;
-	both_margins += 1;
-    }
-    var margin = both_margins/2;
-    //return {'plot':plot_width, 'margin':margin}
+    //var plot_width = parseInt(0.9*vis_width);
+    //var both_margins = vis_width - plot_width;
+    //if (isOdd(both_margins)) {
+	// plot_width -= 1;
+	// both_margins += 1;
+    // }
+    // var margin = both_margins/2;
     var margin_left = 30;
     var margin_right = 0;
     return {'plot':vis_width-margin_left-margin_right, 'marginLeft':margin_left, 'marginRight':margin_right}
@@ -243,17 +243,44 @@ function isMinMaxPlot(signal_data) {
 
 
 
+//
+// plotSignal1D
+//
+// For a given container div, we fetch data subsampled to the width of the plot window.
+// The heights of the plots are fixed.
+// Several plots are actally displayed. A large plot which allows zooming (TODO: and panning),
+// and a smaller (smaller height) plot which shows the full signal and highlights the region shown in
+// the larger plot. 
+// An FFT of the signal in the large plot is also show.
+// TODO: Allow both panning and zooming of plot
+// TODO: more usable FFT plots, maybe a 2D spectrogram plot, which is selectable and applies filters 
+// to the freq range selected. 
 function plotSignal1D(id) {
+    // get margins and plot width for container.
     var width_data = getPlotWidth(id);
+
+    // compile the URL for retrieving subsampled data
     var query_char = window.location.search.length ? '&' : '?';
     var trace_query = window.location.search + query_char + 'view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
+    
+    // spacing between bottom of plot and container.
+    // TODO: should merge this with getPlotWidth to have a single
+    // function which provides margins.
     var bottom_spacing = 20;
+
+    // height of the signal plot 
     var signal_height = 200, overview_height = 100;
+
+
+    // this is a bit convoluted, get the data, pass if to getFourier, which passes it to dataReady.
+    // getFourier doesn't actually use the data which it takes as an argument! just passes it along.
+    // TODO: refactor so it is more easily understandable.
     $.getJSON(trace_query, getFourier);
 
     function getFourier(d) {
+	// compile the URL to get power spectrum data.
 	var fourier_query = window.location.search + query_char + 'view=json&f990_name=power_spectrum&f995_arg0=0.0&f995_arg1=0.5&f995_name=norm_dim_range&f999_name=resample_minmax&f999_arg1='+width_data.plot;
-	
+	// get power spectrum data and pass the resampled data (which getFourier took as an argument) to dataReady.
 	$.getJSON(fourier_query, function(a) { dataReady(d,a) ;});
     }
 
@@ -270,62 +297,88 @@ function plotSignal1D(id) {
 		    {'name':'overview','data':orig_data, 'height':overview_height},
 		    {'name':'fourier','data':fourier_data, 'height':overview_height}]
 
+
+	// x and y are objects which will contain axes for each of the data plots/
 	var x = {}, y={};
+	// plot width
 	var w = width_data.plot;// + 2*width_data.margin;
 	//var m = width_data.margin;
 
+	// populate x and y with axes.
 	function setupAxes(d, i) {
 	    y[d.name] = d3.scale.linear();
 	    x[d.name] = d3.scale.linear();
 	}
 
-	
 	// include additional info in data.
 	function updateData(d, i) {
+	    // offsets to determine vertical coordinates of each plot.
 	    if (i > 0) {
 		d.offset = d.height+data[i-1].offset+plot_spacing;
 	    } else {
 		d.offset = d.height;
 	    }
+	    // get min and max data values
 	    d.is_minmax = isMinMaxPlot(d.data);
 	    d.min_data = d.is_minmax ? d3.min(d.data.data[0]) : d3.min(d.data.data);
 	    d.max_data = d.is_minmax ? d3.max(d.data.data[1]) : d3.max(d.data.data);
+
+	    // get min and max values for axes
 	    d.delta_data = d.max_data - d.min_data;
 	    d.min_plot = d.min_data - range_padding*d.delta_data;
 	    d.max_plot = d.max_data + range_padding*d.delta_data;
+
+	    // get min and max dimension (i.e. x axis, e.g. time)
 	    d.min_dim = d.data.dim[0];
 	    d.max_dim = d.data.dim[d.data.dim.length-1];
+
+	    // recompute axes
 	    y[d.name].domain([d.min_data, d.max_data]).range([0 + range_padding*d.height, d.height*(1-range_padding)]);
 	    x[d.name].domain([d.min_dim, d.max_dim]).range([0 + width_data.marginLeft, w - width_data.marginRight]);	    
 	}
 
+	// apply the above axes and data functions
 	data.forEach(setupAxes);
 	data.forEach(updateData);
 
-	// select the id and append an svg element for each plot
+	// fix height of container element
+	$(id).height(data[data.length -1].offset+bottom_spacing);
+
+	// add to the container the SVG element which will contain the plots.
 	var svg = d3.select(id)
 	    .append("svg:svg")
 	    .attr("width", w)
 	    .attr("height", data[data.length -1].offset+bottom_spacing);
 	
+	// add an SVG group ('g') container element for each plot.
+	var g = svg.selectAll("g")
+	    .data(data)
+	    .enter().append("svg:g")
+	    .attr("transform", function(d) {return "translate(0, "+d.offset+")" });
+
+	// for each data group, add an SVD path element with the data.
+	g.append("svg:path")
+	    .attr("class", "plot")
+	    .classed("path-filled", function(d) { return d.is_minmax })
+	    .attr("d", doLine);
+
+
+	// TODO: surely these can be replaced with d3 scales?
 	function minX(d) { return x[d.name](d.min_dim); }
 	function maxX(d) { return x[d.name](d.max_dim); }
 	function minY(d) { return -1 * y[d.name](d.min_plot); }
 	function maxY(d) { return -1 * y[d.name](d.max_plot); }
 	
-	$(id).height(data[data.length -1].offset+bottom_spacing);
+	// create a brush objects
 	var br = d3.svg.brush()
 	    .on("brushstart", brushstart)
 	    .on("brush", brush)
 	    .on("brushend", brushend);
 	
-	var g = svg.selectAll("g").data(data).enter().append("svg:g")
-	    .attr("transform", function(d) {return "translate(0, "+d.offset+")" });
-	
 	// this should be added by brush.js?
 	// probably we just need something else with .background
 	// and brush.js will insert?
-
+	// TODO: do we need this?
 	g.append("rect")
             .attr("class", "background")
             .style("visibility", "hidden")
@@ -336,22 +389,47 @@ function plotSignal1D(id) {
 	    .attr("width", function(d) {return maxX(d)-minX(d)})
 	    .attr("height", function(d) {return minY(d)-maxY(d)}); 
 
+
+	// for each plot, call the brush and set the brush to the plot's x axis
 	g.each( function (d) { d3.select(this).call(br.x(x[d.name]))});
 
+	// fix the y range for the brush rectangles. 
+	// TODO: do we need this?
 	g.selectAll("rect.extent")
 	    .attr("y", maxY)
 	    .attr("height", function(d) {return minY(d)-maxY(d)});
 
-	
+	//
+	// Brush functions
+	//
+
+	// called when brush starts
 	function brushstart(p) {
 	    g.classed("selecting", true);
 	    br.x(x[p.name]);
 	}
 
+
+	// called when brush is dragged
 	function brush() {
 	    var s = d3.event.target.extent();
-	    //circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
 	}
+
+	// called when brush is finished (user unclicks the mouse)
+	function brushend() {
+	    g.classed("selecting", !d3.event.target.empty());
+	    var s = d3.event.target.extent();
+	    var new_data_url = window.location.search + query_char + 'f990_name=dim_range&f990_arg0='+s[0]+'&f990_arg1='+s[1]+'&view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
+
+	    function updateFourier(d) {
+		var fourier_query = window.location.search + query_char + 'f980_name=dim_range&f980_arg0='+s[0]+'&f980_arg1='+s[1]+'&view=json&f990_name=power_spectrum&f995_arg0=0.0&f995_arg1=0.5&f995_name=norm_dim_range&f999_name=resample_minmax&f999_arg1='+width_data.plot;
+		
+		$.getJSON(fourier_query, function(a) { updatePlot(d,a) ;});
+	    }
+	    d3.json(new_data_url, updateFourier);
+
+	}
+
 	
 	function updatePlot(newdata, newfourier) {
 	    
@@ -389,19 +467,6 @@ function plotSignal1D(id) {
 
 	}
 
-	function brushend() {
-	    g.classed("selecting", !d3.event.target.empty());
-	    var s = d3.event.target.extent();
-	    var new_data_url = window.location.search + query_char + 'f990_name=dim_range&f990_arg0='+s[0]+'&f990_arg1='+s[1]+'&view=json&f999_name=resample_minmax&f999_arg1='+width_data.plot;
-
-	    function updateFourier(d) {
-		var fourier_query = window.location.search + query_char + 'f980_name=dim_range&f980_arg0='+s[0]+'&f980_arg1='+s[1]+'&view=json&f990_name=power_spectrum&f995_arg0=0.0&f995_arg1=0.5&f995_name=norm_dim_range&f999_name=resample_minmax&f999_arg1='+width_data.plot;
-		
-		$.getJSON(fourier_query, function(a) { updatePlot(d,a) ;});
-	    }
-	    d3.json(new_data_url, updateFourier);
-
-	}
 
 
 
@@ -503,13 +568,6 @@ function plotSignal1D(id) {
 	}
 
 	updateAxesMarkers();
-
-	g.append("svg:path")
-	    .attr("class", "plot")
-	    .classed("path-filled", function(d) { return d.is_minmax })
-	    .attr("d", doLine);
-	
-
 
     }    
 }
