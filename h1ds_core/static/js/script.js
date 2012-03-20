@@ -489,14 +489,6 @@ Plot1D.prototype.displayData = function() {
 
     this.g.attr("transform", "translate("+this.padding[3]+","+(this.height+this.padding[0])+")");
 
-    // for each data, add an SVD path element with the data.
-    this.g.selectAll("path")
-	.data(this.data)
-	.enter().append("path")
-	.attr("class","plot")
-	.classed("path-filled", function(d) { return d.is_minmax })
-	.attr("d", function(d,i) { return that.formatData(d,i) });
-
     // only display x axis if it doesn't already exist
     var xa = this.g.selectAll(".axis.x");
     if (xa[0].length === 0) {
@@ -511,6 +503,16 @@ Plot1D.prototype.displayData = function() {
 	    .attr("transform", "translate("+this.padding[3]+","+-(this.padding[2]+this.height)+")") // TODO: fix
 	    .call(this.yAxis);
     }
+
+    // for each data, add an SVD path element with the data.
+    this.g.selectAll("path.data")
+	.data(this.data)
+	.enter().append("path")
+	.attr("class","data")
+	.classed("path-filled", function(d) { return d.is_minmax })
+	.attr("d", function(d,i) { return that.formatData(d,i) });
+
+
 };
 
 
