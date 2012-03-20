@@ -379,7 +379,7 @@ PlotContainer.prototype.setupPlots = function() {
 
 function Plot1D(name) {
     this.name = name;
-    this.padding = [5,10,5,25];
+    this.padding = [5,10,30,50];
     // height of plot, including padding
     this.height = 400;
     // width of plot, including padding. 
@@ -391,7 +391,7 @@ function Plot1D(name) {
     // right to the edge.
     this.range_padding = 0.05;
     this.x = d3.scale.linear().range(
-	[0 + this.padding[3], this.width - this.padding[1]]
+	[0, this.width - this.padding[1]-this.padding[3]]
     );
     this.y = d3.scale.linear().range(
 	[this.height - this.padding[0],0 + this.padding[2]]
@@ -405,7 +405,7 @@ function Plot1D(name) {
 Plot1D.prototype.setWidth = function(width) {
     this.width = width;
     this.x.range(
-	[0 + this.padding[3], this.width - this.padding[1]]
+	[0, this.width - this.padding[1]-this.padding[3]]
 	);
     this.yAxis.tickSize(-(this.width-this.padding[3]-this.padding[1]));
     
@@ -495,13 +495,33 @@ Plot1D.prototype.displayData = function() {
 	this.g.append("svg:g").attr("class","x axis")
 	    .attr("transform", "translate(0,"+-(this.padding[0]+this.padding[2])+")")
 	    .call(this.xAxis);
+	d3.select(".axis.x").append("text").attr("class", "x label")
+	    .attr("x", 0.5*(this.width-this.padding[1]-this.padding[3]))
+	    .attr("y", this.padding[2])
+	    .text(that.data[0].dim_units);
+
+	// shift label to centre. 
+	// TODO: this selection won't work with multiple axes...
+	var new_x = $(".x.label").attr("x") - $(".x.label").width()/2 ;
+	$(".x.label").attr("x",new_x);
     }
 
     var ya = this.g.selectAll(".axis.y");
     if (ya[0].length === 0) {
 	this.g.append("svg:g").attr("class","y axis")
-	    .attr("transform", "translate("+this.padding[3]+","+-(this.padding[2]+this.height)+")") // TODO: fix
+	    .attr("transform", "translate(0,"+-(this.padding[2]+this.height)+")") // TODO: fix
 	    .call(this.yAxis);
+	d3.select(".axis.y").append("text").attr("class", "y label")
+	    .attr("transform", "rotate(-90)")
+	    .attr("x", -this.height*0.5)
+	    .attr("y", -this.padding[3]*0.8)
+	    .text(that.data[0].data_units);
+
+	// shift label to centre.
+	// TODO: this selection won't work with multiple axes...
+	var new_y = $(".y.label").attr("x") - $(".y.label").width()/2 ;
+	$(".y.label").attr("x",new_y);
+
     }
 
     // for each data, add an SVD path element with the data.
