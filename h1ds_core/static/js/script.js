@@ -351,7 +351,7 @@ PlotContainer.prototype.setupPlots = function() {
 	.enter().append("svg:g")
 	.attr("id", function(d) { return "plot-"+d.name;})
 	.attr("transform", function(d) {
-	    h_offset += (d.margin[0] + d.height + d.margin[2]);
+	    h_offset += (d.height);
 	    return "translate(0, "+h_offset+")" });
     
     // set height of HTML element surrounding container
@@ -365,7 +365,6 @@ PlotContainer.prototype.setupPlots = function() {
     // be resampled to the number of pixels of the plot.
     this.plots.each(function(d,i) { 
 	d.setWidth(plot_width); 
-	d.displayData();
     });
 };
 
@@ -380,33 +379,35 @@ PlotContainer.prototype.setupPlots = function() {
 
 function Plot1D(name) {
     this.name = name;
+    this.padding = [5,10,5,25];
+    // height of plot, including padding
     this.height = 400;
-    this.margin = [5,5,5,5];
+    // width of plot, including padding. 
     this.width = 100;
     this.data = [];
     this.xlim = [1.e100,-1.e100];
     this.ylim = [1.e100,-1.e100];
+    // how much extra space to plot on y-axis so the data doesn't go
+    // right to the edge.
     this.range_padding = 0.05;
     this.x = d3.scale.linear().range(
-	[0 + this.margin[3], this.width - this.margin[1]]
+	[0 + this.padding[3], this.width - this.padding[1]]
     );
     this.y = d3.scale.linear().range(
-	[0 + this.range_padding*this.height, this.height*(1-this.range_padding)]
+	[this.height - this.padding[0],0 + this.padding[2]]
     );
-
+    this.xAxis = d3.svg.axis().scale(this.x).tickSize(-(this.height-this.padding[0]-this.padding[2]));
+    this.yAxis = d3.svg.axis().scale(this.y).orient("left");
+    
 
 }
 
 Plot1D.prototype.setWidth = function(width) {
-    console.log("set width")
-    console.log(width)
-    console.log(this.x.range());
     this.width = width;
-
     this.x.range(
-	[0 + this.margin[3], this.width - this.margin[1]]
+	[0 + this.padding[3], this.width - this.padding[1]]
 	);
-    console.log(this.x.range());
+    
 };
 
 // update x and y axes limits
@@ -432,41 +433,48 @@ Plot1D.prototype.updateAxes = function() {
     } 
     this.x.domain(this.xlim);
     this.y.domain(this.ylim);
+    
 };
 
 Plot1D.prototype.addData = function(data_url) {
     var that = this;
+    var query_char = window.location.search.length ? '&' : '?';
+    var new_url = window.location.search + query_char;
     // add resample_minmax to query string.
+    console.log(data_url);
     if (data_url.length > 0) {
 	data_url += '&f999_name=resample_minmax&f999_arg0='+this.width+'&view=json';
+	new_url += data_url;
     }
     else {
-	var query_char = window.location.search.length ? '&' : '?';
-	data_url = query_char + 'f999_name=resample_minmax&f999_arg0='+this.width+'&view=json';
-
+	new_url += 'f999_name=resample_minmax&f999_arg0='+this.width+'&view=json';	
     }
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
-    $.getJSON(data_url, function(a) {a.is_minmax = isMinMaxPlot(a);
-				     that.data.push(a); 
-				     that.updateAxes();
-				     that.displayData();});
+    $.getJSON(new_url, function(a) {a.is_minmax = isMinMaxPlot(a);
+				    that.data.push(a); 
+				    that.updateAxes();
+				    that.displayData();});
 };
 
 
 // format data for SVG <path> element's d attribute.
+// TODO: it's rather ugly to have height and padding in the y axis
+// calculation... isn't there a better way?
 Plot1D.prototype.formatData = function(d, i) {
     var that = this;
     if (d.is_minmax) {
 	var fill_data = fillPlot(d);
 	var line = d3.svg.line()
 	    .x(function(a) {return that.x(a[0]); })
-	    .y(function(a) {return -1 * that.y(a[1]); });
+	    .y(function(a) {
+		return -(that.height+that.padding[2]) + that.y(a[1]);
+	    });
 	return line(fill_data);
     } else {
 	var line = d3.svg.line()
 	    .x(function(a,j) { return that.x(d.dim[j]); })
-	    .y(function(a) { return -1 * that.y(a); });
+	    .y(function(a) { return -(that.height+that.padding[2])+ that.y(a); });
 	return line(d.data);
     }
 };
@@ -477,6 +485,9 @@ Plot1D.prototype.displayData = function() {
     // re-select them by ID?
     var that=this;
     this.g = d3.select("#plot-"+this.name);
+
+    this.g.attr("transform", "translate("+this.padding[3]+","+(this.height+this.padding[0])+")");
+
     // for each data, add an SVD path element with the data.
     this.g.selectAll("path")
 	.data(this.data)
@@ -484,6 +495,21 @@ Plot1D.prototype.displayData = function() {
 	.attr("class","plot")
 	.classed("path-filled", function(d) { return d.is_minmax })
 	.attr("d", function(d,i) { return that.formatData(d,i) });
+
+    // only display x axis if it doesn't already exist
+    var xa = this.g.selectAll(".axis.x");
+    if (xa[0].length === 0) {
+	this.g.append("svg:g").attr("class","x axis")
+	    .attr("transform", "translate(0,"+-(this.padding[0]+this.padding[2])+")")
+	    .call(this.xAxis);
+    }
+
+    var ya = this.g.selectAll(".axis.y");
+    if (ya[0].length === 0) {
+	this.g.append("svg:g").attr("class","y axis")
+	    .attr("transform", "translate("+this.padding[3]+","+-(this.padding[2]+this.height)+")") // TODO: fix
+	    .call(this.yAxis);
+    }
 };
 
 
