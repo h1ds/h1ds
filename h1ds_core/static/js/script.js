@@ -397,7 +397,7 @@ function Plot1D(name) {
 	[this.height - this.padding[0],0 + this.padding[2]]
     );
     this.xAxis = d3.svg.axis().scale(this.x).tickSize(-(this.height-this.padding[0]-this.padding[2]));
-    this.yAxis = d3.svg.axis().scale(this.y).orient("left");
+    this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickSize(-(this.width-this.padding[3]-this.padding[1]));
     
 
 }
@@ -407,6 +407,7 @@ Plot1D.prototype.setWidth = function(width) {
     this.x.range(
 	[0 + this.padding[3], this.width - this.padding[1]]
 	);
+    this.yAxis.tickSize(-(this.width-this.padding[3]-this.padding[1]));
     
 };
 
