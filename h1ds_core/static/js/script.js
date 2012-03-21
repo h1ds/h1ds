@@ -242,24 +242,6 @@ function isMinMaxPlot(signal_data) {
 }
 
 
-/* 
- * Signal class constructor
- *
- * A signal is one or more 1-d arrays which share the same domain (e.g. timebase).
- *
- * arguments:
- * data - the JSON object returned from H1DS server.
- *
- */
-
-function Signal(data) {
-
-}
-
-Signal.prototype = {
-    
-}
-
 /*
  * getPlotQueryString
  *
@@ -304,7 +286,15 @@ function PlotContainer(id) {
     this.svg = d3.select(id).append("svg:svg");
     this.padding = [10,10,10,10];
     this.plot_data = [];
+    // append a form entry box (after SVG) to add URL for new plot
+    d3.select(id).append("p").text("Enter data URL to add another plot")
+	.append("form").attr("id","add-plot-form")
+	.append("div").html('<input id="add-plot-url" type="text" /><input type="submit" />');
+    var that = this;
+    $("#add-plot-form").submit(function() {that.addPlot('test',$("#add-plot-url").val()); return false;});
 }
+
+
 
 PlotContainer.prototype.setWidth = function(width) {
     this.svg.attr("width",width);
@@ -325,7 +315,13 @@ PlotContainer.prototype.addPlot = function(plot_name, data_url, plot_type) {
     this.setupPlots();
     // now load the data.
     this.addData(plot_name, data_url);
+    // and setup the brush for zooming.
+    // this.setupBrush();
 };
+
+//PlotContainer.prototype.setupBrush = function() {
+//    
+//};
 
 PlotContainer.prototype.getPlotIndex = function(plot_name) {
     // find plot object with plot_name. 
@@ -341,24 +337,36 @@ PlotContainer.prototype.addData = function(plot_name, data_url) {
     this.plot_data[plot_i].addData(data_url);
 };
 
+// calculate translate values for g.plot elements
+PlotContainer.prototype.computeLayout = function() {
+    var h_offset = this.padding[0];
+    for (var i=0; i<this.plot_data.length; i++) {
+	h_offset += this.plot_data[i].height;
+	this.plot_data[i].h_offset = 1.0*h_offset;
+    }
+    return h_offset+this.padding[2];
+};
 
 PlotContainer.prototype.setupPlots = function() {
-    var h_offset = this.padding[0];
+    //var h_offset = this.padding[0];
     var plot_width = $(this.id).width()-this.padding[1]-this.padding[3];
+    var that = this;
+    var full_height = this.computeLayout();
     // bind plots to <svg:g> elements using the d3.js API
-    this.plots = this.svg.selectAll("g")
+    this.plots = this.svg.selectAll("g.plot")
 	.data(this.plot_data)
 	.enter().append("svg:g")
+	.attr("class","plot")
 	.attr("id", function(d) { return "plot-"+d.name;})
 	.attr("transform", function(d) {
-	    h_offset += (d.height);
-	    return "translate(0, "+h_offset+")" });
+	    console.log(d.h_offset);
+	    return "translate(0, "+(d.h_offset)+")"; });
     
     // set height of HTML element surrounding container
-    $(this.id).height(h_offset + this.padding[2]);
+    $(this.id).height(full_height);
     
     // set height of plot container
-    this.setHeight(h_offset + this.padding[2]);
+    this.setHeight(full_height);
     
     // Set the  width for  each plot.  We want to  do this  before the
     // plots grab the data from the server, so we can request the data
@@ -439,20 +447,12 @@ Plot1D.prototype.updateAxes = function() {
 
 Plot1D.prototype.addData = function(data_url) {
     var that = this;
-    var query_char = window.location.search.length ? '&' : '?';
-    var new_url = window.location.search + query_char;
-    // add resample_minmax to query string.
-    console.log(data_url);
-    if (data_url.length > 0) {
-	data_url += '&f999_name=resample_minmax&f999_arg0='+this.width+'&view=json';
-	new_url += data_url;
-    }
-    else {
-	new_url += 'f999_name=resample_minmax&f999_arg0='+this.width+'&view=json';	
-    }
+    // does data_url contain a query string?
+    var query_char = data_url.match(/\?.+/) ? '&' : '?';
+    data_url += (query_char+'f999_name=resample_minmax&f999_arg0='+this.width+'&view=json');
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
-    $.getJSON(new_url, function(a) {a.is_minmax = isMinMaxPlot(a);
+    $.getJSON(data_url, function(a) {a.is_minmax = isMinMaxPlot(a);
 				    that.data.push(a); 
 				    that.updateAxes();
 				    that.displayData();});
@@ -487,8 +487,7 @@ Plot1D.prototype.displayData = function() {
     var that=this;
     this.g = d3.select("#plot-"+this.name);
 
-    this.g.attr("transform", "translate("+this.padding[3]+","+(this.height+this.padding[0])+")");
-
+    this.g.attr("transform", "translate("+this.padding[3]+","+(this.h_offset+this.padding[0])+")");
     // only display x axis if it doesn't already exist
     var xa = this.g.selectAll(".axis.x");
     if (xa[0].length === 0) {
@@ -571,7 +570,6 @@ function plotSignal1D(id) {
     // TODO: refactor so it is more easily understandable.
     var test_data = [];
     $.getJSON(trace_query, function(d){ test_data[0] = d;})
-    console.log(test_data);
     $.getJSON(trace_query, getFourier);
 
     function getFourier(d) {
@@ -766,8 +764,6 @@ function plotSignal1D(id) {
 		    
 		}
 	    });
-	    console.log('xxx');
-	    console.log(test_data);
 	}
 
 

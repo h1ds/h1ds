@@ -176,6 +176,8 @@ a,this._uiHash());for(e=0;e<c.length;e++)c[e].call(this,a);this._trigger("stop",
 _uiHash:function(a){var b=a||this;return{helper:b.helper,placeholder:b.placeholder||d([]),position:b.position,originalPosition:b.originalPosition,offset:b.positionAbs,item:b.currentItem,sender:a?a.element:null}}});d.extend(d.ui.sortable,{version:"1.8.16"})})(jQuery);
 ;
 
+
+
 /**
  * jQuery Cookie plugin
  *
