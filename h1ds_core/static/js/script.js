@@ -359,7 +359,6 @@ PlotContainer.prototype.setupPlots = function() {
 	.attr("class","plot")
 	.attr("id", function(d) { return "plot-"+d.name;})
 	.attr("transform", function(d) {
-	    console.log(d.h_offset);
 	    return "translate(0, "+(d.h_offset)+")"; });
     
     // set height of HTML element surrounding container
@@ -494,15 +493,15 @@ Plot1D.prototype.displayData = function() {
 	this.g.append("svg:g").attr("class","x axis")
 	    .attr("transform", "translate(0,"+-(this.padding[0]+this.padding[2])+")")
 	    .call(this.xAxis);
-	d3.select(".axis.x").append("text").attr("class", "x label")
+	this.g.select(".axis.x").append("text").attr("class", "x label")
 	    .attr("x", 0.5*(this.width-this.padding[1]-this.padding[3]))
 	    .attr("y", this.padding[2])
 	    .text(that.data[0].dim_units);
 
 	// shift label to centre. 
-	// TODO: this selection won't work with multiple axes...
-	var new_x = $(".x.label").attr("x") - $(".x.label").width()/2 ;
-	$(".x.label").attr("x",new_x);
+	var xa_sel = "#" + this.g.attr("id") + " > g.x.axis > text.x.label";
+	var new_x = $(xa_sel).attr("x") - $(xa_sel).width()/2 ;
+	$(xa_sel).attr("x",new_x);
     }
 
     var ya = this.g.selectAll(".axis.y");
@@ -510,16 +509,16 @@ Plot1D.prototype.displayData = function() {
 	this.g.append("svg:g").attr("class","y axis")
 	    .attr("transform", "translate(0,"+-(this.padding[2]+this.height)+")") // TODO: fix
 	    .call(this.yAxis);
-	d3.select(".axis.y").append("text").attr("class", "y label")
+	this.g.select(".axis.y").append("text").attr("class", "y label")
 	    .attr("transform", "rotate(-90)")
 	    .attr("x", -this.height*0.5)
 	    .attr("y", -this.padding[3]*0.8)
 	    .text(that.data[0].data_units);
 
-	// shift label to centre.
-	// TODO: this selection won't work with multiple axes...
-	var new_y = $(".y.label").attr("x") - $(".y.label").width()/2 ;
-	$(".y.label").attr("x",new_y);
+	// shift label to centre. 
+	var ya_sel = "#" + this.g.attr("id") + " > g.y.axis > text.y.label";
+	var new_y = $(ya_sel).attr("x") - $(ya_sel).width()/2 ;
+	$(ya_sel).attr("x",new_y);
 
     }
 
