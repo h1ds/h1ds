@@ -291,7 +291,9 @@ function PlotContainer(id) {
 	.append("form").attr("id","add-plot-form")
 	.append("div").html('<input id="add-plot-url" type="text" /><input type="submit" />');
     var that = this;
-    $("#add-plot-form").submit(function() {that.addPlot('test',$("#add-plot-url").val()); return false;});
+    $("#add-plot-form").submit(function() {that.addPlot(
+	(function(){return 'test_'+that.plot_data.length})()
+	,$("#add-plot-url").val()); return false;});
 }
 
 
@@ -308,7 +310,6 @@ PlotContainer.prototype.addPlot = function(plot_name, data_url, plot_type) {
     // TODO:  use  switch  statement  to load  different  classes  for
     // different  plot types.  For now,  just load  Plot1D.  When it's
     // working, develop a Plot1DOverview sub-class.
-
     // add a new plot object 
     this.plot_data.push(new Plot1D(plot_name));
     // set up the SVG with new plot, set width in new plot object
