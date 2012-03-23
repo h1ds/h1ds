@@ -387,11 +387,49 @@ PlotContainer.prototype.setupPlots = function() {
 
 function Plot1D(name) {
     this.name = name;
-    this.padding = [5,10,30,50];
+    this.padding = [5,50,30,50];
     // height of plot, including padding
     this.height = 400;
     // width of plot, including padding. 
     this.width = 100;
+
+    /*
+     * the menu padding is relative to the gap in the right hand plot padding
+     * so the width of the menu is padding[1] - menu_padding[1] - menu_padding[3]
+     * i.e. make sure padding[1] > (menu_padding[1] + menu_padding[3])
+     * note: menu_padding[2] is currently ignored. the height of the menu is
+     * adjusted dynamically as buttons are added.
+     * 
+     * +--svg-------------------------------------------------+
+     * |                                                      |
+     * |  +---svg:g----------------------------------------+  |
+     * |  |  ^                 ^                           |  |  ^
+     * |  |<-+--width----------+-------------------------->|  |  |
+     * |  |  |                 v padding[0]                |  |  | menu_padding[0]
+     * |  |  |  +------------------------+                 |  |  |
+     * |  |  |  |                        |<-padding[1]---->|  |  |
+     * |  |  |  |                        |                 |  |  v
+     * |  |  h  |                        |    +-----+      |  |
+     * |  |  e  |                        |    |     |      |  |
+     * |  |  i  |        menu_padding[3] |<-->|     |      |  |
+     * |  |  g  |                        |    |     |<---->|  | menu_padding[1]
+     * |  |  h  |                        |    |     |      |  |
+     * |  |  t  |                        |    +-----+      |  |
+     * |  |  |  |                        |                 |  | ^
+     * |  |< +->|padding[3]              |                 |  | |
+     * |  |  |  +------------------------+                 |  | |
+     * |  |  |                 ^                           |  | | menu_padding[2]
+     * |  |  |                 | padding[2]                |  | |
+     * |  |  v                 v                           |  | v
+     * |  +------------------------------------------------+  |
+     * |                                                      |
+     * +------------------------------------------------------+
+     * 
+     */
+
+
+    this.menu_padding = [5, 5, -1, 5];
+
     this.data = [];
     this.xlim = [1.e100,-1.e100];
     this.ylim = [1.e100,-1.e100];
@@ -412,6 +450,7 @@ function Plot1D(name) {
 
 Plot1D.prototype.setWidth = function(width) {
     this.width = width;
+    console.log(this.width);
     this.x.range(
 	[0, this.width - this.padding[1]-this.padding[3]]
 	);
@@ -480,6 +519,7 @@ Plot1D.prototype.formatData = function(d, i) {
     }
 };
 
+
 Plot1D.prototype.displayData = function() {
     // get the <svg:g> element for this plot
     // TODO: can  we store  the elements somehow  so we don't  have to
@@ -531,7 +571,15 @@ Plot1D.prototype.displayData = function() {
 	.classed("path-filled", function(d) { return d.is_minmax })
 	.attr("d", function(d,i) { return that.formatData(d,i) });
 
-
+    var pm = this.g.selectAll(".plot-menu");
+    if (pm[0].length === 0) {
+	this.g.append("g").attr("class", "plot-menu")
+	    .append("rect")
+	    //.attr("transform", "translate("+(that.width-that.padding[1]+that.menu_padding[3])+","+(0)+")")
+	    .attr("transform", "translate("+(this.width-this.padding[1]-this.padding[3]+this.menu_padding[3])+","+(-this.height)+")")
+	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
+	    .attr("height", "50")
+    }
 };
 
 
