@@ -279,13 +279,19 @@ function getPlotQueryString() {
  * Set up SVG container for plots inside HTML element.
  * 
  * arguments: id of HTML element for container.
+ *
+ * 
+ *
+ *
  * 
  */
 function PlotContainer(id) {
     this.id = id;
     this.svg = d3.select(id).append("svg:svg");
-    this.padding = [10,10,10,10];
+    //this.padding = [10,10,10,10];
+    this.plot_spacing = 50;
     this.plot_data = [];
+    this.v_offsets = [];
     // append a form entry box (after SVG) to add URL for new plot
     d3.select(id).append("p").text("Enter data URL to add another plot")
 	.append("form").attr("id","add-plot-form")
@@ -297,83 +303,30 @@ function PlotContainer(id) {
 }
 
 
-
-PlotContainer.prototype.setWidth = function(width) {
-    this.svg.attr("width",width);
-};
-
-PlotContainer.prototype.setHeight = function(height) {
-    this.svg.attr("height",height);
-};
-
 PlotContainer.prototype.addPlot = function(plot_name, data_url, plot_type) {
     // TODO:  use  switch  statement  to load  different  classes  for
     // different  plot types.  For now,  just load  Plot1D.  When it's
     // working, develop a Plot1DOverview sub-class.
     // add a new plot object 
-    this.plot_data.push(new Plot1D(plot_name));
-    // set up the SVG with new plot, set width in new plot object
-    this.setupPlots();
-    // now load the data.
-    this.addData(plot_name, data_url);
-    // and setup the brush for zooming.
-    // this.setupBrush();
-};
 
-//PlotContainer.prototype.setupBrush = function() {
-//    
-//};
-
-PlotContainer.prototype.getPlotIndex = function(plot_name) {
-    // find plot object with plot_name. 
-    for (var plot_i=0; plot_i<this.plot_data.length; plot_i++) {
-	if (this.plot_data[plot_i].name == plot_name) break;
+    var new_plot = new Plot1D(plot_name, data_url)
+    this.plot_data.push(new_plot);
+    var new_offset = new_plot.height;
+    if (this.v_offsets.length > 0) {
+	new_offset += this.plot_spacing + this.v_offsets[this.v_offsets.length-1];
     }
-    return plot_i;
-};
+    this.v_offsets.push(new_offset);
 
-PlotContainer.prototype.addData = function(plot_name, data_url) {
-    // find index of plot with plot_name
-    var plot_i = this.getPlotIndex(plot_name);
-    this.plot_data[plot_i].addData(data_url);
-};
+    this.svg.attr("height",new_offset);
+    $(this.id).height(new_offset);
 
-// calculate translate values for g.plot elements
-PlotContainer.prototype.computeLayout = function() {
-    var h_offset = this.padding[0];
-    for (var i=0; i<this.plot_data.length; i++) {
-	h_offset += this.plot_data[i].height;
-	this.plot_data[i].h_offset = 1.0*h_offset;
-    }
-    return h_offset+this.padding[2];
-};
-
-PlotContainer.prototype.setupPlots = function() {
-    //var h_offset = this.padding[0];
-    var plot_width = $(this.id).width()-this.padding[1]-this.padding[3];
-    var that = this;
-    var full_height = this.computeLayout();
-    // bind plots to <svg:g> elements using the d3.js API
-    this.plots = this.svg.selectAll("g.plot")
+    this.svg.selectAll("g.plot")
 	.data(this.plot_data)
 	.enter().append("svg:g")
+	.attr("transform", "translate(0,"+new_offset+")")
 	.attr("class","plot")
 	.attr("id", function(d) { return "plot-"+d.name;})
-	.attr("transform", function(d) {
-	    return "translate(0, "+(d.h_offset)+")"; });
-    
-    // set height of HTML element surrounding container
-    $(this.id).height(full_height);
-    
-    // set height of plot container
-    this.setHeight(full_height);
-    
-    // Set the  width for  each plot.  We want to  do this  before the
-    // plots grab the data from the server, so we can request the data
-    // be resampled to the number of pixels of the plot.
-    this.plots.each(function(d,i) { 
-	d.setWidth(plot_width); 
-    });
+	.call(function(a) { a.datum().loadData(a); });
 };
 
 /*
@@ -382,12 +335,15 @@ PlotContainer.prototype.setupPlots = function() {
  * Setup axes etc, for one or more Signals.
  * Corresponds to an SVG <g> container.
  *
- * arguments: name of plot. 
+ * arguments: name of plot, data URL
+ * 
+ * 
  */
 
-function Plot1D(name) {
+function Plot1D(name, data_url) {
     this.name = name;
-    this.padding = [5,50,30,50];
+    this.data_url = data_url;
+    this.padding = [5,50,50,50];
     // height of plot, including padding
     this.height = 400;
     // width of plot, including padding. 
@@ -402,7 +358,7 @@ function Plot1D(name) {
      * 
      * +--svg-------------------------------------------------+
      * |                                                      |
-     * |  +---svg:g----------------------------------------+  |
+     * |  +-----svg:g--#plot-plotname----------------------+  |
      * |  |  ^                 ^                           |  |  ^
      * |  |<-+--width----------+-------------------------->|  |  |
      * |  |  |                 v padding[0]                |  |  | menu_padding[0]
@@ -421,14 +377,14 @@ function Plot1D(name) {
      * |  |  |                 ^                           |  | | menu_padding[2]
      * |  |  |                 | padding[2]                |  | |
      * |  |  v                 v                           |  | v
-     * |  +------------------------------------------------+  |
-     * |                                                      |
+     * |  +------------------------------------------------+  | 
+     * |                                                      | 
      * +------------------------------------------------------+
      * 
      */
 
 
-    this.menu_padding = [5, 5, -1, 5];
+    this.menu_padding = [0, 5, -1, 5];
 
     this.data = [];
     this.xlim = [1.e100,-1.e100];
@@ -440,17 +396,15 @@ function Plot1D(name) {
 	[0, this.width - this.padding[1]-this.padding[3]]
     );
     this.y = d3.scale.linear().range(
-	[this.height - this.padding[0],0 + this.padding[2]]
+	[this.height-this.padding[0]-this.padding[2],0]
     );
     this.xAxis = d3.svg.axis().scale(this.x).tickSize(-(this.height-this.padding[0]-this.padding[2]));
     this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickSize(-(this.width-this.padding[3]-this.padding[1]));
-    
-
 }
+
 
 Plot1D.prototype.setWidth = function(width) {
     this.width = width;
-    console.log(this.width);
     this.x.range(
 	[0, this.width - this.padding[1]-this.padding[3]]
 	);
@@ -484,17 +438,18 @@ Plot1D.prototype.updateAxes = function() {
     
 };
 
-Plot1D.prototype.addData = function(data_url) {
+Plot1D.prototype.loadData = function(g) {
     var that = this;
+    this.setWidth($(g).parent().width());
     // does data_url contain a query string?
-    var query_char = data_url.match(/\?.+/) ? '&' : '?';
-    data_url += (query_char+'f999_name=resample_minmax&f999_arg0='+this.width+'&view=json');
+    var query_char = this.data_url.match(/\?.+/) ? '&' : '?';
+    data_url = this.data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.width-this.padding[1]-this.padding[3])+'&view=json');
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
     $.getJSON(data_url, function(a) {a.is_minmax = isMinMaxPlot(a);
-				    that.data.push(a); 
-				    that.updateAxes();
-				    that.displayData();});
+				     that.data.push(a); 
+				     that.updateAxes();
+				     that.displayData(g);});
 };
 
 
@@ -508,7 +463,8 @@ Plot1D.prototype.formatData = function(d, i) {
 	var line = d3.svg.line()
 	    .x(function(a) {return that.x(a[0]); })
 	    .y(function(a) {
-		return -(that.height+that.padding[2]) + that.y(a[1]);
+		//return -(that.height+that.padding[2]) + that.y(a[1]);
+		return that.y(a[1]);
 	    });
 	return line(fill_data);
     } else {
@@ -520,23 +476,22 @@ Plot1D.prototype.formatData = function(d, i) {
 };
 
 
-Plot1D.prototype.displayData = function() {
-    // get the <svg:g> element for this plot
-    // TODO: can  we store  the elements somehow  so we don't  have to
-    // re-select them by ID?
-    var that=this;
-    this.g = d3.select("#plot-"+this.name);
+/* this refs data, needs to be called after getdata */
 
-    this.g.attr("transform", "translate("+this.padding[3]+","+(this.h_offset+this.padding[0])+")");
+Plot1D.prototype.displayData = function(g) {
+    var that=this;
+    this.g = g;
+
     // only display x axis if it doesn't already exist
+
     var xa = this.g.selectAll(".axis.x");
     if (xa[0].length === 0) {
 	this.g.append("svg:g").attr("class","x axis")
-	    .attr("transform", "translate(0,"+-(this.padding[0]+this.padding[2])+")")
+	    .attr("transform", "translate("+this.padding[3]+","+-(this.padding[2])+")")
 	    .call(this.xAxis);
 	this.g.select(".axis.x").append("text").attr("class", "x label")
 	    .attr("x", 0.5*(this.width-this.padding[1]-this.padding[3]))
-	    .attr("y", this.padding[2])
+	    .attr("y", "2.5em")
 	    .text(that.data[0].dim_units);
 
 	// shift label to centre. 
@@ -544,16 +499,17 @@ Plot1D.prototype.displayData = function() {
 	var new_x = $(xa_sel).attr("x") - $(xa_sel).width()/2 ;
 	$(xa_sel).attr("x",new_x);
     }
+    
 
     var ya = this.g.selectAll(".axis.y");
     if (ya[0].length === 0) {
 	this.g.append("svg:g").attr("class","y axis")
-	    .attr("transform", "translate(0,"+-(this.padding[2]+this.height)+")") // TODO: fix
+	    .attr("transform", "translate("+this.padding[3]+","+-(this.height - this.padding[0])+")") // TODO: fix
 	    .call(this.yAxis);
 	this.g.select(".axis.y").append("text").attr("class", "y label")
 	    .attr("transform", "rotate(-90)")
-	    .attr("x", -this.height*0.5)
-	    .attr("y", -this.padding[3]*0.8)
+	    .attr("x", -(this.height-this.padding[0]-this.padding[2])*0.5)
+	    .attr("y", "-3em")
 	    .text(that.data[0].data_units);
 
 	// shift label to centre. 
@@ -567,19 +523,20 @@ Plot1D.prototype.displayData = function() {
     this.g.selectAll("path.data")
 	.data(this.data)
 	.enter().append("path")
+	.attr("transform", "translate("+this.padding[3]+","+-(this.height-this.padding[0])+")")
 	.attr("class","data")
 	.classed("path-filled", function(d) { return d.is_minmax })
 	.attr("d", function(d,i) { return that.formatData(d,i) });
+
 
     var pm = this.g.selectAll(".plot-menu");
     if (pm[0].length === 0) {
 	this.g.append("g").attr("class", "plot-menu")
 	    .append("rect")
-	    //.attr("transform", "translate("+(that.width-that.padding[1]+that.menu_padding[3])+","+(0)+")")
-	    .attr("transform", "translate("+(this.width-this.padding[1]-this.padding[3]+this.menu_padding[3])+","+(-this.height)+")")
+	    .attr("transform", "translate("+(this.width-this.padding[1]+this.menu_padding[3])+","+-(this.height-this.padding[0]-this.menu_padding[0])+")")
 	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
 	    .attr("height", "50")
-    }
+    } 
 };
 
 
@@ -933,7 +890,7 @@ $(document).ready(function() {
     });
     if ($("#signal-1d-placeholder").length) {
 	var pc = new PlotContainer("#signal-1d-placeholder");
-	pc.addPlot('default', '');
+	pc.addPlot('default', window.location.toString());
     }
     if ($("#signal-2d-placeholder").length) {
 	plotSignal2D();
