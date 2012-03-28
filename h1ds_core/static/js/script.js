@@ -354,7 +354,8 @@ function Plot1D(name, data_url) {
      * so the width of the menu is padding[1] - menu_padding[1] - menu_padding[3]
      * i.e. make sure padding[1] > (menu_padding[1] + menu_padding[3])
      * note: menu_padding[2] is currently ignored. the height of the menu is
-     * adjusted dynamically as buttons are added.
+     * adjusted dynamically as buttons are added. Note that the svg:g container doesn't 
+     * have fixed width or height, but does have translated coordinates. 
      * 
      * +--svg-------------------------------------------------+
      * |                                                      |
