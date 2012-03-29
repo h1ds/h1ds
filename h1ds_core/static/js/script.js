@@ -473,8 +473,6 @@ Plot1D.prototype.formatData = function(d, i) {
 };
 
 
-/* this refs data, needs to be called after getdata */
-
 Plot1D.prototype.displayData = function(g) {
     var that=this;
     this.g = g;
@@ -530,7 +528,6 @@ Plot1D.prototype.displayData = function(g) {
     var pm = this.g.selectAll(".plot-menu");
     if (pm[0].length === 0) {
 	this.g.append("g").attr("class", "plot-menu")
-	    //.append("rect")
 	    .attr("transform", "translate("+(this.width-this.padding[1]+this.menu_padding[3])+","+-(this.height-this.padding[0]-this.menu_padding[0])+")")
 	    .append("rect")
 	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
