@@ -337,6 +337,40 @@ PlotContainer.prototype.addPlot = function(plot_name, data_url, plot_type) {
  *
  * arguments: name of plot, data URL
  * 
+ *
+ * the menu  padding is  relative to  the gap in  the right  hand plot
+ * padding so the width of  the menu is padding[1] - menu_padding[1] -
+ * menu_padding[3]  i.e.  make sure  padding[1]  > (menu_padding[1]  +
+ * menu_padding[3])  note: menu_padding[2]  is currently  ignored. the
+ * height  of  the  menu   is  adjusted  dynamically  as  buttons  are
+ * added. Note  that the svg:g  container doesn't have fixed  width or
+ * height, but does have translated coordinates.
+ * 
+ * +--svg-------------------------------------------------+
+ * |                                                      |
+ * |  +-----svg:g--#plot-plotname----------------------+  |
+ * |  |  ^                 ^                           |  |  ^
+ * |  |<-+--width----------+-------------------------->|  |  |
+ * |  |  |                 v padding[0]                |  |  | menu_padding[0]
+ * |  |  |  +------------------------+                 |  |  |
+ * |  |  |  |                        |<-padding[1]---->|  |  |
+ * |  |  |  |                        |                 |  |  v
+ * |  |  h  |                        |    +-----+      |  |
+ * |  |  e  |                        |    |     |      |  |
+ * |  |  i  |        menu_padding[3] |<-->|     |      |  |
+ * |  |  g  |                        |    |     |<---->|  | menu_padding[1]
+ * |  |  h  |                        |    |     |      |  |
+ * |  |  t  |                        |    +-----+      |  |
+ * |  |  |  |                        |                 |  | ^
+ * |  |< +->|padding[3]              |                 |  | |
+ * |  |  |  +------------------------+                 |  | |
+ * |  |  |                 ^                           |  | | menu_padding[2]
+ * |  |  |                 | padding[2]                |  | |
+ * |  |  v                 v                           |  | v
+ * |  +------------------------------------------------+  | 
+ * |                                                      | 
+ * +------------------------------------------------------+
+ * 
  * 
  */
 
@@ -348,42 +382,9 @@ function Plot1D(name, data_url) {
     this.height = 400;
     // width of plot, including padding. 
     this.width = 100;
-
-    /*
-     * the menu padding is relative to the gap in the right hand plot padding
-     * so the width of the menu is padding[1] - menu_padding[1] - menu_padding[3]
-     * i.e. make sure padding[1] > (menu_padding[1] + menu_padding[3])
-     * note: menu_padding[2] is currently ignored. the height of the menu is
-     * adjusted dynamically as buttons are added. Note that the svg:g container doesn't 
-     * have fixed width or height, but does have translated coordinates. 
-     * 
-     * +--svg-------------------------------------------------+
-     * |                                                      |
-     * |  +-----svg:g--#plot-plotname----------------------+  |
-     * |  |  ^                 ^                           |  |  ^
-     * |  |<-+--width----------+-------------------------->|  |  |
-     * |  |  |                 v padding[0]                |  |  | menu_padding[0]
-     * |  |  |  +------------------------+                 |  |  |
-     * |  |  |  |                        |<-padding[1]---->|  |  |
-     * |  |  |  |                        |                 |  |  v
-     * |  |  h  |                        |    +-----+      |  |
-     * |  |  e  |                        |    |     |      |  |
-     * |  |  i  |        menu_padding[3] |<-->|     |      |  |
-     * |  |  g  |                        |    |     |<---->|  | menu_padding[1]
-     * |  |  h  |                        |    |     |      |  |
-     * |  |  t  |                        |    +-----+      |  |
-     * |  |  |  |                        |                 |  | ^
-     * |  |< +->|padding[3]              |                 |  | |
-     * |  |  |  +------------------------+                 |  | |
-     * |  |  |                 ^                           |  | | menu_padding[2]
-     * |  |  |                 | padding[2]                |  | |
-     * |  |  v                 v                           |  | v
-     * |  +------------------------------------------------+  | 
-     * |                                                      | 
-     * +------------------------------------------------------+
-     * 
-     */
-
+    // if  true, show  overview  plot beneath  main  plot. useful  for
+    // context when zooming and panning.
+    this.overview = false;
 
     this.menu_padding = [0, 5, -1, 5];
 
@@ -455,23 +456,18 @@ Plot1D.prototype.loadData = function(g) {
 
 
 // format data for SVG <path> element's d attribute.
-// TODO: it's rather ugly to have height and padding in the y axis
-// calculation... isn't there a better way?
 Plot1D.prototype.formatData = function(d, i) {
     var that = this;
     if (d.is_minmax) {
 	var fill_data = fillPlot(d);
 	var line = d3.svg.line()
-	    .x(function(a) {return that.x(a[0]); })
-	    .y(function(a) {
-		//return -(that.height+that.padding[2]) + that.y(a[1]);
-		return that.y(a[1]);
-	    });
+	    .x(function(a) { return that.x(a[0]); })
+	    .y(function(a) { return that.y(a[1]); });
 	return line(fill_data);
     } else {
 	var line = d3.svg.line()
 	    .x(function(a,j) { return that.x(d.dim[j]); })
-	    .y(function(a) { return -(that.height+that.padding[2])+ that.y(a); });
+	    .y(function(a) { return that.y(a); });
 	return line(d.data);
     }
 };
@@ -530,16 +526,34 @@ Plot1D.prototype.displayData = function(g) {
 	.attr("d", function(d,i) { return that.formatData(d,i) });
 
 
+    var button_padding = 5;
     var pm = this.g.selectAll(".plot-menu");
     if (pm[0].length === 0) {
 	this.g.append("g").attr("class", "plot-menu")
-	    .append("rect")
+	    //.append("rect")
 	    .attr("transform", "translate("+(this.width-this.padding[1]+this.menu_padding[3])+","+-(this.height-this.padding[0]-this.menu_padding[0])+")")
+	    .append("rect")
 	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
-	    .attr("height", "50")
+	    .attr("height", "50");
+	// add buttons
+	var pm = this.g.select(".plot-menu");
+	
+
+	pm.append("g")
+	    .attr("class", "plot-button")
+	    .on("click", this.toggleOverview)
+	    .append("rect")
+	    .attr("transform", "translate("+button_padding+","+button_padding+")")
+	    .attr("width",(this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding))
+	    .attr("height", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding));
+
     } 
+
 };
 
+Plot1D.prototype.toggleOverview = function(a) {
+    console.log("toggled overview");
+};
 
 
 //

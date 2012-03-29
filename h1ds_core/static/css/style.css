@@ -1277,6 +1277,26 @@ rect.highlight {
     fill-opacity:0.5;
 }
 
+g.plot-menu rect {
+    stroke-width: 2;
+    stroke: #888;
+    fill: none;
+}
+
+g.plot-button rect {
+    stroke-width: 2;
+    stroke: #555;
+    fill: #bbb;
+}
+
+g.plot-button.active rect {
+    stroke-width: 2;
+    stroke: #555;
+    fill: red;
+}
+
+
+
 /* ==|== non-semantic helper classes ========================================
    Please define your styles before this section.
    ========================================================================== */
