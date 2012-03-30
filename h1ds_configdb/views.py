@@ -16,7 +16,7 @@ def configdb_home(request):
 
 def kh_string_w_neg(kh):
     kh_str = "%1.3f" %kh
-    if kh_str[0] == '-':
+    if kh_str[0] != '-':
         kh_str = '0'+kh_str
     return kh_str
 
