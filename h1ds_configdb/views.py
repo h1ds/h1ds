@@ -14,6 +14,12 @@ def configdb_home(request):
                               context_instance=RequestContext(request),
                               )
 
+def kh_string_w_neg(kh):
+    kh_str = "%1.3f" %kh
+    if kh_str[0] == '-':
+        kh_str = '0'+kh_str
+    return kh_str
+
 def config_overview(request, config_id):
     # only support config_id = khx.xx for now
     kh = config_id[2:]
@@ -24,7 +30,10 @@ def config_overview(request, config_id):
     input_files = {'HELIAC (inner surfaces)':'/static/configdb/hin/gHg110324-kh%.3f-kv1.000.hin' %float(kh),
                    'HELIAC (outer surfaces)':'/static/configdb/hin/gHg110324-kh%.3f-kv1.000_outer.hin' %float(kh),
                    'VMEC input file':'/static/configdb/vmec/input.h1ass027v1_0p%02d' %(int(100*float(kh))),
+                   'VMEC output (vacuum)':'/static/configdb/vmec/SCAN_FreeBound_VAC_NITER20000-2012-03-20/WOUT_LINKS/wout_VMEC_fb_kh%s.nc' %(kh_string_w_neg(kh)),
+                   'VMEC output (0.1% beta)':'/static/configdb/vmec/SCAN_FreeBound_bav0.10-2012-03-22/WOUT_LINKS/wout_VMEC_fb_kh%s.nc' %(kh_string_w_neg(kh)),
                    'Boozer coordinates [NetCDF]':'/static/configdb/vmec/boozmn_h1ass027v1_0p%02d.nc' %(int(100*float(kh)))}
+
     if (10*float(kh)).is_integer():
         # only for 0.1 steps
         input_files['BLINE'] = '/static/configdb/bline/hnh3k%02d.txt' %(int(10*float(kh)))
