@@ -362,7 +362,6 @@ function PlotContainer(id) {
 
 PlotContainer.prototype.addPlotSet = function(plotset_name, data_url, plot_type) {
 
-    // var new_plot = new Plot1D(plot_name, data_url)
     var new_plotset = new PlotSet(plotset_name, data_url)
     
     // calculate the vertical translation for the plotset
@@ -496,6 +495,35 @@ PlotSet.prototype.loadData = function(g) {
 	.attr("id", function(d) { return "plot-"+that.name+'-'+d.name;})
 	.call(function(a) { a.datum().loadData(a); });
 
+    this.loadMenu();
+
+};
+
+PlotSet.prototype.loadMenu = function() {
+    var button_padding = 5;
+    var pm = this.g.selectAll(".plot-menu");
+    if (pm[0].length === 0) {
+	this.g.append("g").attr("class", "plot-menu")
+	    .attr("transform", "translate("+(this.width-this.padding[1]+this.menu_padding[3])+","+(this.menu_padding[0])+")")
+	    .append("rect")
+	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
+	    .attr("height", "50");
+	// add buttons
+	var pm = this.g.select(".plot-menu");
+	
+	
+	pm.append("g")
+	    .attr("class", "plot-button")
+	    .on("click", this.toggleOverview)
+	    .append("rect")
+	    .attr("transform", "translate("+button_padding+","+button_padding+")")
+	    .attr("width",(this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding))
+	    .attr("height", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding));
+    }
+};
+
+PlotSet.prototype.toggleOverview = function(a) {
+    console.log("toggled overview");
 };
 
 /*
@@ -518,24 +546,24 @@ PlotSet.prototype.loadData = function(g) {
  * +--g.plotset-------------------------------------------+
  * |                                                      |
  * |  +-----g.plot--#plot-plotname---------------------+  |
- * |  |  ^                 ^                           |  |  ^
- * |  |<-+--width----------+-------------------------->|  |  |
- * |  |  |                 v padding[0]                |  |  | menu_padding[0]
- * |  |  |  +------------------------+                 |  |  |
- * |  |  |  |                        |<-padding[1]---->|  |  |
- * |  |  |  |                        |                 |  |  v
- * |  |  h  |                        |    +-----+      |  |
- * |  |  e  |                        |    |     |      |  |
- * |  |  i  |        menu_padding[3] |<-->|     |      |  |
- * |  |  g  |                        |    |     |<---->|  | menu_padding[1]
- * |  |  h  |                        |    |     |      |  |
- * |  |  t  |                        |    +-----+      |  |
- * |  |  |  |                        |                 |  | ^
- * |  |< +->|padding[3]              |                 |  | |
- * |  |  |  +------------------------+                 |  | |
- * |  |  |                 ^                           |  | | menu_padding[2]
- * |  |  |                 | padding[2]                |  | |
- * |  |  v                 v                           |  | v
+ * |  |  ^                 ^                           |  |
+ * |  |<-+--width----------+-------------------------->|  |
+ * |  |  |                 v padding[0]                |  |
+ * |  |  |  +---------------------------+              |  |
+ * |  |  |  |                           |<-padding[1]->|  |
+ * |  |  |  |                           |              |  |
+ * |  |  h  |                           |              |  |
+ * |  |  e  |                           |              |  |
+ * |  |  i  |                           |              |  |
+ * |  |  g  |                           |              |  |
+ * |  |  h  |                           |              |  |
+ * |  |  t  |                           |              |  |
+ * |  |  |  |                           |              |  |
+ * |  |< +->|padding[3]                 |              |  |
+ * |  |  |  +---------------------------+              |  |
+ * |  |  |                 ^                           |  |
+ * |  |  |                 | padding[2]                |  |
+ * |  |  v                 v                           |  |
  * |  +------------------------------------------------+  | 
  * |                                                      | 
  * |  +-----g.plot---#plot-nextplot--------------------+  |
@@ -550,7 +578,7 @@ PlotSet.prototype.loadData = function(g) {
 function Plot1D(name, data_url, height, width) {
     this.name = name;
     this.data_url = data_url;
-    this.padding = [5,50,50,50];
+    this.padding = [5,5,40,40];
     // height of plot, including padding
     this.height = height;
     // width of plot, including padding. 
@@ -558,8 +586,6 @@ function Plot1D(name, data_url, height, width) {
     // if  true, show  overview  plot beneath  main  plot. useful  for
     // context when zooming and panning.
     this.overview = false;
-
-    this.menu_padding = [0, 5, -1, 5];
 
     this.data = [];
     this.xlim = [1.e100,-1.e100];
@@ -695,36 +721,7 @@ Plot1D.prototype.displayData = function(g) {
 	.attr("class","data")
 	.classed("path-filled", function(d) { return d.is_minmax })
 	.attr("d", function(d,i) { return that.formatData(d,i) });
-
-
-    var button_padding = 5;
-    var pm = this.g.selectAll(".plot-menu");
-    if (pm[0].length === 0) {
-	this.g.append("g").attr("class", "plot-menu")
-	    .attr("transform", "translate("+(this.width-this.padding[1]+this.menu_padding[3])+","+-(this.height-this.padding[0]-this.menu_padding[0])+")")
-	    .append("rect")
-	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
-	    .attr("height", "50");
-	// add buttons
-	var pm = this.g.select(".plot-menu");
-	
-
-	pm.append("g")
-	    .attr("class", "plot-button")
-	    .on("click", this.toggleOverview)
-	    .append("rect")
-	    .attr("transform", "translate("+button_padding+","+button_padding+")")
-	    .attr("width",(this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding))
-	    .attr("height", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding));
-
-    } 
-
-};
-
-Plot1D.prototype.toggleOverview = function(a) {
-    console.log("toggled overview");
-};
-
+}; 
 
 //
 // plotSignal1D
