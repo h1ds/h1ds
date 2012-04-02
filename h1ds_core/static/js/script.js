@@ -504,7 +504,9 @@ PlotSet.prototype.loadMenu = function() {
     var pm = this.g.selectAll(".plot-menu");
     if (pm[0].length === 0) {
 	this.g.append("g").attr("class", "plot-menu")
-	    .attr("transform", "translate("+(this.width-this.padding[1]+this.menu_padding[3])+","+(this.menu_padding[0])+")")
+	    .attr("transform", "translate("+
+		  (this.width-this.padding[1]+this.menu_padding[3])+
+		  ","+(this.menu_padding[0])+")")
 	    .append("rect")
 	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
 	    .attr("height", "50");
@@ -514,7 +516,7 @@ PlotSet.prototype.loadMenu = function() {
 	
 	pm.append("g")
 	    .attr("class", "plot-button")
-	    .on("click", this.toggleOverview)
+	    .on("click", this.addSignal)
 	    .append("rect")
 	    .attr("transform", "translate("+button_padding+","+button_padding+")")
 	    .attr("width",(this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding))
@@ -522,8 +524,8 @@ PlotSet.prototype.loadMenu = function() {
     }
 };
 
-PlotSet.prototype.toggleOverview = function(a) {
-    console.log("toggled overview");
+PlotSet.prototype.addSignal = function(a) {
+    console.log("added signal");
 };
 
 /*
