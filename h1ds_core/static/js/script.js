@@ -273,6 +273,21 @@ function getPlotQueryString() {
     return (plot_url += '&view=json');
 }
 
+/*
+ * Interactive data plots for MDSplus.
+ * 
+ * There  are  three   primary  objects:  PlotContainer,  PlotSet  and
+ * Plot1D. PlotContainer  is called first,  it inserts an  SVG element
+ * inside   the   DOM   element   whose  id   matches   the   supplied
+ * argument. PlotSet  is a  container for a  set plots using  the same
+ * dataset; e.g. timeseries and  power spectrum. Plot1D is used inside
+ * a PlotSet and does the actual plotting of data.
+ *
+ *
+ *
+ */
+
+
 /* 
  * PlotContainer 
  * 
@@ -280,53 +295,207 @@ function getPlotQueryString() {
  * 
  * arguments: id of HTML element for container.
  *
- * 
+ *  +-------#id------------------------------------------------------+
+ *  |                                                                |
+ *  | +-----svg---------------------------------------------------+  |
+ *  | |                                                           |  |
+ *  | |   +---g.plotset---------------------------------------+   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   +---------------------------------------------------+   |  |
+ *  | |                  ^                                        |  |
+ *  | |                  |  plotset_spacing                       |  |
+ *  | |                  v                                        |  |
+ *  | |   +---g.plotset---------------------------------------+   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   +---------------------------------------------------+   |  |
+ *  | |                                                           |  |
+ *  | |                                                           |  |
+ *  | |                                                           |  |
+ *  | |   +---g.plotset---------------------------------------+   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   |                                                   |   |  |
+ *  | |   +---------------------------------------------------+   |  |
+ *  | |                                                           |  |
+ *  | +-----------------------------------------------------------+  |
+ *  |                                                                |
+ *  | +---<p>-----------------------------------------------------+  |
+ *  | |                                                           |  |
+ *  | | Enter URL to add another...                               |  |
+ *  | |                                                           |  |
+ *  | +-----------------------------------------------------------+  |
+ *  |                                                                |
+ *  +----------------------------------------------------------------+
  *
- *
- * 
  */
+
 function PlotContainer(id) {
+    var that = this;
     this.id = id;
     this.svg = d3.select(id).append("svg:svg");
-    //this.padding = [10,10,10,10];
-    this.plot_spacing = 50;
-    this.plot_data = [];
-    this.v_offsets = [];
+    // spacing between plotsets
+    this.plotset_spacing = 50;
+    // array of plotset instances in this container
+    this.plotsets = [];
+
     // append a form entry box (after SVG) to add URL for new plot
+    // TODO: this puts div inside form inside p. yuck. fix it.
     d3.select(id).append("p").text("Enter data URL to add another plot")
 	.append("form").attr("id","add-plot-form")
 	.append("div").html('<input id="add-plot-url" type="text" /><input type="submit" />');
-    var that = this;
-    $("#add-plot-form").submit(function() {that.addPlot(
-	(function(){return 'test_'+that.plot_data.length})()
-	,$("#add-plot-url").val()); return false;});
+
+    $("#add-plot-form").submit(function() {that.addPlotSet(
+	(function(){return 'test_'+that.plotsets.length})(),
+	$("#add-plot-url").val()); return false;});
 }
 
 
-PlotContainer.prototype.addPlot = function(plot_name, data_url, plot_type) {
-    // TODO:  use  switch  statement  to load  different  classes  for
-    // different  plot types.  For now,  just load  Plot1D.  When it's
-    // working, develop a Plot1DOverview sub-class.
-    // add a new plot object 
+PlotContainer.prototype.addPlotSet = function(plotset_name, data_url, plot_type) {
 
-    var new_plot = new Plot1D(plot_name, data_url)
-    this.plot_data.push(new_plot);
-    var new_offset = new_plot.height;
-    if (this.v_offsets.length > 0) {
-	new_offset += this.plot_spacing + this.v_offsets[this.v_offsets.length-1];
+    // var new_plot = new Plot1D(plot_name, data_url)
+    var new_plotset = new PlotSet(plotset_name, data_url)
+    
+    // calculate the vertical translation for the plotset
+    var new_offset = 0;
+    if (this.plotsets.length > 0) {
+	new_offset += this.plotsets[this.plotsets.length-1].offset;
+	new_offset += this.plotsets[this.plotsets.length-1].getHeight();
+	new_offset += this.plotset_spacing;
     }
-    this.v_offsets.push(new_offset);
 
-    this.svg.attr("height",new_offset);
-    $(this.id).height(new_offset);
+    new_plotset.offset = new_offset;
 
-    this.svg.selectAll("g.plot")
-	.data(this.plot_data)
+    // add new plotset to the plot container
+    this.plotsets.push(new_plotset);
+
+    var new_height = new_offset + new_plotset.getHeight();
+
+    // adjust the height of plot container (SVG) and DOM container element.
+    this.svg.attr("height",new_height);
+    $(this.id).height(new_height);
+
+    // Bind plotsets and load data. Each plotset is wrapped by an <svg:g> element.
+    this.svg.selectAll("g.plotset")
+	.data(this.plotsets)
 	.enter().append("svg:g")
 	.attr("transform", "translate(0,"+new_offset+")")
-	.attr("class","plot")
-	.attr("id", function(d) { return "plot-"+d.name;})
+	.attr("class","plotset")
+	.attr("id", function(d) { return "plotset-"+d.name;})
 	.call(function(a) { a.datum().loadData(a); });
+};
+
+/* 
+ * PlotSet
+ *
+ * Wrapper for individual plots using same data.  
+ *
+ * mp = menu_padding. note mp[2] is ignored (height of menu stretched
+ * to fit number of buttons.
+ *
+ *
+ *  +---g.plotset----------------------------------------------------+
+ *  |                ^                                       ^       |
+ *  |                | padding[0]                            | mp[0] |
+ *  |                v                                       v       |
+ *  |      +---g.plot----------------------------------+    +--+     |
+ *  |<---->|                                           |    |  |     |
+ *  |  p   |                                      mp[3]|<-->|  |<--->|
+ *  |  a   |                                           |    |  |mp[1]|
+ *  |  d   +----------------------------------------- -+    |  |     |
+ *  |  d           ^                                        |  |     |
+ *  |  i           | plot_spacing                           |  |     |
+ *  |  n           v                                        +--+     |
+ *  |  g   +---g.plot----------------------------------+             |
+ *  | [3]  |                                           |             |
+ *  |      |                                           |             |
+ *  |      |                                           |             |
+ *  |      +-------------------------------------------+             |
+ *  |                                                                |
+ *  |      +---g.plot----------------------------------+             |
+ *  |      |                                           |             |
+ *  |      |                                           |<----------->|
+ *  |      |                                           |  padding[1] |
+ *  |      +-------------------------------------------+             |
+ *  |          ^                                                     |
+ *  |          | padding[2]                                          |
+ *  |          v                                                     |
+ *  +----------------------------------------------------------------+
+ *
+ */
+
+function PlotSet(plotset_name, data_url) {
+    this.name = plotset_name;
+    this.data_urls = [data_url];
+    this.plots = {'main':{'height':400, 'instance':null},
+		  'overview':{'height':200, 'instance':null},
+		  'powerspectrum':{'height':200, 'instance':null},
+		 };
+    this.active_plots = ['main'];
+    this.plot_spacing = 10;
+    this.padding = [5,50,5,5];
+    this.width = 10;
+    this.menu_padding = [10,10,10,10];
+}
+
+
+PlotSet.prototype.getHeight = function() {
+    var h = 0;
+    for (var i=0; i < this.active_plots.length; i++) {
+	h += this.plots[this.active_plots[i]].height;
+    }
+    if (this.active_plots.length > 1) {
+	h += (this.active_plots.length-1)*this.plot_spacing;
+    }
+    return h;
+};
+
+PlotSet.prototype.setWidth = function(new_width) {
+    this.width = new_width;
+}
+
+// 
+PlotSet.prototype.loadData = function(g) {
+    // g is the <svg:g> group element containing this plotset
+    this.g = g;
+    this.setWidth($(this.g).parent().width());
+    
+    var that = this;
+    // generate a dataset with instances of active plots
+    var plots = [];
+    var offset = 0;
+    for (var i=0; i<this.active_plots.length; i++) {
+	// if we don't have an active instance, then make one.
+	if (!this.plots[this.active_plots[i]].instance) {
+	    this.plots[this.active_plots[i]].instance = new Plot1D(this.name+"-"+this.active_plots[i],
+								   this.data_urls[0], 
+								   this.plots[this.active_plots[i]].height,
+								   this.width-this.padding[1]-this.padding[3]
+								  )
+	}
+	offset += this.plots[this.active_plots[i]].height;
+	this.plots[this.active_plots[i]].instance.offset = offset;
+	plots.push(this.plots[this.active_plots[i]].instance);
+	offset += this.plot_spacing;
+    }
+
+    this.g.selectAll("g.plot")
+	.data(plots)
+	.enter().append("svg:g")
+	.attr("transform", function(d) { return "translate("+that.padding[3]+","+(d.offset+that.padding[0])+")" })
+	.attr("class","plot")
+	.attr("id", function(d) { return "plot-"+that.name+'-'+d.name;})
+	.call(function(a) { a.datum().loadData(a); });
+
 };
 
 /*
@@ -346,9 +515,9 @@ PlotContainer.prototype.addPlot = function(plot_name, data_url, plot_type) {
  * added. Note  that the svg:g  container doesn't have fixed  width or
  * height, but does have translated coordinates.
  * 
- * +--svg-------------------------------------------------+
+ * +--g.plotset-------------------------------------------+
  * |                                                      |
- * |  +-----svg:g--#plot-plotname----------------------+  |
+ * |  +-----g.plot--#plot-plotname---------------------+  |
  * |  |  ^                 ^                           |  |  ^
  * |  |<-+--width----------+-------------------------->|  |  |
  * |  |  |                 v padding[0]                |  |  | menu_padding[0]
@@ -369,19 +538,23 @@ PlotContainer.prototype.addPlot = function(plot_name, data_url, plot_type) {
  * |  |  v                 v                           |  | v
  * |  +------------------------------------------------+  | 
  * |                                                      | 
+ * |  +-----g.plot---#plot-nextplot--------------------+  |
+ * |  |                                                |  |
+ * |  | etc...                                         |  |
+ * |  |                                                |  |
  * +------------------------------------------------------+
  * 
  * 
  */
 
-function Plot1D(name, data_url) {
+function Plot1D(name, data_url, height, width) {
     this.name = name;
     this.data_url = data_url;
     this.padding = [5,50,50,50];
     // height of plot, including padding
-    this.height = 400;
+    this.height = height;
     // width of plot, including padding. 
-    this.width = 100;
+    this.width = width;
     // if  true, show  overview  plot beneath  main  plot. useful  for
     // context when zooming and panning.
     this.overview = false;
@@ -442,7 +615,7 @@ Plot1D.prototype.updateAxes = function() {
 
 Plot1D.prototype.loadData = function(g) {
     var that = this;
-    this.setWidth($(g).parent().width());
+    //this.setWidth($(g).parent().width());
     // does data_url contain a query string?
     var query_char = this.data_url.match(/\?.+/) ? '&' : '?';
     data_url = this.data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.width-this.padding[1]-this.padding[3])+'&view=json');
@@ -902,7 +1075,7 @@ $(document).ready(function() {
     });
     if ($("#signal-1d-placeholder").length) {
 	var pc = new PlotContainer("#signal-1d-placeholder");
-	pc.addPlot('default', window.location.toString());
+	pc.addPlotSet('default', window.location.toString());
     }
     if ($("#signal-2d-placeholder").length) {
 	plotSignal2D();
