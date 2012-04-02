@@ -344,7 +344,7 @@ function PlotContainer(id) {
     this.id = id;
     this.svg = d3.select(id).append("svg:svg");
     // spacing between plotsets
-    this.plotset_spacing = 50;
+    this.plotset_spacing = 10;
     // array of plotset instances in this container
     this.plotsets = [];
 
@@ -443,7 +443,7 @@ function PlotSet(plotset_name, data_url) {
     this.plot_spacing = 10;
     this.padding = [5,50,5,5];
     this.width = 10;
-    this.menu_padding = [10,10,10,10];
+    this.menu_padding = [10,5,10,5];
 }
 
 
