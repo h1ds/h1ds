@@ -436,6 +436,7 @@ PlotContainer.prototype.addPlotSet = function(plotset_name, data_url, plot_type)
  */
 
 function PlotSet(plotset_name, data_url) {
+    var that = this;
     this.name = plotset_name;
     this.data_urls = [data_url];
     this.plots = {'main':{'height':400, 'instance':null},
@@ -447,7 +448,7 @@ function PlotSet(plotset_name, data_url) {
     this.padding = [5,50,5,5];
     this.width = 10;
     this.menu_padding = [10,5,10,5];
-    var that = this;
+    this.data_colours = ['#010101', '#ED2D2E', '#008C47', '#1859A9', '#662C91', '#A11D20'];
     this.addSignalDialog = $('<div></div>')
 	.html('<form><fieldset><label for="url">URL</label><input type="text" name="url" id="signalurl" class="text ui-widget-content ui-corner-all"/></fieldset></form>')
 	.dialog({
@@ -500,6 +501,7 @@ PlotSet.prototype.loadData = function() {
 	offset += this.plots[this.active_plots[i]].height;
 	this.plots[this.active_plots[i]].instance.offset = offset;
 	this.plots[this.active_plots[i]].instance.data_urls = this.data_urls;
+	this.plots[this.active_plots[i]].instance.data_colours = this.data_colours;
 	plotlist.push(this.plots[this.active_plots[i]].instance);
 	offset += this.plot_spacing;
     }
@@ -511,7 +513,7 @@ PlotSet.prototype.loadData = function() {
 	.attr("class","plot")
 	.attr("id", function(d) { return "plot-"+that.name+'-'+d.name;});
 
-    this.g.selectAll("g.plot").each( function(d,i) { d.g = d3.select(this);d.loadData(); });
+    this.g.selectAll("g.plot").each( function(d,i) { d.g = d3.select(this); d.loadData(); });
     
     this.loadMenu();
 
@@ -658,6 +660,7 @@ Plot1D.prototype.updateAxes = function() {
 };
 
 Plot1D.prototype.loadData = function() {
+    this.data = [];
     for (i=0; i<this.data_urls.length; i++) {
 	this.loadURL(this.data_urls[i]);
     }
@@ -665,15 +668,20 @@ Plot1D.prototype.loadData = function() {
 
 Plot1D.prototype.loadURL = function(data_url) {
     var that = this;
+    
     // does data_url contain a query string?
     var query_char = data_url.match(/\?.+/) ? '&' : '?';
     data_url += (query_char+'f999_name=resample_minmax&f999_arg0='+(this.width-this.padding[1]-this.padding[3])+'&view=json');
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
-    $.getJSON(data_url, function(a) {a.is_minmax = isMinMaxPlot(a);
-				     that.data.push(a); 
-				     that.updateAxes();
-				     that.displayData();});
+    $.ajax({url: data_url, 
+	    dataType: "json"})
+	.done(function(a) {
+	    a.is_minmax = isMinMaxPlot(a);
+	    that.data.push(a); 
+	    that.updateAxes();
+	    that.displayData();
+	});
 };
 
 
@@ -741,7 +749,9 @@ Plot1D.prototype.displayData = function() {
 	.attr("transform", "translate("+this.padding[3]+","+-(this.height-this.padding[0])+")")
 	.attr("class","data")
 	.classed("path-filled", function(d) { return d.is_minmax })
-	.attr("d", function(d,i) { return that.formatData(d,i) });
+	.attr("d", function(d,i) { return that.formatData(d,i) })
+	.style("stroke", function(d,i) { return that.data_colours[i]; })
+	.style("fill", function(d,i) { console.log(i); return that.data_colours[i]; });
 }; 
 
 //
