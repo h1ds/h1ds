@@ -390,7 +390,10 @@ PlotContainer.prototype.addPlotSet = function(plotset_name, data_url, plot_type)
 	.attr("transform", "translate(0,"+new_offset+")")
 	.attr("class","plotset")
 	.attr("id", function(d) { return "plotset-"+d.name;})
-	.call(function(a) { a.datum().loadData(a); });
+	.call(function(a) { 
+	    a.datum().g = a;
+	    a.datum().loadData(); 
+	});
 };
 
 /* 
@@ -444,6 +447,21 @@ function PlotSet(plotset_name, data_url) {
     this.padding = [5,50,5,5];
     this.width = 10;
     this.menu_padding = [10,5,10,5];
+    var that = this;
+    this.addSignalDialog = $('<div></div>')
+	.html('<form><fieldset><label for="url">URL</label><input type="text" name="url" id="signalurl" class="text ui-widget-content ui-corner-all"/></fieldset></form>')
+	.dialog({
+	    autoOpen:false,
+	    title: 'Add signal',
+	    buttons: {
+		"add signal": function() {
+		    that.data_urls.push($('#signalurl').val());
+		    that.loadData();
+		    $(this).dialog("close");
+		}
+	    },
+	});
+
 }
 
 
@@ -462,45 +480,46 @@ PlotSet.prototype.setWidth = function(new_width) {
     this.width = new_width;
 }
 
-// 
-PlotSet.prototype.loadData = function(g) {
-    // g is the <svg:g> group element containing this plotset
-    this.g = g;
+PlotSet.prototype.loadData = function() {
+
     this.setWidth($(this.g).parent().width());
     
     var that = this;
     // generate a dataset with instances of active plots
-    var plots = [];
+    var plotlist = [];
     var offset = 0;
     for (var i=0; i<this.active_plots.length; i++) {
 	// if we don't have an active instance, then make one.
 	if (!this.plots[this.active_plots[i]].instance) {
 	    this.plots[this.active_plots[i]].instance = new Plot1D(this.name+"-"+this.active_plots[i],
-								   this.data_urls[0], 
+								   this.data_urls, 
 								   this.plots[this.active_plots[i]].height,
 								   this.width-this.padding[1]-this.padding[3]
 								  )
 	}
 	offset += this.plots[this.active_plots[i]].height;
 	this.plots[this.active_plots[i]].instance.offset = offset;
-	plots.push(this.plots[this.active_plots[i]].instance);
+	this.plots[this.active_plots[i]].instance.data_urls = this.data_urls;
+	plotlist.push(this.plots[this.active_plots[i]].instance);
 	offset += this.plot_spacing;
     }
 
     this.g.selectAll("g.plot")
-	.data(plots)
+	.data(plotlist)
 	.enter().append("svg:g")
 	.attr("transform", function(d) { return "translate("+that.padding[3]+","+(d.offset+that.padding[0])+")" })
 	.attr("class","plot")
-	.attr("id", function(d) { return "plot-"+that.name+'-'+d.name;})
-	.call(function(a) { a.datum().loadData(a); });
+	.attr("id", function(d) { return "plot-"+that.name+'-'+d.name;});
 
+    this.g.selectAll("g.plot").each( function(d,i) { d.g = d3.select(this);d.loadData(); });
+    
     this.loadMenu();
 
 };
 
 PlotSet.prototype.loadMenu = function() {
     var button_padding = 5;
+    var that = this;
     var pm = this.g.selectAll(".plot-menu");
     if (pm[0].length === 0) {
 	this.g.append("g").attr("class", "plot-menu")
@@ -512,20 +531,17 @@ PlotSet.prototype.loadMenu = function() {
 	    .attr("height", "50");
 	// add buttons
 	var pm = this.g.select(".plot-menu");
+
 	
 	
 	pm.append("g")
 	    .attr("class", "plot-button")
-	    .on("click", this.addSignal)
+	    .on("click", function(d,i) { that.addSignalDialog.dialog('open'); return false;} )
 	    .append("rect")
 	    .attr("transform", "translate("+button_padding+","+button_padding+")")
 	    .attr("width",(this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding))
 	    .attr("height", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding));
     }
-};
-
-PlotSet.prototype.addSignal = function(a) {
-    console.log("added signal");
 };
 
 /*
@@ -577,9 +593,9 @@ PlotSet.prototype.addSignal = function(a) {
  * 
  */
 
-function Plot1D(name, data_url, height, width) {
+function Plot1D(name, data_urls, height, width) {
     this.name = name;
-    this.data_url = data_url;
+    this.data_urls = data_urls;
     this.padding = [5,5,40,40];
     // height of plot, including padding
     this.height = height;
@@ -641,18 +657,23 @@ Plot1D.prototype.updateAxes = function() {
     
 };
 
-Plot1D.prototype.loadData = function(g) {
+Plot1D.prototype.loadData = function() {
+    for (i=0; i<this.data_urls.length; i++) {
+	this.loadURL(this.data_urls[i]);
+    }
+};
+
+Plot1D.prototype.loadURL = function(data_url) {
     var that = this;
-    //this.setWidth($(g).parent().width());
     // does data_url contain a query string?
-    var query_char = this.data_url.match(/\?.+/) ? '&' : '?';
-    data_url = this.data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.width-this.padding[1]-this.padding[3])+'&view=json');
+    var query_char = data_url.match(/\?.+/) ? '&' : '?';
+    data_url += (query_char+'f999_name=resample_minmax&f999_arg0='+(this.width-this.padding[1]-this.padding[3])+'&view=json');
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
     $.getJSON(data_url, function(a) {a.is_minmax = isMinMaxPlot(a);
 				     that.data.push(a); 
 				     that.updateAxes();
-				     that.displayData(g);});
+				     that.displayData();});
 };
 
 
@@ -674,12 +695,10 @@ Plot1D.prototype.formatData = function(d, i) {
 };
 
 
-Plot1D.prototype.displayData = function(g) {
+Plot1D.prototype.displayData = function() {
     var that=this;
-    this.g = g;
 
     // only display x axis if it doesn't already exist
-
     var xa = this.g.selectAll(".axis.x");
     if (xa[0].length === 0) {
 	this.g.append("svg:g").attr("class","x axis")
