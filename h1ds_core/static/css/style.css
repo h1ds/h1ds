@@ -1320,16 +1320,21 @@ g.plot-menu rect {
     fill: none;
 }
 
-g.plot-button rect {
+g.button rect {
     stroke-width: 2;
-    stroke: #555;
+    stroke: #444;
     fill: #ddd;
 }
 
-g.plot-button.active rect {
+g.button path {
+    stroke-width: 2;
+    stroke: #444;
+}
+
+g.button.active rect {
     stroke-width: 2;
     stroke: #555;
-    fill: red;
+    fill: #91C58E;
 }
 
 

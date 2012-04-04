@@ -360,34 +360,46 @@ function PlotContainer(id) {
 }
 
 
-PlotContainer.prototype.addPlotSet = function(plotset_name, data_url, plot_type) {
 
-    var new_plotset = new PlotSet(plotset_name, data_url)
-    
+PlotContainer.prototype.resetHeight = function() {
     // calculate the vertical translation for the plotset
-    var new_offset = 0;
-    if (this.plotsets.length > 0) {
-	new_offset += this.plotsets[this.plotsets.length-1].offset;
-	new_offset += this.plotsets[this.plotsets.length-1].getHeight();
-	new_offset += this.plotset_spacing;
+    var new_height = 0;
+    this.plotsets[0].offset = new_height;
+    for (var i=1; i<this.plotsets.length; i++) {
+	//new_height += this.plotsets[i-1].offset;
+	new_height += this.plotsets[i-1].getHeight();
+	new_height += this.plotset_spacing;	
+	this.plotsets[i].offset = new_height;
     }
 
-    new_plotset.offset = new_offset;
-
-    // add new plotset to the plot container
-    this.plotsets.push(new_plotset);
-
-    var new_height = new_offset + new_plotset.getHeight();
+    new_height += this.plotset_spacing;
+    new_height += this.plotsets[this.plotsets.length-1].getHeight();
+    
 
     // adjust the height of plot container (SVG) and DOM container element.
     this.svg.attr("height",new_height);
     $(this.id).height(new_height);
 
+    this.svg.selectAll("g.plotset")
+	.data(this.plotsets)
+	.attr("transform", function(d) {return "translate(0,"+d.offset+")"});
+
+
+};
+
+PlotContainer.prototype.addPlotSet = function(plotset_name, data_url, plot_type) {
+
+    var new_plotset = new PlotSet(plotset_name, data_url);
+    new_plotset.container = this;
+    // add new plotset to the plot container
+    this.plotsets.push(new_plotset);
+    this.resetHeight();
+
     // Bind plotsets and load data. Each plotset is wrapped by an <svg:g> element.
     this.svg.selectAll("g.plotset")
 	.data(this.plotsets)
 	.enter().append("svg:g")
-	.attr("transform", "translate(0,"+new_offset+")")
+	.attr("transform", function(d) {return "translate(0,"+d.offset+")"})
 	.attr("class","plotset")
 	.attr("id", function(d) { return "plotset-"+d.name;})
 	.call(function(a) { 
@@ -513,14 +525,24 @@ PlotSet.prototype.loadData = function() {
 	.attr("class","plot")
 	.attr("id", function(d) { return "plot-"+that.name+'-'+d.name;});
 
+    this.g.selectAll("g.plot")
+	.data(plotlist)
+	.exit().remove();
+
     this.g.selectAll("g.plot").each( function(d,i) { d.g = d3.select(this); d.loadData(); });
     
     this.loadMenu();
-
+    this.container.resetHeight();
 };
 
 PlotSet.prototype.loadMenu = function() {
-    var button_padding = 5;
+    // button padding
+    var bp = 5;
+    // button width
+    var bw = this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*bp;
+    // button height
+    var bh = this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*bp;
+    var nButtons = 2;
     var that = this;
     var pm = this.g.selectAll(".plot-menu");
     if (pm[0].length === 0) {
@@ -530,41 +552,70 @@ PlotSet.prototype.loadMenu = function() {
 		  ","+(this.menu_padding[0])+")")
 	    .append("rect")
 	    .attr("width", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]))
-	    .attr("height", "50");
+	    .attr("height", 2*bp+nButtons*bh+(nButtons-1)*bp);
 	// add buttons
 	var pm = this.g.select(".plot-menu");
-
 	
-	
-	var bw = this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding;
-	var bh = this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding;
-	var bp = button_padding;
+	// button for adding another signal from URL
 	pm.append("g")
-	    .attr("class", "plot-button")
-	    .append("rect")
-	    .on("click", function(d,i) { that.addSignalDialog.dialog('open'); return false;} )
+	    .attr("class", "button addplot")
 	    .attr("transform", "translate("+bp+","+bp+")")
+	    .on("click", function(d,i) { that.addSignalDialog.dialog('open'); return false;} )
+	    .append("rect")
 	    .attr("width", bw)
 	    .attr("height", bh);
-	pm.selectAll('g.plot-button')
+	pm.selectAll('g.button.addplot')
 	    .append("path")
-	    .style("stroke", "#000")
-	    .attr("d", "M"+bp+" "+(bp+0.7*bh)	// add signal icon
-		  +" L"+(bp+0.2*bw)+" "+(bp+0.7*bh)
-		  +" L"+(bp+0.3*bw)+" "+(bp+0.6*bh)
-		  +" L"+(bp+0.4*bw)+" "+(bp+0.8*bh)
-		  +" L"+(bp+0.5*bw)+" "+(bp+0.6*bh)
-		  +" L"+(bp+0.6*bw)+" "+(bp+0.8*bh)
-		  +" L"+(bp+0.7*bw)+" "+(bp+0.6*bh)
-		  +" L"+(bp+0.8*bw)+" "+(bp+0.7*bh)
-		  +" L"+(bp+1.0*bw)+" "+(bp+0.7*bh)
-		  +" M"+(bp+0.7*bw)+" "+(bp+0.1*bh)
-		  +" L"+(bp+0.7*bw)+" "+(bp+0.3*bh)
-		  +" M"+(bp+0.6*bw)+" "+(bp+0.2*bh)
-		  +" L"+(bp+0.8*bw)+" "+(bp+0.2*bh)
+	    .attr("d", "M"+0+" "+(0.7*bh)	// add signal icon
+		  +" L"+(0.2*bw)+" "+(0.7*bh)
+		  +" L"+(0.3*bw)+" "+(0.6*bh)
+		  +" L"+(0.4*bw)+" "+(0.8*bh)
+		  +" L"+(0.5*bw)+" "+(0.6*bh)
+		  +" L"+(0.6*bw)+" "+(0.8*bh)
+		  +" L"+(0.7*bw)+" "+(0.6*bh)
+		  +" L"+(0.8*bw)+" "+(0.7*bh)
+		  +" L"+(1.0*bw)+" "+(0.7*bh)
+		  +" M"+(0.7*bw)+" "+(0.1*bh)
+		  +" L"+(0.7*bw)+" "+(0.3*bh)
+		  +" M"+(0.6*bw)+" "+(0.2*bh)
+		  +" L"+(0.8*bw)+" "+(0.2*bh)
 		 );
+
+	// button for adding overview plot
+	pm.append("g")
+	    .attr("class", "button toggleoverview")
+	    .attr("transform", "translate("+bp+","+(2*bp+bh)+")")
+	    .on("click", function(d,i) { that.toggleOverview(); return false;} )
+	    .append("rect")
+	    .attr("width", bw)
+	    .attr("height", bh);
+
+	pm.selectAll('g.button.toggleoverview')
+	    .append("text")
+	    .attr("y", 0.4*bh)
+	    .attr("textLength", bw)
+	    .text("OVER");
+	pm.selectAll('g.button.toggleoverview')
+	    .append("text")
+	    .attr("y", 0.9*bh)
+	    .attr("textLength", bw)
+	    .text("VIEW");
     }
 };
+
+PlotSet.prototype.toggleOverview = function() {
+    var plotName = "overview";
+    // check if we have overview.
+    var isActive = ($.inArray(plotName, this.active_plots) !== -1);
+    var toggleButton = this.g.select("g.button.toggleoverview");
+    toggleButton.classed("active", !isActive);
+    if (isActive) {
+	this.active_plots.splice( $.inArray(plotName, this.active_plots), 1 );
+    } else {
+	this.active_plots.push(plotName);
+    }
+    this.loadData();
+}
 
 /*
  * Plot1D
@@ -841,9 +892,6 @@ Plot1D.prototype.drawLegend = function() {
 	.append("text")
 	.text(function(d) {return d})
     	.style("fill", function(d,i) { return that.data_colours[i]; });
-
-    
-
 
 };
 
