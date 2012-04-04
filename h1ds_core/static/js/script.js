@@ -562,6 +562,15 @@ PlotSet.prototype.loadMenu = function() {
  * height  of  the  menu   is  adjusted  dynamically  as  buttons  are
  * added. Note  that the svg:g  container doesn't have fixed  width or
  * height, but does have translated coordinates.
+ *
+ * TODO:
+ * -- the   unique  data   names   should  really   be  maintined   by
+ * PlotSet. It's simpler  for now just to manage  withing Plot1D as we
+ * need  the MDS  path names  returned from  the call  to  the server.
+ * Perhaps PlotSet  should manage server  calls?  This should  work if
+ * all plots  in a  PlotSet are  the same width,  so we  can determine
+ * sampling at the PlotSet level.
+ *
  * 
  * +--g.plotset-------------------------------------------+
  * |                                                      |
@@ -598,6 +607,7 @@ PlotSet.prototype.loadMenu = function() {
 function Plot1D(name, data_urls, height, width) {
     this.name = name;
     this.data_urls = data_urls;
+    this.data_names = [];
     this.padding = [5,5,40,40];
     // height of plot, including padding
     this.height = height;
@@ -666,6 +676,51 @@ Plot1D.prototype.loadData = function() {
     }
 };
 
+// Generate unique names for plots based on MDS paths.
+// TODO: need to include H1DS filters in here also.
+Plot1D.prototype.updateDataNames = function() { 
+    var split_names = [];
+    for (var i=0; i<this.data.length; i++) {
+	split_names.push(
+	    this.data[i].meta['mds_path'].replace(/::/g,':').replace(/:/g,'.').split('.')
+	);
+    }
+
+  
+    function check_unique(unique_level) {
+	for (var i=0; i<(split_names.length-1); i++) {
+	    for (var j=(i+1); j<split_names.length; j++) {
+		if (split_names[i][split_names[i].length-unique_level] === split_names[j][split_names[j].length-unique_level]) {
+		    return false;
+		}
+	    }
+	}
+	return true;
+    }
+    
+    var level = 1;
+    
+    while (!check_unique(level)) {
+	level +=1 ;
+	if (level > 20) {
+	    break;
+	}
+    }
+    
+    console.log(split_names);
+
+    for (var i=0; i<split_names.length; i++) {
+	this.data_names[i] = ""
+	for (var j=level; j>1; j--) {
+	    this.data_names[i] += split_names[i][split_names[i].length-j];
+	    this.data_names[i] += '.';
+	}
+	this.data_names[i] += split_names[i][split_names[i].length-1];
+    }
+    
+    console.log(this.data_names);
+};
+
 Plot1D.prototype.loadURL = function(data_url) {
     var that = this;
     
@@ -678,7 +733,8 @@ Plot1D.prototype.loadURL = function(data_url) {
 	    dataType: "json"})
 	.done(function(a) {
 	    a.is_minmax = isMinMaxPlot(a);
-	    that.data.push(a); 
+	    that.data.push(a);
+	    that.updateDataNames();
 	    that.updateAxes();
 	    that.displayData();
 	});
@@ -751,7 +807,7 @@ Plot1D.prototype.displayData = function() {
 	.classed("path-filled", function(d) { return d.is_minmax })
 	.attr("d", function(d,i) { return that.formatData(d,i) })
 	.style("stroke", function(d,i) { return that.data_colours[i]; })
-	.style("fill", function(d,i) { console.log(i); return that.data_colours[i]; });
+	.style("fill", function(d,i) { return that.data_colours[i]; });
 }; 
 
 //
