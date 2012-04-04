@@ -536,13 +536,33 @@ PlotSet.prototype.loadMenu = function() {
 
 	
 	
+	var bw = this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding;
+	var bh = this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding;
+	var bp = button_padding;
 	pm.append("g")
 	    .attr("class", "plot-button")
-	    .on("click", function(d,i) { that.addSignalDialog.dialog('open'); return false;} )
 	    .append("rect")
-	    .attr("transform", "translate("+button_padding+","+button_padding+")")
-	    .attr("width",(this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding))
-	    .attr("height", (this.padding[1]-this.menu_padding[1]-this.menu_padding[3]-2*button_padding));
+	    .on("click", function(d,i) { that.addSignalDialog.dialog('open'); return false;} )
+	    .attr("transform", "translate("+bp+","+bp+")")
+	    .attr("width", bw)
+	    .attr("height", bh);
+	pm.selectAll('g.plot-button')
+	    .append("path")
+	    .style("stroke", "#000")
+	    .attr("d", "M"+bp+" "+(bp+0.7*bh)	// add signal icon
+		  +" L"+(bp+0.2*bw)+" "+(bp+0.7*bh)
+		  +" L"+(bp+0.3*bw)+" "+(bp+0.6*bh)
+		  +" L"+(bp+0.4*bw)+" "+(bp+0.8*bh)
+		  +" L"+(bp+0.5*bw)+" "+(bp+0.6*bh)
+		  +" L"+(bp+0.6*bw)+" "+(bp+0.8*bh)
+		  +" L"+(bp+0.7*bw)+" "+(bp+0.6*bh)
+		  +" L"+(bp+0.8*bw)+" "+(bp+0.7*bh)
+		  +" L"+(bp+1.0*bw)+" "+(bp+0.7*bh)
+		  +" M"+(bp+0.7*bw)+" "+(bp+0.1*bh)
+		  +" L"+(bp+0.7*bw)+" "+(bp+0.3*bh)
+		  +" M"+(bp+0.6*bw)+" "+(bp+0.2*bh)
+		  +" L"+(bp+0.8*bw)+" "+(bp+0.2*bh)
+		 );
     }
 };
 
@@ -707,8 +727,6 @@ Plot1D.prototype.updateDataNames = function() {
 	}
     }
     
-    console.log(split_names);
-
     for (var i=0; i<split_names.length; i++) {
 	this.data_names[i] = ""
 	for (var j=level; j>1; j--) {
@@ -718,7 +736,6 @@ Plot1D.prototype.updateDataNames = function() {
 	this.data_names[i] += split_names[i][split_names[i].length-1];
     }
     
-    console.log(this.data_names);
 };
 
 Plot1D.prototype.loadURL = function(data_url) {
@@ -783,7 +800,7 @@ Plot1D.prototype.displayData = function() {
     var ya = this.g.selectAll(".axis.y");
     if (ya[0].length === 0) {
 	this.g.append("svg:g").attr("class","y axis")
-	    .attr("transform", "translate("+this.padding[3]+","+-(this.height - this.padding[0])+")") // TODO: fix
+	    .attr("transform", "translate("+this.padding[3]+","+-(this.height - this.padding[0])+")")
 	    .call(this.yAxis);
 	this.g.select(".axis.y").append("text").attr("class", "y label")
 	    .attr("transform", "rotate(-90)")
@@ -808,7 +825,28 @@ Plot1D.prototype.displayData = function() {
 	.attr("d", function(d,i) { return that.formatData(d,i) })
 	.style("stroke", function(d,i) { return that.data_colours[i]; })
 	.style("fill", function(d,i) { return that.data_colours[i]; });
+
+    this.drawLegend();
+
 }; 
+
+Plot1D.prototype.drawLegend = function() {
+    var that=this;
+    this.g.selectAll("g.legend").remove();
+    this.g.selectAll("g.legend")
+	.data(this.data_names)
+	.enter().append("svg:g")
+    	.attr("transform", function(d,i) { return "translate("+(that.padding[3]+10)+","+-(that.height - that.padding[0] - (i+1)*12)+")"; })
+	.attr("class", "legend")
+	.append("text")
+	.text(function(d) {return d})
+    	.style("fill", function(d,i) { return that.data_colours[i]; });
+
+    
+
+
+};
+
 
 //
 // plotSignal1D

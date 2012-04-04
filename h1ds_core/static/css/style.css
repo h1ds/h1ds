@@ -1323,7 +1323,7 @@ g.plot-menu rect {
 g.plot-button rect {
     stroke-width: 2;
     stroke: #555;
-    fill: #bbb;
+    fill: #ddd;
 }
 
 g.plot-button.active rect {
