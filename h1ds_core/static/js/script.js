@@ -473,7 +473,7 @@ function PlotSet(plotset_name, data_url) {
 		    $(this).dialog("close");
 		}
 	    },
-	});
+	}).submit(function (e) { return false; });
 
 }
 
