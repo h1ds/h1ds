@@ -462,15 +462,32 @@ function PlotSet(plotset_name, data_url) {
     this.menu_padding = [10,5,10,5];
     this.data_colours = ['#010101', '#ED2D2E', '#008C47', '#1859A9', '#662C91', '#A11D20'];
     this.addSignalDialog = $('<div></div>')
-	.html('<form><fieldset><label for="url">URL</label><input type="text" name="url" id="signalurl" class="text ui-widget-content ui-corner-all"/></fieldset></form>')
+	.html('<p class="validateTips">Enter URL for new signal</p><form><fieldset><label for="url">URL</label><input type="text" name="url" id="signalurl" class="text ui-widget-content ui-corner-all"/></fieldset></form>')
 	.dialog({
 	    autoOpen:false,
 	    title: 'Add signal',
 	    buttons: {
 		"add signal": function() {
-		    that.data_urls.push($('#signalurl').val());
-		    that.loadData();
-		    $(this).dialog("close");
+		    var isValid = true;
+		    var newURL = $('#signalurl').val();
+		    $('#signalurl').removeClass("ui-state-error");
+		    $(".validateTips").removeClass("ui-state-highlight");
+		    $(".validateTips").text("Enter URL for new signal.");
+		    for (var i=0; i<that.data_urls.length;i++) {
+			if (newURL === that.data_urls[i]) {
+			    isValid = false;
+			}
+		    }
+		    if (isValid) {
+			that.data_urls.push(newURL);
+			that.loadData();
+			$('#signalurl').val("");
+			$(this).dialog("close");
+		    } else {
+			$("#signalurl").addClass("ui-state-error");
+			$(".validateTips").addClass("ui-state-highlight");
+			$(".validateTips").text("URL already plotted. Choose another one.");
+		    }
 		}
 	    },
 	}).submit(function (e) { return false; });
@@ -757,7 +774,6 @@ Plot1D.prototype.updateDataNames = function() {
 	);
     }
 
-  
     function check_unique(unique_level) {
 	for (var i=0; i<(split_names.length-1); i++) {
 	    for (var j=(i+1); j<split_names.length; j++) {
