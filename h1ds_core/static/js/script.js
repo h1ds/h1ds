@@ -550,6 +550,7 @@ PlotSet.prototype.loadData = function() {
     
     this.loadMenu();
     this.container.resetHeight();
+
 };
 
 PlotSet.prototype.loadMenu = function() {
@@ -706,8 +707,8 @@ function Plot1D(name, data_urls, height, width) {
     this.overview = false;
 
     this.data = [];
-    this.xlim = [1.e100,-1.e100];
-    this.ylim = [1.e100,-1.e100];
+    this.xlim = [Number.MAX_VALUE,-Number.MAX_VALUE];
+    this.ylim = [Number.MAX_VALUE,-Number.MAX_VALUE];
     // how much extra space to plot on y-axis so the data doesn't go
     // right to the edge.
     this.range_padding = 0.05;
@@ -733,9 +734,11 @@ Plot1D.prototype.setWidth = function(width) {
 
 // update x and y axes limits
 Plot1D.prototype.updateAxes = function() {
+    var that=this;
     for (var i=0; i<this.data.length; i++) {
 	this.data[i].min_data = this.data[i].is_minmax ? d3.min(this.data[i].data[0]) : d3.min(this.data[i].data);
 	this.data[i].max_data = this.data[i].is_minmax ? d3.max(this.data[i].data[1]) : d3.max(this.data[i].data);
+
 
 	// get min and max values for axes
 	this.data[i].delta_data = this.data[i].max_data - this.data[i].min_data;
@@ -751,9 +754,15 @@ Plot1D.prototype.updateAxes = function() {
 	this.xlim[1] = d3.max([this.xlim[1], this.data[i].max_dim]);
 	this.ylim[0] = d3.min([this.ylim[0], this.data[i].min_plot]);
 	this.ylim[1] = d3.max([this.ylim[1], this.data[i].max_plot]);
-    } 
+    }
     this.x.domain(this.xlim);
     this.y.domain(this.ylim);
+    var t = this.g.transition().duration(500);
+    t.select(".y.axis").call(this.yAxis);
+    t.select(".x.axis").call(this.xAxis);
+    t.selectAll("path.data").attr("d", function(d,i) { return that.formatData(d,i); });
+
+    
     
 };
 
@@ -778,14 +787,14 @@ Plot1D.prototype.updateDataNames = function() {
 
     // if there is only one signal, return the last path component as the name
     if (split_names.length === 1) {
-	this.data_names[0] = split_names[0][split_names[0].length-1];
+	this.data_names[0] = this.data[0].meta['mds_shot']+" "+split_names[0][split_names[0].length-1];
 	return true;
     }
 
 
     // otherwise iterate through path components and ignore the common components
     
-    var shortest_path = 1000;
+    var shortest_path = Number.MAX_VALUE;
     for (var i=0; i<split_names.length;i++) {
 	if (split_names[i].length < shortest_path ) shortest_path = split_names[i].length;
     }
@@ -801,7 +810,7 @@ Plot1D.prototype.updateDataNames = function() {
     }
 
     for (var i=0; i<split_names.length; i++) {
-	this.data_names[i] = ""
+	this.data_names[i] = this.data[i].meta['mds_shot'] + " ";
 	for (var j=common_level; j<split_names[i].length-1; j++) {
 	    this.data_names[i] += split_names[i][j];
 	    this.data_names[i] += '.';
@@ -819,7 +828,8 @@ Plot1D.prototype.loadURL = function(data_url) {
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
     $.ajax({url: data_url, 
-	    dataType: "json"})
+	    dataType: "json",
+	    async:false})
 	.done(function(a) {
 	    a.is_minmax = isMinMaxPlot(a);
 	    that.data.push(a);
@@ -918,7 +928,9 @@ Plot1D.prototype.drawLegend = function() {
 
 
 //
-// plotSignal1D
+// plotSignal1D -- DEPRICATED - will be removed once the plotcontainer, etc
+// above is complete.
+//
 //
 // For a given  container div, we fetch data subsampled  to the width of
 // the plot window.  The heights  of the plots are fixed.  Several plots
