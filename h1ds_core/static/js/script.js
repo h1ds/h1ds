@@ -767,6 +767,8 @@ Plot1D.prototype.loadData = function() {
 // Generate unique names for plots based on MDS paths.
 // TODO: need to include H1DS filters in here also.
 Plot1D.prototype.updateDataNames = function() { 
+    // split the components of the MDS path we want to compare
+
     var split_names = [];
     for (var i=0; i<this.data.length; i++) {
 	split_names.push(
@@ -774,35 +776,38 @@ Plot1D.prototype.updateDataNames = function() {
 	);
     }
 
-    function check_unique(unique_level) {
-	for (var i=0; i<(split_names.length-1); i++) {
-	    for (var j=(i+1); j<split_names.length; j++) {
-		if (split_names[i][split_names[i].length-unique_level] === split_names[j][split_names[j].length-unique_level]) {
-		    return false;
-		}
-	    }
-	}
+    // if there is only one signal, return the last path component as the name
+    if (split_names.length === 1) {
+	this.data_names[0] = split_names[0][split_names[0].length-1];
 	return true;
     }
+
+
+    // otherwise iterate through path components and ignore the common components
     
-    var level = 1;
-    
-    while (!check_unique(level)) {
-	level +=1 ;
-	if (level > 20) {
-	    break;
-	}
+    var shortest_path = 1000;
+    for (var i=0; i<split_names.length;i++) {
+	if (split_names[i].length < shortest_path ) shortest_path = split_names[i].length;
     }
-    
+
+    var common_level = 0;
+    var different_level = false;
+    for (var i=0; i<shortest_path; i++) {
+	for (var j=1; j<split_names.length;j++) {
+	    if (split_names[j][i] !== split_names[0][i]) different_level=true;
+	}
+	if (different_level) break;
+	common_level++;
+    }
+
     for (var i=0; i<split_names.length; i++) {
 	this.data_names[i] = ""
-	for (var j=level; j>1; j--) {
-	    this.data_names[i] += split_names[i][split_names[i].length-j];
+	for (var j=common_level; j<split_names[i].length-1; j++) {
+	    this.data_names[i] += split_names[i][j];
 	    this.data_names[i] += '.';
 	}
 	this.data_names[i] += split_names[i][split_names[i].length-1];
     }
-    
 };
 
 Plot1D.prototype.loadURL = function(data_url) {
