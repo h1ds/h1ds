@@ -342,21 +342,25 @@ function getPlotQueryString() {
 function PlotContainer(id) {
     var that = this;
     this.id = id;
-    this.svg = d3.select(id).append("svg:svg");
+    var container = d3.select(id);
+    this.svg = container.append("svg:svg");
+    
     // spacing between plotsets
     this.plotset_spacing = 10;
+
     // array of plotset instances in this container
     this.plotsets = [];
 
     // append a form entry box (after SVG) to add URL for new plot
-    // TODO: this puts div inside form inside p. yuck. fix it.
-    d3.select(id).append("p").text("Enter data URL to add another plot")
-	.append("form").attr("id","add-plot-form")
-	.append("div").html('<input id="add-plot-url" type="text" /><input type="submit" />');
-
-    $("#add-plot-form").submit(function() {that.addPlotSet(
-	(function(){return 'test_'+that.plotsets.length})(),
-	$("#add-plot-url").val()); return false;});
+    container.append("p").text("Enter data URL to add another plot");
+    container.append("form")
+	.attr("id","add-plot-form")
+	.html('<input id="add-plot-url" type="text" /><input type="submit" />');    
+    $("#add-plot-form").submit(
+	function() {that.addPlotSet(
+	    (function() {return 'test_'+that.plotsets.length})(),
+	    $("#add-plot-url").val()); return false;}
+    );
 }
 
 
