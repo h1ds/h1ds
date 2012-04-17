@@ -775,6 +775,10 @@ Plot1D.prototype.loadData = function() {
     for (i=0; i<this.data_urls.length; i++) {
 	this.loadURL(this.data_urls[i]);
     }
+    this.updateDataNames();
+    this.updateAxes();
+    this.displayData();
+
 };
 
 // Generate unique names for plots based on MDS paths.
@@ -825,7 +829,6 @@ Plot1D.prototype.updateDataNames = function() {
 
 Plot1D.prototype.loadURL = function(data_url) {
     var that = this;
-    
     // does data_url contain a query string?
     var query_char = data_url.match(/\?.+/) ? '&' : '?';
     data_url += (query_char+'f999_name=resample_minmax&f999_arg0='+(this.width-this.padding[1]-this.padding[3])+'&view=json');
@@ -837,9 +840,6 @@ Plot1D.prototype.loadURL = function(data_url) {
 	.done(function(a) {
 	    a.is_minmax = isMinMaxPlot(a);
 	    that.data.push(a);
-	    that.updateDataNames();
-	    that.updateAxes();
-	    that.displayData();
 	});
 };
 
