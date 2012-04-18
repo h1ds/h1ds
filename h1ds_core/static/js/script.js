@@ -361,6 +361,7 @@ function PlotContainer(id) {
 	    (function() {return 'test_'+that.plotsets.length})(),
 	    $("#add-plot-url").val()); return false;}
     );
+
 }
 
 
@@ -455,9 +456,11 @@ function PlotSet(plotset_name, data_url) {
     var that = this;
     this.name = plotset_name;
     this.data_urls = [data_url];
-    this.plots = {'main':{'height':400, 'instance':null},
-		  'overview':{'height':200, 'instance':null},
-		  'powerspectrum':{'height':200, 'instance':null},
+    // zoom to brush - if the brush is resized, should the axes limits be reset to 
+    // brush limits (zoom).
+    this.plots = {'main':{'height':400, 'instance':null, 'zoom_to_brush':true},
+		  'overview':{'height':200, 'instance':null, 'zoom_to_brush':false},
+		  'powerspectrum':{'height':200, 'instance':null, 'zoom_to_brush':false},
 		 };
     this.active_plots = ['main'];
     this.plot_spacing = 10;
@@ -465,6 +468,11 @@ function PlotSet(plotset_name, data_url) {
     this.width = 10;
     this.menu_padding = [10,5,10,5];
     this.data_colours = ['#010101', '#ED2D2E', '#008C47', '#1859A9', '#662C91', '#A11D20'];
+    this.brush = d3.svg.brush()
+	.on("brushstart", this.brushstart)
+	.on("brush", this.brush)
+	.on("brushend", this.brushend);
+
     this.addSignalDialog = $('<div></div>')
 	.html('<p class="validateTips">Enter URL for new signal</p><form><fieldset><label for="url">URL</label><input type="text" name="url" id="signalurl" class="text ui-widget-content ui-corner-all"/></fieldset></form>')
 	.dialog({
@@ -498,6 +506,15 @@ function PlotSet(plotset_name, data_url) {
 
 }
 
+PlotSet.prototype.brushstart = function() {
+    
+};
+
+PlotSet.prototype.brush = function() {
+};
+
+PlotSet.prototype.brushend = function() {
+};
 
 PlotSet.prototype.getHeight = function() {
     var h = 0;
@@ -512,7 +529,7 @@ PlotSet.prototype.getHeight = function() {
 
 PlotSet.prototype.setWidth = function(new_width) {
     this.width = new_width;
-}
+};
 
 PlotSet.prototype.loadData = function() {
 
@@ -526,14 +543,14 @@ PlotSet.prototype.loadData = function() {
 	// if we don't have an active instance, then make one.
 	if (!this.plots[this.active_plots[i]].instance) {
 	    this.plots[this.active_plots[i]].instance = new Plot1D(this.name+"-"+this.active_plots[i],
-								   this.data_urls, 
 								   this.plots[this.active_plots[i]].height,
-								   this.width-this.padding[1]-this.padding[3]
+								   this.width-this.padding[1]-this.padding[3],
+								   this.plots[this.active_plots[i]].zoom_to_brush
 								  )
 	}
 	offset += this.plots[this.active_plots[i]].height;
 	this.plots[this.active_plots[i]].instance.offset = offset;
-	this.plots[this.active_plots[i]].instance.data_urls = this.data_urls;
+	this.plots[this.active_plots[i]].instance.plotset = this;
 	this.plots[this.active_plots[i]].instance.data_colours = this.data_colours;
 	plotlist.push(this.plots[this.active_plots[i]].instance);
 	offset += this.plot_spacing;
@@ -697,9 +714,8 @@ PlotSet.prototype.toggleOverview = function() {
  * 
  */
 
-function Plot1D(name, data_urls, height, width) {
+function Plot1D(name, height, width) {
     this.name = name;
-    this.data_urls = data_urls;
     this.data_names = [];
     this.padding = [5,5,40,40];
     // height of plot, including padding
@@ -772,8 +788,8 @@ Plot1D.prototype.updateAxes = function() {
 
 Plot1D.prototype.loadData = function() {
     this.data = [];
-    for (i=0; i<this.data_urls.length; i++) {
-	this.loadURL(this.data_urls[i]);
+    for (i=0; i<this.plotset.data_urls.length; i++) {
+	this.loadURL(this.plotset.data_urls[i]);
     }
     this.updateDataNames();
     this.updateAxes();
