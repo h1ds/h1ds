@@ -551,7 +551,6 @@ PlotSet.prototype.loadData = function() {
 	offset += this.plots[this.active_plots[i]].height;
 	this.plots[this.active_plots[i]].instance.offset = offset;
 	this.plots[this.active_plots[i]].instance.plotset = this;
-	this.plots[this.active_plots[i]].instance.data_colours = this.data_colours;
 	plotlist.push(this.plots[this.active_plots[i]].instance);
 	offset += this.plot_spacing;
     }
@@ -925,8 +924,8 @@ Plot1D.prototype.displayData = function() {
 	.attr("class","data")
 	.classed("path-filled", function(d) { return d.is_minmax })
 	.attr("d", function(d,i) { return that.formatData(d,i) })
-	.style("stroke", function(d,i) { return that.data_colours[i]; })
-	.style("fill", function(d,i) { return that.data_colours[i]; });
+	.style("stroke", function(d,i) { return that.plotset.data_colours[i]; })
+	.style("fill", function(d,i) { return that.plotset.data_colours[i]; });
 
     this.drawLegend();
 
@@ -942,7 +941,7 @@ Plot1D.prototype.drawLegend = function() {
 	.attr("class", "legend")
 	.append("text")
 	.text(function(d) {return d})
-    	.style("fill", function(d,i) { return that.data_colours[i]; });
+    	.style("fill", function(d,i) { return that.plotset.data_colours[i]; });
 
 };
 
