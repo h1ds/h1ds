@@ -343,7 +343,8 @@ function PlotContainer(id) {
     var that = this;
     this.id = id;
     var container = d3.select(id);
-    this.svg = container.append("svg:svg");
+    this.svg = container.append("svg:svg")
+	.attr("width",$(id).width());
     
     // spacing between plotsets
     this.plotset_spacing = 10;
