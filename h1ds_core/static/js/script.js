@@ -468,10 +468,6 @@ function PlotSet(plotset_name, data_url) {
     this.width = 10;
     this.menu_padding = [10,5,10,5];
     this.data_colours = ['#010101', '#ED2D2E', '#008C47', '#1859A9', '#662C91', '#A11D20'];
-    this.brush = d3.svg.brush()
-	.on("brushstart", this.brushstart)
-	.on("brush", this.brush)
-	.on("brushend", this.brushend);
 
     this.addSignalDialog = $('<div></div>')
 	.html('<p class="validateTips">Enter URL for new signal</p><form><fieldset><label for="url">URL</label><input type="text" name="url" id="signalurl" class="text ui-widget-content ui-corner-all"/></fieldset></form>')
@@ -505,16 +501,6 @@ function PlotSet(plotset_name, data_url) {
 	}).submit(function (e) { return false; });
 
 }
-
-PlotSet.prototype.brushstart = function() {
-    
-};
-
-PlotSet.prototype.brush = function() {
-};
-
-PlotSet.prototype.brushend = function() {
-};
 
 PlotSet.prototype.getHeight = function() {
     var h = 0;
@@ -732,15 +718,15 @@ function Plot1D(name, height, width) {
     // right to the edge.
     this.range_padding = 0.05;
     this.x = d3.scale.linear().range(
-	[0, this.width - this.padding[1]-this.padding[3]]
+	[this.padding[3], this.width - this.padding[1]]
     );
     this.y = d3.scale.linear().range(
 	[this.height-this.padding[0]-this.padding[2],0]
     );
     this.xAxis = d3.svg.axis().scale(this.x).tickSize(-(this.height-this.padding[0]-this.padding[2]));
     this.yAxis = d3.svg.axis().scale(this.y).orient("left").tickSize(-(this.width-this.padding[3]-this.padding[1]));
-}
 
+}
 
 Plot1D.prototype.setWidth = function(width) {
     this.width = width;
@@ -793,7 +779,6 @@ Plot1D.prototype.loadData = function() {
     this.updateDataNames();
     this.updateAxes();
     this.displayData();
-
 };
 
 // Generate unique names for plots based on MDS paths.
@@ -884,7 +869,7 @@ Plot1D.prototype.displayData = function() {
     var xa = this.g.selectAll(".axis.x");
     if (xa[0].length === 0) {
 	this.g.append("svg:g").attr("class","x axis")
-	    .attr("transform", "translate("+this.padding[3]+","+-(this.padding[2])+")")
+	    .attr("transform", "translate(0,"+-(this.padding[2])+")")
 	    .call(this.xAxis);
 	this.g.select(".axis.x").append("text").attr("class", "x label")
 	    .attr("x", 0.5*(this.width-this.padding[1]-this.padding[3]))
@@ -917,18 +902,22 @@ Plot1D.prototype.displayData = function() {
     }
 
     // for each data, add an SVD path element with the data.
-    this.g.selectAll("path.data")
+    this.cell = this.g.append("g")
+    	.attr("transform", "translate(0,"+-(this.height-this.padding[0])+")")
+	.attr("class", "cell");
+
+    this.cell.selectAll("path.data")
 	.data(this.data)
 	.enter().append("path")
-	.attr("transform", "translate("+this.padding[3]+","+-(this.height-this.padding[0])+")")
 	.attr("class","data")
 	.classed("path-filled", function(d) { return d.is_minmax })
 	.attr("d", function(d,i) { return that.formatData(d,i) })
 	.style("stroke", function(d,i) { return that.plotset.data_colours[i]; })
 	.style("fill", function(d,i) { return that.plotset.data_colours[i]; });
 
-    this.drawLegend();
 
+    this.drawLegend();
+    
 }; 
 
 Plot1D.prototype.drawLegend = function() {
