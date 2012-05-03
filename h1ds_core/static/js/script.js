@@ -287,6 +287,97 @@ function getPlotQueryString() {
  *
  */
 
+/*********************************************************************/
+/*********************************************************************/
+
+function NewPlotContainer(id) {
+    var that = this;
+    this.id = id;
+    var container = d3.select(id);
+    this.svg = container.append("svg:svg")
+	.attr("width",$(id).width());
+    
+    this.plotsetSpacing = 10;
+    this.plotSpacing = 5;
+    // data is an object with url:plot_data key/pairs
+    this.data = {};
+    this.plotTypes = {
+	'main':{'height':400},
+	'overview':{'height':200}
+    };
+    // ploset contains objects for each plotset. 
+    // each object is {'urls'[url_1,url_2], 'plottypes':[plottype_1, plottype_2], translation=[x,y]}
+    // url_1, url_2, etc are keys in this.data
+    // plottype_1, plottype_2, etc are from this.plottypes
+    // translation is argument for transform=translate(x,y) for the plotset <svg:g> element
+    this.plotsets = [];
+}
+
+// compute translations for plotsets and plots
+NewPlotContainer.prototype.computeLayout = function() {
+    // plotsets
+    var x_offset = 0;
+    var y_offset = 0;
+    
+    for (var i=0; i<this.plotsets.length; i++) {
+	this.plotsets.translation = [x_offset,y_offset];
+	for (var j=0;j<this.plotsets[i].plotTypes.length; j++){
+	    y_offset += this.plotTypes[this.plotsets[i].plotTypes[j]].height;
+	}
+	y_offset += (this.plotsets[i].plotTypes.length-1)*this.plotSpacing;
+	y_offset += this.plotsetSpacing;
+    }
+};
+
+NewPlotContainer.prototype.updateDisplay = function() {
+    var that=this;
+    this.computeLayout();
+    var plotsets = this.svg.selectAll("g.plotset")
+	.data(this.plotsets)
+	.enter().append("g")
+	.attr("class", "plotset")
+	.attr("transform", function(d) {return "translate("+d.translation[0]+","+d.translation[1]+")"});
+    var plots = plotsets
+	.selectAll("g.plot")
+    // TODO: need to use a cross function, so we get iterable with plottype and urls.
+	.data(function(d) { return d.plotTypes } )
+	.enter().append("g")
+	.attr("class", "plot")
+	.text(function(d,i) {return d});
+};
+
+NewPlotContainer.prototype.loadURL = function(data_url) {
+    var that = this;
+    // does data_url contain a query string?
+    var query_char = data_url.match(/\?.+/) ? '&' : '?';
+    plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&view=json');
+    // TODO: we should be able to easily inspect returned data to see
+    // if it is minmax, rather than needing a dedicated js function
+    $.ajax({url: plot_data_url, 
+	    dataType: "json",
+	    async:false})
+	.done(function(a) {
+	    a.is_minmax = isMinMaxPlot(a);
+	    that.data[data_url] = a;
+	});
+};
+
+
+NewPlotContainer.prototype.addPlotSet = function(url_list) {
+    for (var i=0; i<url_list.length;i++) {
+	// if URL is not in this.data, add it.
+	if (!this.data.hasOwnProperty(url_list[i])) this.loadURL(url_list[i]);	
+    }
+    
+    this.plotsets.push({'urls':url_list,'plotTypes':['main'], 'translation':[0,0]});
+    this.updateDisplay();
+}
+
+
+
+/*********************************************************************/
+/*********************************************************************/
+
 
 /* 
  * PlotContainer 
@@ -1286,8 +1377,9 @@ $(document).ready(function() {
 	populateMDSNav(tree, shot, $(this));
     });
     if ($("#signal-1d-placeholder").length) {
-	var pc = new PlotContainer("#signal-1d-placeholder");
-	pc.addPlotSet('default', window.location.toString());
+	var pc = new NewPlotContainer("#signal-1d-placeholder");
+	//pc.addPlotSet('default', window.location.toString());
+	pc.addPlotSet([window.location.toString()]);
     }
     if ($("#signal-2d-placeholder").length) {
 	plotSignal2D();
