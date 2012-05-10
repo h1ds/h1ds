@@ -290,28 +290,121 @@ function getPlotQueryString() {
 /*********************************************************************/
 /*********************************************************************/
 
+/*
+ * expected usage:
+ * var pc = new NewPlotContainer("#signal-1d-placeholder");
+ * pc.addPlotSet([window.location.toString()]);
+ */
+
 function NewPlotContainer(id) {
-    var that = this;
-    this.id = id;
-    var container = d3.select(id);
-    this.svg = container.append("svg:svg")
-	.attr("width",$(id).width());
-    
+    // Layout settings
     this.plotsetSpacing = 10;
     this.plotSpacing = 5;
-    // data is an object with url:plot_data key/pairs
-    this.data = {};
     this.plotTypes = {
 	'main':{'height':400},
 	'overview':{'height':200}
     };
-    // ploset contains objects for each plotset. 
+
+    // create SVG
+    this.svg = d3.select(id)
+	.append("svg:svg")
+	.attr("width",$(id).width());
+
+    // data is an object for storing url:plot_data key/value pairs
+    // This is the one place where data is stored.
+    this.data = {};
+
+    // plotsets contains objects for each plotset. 
     // each object is {'urls'[url_1,url_2], 'plottypes':[plottype_1, plottype_2], translation=[x,y]}
     // url_1, url_2, etc are keys in this.data
     // plottype_1, plottype_2, etc are from this.plottypes
     // translation is argument for transform=translate(x,y) for the plotset <svg:g> element
     this.plotsets = [];
 }
+
+NewPlotContainer.prototype.addPlotSet = function(url_list) {
+    // check if the requested URLs are already stored in PlotContainer.data
+    // if not, add them
+    for (var i=0; i<url_list.length;i++) {
+	if (!this.data.hasOwnProperty(url_list[i])) this.loadURL(url_list[i]);	
+    }
+    
+    this.plotsets.push({'urls':url_list,'plotTypes':['main'], 'translation':[0,0]});
+    this.updateDisplay();
+}
+
+NewPlotContainer.prototype.loadURL = function(data_url) {
+    var that = this;
+
+    // the actual data we request uses a modified URL which resamples the data to the screen resolution
+    // does data_url contain a query string?
+    var query_char = data_url.match(/\?.+/) ? '&' : '?';
+    plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&view=json');
+
+    // TODO: we should be able to easily inspect returned data to see
+    // if it is minmax, rather than needing a dedicated js function
+    // TODO: refactor code to be able to cope with async URL loading.
+    $.ajax({url: plot_data_url, 
+	    dataType: "json",
+	    async:false})
+	.done(function(a) {
+	    a.is_minmax = isMinMaxPlot(a);
+	    that.data[data_url] = a;
+	});
+};
+
+NewPlotContainer.prototype.updateDisplay = function() {
+    var that = this;
+
+    // TODO: this should be part of generate plotsets data...
+    // first, recompute the layout in case plots have been added or removed.
+    // this.computeLayout();
+
+    // EDIT POINT.
+    // Create the data structure to pass to d3
+    // [plotset_1, plotset_2, ..., plotset_m]
+    // plotset_i: {translation:[x,y],plots:[plot_1, plot_2, ..., plot_n]}
+    // plot_j: {translation:[x,y], data:[data_1, data_2, ..., data_p]}
+    var plotset_data = this.generatePlotsetData();
+
+    var plotsets = this.svg.selectAll("g.plotset")
+	.data(plotset_data)
+	.enter().append("g")
+	.attr("class", "plotset")
+	.attr("transform", function(d) {return "translate("+d.translation[0]+","+d.translation[1]+")"});
+
+    var plots = plotsets
+	.selectAll("g.plot")
+	.data(function(d,i) { return that.generatePlotData(i); } )
+	.enter().append("g")
+	.attr("class", "plot")
+	.text(function(d,i) {return d});
+};
+
+NewPlotContainer.prototype.generatePlotsetData = function() {
+    var data = [];
+    for (var i=0; i<this.plotset.length; i++) {
+	data.push({'plots':this.generatePlotData(i)});
+    }
+    // now add the layout info.
+    
+};
+
+// generate iterable data for plots within plotset
+NewPlotContainer.prototype.generatePlotData = function(plotset_index) {
+    var plot_data = [];
+    var plotset_data = [];
+    for (var i=0; i<this.plotsets[plotset_index].urls.length; i++) {
+	plot_data.push(this.data[this.plotsets[plotset_index].urls[i]]);
+    }
+    for (var i=0; i<this.plotsets[plotset_index].plotTypes.length; i++) {
+	plotset_data.push({'plotType':this.plotsets[plotset_index].plotTypes[i],
+			   'data':plot_data
+			  });
+    }
+    return plotset_data;
+};
+
 
 // compute translations for plotsets and plots
 NewPlotContainer.prototype.computeLayout = function() {
@@ -329,49 +422,7 @@ NewPlotContainer.prototype.computeLayout = function() {
     }
 };
 
-NewPlotContainer.prototype.updateDisplay = function() {
-    var that=this;
-    this.computeLayout();
-    var plotsets = this.svg.selectAll("g.plotset")
-	.data(this.plotsets)
-	.enter().append("g")
-	.attr("class", "plotset")
-	.attr("transform", function(d) {return "translate("+d.translation[0]+","+d.translation[1]+")"});
-    var plots = plotsets
-	.selectAll("g.plot")
-    // TODO: need to use a cross function, so we get iterable with plottype and urls.
-	.data(function(d) { return d.plotTypes } )
-	.enter().append("g")
-	.attr("class", "plot")
-	.text(function(d,i) {return d});
-};
 
-NewPlotContainer.prototype.loadURL = function(data_url) {
-    var that = this;
-    // does data_url contain a query string?
-    var query_char = data_url.match(/\?.+/) ? '&' : '?';
-    plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&view=json');
-    // TODO: we should be able to easily inspect returned data to see
-    // if it is minmax, rather than needing a dedicated js function
-    $.ajax({url: plot_data_url, 
-	    dataType: "json",
-	    async:false})
-	.done(function(a) {
-	    a.is_minmax = isMinMaxPlot(a);
-	    that.data[data_url] = a;
-	});
-};
-
-
-NewPlotContainer.prototype.addPlotSet = function(url_list) {
-    for (var i=0; i<url_list.length;i++) {
-	// if URL is not in this.data, add it.
-	if (!this.data.hasOwnProperty(url_list[i])) this.loadURL(url_list[i]);	
-    }
-    
-    this.plotsets.push({'urls':url_list,'plotTypes':['main'], 'translation':[0,0]});
-    this.updateDisplay();
-}
 
 
 
