@@ -28,7 +28,11 @@ class ConfigDBStringProperty(ConfigDBBaseProperty):
 class ConfigDBFloatProperty(ConfigDBBaseProperty):
     value = models.FloatField()
 
+class ConfigDBIntProperty(ConfigDBBaseProperty):
+    value = models.FloatField()
+
 configdb_type_class_map = {
     str:ConfigDBStringProperty,
     numpy.float64:ConfigDBFloatProperty,
+    int:ConfigDBIntProperty
     }
