@@ -29,17 +29,16 @@ class Command(BaseCommand):
                     
                     
                     configdbfile_instance, configdbfile_created = ConfigDBFile.objects.get_or_create(filename=full_filename, defaults={'filetype':filetype_instance})
-                    if configdbfile_created:
+                    if True:#configdbfile_created:
                         for (k,v) in metadata.items():
                             if type(v) in configdb_type_class_map.keys():
-                                propertytype_instance, propertytype_created = ConfigDBPropertyType.objects.get_or_create(name=k, defaults={'description':'No description'})
-                                
-
+                                propertytype_instance, propertytype_created = ConfigDBPropertyType.objects.get_or_create(name=k, defaults={'description':'No description'})                                
                                 property_model=configdb_type_class_map[type(v)]
-                                new_property = property_model(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance, value=v)
-                                new_property.save()
+                                new_property, new_property_created = property_model.objects.get_or_create(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance, value=v)
+                            else:
+                                self.stdout.write(str(k)+": "+str(type(v))+'\n')
                     worked +=1
-                except:
+                except KeyError:
                     failed +=1
         self.stdout.write("managed to grab metadata from %d of %d files (%.2f%%)\n" %(worked, worked+failed, 100.*worked/(worked+failed)))
 

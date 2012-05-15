@@ -1,4 +1,4 @@
-
+import numpy
 from django.db import models
 
 
@@ -22,6 +22,13 @@ class ConfigDBBaseProperty(models.Model):
 class ConfigDBStringProperty(ConfigDBBaseProperty):
     value = models.CharField(max_length=256)
 
+class ConfigDBStringProperty(ConfigDBBaseProperty):
+    value = models.CharField(max_length=256)
+
+class ConfigDBFloatProperty(ConfigDBBaseProperty):
+    value = models.FloatField()
+
 configdb_type_class_map = {
     str:ConfigDBStringProperty,
+    numpy.float64:ConfigDBFloatField,
     }
