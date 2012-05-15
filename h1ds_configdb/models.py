@@ -30,5 +30,5 @@ class ConfigDBFloatProperty(ConfigDBBaseProperty):
 
 configdb_type_class_map = {
     str:ConfigDBStringProperty,
-    numpy.float64:ConfigDBFloatField,
+    numpy.float64:ConfigDBFloatProperty,
     }
