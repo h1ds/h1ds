@@ -1,0 +1,22 @@
+{% extends "h1ds_core/base.html"%}
+
+{% block content %}
+<div class="column w20" id="configdb-column-left">
+  <!--  This generates  the 'select  shot'  form in  the top  left of  the
+	page. -->
+  <div class="portlet" id="configdb-portlet-seletion">
+    <div class="portlet-header">select config</div>
+    <div class="portlet-content">
+      <div class="sidebarcontent">
+	<FORM action="/" method="post">{% csrf_token %}
+	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
+	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="Shot number...">
+	</FORM>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block configdb_content %}{% endblock %}
+
+{% endblock %}

@@ -31,7 +31,7 @@ class Command(BaseCommand):
                     configdbfile_instance, configdbfile_created = ConfigDBFile.objects.get_or_create(filename=full_filename, defaults={'filetype':filetype_instance})
                     if True:#configdbfile_created:
                         for (k,v) in metadata.items():
-                            if type(v) in configdb_type_class_map.keys():
+                            if type(v) in configdb_type_class_map.keys() and k not in ['filename','filetype']:
                                 propertytype_instance, propertytype_created = ConfigDBPropertyType.objects.get_or_create(name=k, defaults={'description':'No description'})                                
                                 property_model=configdb_type_class_map[type(v)]
                                 new_property, new_property_created = property_model.objects.get_or_create(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance, value=v)

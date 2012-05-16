@@ -1,8 +1,27 @@
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from django.http import HttpResponseRedirect
+#from django.shortcuts import render_to_response
+#from django.template import RequestContext
+#from django.http import HttpResponseRedirect
+from django.views.generic import TemplateView
 
-def configdb_home(request):
+from h1ds_configdb.models import ConfigDBFileType
+
+
+class HomeView(TemplateView):
+    template_name = 'h1ds_configdb/configdb_home.html'
+    
+    def get_context_data(self, **kwargs):
+        # get all instances of ConfigDBFileType
+        context = super(HomeView, self).get_context_data(**kwargs)        
+        context['configdb_filetypes'] = ConfigDBFileType.objects.all()
+        
+        return context
+        
+        
+        
+
+
+"""
+def _configdb_home(request):
     config_list = []
     for khx in range(0,121):
         kh = khx*0.01
@@ -71,3 +90,4 @@ def config_overview(request, config_id):
                               context_instance=RequestContext(request),
                               )
 
+"""

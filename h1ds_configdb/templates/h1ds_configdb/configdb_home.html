@@ -1,65 +1,7 @@
-{% extends "h1ds_core/base.html"%}
+{% extends "h1ds_configdb/base.html"%}
 
-{% load templatetable %}
+{% block configdb_content %}
 
-{% block content %}
-
-<h1>H1 configurations database</h1>
-
-<h2>Reference configurations</h2>
-<table class="data">
-  <tr>
-    <th>
-      Configuration
-    </th>
-    <th>
-      kappa h
-    </th>
-    <th>
-      kappa v
-    </th>
-    <th>
-      Poincare (phi=0)
-    </th>
-    <th>
-      Rot. transform
-    </th>
-  </tr>
-  <tr>
-    <td><a href="/configurations/kh0.00/">Standard</a></td>
-    <td>0.0</td>
-    <td>1.0</td>
-    <td><img src="{{ STATIC_URL }}configdb/poincare/kh0.00-phi0_small.png" height="50%"></td>
-    <td><img src="{{ STATIC_URL }}configdb/iotabar/iotabar_kh0.00_small.png" height="50%"></td>
-  </tr>
-  <tr>
-    <td><a href="/configurations/kh1.00/">Full helical</a></td>
-    <td>1.0</td>
-    <td>1.0</td>
-    <td><img src="{{ STATIC_URL }}configdb/poincare/kh1.00-phi0_small.png" height="50%"></td>
-    <td><img src="{{ STATIC_URL }}configdb/iotabar/iotabar_kh1.00_small.png" height="50%"></td>
-  </tr>
-
-</table>
-
-<h2>All configurations</h2>
-
-<table class="data">
-  <tr>
-    <th>
-      Configuration URL
-    </th>
-    <th>
-      kappa h
-    </th>
-    <th>
-      kappa v
-    </th>
-  </tr>
-{% for c in configs %}
-<tr><td><a href="{{c.url}}">{{c.url}}</a></td><td>{{c.kh}}</td><td>{{c.kv}}</td></tr>
-{% endfor %}
-</table>
-
+{{ configdb_filetypes }}
 
 {% endblock %}
