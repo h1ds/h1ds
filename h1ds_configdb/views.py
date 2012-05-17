@@ -5,9 +5,10 @@ from django.http import Http404
 from django.views.generic.edit import FormView
 from django import forms
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponseRedirect
 
-from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile
+from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType
 
 class ConfigDBSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -16,6 +17,8 @@ class ConfigDBSelectionForm(forms.Form):
         for configdb_filetype in ConfigDBFileType.objects.all():
             self.fields['filetype_%s' %configdb_filetype.slug] = forms.BooleanField(required=False, label=configdb_filetype.name)
         
+        
+
 
 class HomeView(FormView):
     template_name = 'h1ds_configdb/configdb_home.html'
@@ -58,18 +61,20 @@ class HomeView(FormView):
 
     def get_context_data(self, **kwargs):
         filetype_slugs = [i[9:] for i in kwargs['form'].initial.keys() if i.startswith("filetype_")]
-        kwargs['config_files'] = ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).count()
+        paginator = Paginator(ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).all(), 50)
+        
+        try:
+            page = int(self.request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+
+        try:
+            kwargs['config_files'] = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            kwargs['config_files'] = paginator.page(paginator.num_pages)
+
         return kwargs
 
-        
-    #    # get all instances of ConfigDBFileType
-    #    context = super(HomeView, self).get_context_data(**kwargs)        
-    #    context['configdb_filetypes'] = ConfigDBFileType.objects.all()
-    #    context['form'] = ConfigDBSelectionForm()
-    #    return context
-        
-    
-        
         
 
 
