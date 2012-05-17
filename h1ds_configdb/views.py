@@ -17,7 +17,8 @@ class ConfigDBSelectionForm(forms.Form):
         for configdb_filetype in ConfigDBFileType.objects.all():
             self.fields['filetype_%s' %configdb_filetype.slug] = forms.BooleanField(required=False, label=configdb_filetype.name)
         
-        
+        for prop in ConfigDBPropertyType.objects.all():
+            self.fields['property_%s' %prop.slug] = forms.FloatField(required=False, label=prop.name)
 
 
 class HomeView(FormView):
@@ -61,7 +62,9 @@ class HomeView(FormView):
 
     def get_context_data(self, **kwargs):
         filetype_slugs = [i[9:] for i in kwargs['form'].initial.keys() if i.startswith("filetype_")]
-        paginator = Paginator(ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).all(), 50)
+        all_files = ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).all()
+        paginator = Paginator(all_files, 50)
+        kwargs['n_files'] = len(all_files)
         
         try:
             page = int(self.request.GET.get('page', '1'))

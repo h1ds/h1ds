@@ -3,6 +3,7 @@ from django.db import models
 from django.template.defaultfilters import slugify
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.core.exceptions import ValidationError
 
 class ConfigDBFileType(models.Model):
     name = models.CharField(max_length=256)
@@ -21,6 +22,7 @@ class ConfigDBPropertyType(models.Model):
     name = models.CharField(max_length=256)
     description = models.TextField()
     slug = models.SlugField()
+    content_type = models.ForeignKey(ContentType)
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
@@ -38,6 +40,12 @@ class ConfigDBProperty(models.Model):
     class Meta:
         verbose_name_plural = "config db properties"
 
+    ## override save, if content type is different to that of configdb_propertytype, than raise an exception.
+    def save(self, *args, **kwargs):
+        if self.content_type != self.configdb_propertytype.content_type:
+            raise ValidationError
+        super(ConfigDBProperty, self).save(*args,**kwargs)
+            
 
 class ConfigDBStringProperty(models.Model):
     value = models.CharField(max_length=256)

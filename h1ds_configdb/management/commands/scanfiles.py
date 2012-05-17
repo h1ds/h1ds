@@ -1,5 +1,6 @@
 import os
 
+from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
@@ -34,13 +35,17 @@ class Command(BaseCommand):
                     if True:#configdbfile_created:
                         for (k,v) in metadata.items():
                             if type(v) in configdb_type_class_map.keys() and k not in ['filename','filetype']:
-                                propertytype_instance, propertytype_created = ConfigDBPropertyType.objects.get_or_create(name=k, defaults={'description':'No description'})                                
                                 property_value_model=configdb_type_class_map[type(v)]
-                                #new_property_value, new_property_value_created = property_model.objects.get_or_create(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance, value=v)
+                                property_value_content_type = ContentType.objects.get_for_model(property_value_model)
+
+                                #propertytype_instance, propertytype_created = ConfigDBPropertyType.objects.get_or_create(name=k, defaults={'description':'No description'})                                
+                                propertytype_instance, propertytype_created = ConfigDBPropertyType.objects.get_or_create(name=k, content_type=property_value_content_type, defaults={'description':'No description'})                                
+
                                 new_property_value = property_value_model(value=v)
                                 new_property_value.save()
                                 
                                 newproperty = ConfigDBProperty(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance , value=new_property_value)
+                                #newproperty = ConfigDBProperty(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance , object_id=new_property_value.id)
                                 newproperty.save()
                                 
                             else:
