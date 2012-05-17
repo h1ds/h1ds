@@ -1,6 +1,8 @@
 import numpy
 from django.db import models
 from django.template.defaultfilters import slugify
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 
 class ConfigDBFileType(models.Model):
     name = models.CharField(max_length=256)
@@ -24,28 +26,33 @@ class ConfigDBPropertyType(models.Model):
         self.slug = slugify(self.name)
         super(ConfigDBPropertyType, self).save(*args, **kwargs)
 
-class ConfigDBBaseProperty(models.Model):
+
+class ConfigDBProperty(models.Model):
     configdb_file = models.ForeignKey("ConfigDBFile")
     configdb_propertytype = models.ForeignKey(ConfigDBPropertyType)
 
-    class Meta:
-        verbose_name_plural = "config db base properties"
-
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
     
-class ConfigDBStringProperty(ConfigDBBaseProperty):
+    class Meta:
+        verbose_name_plural = "config db properties"
+
+
+class ConfigDBStringProperty(models.Model):
     value = models.CharField(max_length=256)
 
     class Meta:
         verbose_name_plural = "config db string properties"
 
-class ConfigDBFloatProperty(ConfigDBBaseProperty):
+class ConfigDBFloatProperty(models.Model):
     value = models.FloatField()
 
     class Meta:
         verbose_name_plural = "config db float properties"
 
-class ConfigDBIntProperty(ConfigDBBaseProperty):
-    value = models.FloatField()
+class ConfigDBIntProperty(models.Model):
+    value = models.IntegerField()
 
     class Meta:
         verbose_name_plural = "config db integer properties"
