@@ -8,10 +8,10 @@
     <div class="portlet-header">select config</div>
     <div class="portlet-content">
       <div class="sidebarcontent">
-	<FORM action="/" method="post">{% csrf_token %}
-	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="Shot number...">
-	</FORM>
+	<form action="" method="post">{% csrf_token %}
+	  {{ form }}
+	  <input type=submit>
+	</form>
       </div>
     </div>
   </div>

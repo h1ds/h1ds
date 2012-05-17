@@ -1,21 +1,74 @@
-#from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response
 #from django.template import RequestContext
 #from django.http import HttpResponseRedirect
-from django.views.generic import TemplateView
+from django.http import Http404
+from django.views.generic.edit import FormView
+from django import forms
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 
-from h1ds_configdb.models import ConfigDBFileType
+from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile
 
+class ConfigDBSelectionForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(ConfigDBSelectionForm, self).__init__(*args, **kwargs)
+        
+        for configdb_filetype in ConfigDBFileType.objects.all():
+            self.fields['filetype_%s' %configdb_filetype.slug] = forms.BooleanField(required=False, label=configdb_filetype.name)
+        
 
-class HomeView(TemplateView):
+class HomeView(FormView):
     template_name = 'h1ds_configdb/configdb_home.html'
+
+    form_class = ConfigDBSelectionForm
     
+    def process_filetype(self):
+        all_filetypes = [i.slug for i in ConfigDBFileType.objects.all()]
+        if self.kwargs["filetype_str"] in ["all", "all_filetypes"]:
+            return all_filetypes
+        requested_filetypes = self.kwargs["filetype_str"].split("+")
+        returned_filetypes = []
+        for filetype in requested_filetypes:
+            if filetype in all_filetypes:
+                returned_filetypes.append(filetype)
+        if not returned_filetypes:
+            raise Http404
+
+        return returned_filetypes
+    
+    def get_initial(self):
+        initial = {}
+        for filetype in self.process_filetype():
+            initial['filetype_%s' %filetype] = True
+        return initial
+        
+
+    def form_valid(self, form):
+        filetypes = []
+        for k,v in form.cleaned_data.items():
+            if k.startswith("filetype_") and v==True:
+                filetypes.append(k[9:])
+        filetype_str = "+".join(filetypes)
+
+        if not filetype_str:
+            filetype_str = "all_filetypes"
+
+        return HttpResponseRedirect(reverse("h1ds-configdb-filetypes", kwargs={'filetype_str':filetype_str}))
+    
+
     def get_context_data(self, **kwargs):
-        # get all instances of ConfigDBFileType
-        context = super(HomeView, self).get_context_data(**kwargs)        
-        context['configdb_filetypes'] = ConfigDBFileType.objects.all()
+        filetype_slugs = [i[9:] for i in kwargs['form'].initial.keys() if i.startswith("filetype_")]
+        kwargs['config_files'] = ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).count()
+        return kwargs
+
         
-        return context
+    #    # get all instances of ConfigDBFileType
+    #    context = super(HomeView, self).get_context_data(**kwargs)        
+    #    context['configdb_filetypes'] = ConfigDBFileType.objects.all()
+    #    context['form'] = ConfigDBSelectionForm()
+    #    return context
         
+    
         
         
 
