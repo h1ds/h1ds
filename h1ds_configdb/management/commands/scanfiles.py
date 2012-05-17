@@ -3,7 +3,7 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBStringProperty, configdb_type_class_map
+from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBProperty, ConfigDBStringProperty, configdb_type_class_map
 
 metadata_scanner = settings.H1DS_CONFIGDB_METADATA_FUNCTION
 
@@ -17,6 +17,8 @@ class Command(BaseCommand):
         for root, dirs, files in os.walk(settings.H1DS_CONFIGDB_DIR):
             for fn in files:
                 try:
+                #if True:
+                    
                     full_filename = os.path.join(root, fn)
                     filetype, mimetype, metadata = metadata_scanner(full_filename)
                     
@@ -33,8 +35,14 @@ class Command(BaseCommand):
                         for (k,v) in metadata.items():
                             if type(v) in configdb_type_class_map.keys() and k not in ['filename','filetype']:
                                 propertytype_instance, propertytype_created = ConfigDBPropertyType.objects.get_or_create(name=k, defaults={'description':'No description'})                                
-                                property_model=configdb_type_class_map[type(v)]
-                                new_property, new_property_created = property_model.objects.get_or_create(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance, value=v)
+                                property_value_model=configdb_type_class_map[type(v)]
+                                #new_property_value, new_property_value_created = property_model.objects.get_or_create(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance, value=v)
+                                new_property_value = property_value_model(value=v)
+                                new_property_value.save()
+                                
+                                newproperty = ConfigDBProperty(configdb_file=configdbfile_instance, configdb_propertytype=propertytype_instance , value=new_property_value)
+                                newproperty.save()
+                                
                             else:
                                 self.stdout.write(str(k)+": "+str(type(v))+'\n')
                     worked +=1

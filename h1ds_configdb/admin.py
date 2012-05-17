@@ -1,11 +1,28 @@
 from django.contrib import admin
-from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBBaseProperty, ConfigDBStringProperty, ConfigDBFloatProperty, ConfigDBIntProperty
+from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBProperty, ConfigDBPropertyType, ConfigDBStringProperty, ConfigDBFloatProperty, ConfigDBIntProperty
 from django.contrib.admin.actions import delete_selected
 
-#admin.site.register(ConfigDBBaseProperty)
-admin.site.register(ConfigDBStringProperty)
-admin.site.register(ConfigDBFloatProperty)
-admin.site.register(ConfigDBIntProperty)
+
+class ConfigDBPropertyAdmin(admin.ModelAdmin):
+    list_display = ['configdb_file', 'configdb_propertytype', 'value']
+    actions = [delete_selected]
+admin.site.register(ConfigDBProperty, ConfigDBPropertyAdmin)
+
+class ConfigDBStringPropertyAdmin(admin.ModelAdmin):
+    list_display = ['value',]
+    actions = [delete_selected]
+admin.site.register(ConfigDBStringProperty, ConfigDBStringPropertyAdmin)
+
+class ConfigDBFloatPropertyAdmin(admin.ModelAdmin):
+    list_display = ['value',]
+    actions = [delete_selected]
+admin.site.register(ConfigDBFloatProperty, ConfigDBFloatPropertyAdmin)
+
+class ConfigDBIntPropertyAdmin(admin.ModelAdmin):
+    list_display = ['value',]
+    actions = [delete_selected]
+admin.site.register(ConfigDBIntProperty, ConfigDBIntPropertyAdmin)
+
 
 class ConfigDBFileTypeAdmin(admin.ModelAdmin):
     list_display = ['name',]

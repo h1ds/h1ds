@@ -33,7 +33,7 @@ class ConfigDBProperty(models.Model):
 
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    value = generic.GenericForeignKey('content_type', 'object_id')
     
     class Meta:
         verbose_name_plural = "config db properties"
@@ -61,16 +61,17 @@ class ConfigDBFile(models.Model):
     filename = models.FilePathField()
     filetype = models.ForeignKey(ConfigDBFileType)
 
-    def get_properties(self):
-        """
-        This is a bit messy, reconsider how best to do the 
-        reverse lookup of subclasses...
-        """
-        props = []
-        for cl in [ConfigDBStringProperty, ConfigDBIntProperty, ConfigDBFloatProperty]:
-            for p in cl.objects.filter(configdb_file = self):
-                props.append([p.configdb_propertytype.name,p.value])
-        return props
+    
+    #def get_properties(self):
+    #    """
+    #    This is a bit messy, reconsider how best to do the 
+    #    reverse lookup of subclasses...
+    #    """
+    #    props = []
+    #    for cl in [ConfigDBStringProperty, ConfigDBIntProperty, ConfigDBFloatProperty]:
+    #        for p in cl.objects.filter(configdb_file = self):
+    #            props.append([p.configdb_propertytype.name,p.value])
+    #    return props
 
 configdb_type_class_map = {
     str:ConfigDBStringProperty,
