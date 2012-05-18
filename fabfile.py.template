@@ -108,6 +108,7 @@ def update_dir_structure():
         ('wiki', 'data', 'pages'),
         ('wiki', 'data', 'user'),
         ('static',),
+        ('media',),
         ('log',),
         ('db',),
         ('pid',),
