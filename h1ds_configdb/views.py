@@ -11,8 +11,6 @@ from django.contrib.contenttypes.models import ContentType
 
 from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBStringProperty, ConfigDBFloatProperty, ConfigDBIntProperty
 
-numeric_propertytypes = [ConfigDBFloatProperty, ConfigDBIntProperty]
-
 
 class ConfigDBSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -23,48 +21,94 @@ class ConfigDBSelectionForm(forms.Form):
         
         # numeric fields.
         for prop in ConfigDBPropertyType.objects.all():
-            if prop.content_type.model_class() in numeric_propertytypes:
-                self.fields['property_max_%s' %prop.slug] = forms.FloatField(required=False, label="%s (min)" %prop.name)
-                self.fields['property_min_%s' %prop.slug] = forms.FloatField(required=False, label="%s (max)" %prop.name)
-
+            if prop.content_type.model_class() == ConfigDBFloatProperty:
+                self.fields['property_min_%s' %prop.slug] = forms.FloatField(required=False, label="%s (min)" %prop.name)
+                self.fields['property_max_%s' %prop.slug] = forms.FloatField(required=False, label="%s (max)" %prop.name)
+            elif prop.content_type.model_class() == ConfigDBIntProperty:
+                self.fields['property_min_%s' %prop.slug] = forms.IntegerField(required=False, label="%s (min)" %prop.name)
+                self.fields['property_max_%s' %prop.slug] = forms.IntegerField(required=False, label="%s (max)" %prop.name)
+                
 
 class HomeView(FormView):
     template_name = 'h1ds_configdb/configdb_home.html'
 
     form_class = ConfigDBSelectionForm
     
-    def process_filetype(self):
+    def get_initial_filetypes(self):
+        initial_filetypes = {}
         all_filetypes = [i.slug for i in ConfigDBFileType.objects.all()]
         if self.kwargs["filetype_str"] in ["all", "all_filetypes"]:
             return all_filetypes
         requested_filetypes = self.kwargs["filetype_str"].split("+")
-        returned_filetypes = []
+
         for filetype in requested_filetypes:
             if filetype in all_filetypes:
-                returned_filetypes.append(filetype)
-        if not returned_filetypes:
+                initial_filetypes['filetype_%s' %filetype] = True
+        if not initial_filetypes:
             raise Http404
 
-        return returned_filetypes
+        return initial_filetypes
     
+    def get_initial_filters(self):
+        initial_filters = {}
+        try:
+            requested_filters = self.kwargs["filter_str"].split("+")
+        except KeyError:            
+            return initial_filters
+        
+        for rf in requested_filters:
+            split_rf = rf.split("__")
+            if split_rf[1] == 'bw':
+                initial_filters['property_min_%s' %split_rf[0]] = split_rf[2]
+                initial_filters['property_max_%s' %split_rf[0]] = split_rf[3]
+            elif split_rf[1] == 'lt':
+                initial_filters['property_max_%s' %split_rf[0]] = split_rf[2]
+            elif split_rf[1] == 'gt':
+                initial_filters['property_min_%s' %split_rf[0]] = split_rf[2]
+        return initial_filters
+        
+
     def get_initial(self):
         initial = {}
-        for filetype in self.process_filetype():
-            initial['filetype_%s' %filetype] = True
+        initial.update(self.get_initial_filetypes())
+        initial.update(self.get_initial_filters())
         return initial
         
+    def get_filter_str(self, properties):
+        filter_strings = []
+        for k,v in properties.items():
+            if v.has_key('min') and v.has_key('max'):
+                filter_strings.append("%s__bw__%s__%s" %(k,str(v['min']), str(v['max'])))
+            elif v.has_key('min'):
+                filter_strings.append("%s__gt__%s" %(k,str(v['min'])))
+            elif v.has_key('max'):
+                filter_strings.append("%s__lt__%s" %(k,str(v['max'])))
+        return "+".join(filter_strings)
 
     def form_valid(self, form):
         filetypes = []
+        properties = {}
         for k,v in form.cleaned_data.items():
             if k.startswith("filetype_") and v==True:
                 filetypes.append(k[9:])
+            elif k.startswith("property_") and v != None:
+                property_name = k[13:]
+                filter_type = k[9:12]
+                if not properties.has_key(property_name):
+                    properties[property_name] = {}
+                properties[property_name][filter_type] = v
+
         filetype_str = "+".join(filetypes)
+
+        filter_str = self.get_filter_str(properties)
 
         if not filetype_str:
             filetype_str = "all_filetypes"
 
-        return HttpResponseRedirect(reverse("h1ds-configdb-filetypes", kwargs={'filetype_str':filetype_str}))
+        if filter_str:
+            return HttpResponseRedirect(reverse("h1ds-configdb-filtered", kwargs={'filetype_str':filetype_str, 'filter_str':filter_str}))
+        else:
+            return HttpResponseRedirect(reverse("h1ds-configdb-filetypes", kwargs={'filetype_str':filetype_str}))
     
 
     def get_context_data(self, **kwargs):
