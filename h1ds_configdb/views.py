@@ -40,9 +40,10 @@ class HomeView(FormView):
         initial_filetypes = {}
         all_filetypes = [i.slug for i in ConfigDBFileType.objects.all()]
         if self.kwargs["filetype_str"] in ["all", "all_filetypes"]:
-            return all_filetypes
+            for ft in all_filetypes:
+                initial_filetypes['filetype_%s' %ft] = True
+            return initial_filetypes
         requested_filetypes = self.kwargs["filetype_str"].split("+")
-
         for filetype in requested_filetypes:
             if filetype in all_filetypes:
                 initial_filetypes['filetype_%s' %filetype] = True
@@ -124,7 +125,22 @@ class HomeView(FormView):
 
     def get_context_data(self, **kwargs):
         filetype_slugs = [i[9:] for i in kwargs['form'].initial.keys() if i.startswith("filetype_")]
-        all_files = ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).all()
+        all_files = ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs)
+        for fk, fv in [ i for i in kwargs['form'].initial.items() if i[0].startswith('property_')]:
+            slug = fk[13:]
+            content_model = ConfigDBPropertyType.objects.get(slug=slug).content_type.model_class()
+            if fk[9:12] == 'min':
+                filtered_ids = [i[0] for i in content_model.objects.filter(value__gte=fv).values_list('id')]
+            elif fk[9:12] == 'max':
+                filtered_ids = [i[0] for i in content_model.objects.filter(value__lte=fv).values_list('id')]
+            else:
+                filtered_ids = []
+            all_files = all_files.filter(configdbproperty__configdb_propertytype__name=slug, configdbproperty__object_id__in=filtered_ids)
+        #filters = []
+        #filters.append(ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).all())
+        #all_files = ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).all()
+        
+
         paginator = Paginator(all_files, int(self.request.GET.get('results_per_page', DEFAULT_RESULTS_PER_PAGE)))
         kwargs['n_files'] = len(all_files)
         
