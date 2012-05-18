@@ -9,7 +9,7 @@ Number of results: {{ n_files }}
 <div class="pagination">
     <span class="step-links">
         {% if config_files.has_previous %}
-            <a href="?page={{ config_files.previous_page_number }}">previous</a>
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.previous_page_number }}">previous</a>
         {% endif %}
 
         <span class="current">
@@ -17,7 +17,7 @@ Number of results: {{ n_files }}
         </span>
 
         {% if config_files.has_next %}
-            <a href="?page={{ config_files.next_page_number }}">next</a>
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.next_page_number }}">next</a>
         {% endif %}
     </span>
 </div>
@@ -27,7 +27,7 @@ Number of results: {{ n_files }}
 <div class="pagination">
     <span class="step-links">
         {% if config_files.has_previous %}
-            <a href="?page={{ config_files.previous_page_number }}">previous</a>
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.previous_page_number }}">previous</a>
         {% endif %}
 
         <span class="current">
@@ -35,7 +35,7 @@ Number of results: {{ n_files }}
         </span>
 
         {% if config_files.has_next %}
-            <a href="?page={{ config_files.next_page_number }}">next</a>
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.next_page_number }}">next</a>
         {% endif %}
     </span>
 </div>

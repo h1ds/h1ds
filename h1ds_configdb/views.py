@@ -11,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBStringProperty, ConfigDBFloatProperty, ConfigDBIntProperty
 
+DEFAULT_RESULTS_PER_PAGE=10
 
 class ConfigDBSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -27,6 +28,7 @@ class ConfigDBSelectionForm(forms.Form):
             elif prop.content_type.model_class() == ConfigDBIntProperty:
                 self.fields['property_min_%s' %prop.slug] = forms.IntegerField(required=False, label="%s (min)" %prop.name)
                 self.fields['property_max_%s' %prop.slug] = forms.IntegerField(required=False, label="%s (max)" %prop.name)
+        self.fields['results_per_page'] = forms.IntegerField(required=False, label="Number of results per page.")
                 
 
 class HomeView(FormView):
@@ -72,6 +74,7 @@ class HomeView(FormView):
         initial = {}
         initial.update(self.get_initial_filetypes())
         initial.update(self.get_initial_filters())
+        initial['results_per_page'] = self.request.GET.get('results_per_page', DEFAULT_RESULTS_PER_PAGE)
         return initial
         
     def get_filter_str(self, properties):
@@ -105,16 +108,24 @@ class HomeView(FormView):
         if not filetype_str:
             filetype_str = "all_filetypes"
 
+        kwargs = {'filetype_str':filetype_str}
+
+        querystring = ""
+        rpp = int(self.request.POST.get('results_per_page', DEFAULT_RESULTS_PER_PAGE))
+        if rpp != DEFAULT_RESULTS_PER_PAGE:
+            querystring = "?results_per_page=%d" %(rpp)
+
         if filter_str:
-            return HttpResponseRedirect(reverse("h1ds-configdb-filtered", kwargs={'filetype_str':filetype_str, 'filter_str':filter_str}))
+            kwargs['filter_str'] = filter_str
+            return HttpResponseRedirect(reverse("h1ds-configdb-filtered", kwargs=kwargs)+querystring)
         else:
-            return HttpResponseRedirect(reverse("h1ds-configdb-filetypes", kwargs={'filetype_str':filetype_str}))
+            return HttpResponseRedirect(reverse("h1ds-configdb-filetypes", kwargs=kwargs)+querystring)
     
 
     def get_context_data(self, **kwargs):
         filetype_slugs = [i[9:] for i in kwargs['form'].initial.keys() if i.startswith("filetype_")]
         all_files = ConfigDBFile.objects.filter(filetype__slug__in=filetype_slugs).all()
-        paginator = Paginator(all_files, 50)
+        paginator = Paginator(all_files, int(self.request.GET.get('results_per_page', DEFAULT_RESULTS_PER_PAGE)))
         kwargs['n_files'] = len(all_files)
         
         try:
