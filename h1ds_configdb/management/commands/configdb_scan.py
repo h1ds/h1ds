@@ -51,7 +51,7 @@ class Command(BaseCommand):
                             else:
                                 self.stdout.write(str(k)+": "+str(type(v))+'\n')
                     worked +=1
-                except:
+                except NotImplementedError:
                     failed +=1
         self.stdout.write("managed to grab metadata from %d of %d files (%.2f%%)\n" %(worked, worked+failed, 100.*worked/(worked+failed)))
 
