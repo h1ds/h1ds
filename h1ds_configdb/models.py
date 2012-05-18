@@ -29,6 +29,7 @@ class ConfigDBPropertyType(models.Model):
         super(ConfigDBPropertyType, self).save(*args, **kwargs)
 
 
+
 class ConfigDBProperty(models.Model):
     configdb_file = models.ForeignKey("ConfigDBFile")
     configdb_propertytype = models.ForeignKey(ConfigDBPropertyType)
@@ -69,7 +70,6 @@ class ConfigDBFile(models.Model):
     filename = models.FilePathField()
     filetype = models.ForeignKey(ConfigDBFileType)
 
-    
     #def get_properties(self):
     #    """
     #    This is a bit messy, reconsider how best to do the 

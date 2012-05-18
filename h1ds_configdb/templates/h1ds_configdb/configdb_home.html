@@ -6,7 +6,7 @@
 
 Number of results: {{ n_files }}
 
-<div class="pagination">
+<div class="pagination clearfix">
     <span class="step-links">
         {% if config_files.has_previous %}
             <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.previous_page_number }}">previous</a>
@@ -21,10 +21,13 @@ Number of results: {{ n_files }}
         {% endif %}
     </span>
 </div>
+
+<div id="masonry-container" class="clearfix">
 {% for dbfile in config_files.object_list %}
 {% show_configfile dbfile %}
 {% endfor %}
-<div class="pagination">
+</div>
+<div class="pagination clearfix">
     <span class="step-links">
         {% if config_files.has_previous %}
             <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.previous_page_number }}">previous</a>

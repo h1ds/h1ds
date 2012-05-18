@@ -1,7 +1,7 @@
 {% extends "h1ds_core/base.html"%}
 
 {% block content %}
-<div class="column w20" id="configdb-column-left">
+<div class="column w20 clearfix" id="configdb-column-left">
   <!--  This generates  the 'select  shot'  form in  the top  left of  the
 	page. -->
   <div class="portlet" id="configdb-portlet-seletion">
@@ -16,7 +16,7 @@
     </div>
   </div>
 </div>
-<div class="column w80" id="configdb-column-data">
+<div class="column w80 clearfix" id="configdb-column-data">
 {% block configdb_content %}{% endblock %}
 </div>
 {% endblock %}
