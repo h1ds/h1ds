@@ -7,8 +7,12 @@ from django import forms
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponseRedirect
+from django.contrib.contenttypes.models import ContentType
 
-from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType
+from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBStringProperty, ConfigDBFloatProperty, ConfigDBIntProperty
+
+numeric_propertytypes = [ConfigDBFloatProperty, ConfigDBIntProperty]
+
 
 class ConfigDBSelectionForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -17,8 +21,11 @@ class ConfigDBSelectionForm(forms.Form):
         for configdb_filetype in ConfigDBFileType.objects.all():
             self.fields['filetype_%s' %configdb_filetype.slug] = forms.BooleanField(required=False, label=configdb_filetype.name)
         
+        # numeric fields.
         for prop in ConfigDBPropertyType.objects.all():
-            self.fields['property_%s' %prop.slug] = forms.FloatField(required=False, label=prop.name)
+            if prop.content_type.model_class() in numeric_propertytypes:
+                self.fields['property_max_%s' %prop.slug] = forms.FloatField(required=False, label="%s (min)" %prop.name)
+                self.fields['property_min_%s' %prop.slug] = forms.FloatField(required=False, label="%s (max)" %prop.name)
 
 
 class HomeView(FormView):
