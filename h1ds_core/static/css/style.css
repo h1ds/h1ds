@@ -1160,7 +1160,14 @@ span.right {
     float:right;
 }
 
-
+.h1ds-configdb-configfile {
+    border-style:solid;
+    border-width:1px;
+    border-color:#eee;
+    margin:1em;
+    padding:1em;
+    overflow: hidden;
+}
 
 .sidebarcontent {
     margin: 0.2em 0;
