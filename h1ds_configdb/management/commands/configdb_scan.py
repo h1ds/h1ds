@@ -1,11 +1,14 @@
 import os
+import shutil
 
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBProperty, ConfigDBStringProperty, configdb_type_class_map
+from h1ds_configdb import CONFIGDB_SUBFOLDER
 
+CONFIGDB_PATH = os.path.join(settings.MEDIA_ROOT, CONFIGDB_SUBFOLDER)
 metadata_scanner = settings.H1DS_CONFIGDB_METADATA_FUNCTION
 
 class Command(BaseCommand):
@@ -13,6 +16,9 @@ class Command(BaseCommand):
     help = 'Scan configdb directory for metadata'
 
     def handle(self, *args, **options):
+        if not os.path.exists(CONFIGDB_PATH):
+            os.mkdir(CONFIGDB_PATH)
+
         failed = 0
         worked = 0
         for root, dirs, files in os.walk(settings.H1DS_CONFIGDB_DIR):
@@ -50,6 +56,7 @@ class Command(BaseCommand):
                                 
                             else:
                                 self.stdout.write(str(k)+": "+str(type(v))+'\n')
+                    shutil.copy(full_filename, CONFIGDB_PATH)
                     worked +=1
                 except NotImplementedError:
                     failed +=1

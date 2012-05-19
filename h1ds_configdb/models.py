@@ -5,6 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core.exceptions import ValidationError
 
+from h1ds_configdb import CONFIGDB_SUBFOLDER
+
 class ConfigDBFileType(models.Model):
     name = models.CharField(max_length=256)
     mimetype = models.CharField(max_length=126)
@@ -67,19 +69,8 @@ class ConfigDBIntProperty(models.Model):
         verbose_name_plural = "config db integer properties"
 
 class ConfigDBFile(models.Model):
-    filename = models.FilePathField()
+    dbfile = models.FileField(upload_to=CONFIGDB_SUBFOLDER)
     filetype = models.ForeignKey(ConfigDBFileType)
-
-    #def get_properties(self):
-    #    """
-    #    This is a bit messy, reconsider how best to do the 
-    #    reverse lookup of subclasses...
-    #    """
-    #    props = []
-    #    for cl in [ConfigDBStringProperty, ConfigDBIntProperty, ConfigDBFloatProperty]:
-    #        for p in cl.objects.filter(configdb_file = self):
-    #            props.append([p.configdb_propertytype.name,p.value])
-    #    return props
 
 configdb_type_class_map = {
     str:ConfigDBStringProperty,
