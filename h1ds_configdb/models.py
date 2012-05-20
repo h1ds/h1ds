@@ -86,5 +86,6 @@ class ConfigDBFile(models.Model):
 configdb_type_class_map = {
     str:ConfigDBStringProperty,
     numpy.float64:ConfigDBFloatProperty,
+    float:ConfigDBFloatProperty,
     int:ConfigDBIntProperty
     }
