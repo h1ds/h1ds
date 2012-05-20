@@ -1,12 +1,27 @@
+"""
+Scan files in settings.H1DS_CONFIGDB_DIR for metadata using
+the settings.H1DS_CONFIGDB_METADATA_FUNCTION function
+
+If the file provides metadata, copy the file across to MEDIA_ROOT
+in the subdirectory h1ds_configdb.CONFIGDB_SUBFOLDER
+
+Currently there is no check whether the file already exists. For now, 
+the expected usage is to clear the configdb using the configdb_clear 
+management function, and then repopulate using configdb_scan. More 
+intelligent file handling might be added at a later date.
+"""
 import os
 import shutil
+import random
 
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.core.files import File
 
 from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType, ConfigDBProperty, ConfigDBStringProperty, configdb_type_class_map
 from h1ds_configdb import CONFIGDB_SUBFOLDER
+
 
 CONFIGDB_PATH = os.path.join(settings.MEDIA_ROOT, CONFIGDB_SUBFOLDER)
 metadata_scanner = settings.H1DS_CONFIGDB_METADATA_FUNCTION
@@ -22,7 +37,7 @@ class Command(BaseCommand):
         failed = 0
         worked = 0
         for root, dirs, files in os.walk(settings.H1DS_CONFIGDB_DIR):
-            for fn in files:
+            for fn in [i for i in files if random.random() > 0.9]:
                 try:
                 #if True:
                     
@@ -37,7 +52,8 @@ class Command(BaseCommand):
                             raise ValueError('wrong mimetype')
                     
                     
-                    configdbfile_instance, configdbfile_created = ConfigDBFile.objects.get_or_create(filename=full_filename, defaults={'filetype':filetype_instance})
+                    #configdbfile_instance, configdbfile_created = ConfigDBFile.objects.get_or_create(filename=full_filename, defaults={'filetype':filetype_instance})
+                    configdbfile_instance, configdbfile_created = ConfigDBFile.objects.get_or_create(dbfile=File(open(full_filename)), defaults={'filetype':filetype_instance})
                     if True:#configdbfile_created:
                         for (k,v) in metadata.items():
                             if type(v) in configdb_type_class_map.keys() and k not in ['filename','filetype']:
@@ -56,7 +72,7 @@ class Command(BaseCommand):
                                 
                             else:
                                 self.stdout.write(str(k)+": "+str(type(v))+'\n')
-                    shutil.copy(full_filename, CONFIGDB_PATH)
+                    #shutil.copy(full_filename, CONFIGDB_PATH)
                     worked +=1
                 except NotImplementedError:
                     failed +=1

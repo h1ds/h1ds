@@ -30,7 +30,7 @@ class ConfigDBFileTypeAdmin(admin.ModelAdmin):
 admin.site.register(ConfigDBFileType, ConfigDBFileTypeAdmin)
 
 class ConfigDBFileAdmin(admin.ModelAdmin):
-    list_display = ['filename',]
+    list_display = ['dbfile',]
     actions = [delete_selected]
 admin.site.register(ConfigDBFile, ConfigDBFileAdmin)
 
