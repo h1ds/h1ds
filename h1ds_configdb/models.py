@@ -1,9 +1,11 @@
+import os
 import numpy
 from django.db import models
 from django.template.defaultfilters import slugify
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from h1ds_configdb import CONFIGDB_SUBFOLDER
 
@@ -68,8 +70,17 @@ class ConfigDBIntProperty(models.Model):
     class Meta:
         verbose_name_plural = "config db integer properties"
 
+def configdb_filename(instance, filename):
+    split_path = filename.split('/')
+    n_dir_conf = len(settings.H1DS_CONFIGDB_DIR.split('/'))
+    
+    new_paths = [CONFIGDB_SUBFOLDER]
+    new_paths.extend(split_path[n_dir_conf:])
+    
+    return os.path.join(*new_paths)
+
 class ConfigDBFile(models.Model):
-    dbfile = models.FileField(upload_to=CONFIGDB_SUBFOLDER)
+    dbfile = models.FileField(upload_to=configdb_filename)
     filetype = models.ForeignKey(ConfigDBFileType)
 
 configdb_type_class_map = {
