@@ -1101,10 +1101,6 @@ a:hover {
     background-color:#369;
 }
 
-/* hover background-color not working in some cases. */
-div.mbox a:hover {
-    color:red;
-}
 
 /* header */
 
