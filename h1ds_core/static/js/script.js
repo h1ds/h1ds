@@ -326,8 +326,8 @@ function NewPlotContainer(id) {
     this.dataPadding = 0.05
 
     // padding for axes
-    this.xAxisPadding = 50;
-    this.yAxisPadding = 50;
+    this.xAxisPadding = 40;
+    this.yAxisPadding = 45;
 }
 
 NewPlotContainer.prototype.addPlotSet = function(url_list) {
@@ -407,6 +407,9 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	.attr("y", function(d) { return -0.8*that.yAxisPadding; })
 	.text(function(d) { return "y"; });
 
+    // # add grid
+
+    
     
     var plotitems = plots
 	.selectAll("path.data")
@@ -484,8 +487,9 @@ NewPlotContainer.prototype.generatePlotData = function(plotset_index) {
 		data_domain[1]+this.dataPadding*data_span
 	    ]);
 
-	new_data.xAxis = d3.svg.axis().scale(new_data.x).orient("bottom");
-	new_data.yAxis = d3.svg.axis().scale(new_data.y).orient("left");
+	console.log(new_data.y.range());
+	new_data.xAxis = d3.svg.axis().scale(new_data.x).orient("bottom").tickSize(new_data.y.range()[1]-new_data.y.range()[0]);
+	new_data.yAxis = d3.svg.axis().scale(new_data.y).orient("left").tickSize(new_data.x.range()[0]-new_data.x.range()[1]);
 
 	plotset_data.push(new_data);
 	y_offset += this.plotTypes[this.plotsets[plotset_index].plotTypes[i]].height;
