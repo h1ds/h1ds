@@ -297,6 +297,7 @@ function getPlotQueryString() {
  */
 
 function NewPlotContainer(id) {
+    this.id = id;
     // Layout settings
     this.plotsetSpacing = 10;
     this.plotSpacing = 5;
@@ -320,6 +321,10 @@ function NewPlotContainer(id) {
     // plottype_1, plottype_2, etc are from this.plottypes
     // translation is argument for transform=translate(x,y) for the plotset <svg:g> element
     this.plotsets = [];
+
+    // padding for axes
+    this.xAxisPadding = 50;
+    this.yAxisPadding = 50;
 }
 
 NewPlotContainer.prototype.addPlotSet = function(url_list) {
@@ -375,11 +380,31 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	.attr("class", "plot")
 	.attr("transform", function(d) {return "translate("+d.translation[0]+","+d.translation[1]+")"});
 
+    // ### Add axes ###
+    // # x axis
     plots.append("g")
 	.attr("class", "axis x")
-	//.attr("transform")
-	.call(function(d) { return d.xAxis })
+	.attr("transform", function(d) {return "translate(0,"+(that.plotTypes[d.plotType].height-that.xAxisPadding)+")"})
+	.each(function(d) { d3.select(this).call(d.xAxis); })
+	    .append("text")
+	.attr("text-anchor", "middle")
+	.attr("x", function(d) { return that.yAxisPadding+0.5*(that.svg.attr("width")-that.yAxisPadding); })
+	.attr("y", function(d) { return 0.8*that.xAxisPadding; })
+	.text(function(d) { return "x"; });
 
+    // # y axis
+    plots.append("g")
+	.attr("class", "axis y")
+	.attr("transform", function(d) {return "translate("+that.yAxisPadding+","+0+")"})
+	.each(function(d) { d3.select(this).call(d.yAxis); })
+	    .append("text")
+	.attr("text-anchor", "middle")
+	.attr("transform", "rotate(-90)")
+	.attr("x", function(d) { return -0.5*(that.plotTypes[d.plotType].height-that.xAxisPadding); })
+	.attr("y", function(d) { return -0.8*that.yAxisPadding; })
+	.text(function(d) { return "y"; });
+
+    
     var plotitems = plots
 	.selectAll("path.data")
 	.data(function(d,i) { 
@@ -411,6 +436,10 @@ NewPlotContainer.prototype.generatePlotsetData = function() {
 	y_offset += this.plotsetSpacing;
     }
     
+    // adjust the height of plot container (SVG) and DOM container element.
+    this.svg.attr("height",y_offset);
+    $(this.id).height(y_offset);
+
     return data;
 };
 
@@ -432,14 +461,14 @@ NewPlotContainer.prototype.generatePlotData = function(plotset_index) {
 			'translation':[x_offset,y_offset],
 		       };
 	new_data.x = d3.scale.linear()
-	    .range([0,that.svg.attr("width")])
+	    .range([that.yAxisPadding,that.svg.attr("width")])
 	    .domain([
 		d3.min(plot_data, function(d,i) { return d3.min(d.dim);}),
 		d3.max(plot_data, function(d,i) { return d3.max(d.dim);})
 	    ]);
 
 	new_data.y = d3.scale.linear()
-	    .range([this.plotTypes[new_data.plotType].height, 0])
+	    .range([this.plotTypes[new_data.plotType].height-that.xAxisPadding, 0])
 	    .domain([
 		d3.min(plot_data, function(d,i) {return d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)}),
 		d3.max(plot_data, function(d,i) {return d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)})
