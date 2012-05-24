@@ -328,7 +328,7 @@ NewPlotContainer.prototype.addPlotSet = function(url_list) {
     for (var i=0; i<url_list.length;i++) {
 	if (!this.data.hasOwnProperty(url_list[i])) this.loadURL(url_list[i]);	
     }
-    
+    // TODO: do we need translation here? it's re-computed in generatePlotsetData() called by updateDisplay()
     this.plotsets.push({'urls':url_list,'plotTypes':['main'], 'translation':[0,0]});
     this.updateDisplay();
 }
@@ -356,17 +356,12 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
 NewPlotContainer.prototype.updateDisplay = function() {
     var that = this;
 
-    // TODO: this should be part of generate plotsets data...
-    // first, recompute the layout in case plots have been added or removed.
-    // this.computeLayout();
-
-    // EDIT POINT.
     // Create the data structure to pass to d3
     // [plotset_1, plotset_2, ..., plotset_m]
     // plotset_i: {translation:[x,y],plots:[plot_1, plot_2, ..., plot_n]}
     // plot_j: {translation:[x,y], data:[data_1, data_2, ..., data_p]}
     var plotset_data = this.generatePlotsetData();
-
+    
     var plotsets = this.svg.selectAll("g.plotset")
 	.data(plotset_data)
 	.enter().append("g")
@@ -375,54 +370,106 @@ NewPlotContainer.prototype.updateDisplay = function() {
 
     var plots = plotsets
 	.selectAll("g.plot")
-	.data(function(d,i) { return that.generatePlotData(i); } )
+	.data(function(d,i) {  return d.plots; } )
 	.enter().append("g")
 	.attr("class", "plot")
-	.text(function(d,i) {return d});
+	.attr("transform", function(d) {return "translate("+d.translation[0]+","+d.translation[1]+")"});
+
+    plots.append("g")
+	.attr("class", "axis x")
+	//.attr("transform")
+	.call(function(d) { return d.xAxis })
+
+    var plotitems = plots
+	.selectAll("path.data")
+	.data(function(d,i) { 
+	    for (var i=0; i<d.data.length; i++) d.data[i].parent = d;
+	    return d.data;})
+	.enter().append("path")
+	.attr("class","data")
+	.classed("path-filled", function(d) { return d.is_minmax })
+	.attr("d", function(d,i) {  return that.formatData(d,i) });
+
 };
 
 NewPlotContainer.prototype.generatePlotsetData = function() {
     var data = [];
-    for (var i=0; i<this.plotset.length; i++) {
+    for (var i=0; i<this.plotsets.length; i++) {
 	data.push({'plots':this.generatePlotData(i)});
     }
-    // now add the layout info.
-    
-};
 
-// generate iterable data for plots within plotset
-NewPlotContainer.prototype.generatePlotData = function(plotset_index) {
-    var plot_data = [];
-    var plotset_data = [];
-    for (var i=0; i<this.plotsets[plotset_index].urls.length; i++) {
-	plot_data.push(this.data[this.plotsets[plotset_index].urls[i]]);
-    }
-    for (var i=0; i<this.plotsets[plotset_index].plotTypes.length; i++) {
-	plotset_data.push({'plotType':this.plotsets[plotset_index].plotTypes[i],
-			   'data':plot_data
-			  });
-    }
-    return plotset_data;
-};
-
-
-// compute translations for plotsets and plots
-NewPlotContainer.prototype.computeLayout = function() {
-    // plotsets
+    // now add the layout info for each plotset.
     var x_offset = 0;
     var y_offset = 0;
     
     for (var i=0; i<this.plotsets.length; i++) {
-	this.plotsets.translation = [x_offset,y_offset];
+	data[i].translation = [x_offset,y_offset];
 	for (var j=0;j<this.plotsets[i].plotTypes.length; j++){
 	    y_offset += this.plotTypes[this.plotsets[i].plotTypes[j]].height;
 	}
 	y_offset += (this.plotsets[i].plotTypes.length-1)*this.plotSpacing;
 	y_offset += this.plotsetSpacing;
     }
+    
+    return data;
 };
 
+// generate iterable data for plots within plotset
+NewPlotContainer.prototype.generatePlotData = function(plotset_index) {
+    var that = this;
+    var plot_data = [];
+    var plotset_data = [];
+    var x_offset = 0;
+    var y_offset = 0;
+    for (var i=0; i<this.plotsets[plotset_index].urls.length; i++) {
+	plot_data.push(this.data[this.plotsets[plotset_index].urls[i]]);
+    }
 
+
+    for (var i=0; i<this.plotsets[plotset_index].plotTypes.length; i++) {
+	var new_data = {'plotType':this.plotsets[plotset_index].plotTypes[i],
+			'data':plot_data,
+			'translation':[x_offset,y_offset],
+		       };
+	new_data.x = d3.scale.linear()
+	    .range([0,that.svg.attr("width")])
+	    .domain([
+		d3.min(plot_data, function(d,i) { return d3.min(d.dim);}),
+		d3.max(plot_data, function(d,i) { return d3.max(d.dim);})
+	    ]);
+
+	new_data.y = d3.scale.linear()
+	    .range([this.plotTypes[new_data.plotType].height, 0])
+	    .domain([
+		d3.min(plot_data, function(d,i) {return d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)}),
+		d3.max(plot_data, function(d,i) {return d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)})
+	    ]);
+
+	new_data.xAxis = d3.svg.axis().scale(new_data.x).orient("bottom");
+	new_data.yAxis = d3.svg.axis().scale(new_data.y).orient("left");
+
+	plotset_data.push(new_data);
+	y_offset += this.plotTypes[this.plotsets[plotset_index].plotTypes[i]].height;
+	y_offset += this.plotSpacing;
+    }
+    return plotset_data;
+};
+
+NewPlotContainer.prototype.formatData = function(d, i) {
+    var that = this;
+    if (d.is_minmax) {
+	var fill_data = fillPlot(d);
+	var line = d3.svg.line()
+	    .x(function(a) { return d.parent.x(a[0]); })
+	    .y(function(a) { return d.parent.y(a[1]); });
+	return line(fill_data);
+    } else {
+	var line = d3.svg.line()
+	    .x(function(a,j) { return d.parent.x(d.dim[j]); })
+	    .y(function(a) { return d.parent.y(a); });
+	return line(d.data);
+    }
+};
 
 
 
