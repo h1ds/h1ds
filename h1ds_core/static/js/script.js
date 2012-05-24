@@ -322,6 +322,9 @@ function NewPlotContainer(id) {
     // translation is argument for transform=translate(x,y) for the plotset <svg:g> element
     this.plotsets = [];
 
+    // how much to extend the y-axis past the data limits.
+    this.dataPadding = 0.05
+
     // padding for axes
     this.xAxisPadding = 50;
     this.yAxisPadding = 50;
@@ -467,11 +470,18 @@ NewPlotContainer.prototype.generatePlotData = function(plotset_index) {
 		d3.max(plot_data, function(d,i) { return d3.max(d.dim);})
 	    ]);
 
+	var data_domain = [
+	    d3.min(plot_data, function(d,i) {return d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)}),
+	    d3.max(plot_data, function(d,i) {return d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)})
+	];
+	
+	var data_span = data_domain[1]-data_domain[0];
+	
 	new_data.y = d3.scale.linear()
 	    .range([this.plotTypes[new_data.plotType].height-that.xAxisPadding, 0])
 	    .domain([
-		d3.min(plot_data, function(d,i) {return d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)}),
-		d3.max(plot_data, function(d,i) {return d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)})
+		data_domain[0]-this.dataPadding*data_span,
+		data_domain[1]+this.dataPadding*data_span
 	    ]);
 
 	new_data.xAxis = d3.svg.axis().scale(new_data.x).orient("bottom");
