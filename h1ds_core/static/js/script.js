@@ -291,9 +291,16 @@ function getPlotQueryString() {
 /*********************************************************************/
 
 /*
- * expected usage:
- * var pc = new NewPlotContainer("#signal-1d-placeholder");
- * pc.addPlotSet([window.location.toString()]);
+ * planned API:
+ * var pc = new NewPlotContainer("#signal-1d-placeholder", [col_1, col_2,..], [row_1, row_2,..]);
+ * col_1, col_2 numbers which are normalised to width of container
+ * e.g. col_1 -> col_1/(coil_1+col_2) * container_width
+ * row_i row heights in pixels
+ * 
+ * pc.addData(name, url, plotnumber, plot type)
+ * pc.linkAxes([plot number, axis or selection], [plot number, axis or selection])
+ *
+ *
  */
 
 function NewPlotContainer(id) {
