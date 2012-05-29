@@ -314,7 +314,7 @@ function NewPlotContainer(id, rows, columns) {
     };
 
     this.plotTypes = {
-	'raw':{},
+	'raw':this.plotLine,
     }
 
     // create SVG
@@ -342,17 +342,33 @@ function NewPlotContainer(id, rows, columns) {
     this.yAxisPadding = 45;
 }
 
+NewPlotContainer.prototype.plotLine = function(selection, data) {
+    selection.append("path")
+	.classed("path-filled", function(d) { return d.is_minmax })
+	.attr("d", function(d,i) {  
+	    if (d.is_minmax) {
+		var fill_data = fillPlot(d);
+		var line = d3.svg.line()
+		    .x(function(a) { return d.parent.x(a[0]); })
+		    .y(function(a) { return d.parent.y(a[1]); });
+		return line(fill_data);
+	    } else {
+		var line = d3.svg.line()
+		    .x(function(a,j) { return d.parent.x(d.dim[j]); })
+		    .y(function(a) { return d.parent.y(a); });
+		return line(d.data);
+	    }
+	});
+};
+
 NewPlotContainer.prototype.setPlotType = function(plot_id, plot_type, update) {
     update = typeof update !== 'undefined' ? update : true;
-
     this.plotGrid[plot_id].plotType = plot_type;
-
     this.updatePlot(plot_id);
     if (update) {
 	this.updateDisplay();
     }
-
-}
+};
 
 NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
     // convert columns from relative widths to absolute pixel widths
@@ -389,12 +405,12 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
     $(this.id).height(row_translate);
 
     return plot_grid;
-}
+};
 
 NewPlotContainer.prototype.addData = function(data_id, data_url) {
     this.loadURL(data_url);
     this.data_ids[data_id] = data_url;
-}
+};
 
 
 NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
@@ -406,7 +422,7 @@ NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
     if (update) {
 	this.updateDisplay();
     }
-}
+};
 
 NewPlotContainer.prototype.loadURL = function(data_url) {
     var that = this;
@@ -430,6 +446,7 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
 
 NewPlotContainer.prototype.updateDisplay = function() {
     var that = this;
+    console.log("inside updateDisplay()");
 
     this.plots = this.svg.selectAll("g.plot")
 	.data(this.plotGrid)
@@ -464,16 +481,15 @@ NewPlotContainer.prototype.updateDisplay = function() {
 
 
     var plotitems = this.plots
-	.selectAll("path.data")
+	.selectAll("g.data")
 	.data(function(d,i) { 
 	    for (var i=0; i<d.data.length; i++) d.data[i].parent = d;
 	    return d.data;})
-	.enter().append("path")
-	.attr("class","data")
-	.classed("path-filled", function(d) { return d.is_minmax })
-	.attr("d", function(d,i) {  return that.formatData(d,i) });
+	.enter().append("g")
+	.attr("class", "data")
+	.each(function(d) {d3.select(this).call(that.plotTypes[d.parent.plotType]);});
 
-}
+};
 
 NewPlotContainer.prototype.updatePlot = function(plot_id) {
     var that = this;
@@ -519,25 +535,7 @@ NewPlotContainer.prototype.updatePlot = function(plot_id) {
 	.scale(this.plotGrid[plot_id].y)
 	.orient("left")
 	.tickSize(this.plotGrid[plot_id].x.range()[0]-this.plotGrid[plot_id].x.range()[1]);
-}
-
-
-NewPlotContainer.prototype.formatData = function(d, i) {
-    var that = this;
-    if (d.is_minmax) {
-	var fill_data = fillPlot(d);
-	var line = d3.svg.line()
-	    .x(function(a) { return d.parent.x(a[0]); })
-	    .y(function(a) { return d.parent.y(a[1]); });
-	return line(fill_data);
-    } else {
-	var line = d3.svg.line()
-	    .x(function(a,j) { return d.parent.x(d.dim[j]); })
-	    .y(function(a) { return d.parent.y(a); });
-	return line(d.data);
-    }
 };
-
 
 
 /*********************************************************************/
@@ -1544,8 +1542,10 @@ $(document).ready(function() {
     if ($("#signal-1d-placeholder").length) {
 	var pc = new NewPlotContainer("#signal-1d-placeholder", [300,250],[0.75,0.25]);
 	pc.addData("default", window.location.toString());
-	pc.setPlotType(0, "raw", false)
+	pc.setPlotType(0, "raw", false);
 	pc.addDataToPlot("default", 0, true);
+	//pc.setPlotType(2, "spectrogram", false);
+	//pc.addDataToPlot("default", 2, true);
 
     }
     if ($("#signal-2d-placeholder").length) {
