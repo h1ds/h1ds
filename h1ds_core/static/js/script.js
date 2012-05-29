@@ -276,15 +276,6 @@ function getPlotQueryString() {
 /*
  * Interactive data plots for MDSplus.
  * 
- * There  are  three   primary  objects:  PlotContainer,  PlotSet  and
- * Plot1D. PlotContainer  is called first,  it inserts an  SVG element
- * inside   the   DOM   element   whose  id   matches   the   supplied
- * argument. PlotSet  is a  container for a  set plots using  the same
- * dataset; e.g. timeseries and  power spectrum. Plot1D is used inside
- * a PlotSet and does the actual plotting of data.
- *
- *
- *
  */
 
 /*********************************************************************/
@@ -314,7 +305,6 @@ function NewPlotContainer(id, rows, columns) {
     // grid layout. Probably should get rid of spacing, and have padding for each
     // columm/row
     // Layout settings
-    this.plotsetSpacing = 10;
     this.plotSpacing = 5;
 
 
@@ -342,14 +332,6 @@ function NewPlotContainer(id, rows, columns) {
 
     // mapping of data_ids to URLs
     this.data_ids = {}
-
-    // TODO: remove plotset
-    // plotsets contains objects for each plotset. 
-    // each object is {'urls'[url_1,url_2], 'plottypes':[plottype_1, plottype_2], translation=[x,y]}
-    // url_1, url_2, etc are keys in this.url_cache
-    // plottype_1, plottype_2, etc are from this.plottypes
-    // translation is argument for transform=translate(x,y) for the plotset <svg:g> element
-    this.plotsets = [];
 
     // how much to extend the y-axis past the data limits.
     this.dataPadding = 0.05
@@ -424,18 +406,6 @@ NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
     if (update) {
 	this.updateDisplay();
     }
-}
-
-// TODO: remove plotset
-NewPlotContainer.prototype.addPlotSet = function(url_list) {
-    // check if the requested URLs are already stored in PlotContainer.data
-    // if not, add them
-    for (var i=0; i<url_list.length;i++) {
-	if (!this.url_cache.hasOwnProperty(url_list[i])) this.loadURL(url_list[i]);	
-    }
-    // TODO: do we need translation here? it's re-computed in generatePlotsetData() called by updateDisplay()
-    this.plotsets.push({'urls':url_list,'plotTypes':['main'], 'translation':[0,0]});
-    this.updateDisplay();
 }
 
 NewPlotContainer.prototype.loadURL = function(data_url) {
@@ -551,142 +521,6 @@ NewPlotContainer.prototype.updatePlot = function(plot_id) {
 	.tickSize(this.plotGrid[plot_id].x.range()[0]-this.plotGrid[plot_id].x.range()[1]);
 }
 
-NewPlotContainer.prototype._updateDisplay = function() {
-    var that = this;
-
-    // Create the data structure to pass to d3
-    // [plotset_1, plotset_2, ..., plotset_m]
-    // plotset_i: {translation:[x,y],plots:[plot_1, plot_2, ..., plot_n]}
-    // plot_j: {translation:[x,y], data:[data_1, data_2, ..., data_p]}
-    var plotset_data = this.generatePlotsetData();
-    
-    var plotsets = this.svg.selectAll("g.plotset")
-	.data(plotset_data)
-	.enter().append("g")
-	.attr("class", "plotset")
-	.attr("transform", function(d) {return "translate("+d.translation[0]+","+d.translation[1]+")"});
-
-    var plots = plotsets
-	.selectAll("g.plot")
-	.data(function(d,i) {  return d.plots; } )
-	.enter().append("g")
-	.attr("class", "plot")
-	.attr("transform", function(d) {return "translate("+d.translation[0]+","+d.translation[1]+")"});
-
-    // ### Add axes ###
-    // # x axis
-    plots.append("g")
-	.attr("class", "axis x")
-	.attr("transform", function(d) {return "translate(0,"+(that.plotTypes[d.plotType].height-that.xAxisPadding)+")"})
-	.each(function(d) { d3.select(this).call(d.xAxis); })
-	    .append("text")
-	.attr("text-anchor", "middle")
-	.attr("x", function(d) { return that.yAxisPadding+0.5*(that.svg.attr("width")-that.yAxisPadding); })
-	.attr("y", function(d) { return 0.8*that.xAxisPadding; })
-	.text(function(d) { return "x"; });
-
-    // # y axis
-    plots.append("g")
-	.attr("class", "axis y")
-	.attr("transform", function(d) {return "translate("+that.yAxisPadding+","+0+")"})
-	.each(function(d) { d3.select(this).call(d.yAxis); })
-	    .append("text")
-	.attr("text-anchor", "middle")
-	.attr("transform", "rotate(-90)")
-	.attr("x", function(d) { return -0.5*(that.plotTypes[d.plotType].height-that.xAxisPadding); })
-	.attr("y", function(d) { return -0.8*that.yAxisPadding; })
-	.text(function(d) { return "y"; });
-
-    // # add grid
-
-    
-    
-    var plotitems = plots
-	.selectAll("path.data")
-	.data(function(d,i) { 
-	    for (var i=0; i<d.data.length; i++) d.data[i].parent = d;
-	    return d.data;})
-	.enter().append("path")
-	.attr("class","data")
-	.classed("path-filled", function(d) { return d.is_minmax })
-	.attr("d", function(d,i) {  return that.formatData(d,i) });
-
-};
-
-// TODO: remove
-NewPlotContainer.prototype.generatePlotsetData = function() {
-    var data = [];
-    for (var i=0; i<this.plotsets.length; i++) {
-	data.push({'plots':this.generatePlotData(i)});
-    }
-
-    // now add the layout info for each plotset.
-    var x_offset = 0;
-    var y_offset = 0;
-    
-    for (var i=0; i<this.plotsets.length; i++) {
-	data[i].translation = [x_offset,y_offset];
-	for (var j=0;j<this.plotsets[i].plotTypes.length; j++){
-	    y_offset += this.plotTypes[this.plotsets[i].plotTypes[j]].height;
-	}
-	y_offset += (this.plotsets[i].plotTypes.length-1)*this.plotSpacing;
-	y_offset += this.plotsetSpacing;
-    }
-    
-    // adjust the height of plot container (SVG) and DOM container element.
-    this.svg.attr("height",y_offset);
-    $(this.id).height(y_offset);
-
-    return data;
-};
-
-// generate iterable data for plots within plotset
-NewPlotContainer.prototype._generatePlotData = function(plotset_index) {
-    var that = this;
-    var plot_data = [];
-    var plotset_data = [];
-    var x_offset = 0;
-    var y_offset = 0;
-    for (var i=0; i<this.plotsets[plotset_index].urls.length; i++) {
-	plot_data.push(this.url_cache[this.plotsets[plotset_index].urls[i]]);
-    }
-
-
-    for (var i=0; i<this.plotsets[plotset_index].plotTypes.length; i++) {
-	var new_data = {'plotType':this.plotsets[plotset_index].plotTypes[i],
-			'data':plot_data,
-			'translation':[x_offset,y_offset],
-		       };
-	new_data.x = d3.scale.linear()
-	    .range([that.yAxisPadding,that.svg.attr("width")])
-	    .domain([
-		d3.min(plot_data, function(d,i) { return d3.min(d.dim);}),
-		d3.max(plot_data, function(d,i) { return d3.max(d.dim);})
-	    ]);
-
-	var data_domain = [
-	    d3.min(plot_data, function(d,i) {return d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)}),
-	    d3.max(plot_data, function(d,i) {return d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)})
-	];
-	
-	var data_span = data_domain[1]-data_domain[0];
-	
-	new_data.y = d3.scale.linear()
-	    .range([this.plotTypes[new_data.plotType].height-that.xAxisPadding, 0])
-	    .domain([
-		data_domain[0]-this.dataPadding*data_span,
-		data_domain[1]+this.dataPadding*data_span
-	    ]);
-
-	new_data.xAxis = d3.svg.axis().scale(new_data.x).orient("bottom").tickSize(new_data.y.range()[1]-new_data.y.range()[0]);
-	new_data.yAxis = d3.svg.axis().scale(new_data.y).orient("left").tickSize(new_data.x.range()[0]-new_data.x.range()[1]);
-
-	plotset_data.push(new_data);
-	y_offset += this.plotTypes[this.plotsets[plotset_index].plotTypes[i]].height;
-	y_offset += this.plotSpacing;
-    }
-    return plotset_data;
-};
 
 NewPlotContainer.prototype.formatData = function(d, i) {
     var that = this;
@@ -1713,8 +1547,6 @@ $(document).ready(function() {
 	pc.setPlotType(0, "raw", false)
 	pc.addDataToPlot("default", 0, true);
 
-	// OLD
-	//pc.addPlotSet([window.location.toString()]);
     }
     if ($("#signal-2d-placeholder").length) {
 	plotSignal2D();
