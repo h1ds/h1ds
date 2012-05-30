@@ -345,6 +345,7 @@ function NewPlotContainer(id, rows, columns) {
 }
 
 NewPlotContainer.prototype.plotLine = function(selection) {
+
     selection.append("path")
 	.classed("path-filled", function(d) { return d.data.is_minmax })
 	.attr("d", function(d,i) {  
@@ -370,7 +371,6 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
 NewPlotContainer.prototype.setPlotType = function(plot_id, plot_type, update) {
     update = typeof update !== 'undefined' ? update : true;
     this.plotGrid[plot_id].plotType = plot_type;
-    this.updatePlot(plot_id);
 
     if (update) {
 	this.updateDisplay();
@@ -415,7 +415,6 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
 };
 
 NewPlotContainer.prototype.addData = function(data_id, data_url) {
-    this.loadURL(data_url);
     this.data_ids[data_id] = data_url;
 };
 
@@ -425,7 +424,6 @@ NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
 
     this.plotGrid[plot_id].data_ids.push(data_id);
 
-    this.updatePlot(plot_id);
     if (update) {
 	this.updateDisplay();
     }
@@ -433,7 +431,6 @@ NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
 
 NewPlotContainer.prototype.loadURL = function(data_url) {
     var that = this;
-
     // the actual data we request uses a modified URL which resamples the data to the screen resolution
     // does data_url contain a query string?
     var query_char = data_url.match(/\?.+/) ? '&' : '?';
@@ -451,9 +448,34 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
 	});
 };
 
+
+NewPlotContainer.prototype.getData = function(data_id, plot_type) {
+    var return_data = {};
+    switch(plot_type) {
+    case 'raw':
+	this.loadURL(this.data_ids[data_id]);
+	return_data = this.url_cache[this.data_ids[data_id]];
+	break;
+    default:
+	this.loadURL(this.data_ids[data_id]);
+	return_data = this.url_cache[this.data_ids[data_id]];
+	break;
+    }
+    return return_data;
+}
+
 NewPlotContainer.prototype.updateDisplay = function() {
     var that = this;
 
+    // load data for plots...
+    for (var plot_i=0;plot_i<this.plotGrid.length;plot_i++) {
+	for (var data_i=0; data_i<this.plotGrid[plot_i].data_ids.length; data_i++) {
+	    this.plotGrid[plot_i].data[data_i] = this.getData(this.plotGrid[plot_i].data_ids[data_i], this.plotGrid[plot_i].dataType);
+	}
+	if (this.plotGrid[plot_i].data_ids.length > 0) this.updatePlot(plot_i);
+    }
+
+    // ...
     var plots = this.svg.selectAll("g.plot")
 	.data(this.plotGrid);
 
@@ -487,7 +509,6 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	.attr("x", function(d) { return -0.5*(d.height-that.xAxisPadding); })
 	.attr("y", function(d) { return -0.8*that.yAxisPadding; })
 	.text(function(d) { return "y"; });
-
 
     var plotitems = plots
 	.selectAll("g.data")
