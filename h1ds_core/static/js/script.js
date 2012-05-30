@@ -313,8 +313,10 @@ function NewPlotContainer(id, rows, columns) {
 	'overview':{'height':200}
     };
 
+    // "raw" should plot any unaltered data? not just line?
     this.plotTypes = {
 	'raw':this.plotLine,
+	'spectrogram':this.plotSpectrogram,
     }
 
     // create SVG
@@ -342,29 +344,34 @@ function NewPlotContainer(id, rows, columns) {
     this.yAxisPadding = 45;
 }
 
-NewPlotContainer.prototype.plotLine = function(selection, data) {
+NewPlotContainer.prototype.plotLine = function(selection) {
     selection.append("path")
-	.classed("path-filled", function(d) { return d.is_minmax })
+	.classed("path-filled", function(d) { return d.data.is_minmax })
 	.attr("d", function(d,i) {  
-	    if (d.is_minmax) {
-		var fill_data = fillPlot(d);
+	    if (d.data.is_minmax) {
+		var fill_data = fillPlot(d.data);
 		var line = d3.svg.line()
-		    .x(function(a) { return d.parent.x(a[0]); })
-		    .y(function(a) { return d.parent.y(a[1]); });
+		    .x(function(a) { return d.plot.x(a[0]); })
+		    .y(function(a) { return d.plot.y(a[1]); });
 		return line(fill_data);
 	    } else {
 		var line = d3.svg.line()
-		    .x(function(a,j) { return d.parent.x(d.dim[j]); })
-		    .y(function(a) { return d.parent.y(a); });
-		return line(d.data);
+		    .x(function(a,j) { return d.plot.x(d.data.dim[j]); })
+		    .y(function(a) { return d.plot.y(a); });
+		return line(d.data.data);
 	    }
 	});
+};
+
+NewPlotContainer.prototype.plotSpectrogram = function(selection) {
+    console.log('plot spectrogram...');
 };
 
 NewPlotContainer.prototype.setPlotType = function(plot_id, plot_type, update) {
     update = typeof update !== 'undefined' ? update : true;
     this.plotGrid[plot_id].plotType = plot_type;
     this.updatePlot(plot_id);
+
     if (update) {
 	this.updateDisplay();
     }
@@ -446,18 +453,20 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
 
 NewPlotContainer.prototype.updateDisplay = function() {
     var that = this;
-    console.log("inside updateDisplay()");
 
-    this.plots = this.svg.selectAll("g.plot")
-	.data(this.plotGrid)
-	.enter().append("g")
+    var plots = this.svg.selectAll("g.plot")
+	.data(this.plotGrid);
+
+    plots.enter().append("g")
 	.attr("class", "plot")
 	.attr("transform", function(d) {return "translate("+d.translate[0]+","+d.translate[1]+")"});
+
+    plots.exit().remove();
     
 
     // ### Add axes ###
     // # x axis
-    this.plots.append("g")
+    plots.append("g")
 	.attr("class", "axis x")
 	.attr("transform", function(d) {return "translate(0,"+(d.height-that.xAxisPadding)+")"})
 	.each(function(d) { typeof d.xAxis !== 'undefined' ? d3.select(this).call(d.xAxis) : function(){}; })
@@ -468,7 +477,7 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	.text(function(d) { return "x"; });
 
     // # y axis
-    this.plots.append("g")
+    plots.append("g")
 	.attr("class", "axis y")
 	.attr("transform", function(d) {return "translate("+that.yAxisPadding+","+0+")"})
 	.each(function(d) { typeof d.yAxis !== 'undefined' ? d3.select(this).call(d.yAxis) : function(){}; })
@@ -480,15 +489,18 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	.text(function(d) { return "y"; });
 
 
-    var plotitems = this.plots
+    var plotitems = plots
 	.selectAll("g.data")
 	.data(function(d,i) { 
-	    for (var i=0; i<d.data.length; i++) d.data[i].parent = d;
-	    return d.data;})
-	.enter().append("g")
+	    var plot_data = [];
+	    for (var i=0; i<d.data.length; i++) plot_data[i] = {'data':d.data[i], 'plot':d};
+	    return plot_data;});
+    
+    plotitems.enter().append("g")
 	.attr("class", "data")
-	.each(function(d) {d3.select(this).call(that.plotTypes[d.parent.plotType]);});
+	.each(function(d,i) {d3.select(this).call(that.plotTypes[d.plot.plotType]);});
 
+    plotitems.exit().remove();
 };
 
 NewPlotContainer.prototype.updatePlot = function(plot_id) {
@@ -1543,9 +1555,9 @@ $(document).ready(function() {
 	var pc = new NewPlotContainer("#signal-1d-placeholder", [300,250],[0.75,0.25]);
 	pc.addData("default", window.location.toString());
 	pc.setPlotType(0, "raw", false);
-	pc.addDataToPlot("default", 0, true);
-	//pc.setPlotType(2, "spectrogram", false);
-	//pc.addDataToPlot("default", 2, true);
+	pc.addDataToPlot("default", 0, false);
+	pc.setPlotType(2, "spectrogram", false);
+	pc.addDataToPlot("default", 2, true);
 
     }
     if ($("#signal-2d-placeholder").length) {
