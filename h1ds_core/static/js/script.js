@@ -281,6 +281,39 @@ function getPlotQueryString() {
 /*********************************************************************/
 /*********************************************************************/
 
+// an object which allows easy manipulation of query string filters.
+function MdsUri(original_uri) {
+    var uri_components = parseUri(original_uri);
+    var mds_filters = {};
+    var filter_re = /^f(\d+)_(name|arg(\d+))$/;
+    for (var key in uri_components.queryKey) {
+	if (uri_components.queryKey.hasOwnProperty(key)) {
+	    var filter_info = filter_re.exec(key);
+	    if (filter_info) {
+		if (!mds_filters.hasOwnProperty(filter_info[1])) {
+		    mds_filters[filter_info[1]] = {'name':"", "args":[]};
+		}
+		if (filter_info[2] === 'name') {
+		    mds_filters[filter_info[1]].name = uri_components.queryKey[key];
+		}
+		else if (filter_info[2].substring(0,3) === 'arg') {
+		    mds_filters[filter_info[1]].args[filter_info[3]] = uri_components.queryKey[key];
+		}
+	    }
+	}
+    }
+}
+
+
+// Functions to modify a URL to return data suitable for a given plot typ
+
+function getSpectrogramUri(original_uri) {
+    // assume original_url gives a timeseries.
+    var mds_uri = MdsUri(original_uri);
+    return original_uri;
+}
+
+
 /*
  * planned API:
  * var pc = new NewPlotContainer("#signal-1d-placeholder", [row_1, row_2,..], [col_1, col_2,..]);
@@ -435,7 +468,6 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
     // does data_url contain a query string?
     var query_char = data_url.match(/\?.+/) ? '&' : '?';
     plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&view=json');
-
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
     // TODO: refactor code to be able to cope with async URL loading.
@@ -456,6 +488,11 @@ NewPlotContainer.prototype.getData = function(data_id, plot_type) {
 	this.loadURL(this.data_ids[data_id]);
 	return_data = this.url_cache[this.data_ids[data_id]];
 	break;
+    case 'spectrogram':
+	var new_uri = getSpectrogramUri(this.data_ids[data_id]);
+	this.loadURL(new_uri);
+	return_data = this.url_cache[new_uri];
+	break;
     default:
 	this.loadURL(this.data_ids[data_id]);
 	return_data = this.url_cache[this.data_ids[data_id]];
@@ -470,7 +507,7 @@ NewPlotContainer.prototype.updateDisplay = function() {
     // load data for plots...
     for (var plot_i=0;plot_i<this.plotGrid.length;plot_i++) {
 	for (var data_i=0; data_i<this.plotGrid[plot_i].data_ids.length; data_i++) {
-	    this.plotGrid[plot_i].data[data_i] = this.getData(this.plotGrid[plot_i].data_ids[data_i], this.plotGrid[plot_i].dataType);
+	    this.plotGrid[plot_i].data[data_i] = this.getData(this.plotGrid[plot_i].data_ids[data_i], this.plotGrid[plot_i].plotType);
 	}
 	if (this.plotGrid[plot_i].data_ids.length > 0) this.updatePlot(plot_i);
     }
