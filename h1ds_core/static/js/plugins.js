@@ -48,6 +48,74 @@ parseUri.options = {
 };
 
 
+// makeURI 1.2.2 - create a URI from an object specification; compatible with
+//                 parseURI (http://blog.stevenlevithan.com/archives/parseuri)
+// (c) Niall Smart <niallsmart.com>
+// MIT License
+function makeUri(u) {
+
+    var uri = "";
+
+    if (u.protocol) {
+        uri += u.protocol + "://";
+    }
+
+    if (u.user) {
+        uri += u.user
+    }
+
+    if (u.password) {
+        uri += ":" + u.password
+    }
+
+    if (u.user || u.password) {
+        uri += "@"
+    }
+
+    if (u.host) {
+        uri += u.host
+    }
+
+    if (u.port) {
+        uri += ":" + u.port
+    }
+
+    if (u.path) {
+        uri += u.path
+    }
+
+    var qk = u.queryKey;
+    var qs = [];
+
+    for (k in qk) {
+
+        if (!qk.hasOwnProperty(k)) {
+            continue;
+        }
+
+        var v = encodeURIComponent(qk[k]);
+
+        k = encodeURIComponent(k);
+
+        if (v) {
+            qs.push(k + "=" + v);
+        } else {
+            qs.push(k);
+        }
+    }
+
+    if (qs.length > 0) {
+        uri += "?" + qs.join("&")
+    }
+
+    if (u.anchor) {
+        uri += "#" + u.anchor
+    }
+
+    return uri;
+}
+
+
 
 // place any jQuery/helper plugins in here, instead of separate, slower script files.
 

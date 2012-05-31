@@ -283,34 +283,86 @@ function getPlotQueryString() {
 
 // an object which allows easy manipulation of query string filters.
 function MdsUri(original_uri) {
-    var uri_components = parseUri(original_uri);
-    var mds_filters = {};
+    this.uri_components = parseUri(original_uri);
+    this.mds_filters = {};
+    this.non_mds_query = {};
     var filter_re = /^f(\d+)_(name|arg(\d+))$/;
-    for (var key in uri_components.queryKey) {
-	if (uri_components.queryKey.hasOwnProperty(key)) {
+    for (var key in this.uri_components.queryKey) {
+	if (this.uri_components.queryKey.hasOwnProperty(key)) {
 	    var filter_info = filter_re.exec(key);
 	    if (filter_info) {
-		if (!mds_filters.hasOwnProperty(filter_info[1])) {
-		    mds_filters[filter_info[1]] = {'name':"", "args":[]};
+		if (!this.mds_filters.hasOwnProperty(filter_info[1])) {
+		    this.mds_filters[filter_info[1]] = {'name':"", "args":[]};
 		}
 		if (filter_info[2] === 'name') {
-		    mds_filters[filter_info[1]].name = uri_components.queryKey[key];
+		    this.mds_filters[filter_info[1]].name = this.uri_components.queryKey[key];
 		}
 		else if (filter_info[2].substring(0,3) === 'arg') {
-		    mds_filters[filter_info[1]].args[filter_info[3]] = uri_components.queryKey[key];
+		    this.mds_filters[filter_info[1]].args[filter_info[3]] = this.uri_components.queryKey[key];
 		}
+	    }
+	    else {
+		this.non_mds_query[key] = this.uri_components.queryKey[key];
 	    }
 	}
     }
 }
 
+MdsUri.prototype.getNextFilterID = function() {
+    var largest_fid = -1;
+    for (var key in this.mds_filters) {
+	if (this.mds_filters.hasOwnProperty(key)) {
+	    if (Number(key) > largest_fid) largest_fid=Number(key);
+	}
+    }
+    return largest_fid + 1;
+};
+
+MdsUri.prototype.appendFilter = function(filter_name, filter_args) {
+    var new_id = this.getNextFilterID();
+    this.mds_filters[String(new_id)] = {'name':filter_name,'args':filter_args};
+};
+
+MdsUri.prototype.renderUri = function() {
+    var newQueryKey = {};
+    for (var key in this.non_mds_query) {
+	if (this.non_mds_query.hasOwnProperty(key)) {
+	    newQueryKey[key] = this.non_mds_query[key];
+	}
+    }
+
+    for (var key in this.mds_filters) {
+	if (this.mds_filters.hasOwnProperty(key)) {
+	    newQueryKey["f"+key+"_name"] = this.mds_filters[key].name;
+	    for (var i=0; i<this.mds_filters[key].args.length;i++) {
+		newQueryKey["f"+key+"_arg"+i] = this.mds_filters[key].args[i];
+	    }
+	}
+    }
+
+    var new_uri_components = jQuery.extend({}, this.uri_components);
+    new_uri_components.queryKey = newQueryKey;
+    return makeUri(new_uri_components);
+};
 
 // Functions to modify a URL to return data suitable for a given plot typ
 
 function getSpectrogramUri(original_uri) {
     // assume original_url gives a timeseries.
-    var mds_uri = MdsUri(original_uri);
-    return original_uri;
+    var mds_uri = new MdsUri(original_uri);
+    mds_uri.appendFilter('spectrogram', [1024]);
+    mds_uri.non_mds_query['view'] = 'json';
+    var new_uri = mds_uri.renderUri();
+    return new_uri;
+}
+
+function getRawUri(original_uri, width) {
+    // assume original_url gives a timeseries.
+    var mds_uri = new MdsUri(original_uri);
+    mds_uri.appendFilter('resample_minmax', [width]);
+    mds_uri.non_mds_query['view'] = 'json';
+    var new_uri = mds_uri.renderUri();
+    return new_uri;
 }
 
 
@@ -374,7 +426,7 @@ function NewPlotContainer(id, rows, columns) {
     // TODO: can we base this on font size rather than magic number of pixels?
     // padding for axes
     this.xAxisPadding = 40;
-    this.yAxisPadding = 45;
+    this.yAxisPadding = 60;
 }
 
 NewPlotContainer.prototype.plotLine = function(selection) {
@@ -398,7 +450,35 @@ NewPlotContainer.prototype.plotLine = function(selection) {
 };
 
 NewPlotContainer.prototype.plotSpectrogram = function(selection) {
-    console.log('plot spectrogram...');
+    var rect_data = [];
+    var cscale=d3.scale.linear().domain([0,1]).range(["blue","red"]);
+    var max_value = -Number.MAX_VALUE;
+    console.log(selection.datum());
+    data = selection.datum();
+    // TODO: last column... 
+    for (var x_i = 0; x_i<data.data.dim[0].length-1; x_i++) {
+	for (var y_i = 0; y_i<data.data.dim[1].length-1; y_i++) {
+	    rect_data.push(
+		{'x1':data.data.dim[0][x_i],
+		 'x2':data.data.dim[0][x_i+1],
+		 'y1':data.data.dim[1][y_i],
+		 'y2':data.data.dim[1][y_i+1],
+		 'value':data.data.data[x_i][y_i]
+		}
+		
+	    );
+	    if (data.data.data[x_i][y_i] > max_value) max_value = data.data.data[x_i][y_i];
+	}
+    }
+    var rects = selection.selectAll("rect").data(rect_data);
+    
+    rects.enter().append("rect")
+	.attr("x", function(d,i) {return data.plot.x(d.x1)})
+	.attr("y", function(d,i) {return data.plot.y(d.y1)})
+	.attr("width", function(d,i) {return data.plot.x(d.x2)-data.plot.x(d.x1)})
+	.attr("height", function(d,i) {return data.plot.y(d.y1)-data.plot.y(d.y2)})
+	.style("fill", function(d,i) {return cscale(d.value/max_value)});
+    
 };
 
 NewPlotContainer.prototype.setPlotType = function(plot_id, plot_type, update) {
@@ -464,18 +544,22 @@ NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
 
 NewPlotContainer.prototype.loadURL = function(data_url) {
     var that = this;
+    console.log(data_url);
     // the actual data we request uses a modified URL which resamples the data to the screen resolution
     // does data_url contain a query string?
-    var query_char = data_url.match(/\?.+/) ? '&' : '?';
-    plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&view=json');
+    //var query_char = data_url.match(/\?.+/) ? '&' : '?';
+    //plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&view=json');
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
     // TODO: refactor code to be able to cope with async URL loading.
-    $.ajax({url: plot_data_url, 
+    $.ajax({url: data_url, 
 	    dataType: "json",
 	    async:false})
 	.done(function(a) {
 	    a.is_minmax = isMinMaxPlot(a);
+	    // TODO: 1D signal dim might not be an element, so dim.length will be large...
+	    // TODO:   - need to make this consistent b/w signals of different dim 
+	    a.n_dim = a.dim.length === 2 ? 2 : 1
 	    that.url_cache[data_url] = a;
 	});
 };
@@ -485,8 +569,9 @@ NewPlotContainer.prototype.getData = function(data_id, plot_type) {
     var return_data = {};
     switch(plot_type) {
     case 'raw':
-	this.loadURL(this.data_ids[data_id]);
-	return_data = this.url_cache[this.data_ids[data_id]];
+	var new_uri = getRawUri(this.data_ids[data_id],this.svg.attr("width"));
+	this.loadURL(new_uri);
+	return_data = this.url_cache[new_uri];
 	break;
     case 'spectrogram':
 	var new_uri = getSpectrogramUri(this.data_ids[data_id]);
@@ -567,10 +652,10 @@ NewPlotContainer.prototype.updatePlot = function(plot_id) {
 
     // update the plot data list from the data_id list
 
-    this.plotGrid[plot_id].data = [];
-    for (var i=0; i<this.plotGrid[plot_id].data_ids.length; i++) {
-	this.plotGrid[plot_id].data[i] = this.url_cache[this.data_ids[this.plotGrid[plot_id].data_ids[i]]];
-    }
+    //this.plotGrid[plot_id].data = [];
+    //for (var i=0; i<this.plotGrid[plot_id].data_ids.length; i++) {
+    //this.plotGrid[plot_id].data[i] = this.url_cache[this.data_ids[this.plotGrid[plot_id].data_ids[i]]];
+   // }
 
     // set axes
     // TODO: want to be able to link axes b/w plots...
@@ -578,13 +663,13 @@ NewPlotContainer.prototype.updatePlot = function(plot_id) {
     this.plotGrid[plot_id].x = d3.scale.linear()
 	.range([that.yAxisPadding,this.plotGrid[plot_id].width])
 	.domain([
-	    d3.min(this.plotGrid[plot_id].data, function(d,i) { return d3.min(d.dim);}),
-	    d3.max(this.plotGrid[plot_id].data, function(d,i) { return d3.max(d.dim);})
+	    d3.min(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.min(d.dim) : d3.min(d.dim[0]);}),
+	    d3.max(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.max(d.dim) : d3.max(d.dim[0]);})
 	]);
     
     var data_domain = [
-	d3.min(this.plotGrid[plot_id].data, function(d,i) {return d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)}),
-	d3.max(this.plotGrid[plot_id].data, function(d,i) {return d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)})
+	d3.min(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)) : d3.min(d.dim[1])}),
+	d3.max(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)) : d3.max(d.dim[1])})
     ];
     
     var data_span = data_domain[1]-data_domain[0];
@@ -599,12 +684,12 @@ NewPlotContainer.prototype.updatePlot = function(plot_id) {
     this.plotGrid[plot_id].xAxis = d3.svg.axis()
 	.scale(this.plotGrid[plot_id].x)
 	.orient("bottom")
-	.tickSize(this.plotGrid[plot_id].y.range()[1]-this.plotGrid[plot_id].y.range()[0]);
+	.tickSize(this.plotGrid[plot_id].data[0].n_dim === 1 ? this.plotGrid[plot_id].y.range()[1]-this.plotGrid[plot_id].y.range()[0] : 5);
     
     this.plotGrid[plot_id].yAxis = d3.svg.axis()
 	.scale(this.plotGrid[plot_id].y)
 	.orient("left")
-	.tickSize(this.plotGrid[plot_id].x.range()[0]-this.plotGrid[plot_id].x.range()[1]);
+	.tickSize(this.plotGrid[plot_id].data[0].n_dim === 1 ? this.plotGrid[plot_id].x.range()[0]-this.plotGrid[plot_id].x.range()[1] : 5);
 };
 
 
