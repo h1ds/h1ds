@@ -351,6 +351,8 @@ function getSpectrogramUri(original_uri) {
     // assume original_url gives a timeseries.
     var mds_uri = new MdsUri(original_uri);
     mds_uri.appendFilter('spectrogram', [1024]);
+    mds_uri.appendFilter('norm_dim_range_2d', [0,1,0,0.5]);
+    mds_uri.appendFilter('y_axis_energy_limit',[0.95]);
     mds_uri.non_mds_query['view'] = 'json';
     var new_uri = mds_uri.renderUri();
     return new_uri;
@@ -409,6 +411,8 @@ function NewPlotContainer(id, rows, columns) {
 	.append("svg:svg")
 	.attr("width",$(id).width());
 
+    // TODO: replace with algorithm to generate distinct colours.
+    this.data_colours = ['#A11D20', '#662C91', '#1859A9', '#008C47', '#ED2D2E', '#010101'];
 
     this.plotGrid = this.setPlotGrid(rows, columns);
 
@@ -417,7 +421,7 @@ function NewPlotContainer(id, rows, columns) {
     // This is the one place where data is stored.
     this.url_cache = {};
 
-    // mapping of data_ids to URLs
+    // mapping of data_ids to URLs, colour, etc
     this.data_ids = {}
 
     // how much to extend the y-axis past the data limits.
@@ -433,6 +437,8 @@ NewPlotContainer.prototype.plotLine = function(selection) {
 
     selection.append("path")
 	.classed("path-filled", function(d) { return d.data.is_minmax })
+	.style("stroke", function(d,i) { return d.data.colour; })
+	.style("fill", function(d,i) { return d.data.colour; })
 	.attr("d", function(d,i) {  
 	    if (d.data.is_minmax) {
 		var fill_data = fillPlot(d.data);
@@ -452,6 +458,7 @@ NewPlotContainer.prototype.plotLine = function(selection) {
 NewPlotContainer.prototype.plotSpectrogram = function(selection) {
     var rect_data = [];
     var cscale=d3.scale.linear().domain([0,1]).range(["blue","red"]);
+    var ascale=d3.scale.linear().domain([0,1]).range([0,1]);
     var max_value = -Number.MAX_VALUE;
     console.log(selection.datum());
     data = selection.datum();
@@ -477,7 +484,9 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
 	.attr("y", function(d,i) {return data.plot.y(d.y1)})
 	.attr("width", function(d,i) {return data.plot.x(d.x2)-data.plot.x(d.x1)})
 	.attr("height", function(d,i) {return data.plot.y(d.y1)-data.plot.y(d.y2)})
-	.style("fill", function(d,i) {return cscale(d.value/max_value)});
+	//.style("fill", function(d,i) {return cscale(d.value/max_value)})
+	.style("fill", function(d,i) {return data.data.colour})
+	.style("fill-opacity", function(d,i) {return d.value/max_value});
     
 };
 
@@ -528,7 +537,7 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
 };
 
 NewPlotContainer.prototype.addData = function(data_id, data_url) {
-    this.data_ids[data_id] = data_url;
+    this.data_ids[data_id] = {'uri':data_url, 'colour':this.data_colours.pop()};
 };
 
 
@@ -569,18 +578,18 @@ NewPlotContainer.prototype.getData = function(data_id, plot_type) {
     var return_data = {};
     switch(plot_type) {
     case 'raw':
-	var new_uri = getRawUri(this.data_ids[data_id],this.svg.attr("width"));
+	var new_uri = getRawUri(this.data_ids[data_id].uri,this.svg.attr("width"));
 	this.loadURL(new_uri);
 	return_data = this.url_cache[new_uri];
 	break;
     case 'spectrogram':
-	var new_uri = getSpectrogramUri(this.data_ids[data_id]);
+	var new_uri = getSpectrogramUri(this.data_ids[data_id].uri);
 	this.loadURL(new_uri);
 	return_data = this.url_cache[new_uri];
 	break;
     default:
-	this.loadURL(this.data_ids[data_id]);
-	return_data = this.url_cache[this.data_ids[data_id]];
+	this.loadURL(this.data_ids[data_id].uri);
+	return_data = this.url_cache[this.data_ids[data_id].uri];
 	break;
     }
     return return_data;
@@ -593,6 +602,7 @@ NewPlotContainer.prototype.updateDisplay = function() {
     for (var plot_i=0;plot_i<this.plotGrid.length;plot_i++) {
 	for (var data_i=0; data_i<this.plotGrid[plot_i].data_ids.length; data_i++) {
 	    this.plotGrid[plot_i].data[data_i] = this.getData(this.plotGrid[plot_i].data_ids[data_i], this.plotGrid[plot_i].plotType);
+	    this.plotGrid[plot_i].data[data_i].colour = that.data_ids[this.plotGrid[plot_i].data_ids[data_i]].colour;
 	}
 	if (this.plotGrid[plot_i].data_ids.length > 0) this.updatePlot(plot_i);
     }
