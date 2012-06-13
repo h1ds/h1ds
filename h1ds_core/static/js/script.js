@@ -358,6 +358,17 @@ function getSpectrogramUri(original_uri) {
     return new_uri;
 }
 
+function getPowerspectrumUri(original_uri) {
+    // assume original_url gives a timeseries.
+    var mds_uri = new MdsUri(original_uri);
+    mds_uri.appendFilter('slanted_baseline', [1000]);
+    mds_uri.appendFilter('power_spectrum', []);
+    mds_uri.appendFilter('norm_dim_range', [0,0.5]);
+    mds_uri.non_mds_query['view'] = 'json';
+    var new_uri = mds_uri.renderUri();
+    return new_uri;
+}
+
 function getRawUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var mds_uri = new MdsUri(original_uri);
@@ -404,6 +415,8 @@ function NewPlotContainer(id, rows, columns) {
     this.plotTypes = {
 	'raw':this.plotLine,
 	'spectrogram':this.plotSpectrogram,
+	//'powerspectrum':this.plotPowerSpectrum,
+	'powerspectrum':this.plotLine,
     }
 
     // create SVG
@@ -433,7 +446,21 @@ function NewPlotContainer(id, rows, columns) {
     this.yAxisPadding = 60;
 }
 
+NewPlotContainer.prototype.setAxis = function(axis, plot_id, reference_plot_id) {
+    console.log()
+    if (axis === 'x') {
+	this.plotGrid[plot_id].xAxis = this.plotGrid[reference_plot_id].xAxis;
+    }
+    if (axis === 'y') {
+	this.plotGrid[plot_id].yAxis = this.plotGrid[reference_plot_id].yAxis;
+    }
+
+};
+
+
 NewPlotContainer.prototype.plotLine = function(selection) {
+
+    var do_flip = selection.datum().plot.flip;
 
     selection.append("path")
 	.classed("path-filled", function(d) { return d.data.is_minmax })
@@ -443,13 +470,13 @@ NewPlotContainer.prototype.plotLine = function(selection) {
 	    if (d.data.is_minmax) {
 		var fill_data = fillPlot(d.data);
 		var line = d3.svg.line()
-		    .x(function(a) { return d.plot.x(a[0]); })
-		    .y(function(a) { return d.plot.y(a[1]); });
+		    .x(function(a) { return d.plot.x(a[do_flip?1:0]); })
+		    .y(function(a) { return d.plot.y(a[do_flip?0:1]); });
 		return line(fill_data);
 	    } else {
 		var line = d3.svg.line()
-		    .x(function(a,j) { return d.plot.x(d.data.dim[j]); })
-		    .y(function(a) { return d.plot.y(a); });
+		    .x(function(a,j) { return d.plot.x(do_flip?a:d.data.dim[j]); })
+		    .y(function(a,j) { return d.plot.y(do_flip?d.data.dim[j]:a); });
 		return line(d.data.data);
 	    }
 	});
@@ -460,7 +487,6 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
     var cscale=d3.scale.linear().domain([0,1]).range(["blue","red"]);
     var ascale=d3.scale.linear().domain([0,1]).range([0,1]);
     var max_value = -Number.MAX_VALUE;
-    console.log(selection.datum());
     data = selection.datum();
     // TODO: last column... 
     for (var x_i = 0; x_i<data.data.dim[0].length-1; x_i++) {
@@ -490,6 +516,9 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
     
 };
 
+NewPlotContainer.prototype.plotPowerSpectrum = function(selection) {
+        
+};
 NewPlotContainer.prototype.setPlotType = function(plot_id, plot_type, update) {
     update = typeof update !== 'undefined' ? update : true;
     this.plotGrid[plot_id].plotType = plot_type;
@@ -497,6 +526,10 @@ NewPlotContainer.prototype.setPlotType = function(plot_id, plot_type, update) {
     if (update) {
 	this.updateDisplay();
     }
+};
+
+NewPlotContainer.prototype.flipAxes = function(plot_id) {
+    this.plotGrid[plot_id].flip = !this.plotGrid[plot_id].flip;
 };
 
 NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
@@ -508,7 +541,7 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
     for (var i=0; i<columns.length; i++) {
 	column_pixels[i] = svg_width*columns[i]/column_sum;
     }
-    
+  
     var plot_grid = [];
     var plot_id_counter = 0;
     var row_translate = 0;
@@ -523,6 +556,7 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
 		'data_ids':[],
 		'data':[],
 		'plotType':"",
+		'flip':false,
 	    };
 	    col_translate += column_pixels[col_i];
 	    plot_id_counter++;	    
@@ -553,7 +587,6 @@ NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
 
 NewPlotContainer.prototype.loadURL = function(data_url) {
     var that = this;
-    console.log(data_url);
     // the actual data we request uses a modified URL which resamples the data to the screen resolution
     // does data_url contain a query string?
     //var query_char = data_url.match(/\?.+/) ? '&' : '?';
@@ -575,6 +608,7 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
 
 
 NewPlotContainer.prototype.getData = function(data_id, plot_type) {
+    console.log(data_id, plot_type);
     var return_data = {};
     switch(plot_type) {
     case 'raw':
@@ -584,6 +618,11 @@ NewPlotContainer.prototype.getData = function(data_id, plot_type) {
 	break;
     case 'spectrogram':
 	var new_uri = getSpectrogramUri(this.data_ids[data_id].uri);
+	this.loadURL(new_uri);
+	return_data = this.url_cache[new_uri];
+	break;
+    case 'powerspectrum':
+	var new_uri = getPowerspectrumUri(this.data_ids[data_id].uri);
 	this.loadURL(new_uri);
 	return_data = this.url_cache[new_uri];
 	break;
@@ -658,25 +697,31 @@ NewPlotContainer.prototype.updateDisplay = function() {
 
 NewPlotContainer.prototype.updatePlot = function(plot_id) {
     var that = this;
-    console.log("inside updatePlot("+plot_id+")");
+    var do_flip = this.plotGrid[plot_id].flip;
+
 
     // update the plot data list from the data_id list
 
-    //this.plotGrid[plot_id].data = [];
-    //for (var i=0; i<this.plotGrid[plot_id].data_ids.length; i++) {
-    //this.plotGrid[plot_id].data[i] = this.url_cache[this.data_ids[this.plotGrid[plot_id].data_ids[i]]];
-   // }
+    var horizontal_range = [that.yAxisPadding,this.plotGrid[plot_id].width];
+    var vertical_range = [this.plotGrid[plot_id].height-that.xAxisPadding, 0];
 
     // set axes
     // TODO: want to be able to link axes b/w plots...
 
-    this.plotGrid[plot_id].x = d3.scale.linear()
-	.range([that.yAxisPadding,this.plotGrid[plot_id].width])
+    //this.plotGrid[plot_id].x = d3.scale.linear()
+    var _x = d3.scale.linear()
+	.range(do_flip?vertical_range:horizontal_range)
 	.domain([
 	    d3.min(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.min(d.dim) : d3.min(d.dim[0]);}),
 	    d3.max(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.max(d.dim) : d3.max(d.dim[0]);})
 	]);
     
+    if (this.plotGrid[plot_id].flip) {
+	this.plotGrid[plot_id].y = _x;
+    } else {
+	this.plotGrid[plot_id].x = _x;
+    }
+
     var data_domain = [
 	d3.min(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)) : d3.min(d.dim[1])}),
 	d3.max(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)) : d3.max(d.dim[1])})
@@ -684,12 +729,20 @@ NewPlotContainer.prototype.updatePlot = function(plot_id) {
     
     var data_span = data_domain[1]-data_domain[0];
     
-    this.plotGrid[plot_id].y = d3.scale.linear()
-	.range([this.plotGrid[plot_id].height-that.xAxisPadding, 0])
+    //this.plotGrid[plot_id].y = d3.scale.linear()
+    var _y = d3.scale.linear()
+	.range(do_flip?horizontal_range:vertical_range)
 	.domain([
 	    data_domain[0]-this.dataPadding*data_span,
 	    data_domain[1]+this.dataPadding*data_span
 	]);
+
+    if (this.plotGrid[plot_id].flip) {
+	this.plotGrid[plot_id].x = _y;
+    } else {
+	this.plotGrid[plot_id].y = _y;
+    }
+
     
     this.plotGrid[plot_id].xAxis = d3.svg.axis()
 	.scale(this.plotGrid[plot_id].x)
@@ -1707,10 +1760,18 @@ $(document).ready(function() {
     if ($("#signal-1d-placeholder").length) {
 	var pc = new NewPlotContainer("#signal-1d-placeholder", [300,250],[0.75,0.25]);
 	pc.addData("default", window.location.toString());
+
+	pc.setPlotType(2, "spectrogram", false);
+	pc.addDataToPlot("default", 2, false);
+
 	pc.setPlotType(0, "raw", false);
 	pc.addDataToPlot("default", 0, false);
-	pc.setPlotType(2, "spectrogram", false);
-	pc.addDataToPlot("default", 2, true);
+
+	pc.setPlotType(3, "powerspectrum", false);
+	pc.flipAxes(3);
+
+	pc.addDataToPlot("default", 3, true);
+	pc.setAxis('y', 3, 2);
 
     }
     if ($("#signal-2d-placeholder").length) {
