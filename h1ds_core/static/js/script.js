@@ -345,25 +345,28 @@ MdsUri.prototype.renderUri = function() {
     return makeUri(new_uri_components);
 };
 
-// Functions to modify a URL to return data suitable for a given plot typ
+// Functions to modify a URL to return data suitable for a given plot type
 
 function getSpectrogramUri(original_uri) {
     // assume original_url gives a timeseries.
     var mds_uri = new MdsUri(original_uri);
+    mds_uri.appendFilter('slanted_baseline', [1000]);
     mds_uri.appendFilter('spectrogram', [1024]);
     mds_uri.appendFilter('norm_dim_range_2d', [0,1,0,0.5]);
-    mds_uri.appendFilter('y_axis_energy_limit',[0.95]);
+    mds_uri.appendFilter('y_axis_energy_limit',[0.98]);
     mds_uri.non_mds_query['view'] = 'json';
     var new_uri = mds_uri.renderUri();
     return new_uri;
 }
 
-function getPowerspectrumUri(original_uri) {
+function getPowerspectrumUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var mds_uri = new MdsUri(original_uri);
     mds_uri.appendFilter('slanted_baseline', [1000]);
     mds_uri.appendFilter('power_spectrum', []);
     mds_uri.appendFilter('norm_dim_range', [0,0.5]);
+    mds_uri.appendFilter('x_axis_energy_limit',[0.98]);
+    mds_uri.appendFilter('resample_minmax', [width]);
     mds_uri.non_mds_query['view'] = 'json';
     var new_uri = mds_uri.renderUri();
     return new_uri;
@@ -428,7 +431,8 @@ function NewPlotContainer(id, rows, columns) {
     this.data_colours = ['#A11D20', '#662C91', '#1859A9', '#008C47', '#ED2D2E', '#010101'];
 
     this.plotGrid = this.setPlotGrid(rows, columns);
-
+    //this.plotRenderOrder = [];
+    //for (var i=0; i<this.plotGrid.length;i++) this.plotRenderOrder[i]=i;
 
     // url_cache is an object for storing url:plot_data key/value pairs
     // This is the one place where data is stored.
@@ -445,17 +449,6 @@ function NewPlotContainer(id, rows, columns) {
     this.xAxisPadding = 40;
     this.yAxisPadding = 60;
 }
-
-NewPlotContainer.prototype.setAxis = function(axis, plot_id, reference_plot_id) {
-    console.log()
-    if (axis === 'x') {
-	this.plotGrid[plot_id].xAxis = this.plotGrid[reference_plot_id].xAxis;
-    }
-    if (axis === 'y') {
-	this.plotGrid[plot_id].yAxis = this.plotGrid[reference_plot_id].yAxis;
-    }
-
-};
 
 
 NewPlotContainer.prototype.plotLine = function(selection) {
@@ -519,17 +512,36 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
 NewPlotContainer.prototype.plotPowerSpectrum = function(selection) {
         
 };
-NewPlotContainer.prototype.setPlotType = function(plot_id, plot_type, update) {
-    update = typeof update !== 'undefined' ? update : true;
-    this.plotGrid[plot_id].plotType = plot_type;
+
+// In order to allow sharing axes, we make sure the primary axis is
+// rendered first, before another plot links to its axis.
+// TODO: it might be better to decouple axes from plots to avoid the problem
+// of determining render order (with potential for infinite recursion).
+//NewPlotContainer.prototype.updateRenderOrder = function() {
+//    var new_order = [];
+//    //for (var i=0; i<this.plotRenderOrder.length; i++) {
+//    //
+//    //}
+//    
+//};
+
+// New properties is an object whose properties will be added to the plotGrid data
+NewPlotContainer.prototype.setPlot = function(plot_id, new_properties, update) {
+    update = typeof update !== 'undefined' ? update : false;
+
+    for (var attrname in new_properties) { 
+	console.log(attrname);
+	this.plotGrid[plot_id][attrname] = new_properties[attrname]; 
+    }
+
+    // update render order in case we've changed axis binding.
+    //this.updateRenderOrder();
+
 
     if (update) {
 	this.updateDisplay();
     }
-};
-
-NewPlotContainer.prototype.flipAxes = function(plot_id) {
-    this.plotGrid[plot_id].flip = !this.plotGrid[plot_id].flip;
+    
 };
 
 NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
@@ -557,6 +569,7 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
 		'data':[],
 		'plotType':"",
 		'flip':false,
+		'bindAxis':[-1,-1],
 	    };
 	    col_translate += column_pixels[col_i];
 	    plot_id_counter++;	    
@@ -622,7 +635,7 @@ NewPlotContainer.prototype.getData = function(data_id, plot_type) {
 	return_data = this.url_cache[new_uri];
 	break;
     case 'powerspectrum':
-	var new_uri = getPowerspectrumUri(this.data_ids[data_id].uri);
+	var new_uri = getPowerspectrumUri(this.data_ids[data_id].uri, this.svg.attr("width"));
 	this.loadURL(new_uri);
 	return_data = this.url_cache[new_uri];
 	break;
@@ -644,6 +657,11 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	    this.plotGrid[plot_i].data[data_i].colour = that.data_ids[this.plotGrid[plot_i].data_ids[data_i]].colour;
 	}
 	if (this.plotGrid[plot_i].data_ids.length > 0) this.updatePlot(plot_i);
+    }
+
+    // link axes.
+    for (var plot_i=0;plot_i<this.plotGrid.length;plot_i++) {
+	if (this.plotGrid[plot_i].data_ids.length > 0) this.linkAxes(plot_i);
     }
 
     // ...
@@ -695,26 +713,35 @@ NewPlotContainer.prototype.updateDisplay = function() {
     plotitems.exit().remove();
 };
 
+NewPlotContainer.prototype.linkAxes = function(plot_id) {
+    var that = this;
+    var use_x_id  = (this.plotGrid[plot_id].bindAxis[0] >= 0 && this.plotGrid[plot_id].bindAxis[0] !== plot_id)?this.plotGrid[plot_id].bindAxis[0]:plot_id;
+    var use_y_id  = (this.plotGrid[plot_id].bindAxis[1] >= 0 && this.plotGrid[plot_id].bindAxis[1] !== plot_id)?this.plotGrid[plot_id].bindAxis[1]:plot_id;
+    if (use_x_id !== plot_id) this.plotGrid[plot_id].x.domain(this.plotGrid[use_x_id].x.domain());
+    if (use_y_id !== plot_id) this.plotGrid[plot_id].y.domain(this.plotGrid[use_y_id].y.domain());
+    
+};
+
 NewPlotContainer.prototype.updatePlot = function(plot_id) {
     var that = this;
     var do_flip = this.plotGrid[plot_id].flip;
 
+    //var use_x_id  = (this.plotGrid[plot_id].bindAxis[0] >= 0 && this.plotGrid[plot_id].bindAxis[0] !== plot_id)?this.plotGrid[plot_id].bindAxis[0]:plot_id;
+    //var use_y_id  = (this.plotGrid[plot_id].bindAxis[1] >= 0 && this.plotGrid[plot_id].bindAxis[1] !== plot_id)?this.plotGrid[plot_id].bindAxis[1]:plot_id;
 
     // update the plot data list from the data_id list
 
     var horizontal_range = [that.yAxisPadding,this.plotGrid[plot_id].width];
     var vertical_range = [this.plotGrid[plot_id].height-that.xAxisPadding, 0];
 
-    // set axes
-    // TODO: want to be able to link axes b/w plots...
+    var dim_domain = [
+	d3.min(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.min(d.dim) : d3.min(d.dim[0]);}),
+	d3.max(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.max(d.dim) : d3.max(d.dim[0]);})
+    ];
 
-    //this.plotGrid[plot_id].x = d3.scale.linear()
     var _x = d3.scale.linear()
 	.range(do_flip?vertical_range:horizontal_range)
-	.domain([
-	    d3.min(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.min(d.dim) : d3.min(d.dim[0]);}),
-	    d3.max(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.max(d.dim) : d3.max(d.dim[0]);})
-	]);
+	.domain(dim_domain);
     
     if (this.plotGrid[plot_id].flip) {
 	this.plotGrid[plot_id].y = _x;
@@ -743,16 +770,20 @@ NewPlotContainer.prototype.updatePlot = function(plot_id) {
 	this.plotGrid[plot_id].y = _y;
     }
 
-    
+
+    //if (use_x_id !== plot_id) this.plotGrid[plot_id].x.domain(this.plotGrid[use_x_id].x.domain());
+    //if (use_y_id !== plot_id) this.plotGrid[plot_id].y.domain(this.plotGrid[use_y_id].y.domain());
+
     this.plotGrid[plot_id].xAxis = d3.svg.axis()
 	.scale(this.plotGrid[plot_id].x)
 	.orient("bottom")
 	.tickSize(this.plotGrid[plot_id].data[0].n_dim === 1 ? this.plotGrid[plot_id].y.range()[1]-this.plotGrid[plot_id].y.range()[0] : 5);
-    
+
     this.plotGrid[plot_id].yAxis = d3.svg.axis()
 	.scale(this.plotGrid[plot_id].y)
 	.orient("left")
 	.tickSize(this.plotGrid[plot_id].data[0].n_dim === 1 ? this.plotGrid[plot_id].x.range()[0]-this.plotGrid[plot_id].x.range()[1] : 5);
+
 };
 
 
@@ -1760,18 +1791,17 @@ $(document).ready(function() {
     if ($("#signal-1d-placeholder").length) {
 	var pc = new NewPlotContainer("#signal-1d-placeholder", [300,250],[0.75,0.25]);
 	pc.addData("default", window.location.toString());
-
-	pc.setPlotType(2, "spectrogram", false);
+	
+	pc.setPlot(2, {"plotType":"spectrogram"});
 	pc.addDataToPlot("default", 2, false);
 
-	pc.setPlotType(0, "raw", false);
+	pc.setPlot(0, {"plotType":"raw", "bindAxis":[2,-1]});
 	pc.addDataToPlot("default", 0, false);
 
-	pc.setPlotType(3, "powerspectrum", false);
-	pc.flipAxes(3);
-
+	pc.setPlot(3, {"plotType":"powerspectrum", "flip":true, 'bindAxis':[-1,2]});
 	pc.addDataToPlot("default", 3, true);
-	pc.setAxis('y', 3, 2);
+
+	//pc.setAxis('y', 3, 2);
 
     }
     if ($("#signal-2d-placeholder").length) {
