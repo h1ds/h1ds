@@ -350,10 +350,10 @@ MdsUri.prototype.renderUri = function() {
 function getSpectrogramUri(original_uri) {
     // assume original_url gives a timeseries.
     var mds_uri = new MdsUri(original_uri);
-    mds_uri.appendFilter('slanted_baseline', [1000]);
-    mds_uri.appendFilter('spectrogram', [1024]);
+    mds_uri.appendFilter('slanted_baseline', [10]);
+    mds_uri.appendFilter('spectrogram', [-1]);
     mds_uri.appendFilter('norm_dim_range_2d', [0,1,0,0.5]);
-    mds_uri.appendFilter('y_axis_energy_limit',[0.98]);
+    mds_uri.appendFilter('y_axis_energy_limit',[0.995]);
     mds_uri.non_mds_query['view'] = 'json';
     var new_uri = mds_uri.renderUri();
     return new_uri;
@@ -362,10 +362,10 @@ function getSpectrogramUri(original_uri) {
 function getPowerspectrumUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var mds_uri = new MdsUri(original_uri);
-    mds_uri.appendFilter('slanted_baseline', [1000]);
+    mds_uri.appendFilter('slanted_baseline', [10]);
     mds_uri.appendFilter('power_spectrum', []);
     mds_uri.appendFilter('norm_dim_range', [0,0.5]);
-    mds_uri.appendFilter('x_axis_energy_limit',[0.98]);
+    //mds_uri.appendFilter('x_axis_energy_limit',[0.995]);
     mds_uri.appendFilter('resample_minmax', [width]);
     mds_uri.non_mds_query['view'] = 'json';
     var new_uri = mds_uri.renderUri();
@@ -670,7 +670,12 @@ NewPlotContainer.prototype.updateDisplay = function() {
 
     plots.enter().append("g")
 	.attr("class", "plot")
-	.attr("transform", function(d) {return "translate("+d.translate[0]+","+d.translate[1]+")"});
+	.attr("transform", function(d) {return "translate("+d.translate[0]+","+d.translate[1]+")"})
+	.append("clipPath")
+	  .attr("id", function(d,i) {return "plot-"+i+"-clippath"})
+	  .append("svg:rect")
+	    .attr("width", function(d,i) {return d.width})
+            .attr("height", function(d,i) {return d.height});
 
     plots.exit().remove();
     
@@ -679,6 +684,7 @@ NewPlotContainer.prototype.updateDisplay = function() {
     // # x axis
     plots.append("g")
 	.attr("class", "axis x")
+	.attr("id", function(d,i) {return "plot-"+i+"-axis-x";})
 	.attr("transform", function(d) {return "translate(0,"+(d.height-that.xAxisPadding)+")"})
 	.each(function(d) { typeof d.xAxis !== 'undefined' ? d3.select(this).call(d.xAxis) : function(){}; })
 	    .append("text")
@@ -690,6 +696,7 @@ NewPlotContainer.prototype.updateDisplay = function() {
     // # y axis
     plots.append("g")
 	.attr("class", "axis y")
+	.attr("id", function(d,i) {return "plot-"+i+"-axis-y";})
 	.attr("transform", function(d) {return "translate("+that.yAxisPadding+","+0+")"})
 	.each(function(d) { typeof d.yAxis !== 'undefined' ? d3.select(this).call(d.yAxis) : function(){}; })
 	    .append("text")
@@ -701,13 +708,14 @@ NewPlotContainer.prototype.updateDisplay = function() {
 
     var plotitems = plots
 	.selectAll("g.data")
-	.data(function(d,i) { 
+	.data(function(d,j) { 
 	    var plot_data = [];
-	    for (var i=0; i<d.data.length; i++) plot_data[i] = {'data':d.data[i], 'plot':d};
+	    for (var i=0; i<d.data.length; i++) plot_data[i] = {'data':d.data[i], 'plot':d, 'plotid':j};
 	    return plot_data;});
     
     plotitems.enter().append("g")
 	.attr("class", "data")
+	.attr("clip-path", function(d,i) { return "url(#plot-"+i+"-clippath)"})
 	.each(function(d,i) {d3.select(this).call(that.plotTypes[d.plot.plotType]);});
 
     plotitems.exit().remove();
