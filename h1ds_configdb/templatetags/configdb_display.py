@@ -10,5 +10,5 @@ def show_configfile(configfile):
     tag_data['file_url'] = settings.MEDIA_URL + configfile.dbfile.name
     tag_data['properties'] = []
     for p in configfile.configdbproperty_set.all():
-        tag_data['properties'].append([p.configdb_propertytype.name, p.value.value])
+        tag_data['properties'].append([p.configdb_propertytype.name, p.get_value()])
     return tag_data

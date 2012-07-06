@@ -1,6 +1,5 @@
 from django.conf.urls.defaults import *
 
-#from h1ds_configdb.views import configdb_home, config_overview
 from h1ds_configdb.views import HomeView
 
 from django.utils.functional import lazy
