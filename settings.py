@@ -127,8 +127,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'concurrent_server',
     'h1ds_core',
-    'djcelery',
-    'djkombu',
+    'djcelery.transport',
+    #'djkombu',
     'south',
     'django_openid_auth',
     'h1ds_mdsplus',
@@ -197,4 +197,5 @@ DEFAULT_MDS_TREE = "test"
 EXTRA_MDS_TREES = [('test', os.path.join(VENV_DIR, 'test_mds_data'))]
 
 # celery settings
-BROKER_BACKEND = "djkombu.transport.DatabaseTransport"
+#BROKER_BACKEND = "djkombu.transport.DatabaseTransport"
+BROKER_URL = "django://"
