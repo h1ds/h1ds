@@ -7,6 +7,8 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse, resolve
 from django.db import connection, transaction
 
+from MDSplus import TreeException
+
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
 from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary import SUMMARY_TABLE_NAME, MINIMUM_SUMMARY_TABLE_SHOT
@@ -28,7 +30,12 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
         attr_names = tuple(a.slug for a in attributes)
         attr_name_str = '('+','.join(['shot', ','.join((a.slug for a in attributes))]) + ')'
         for shot in shots:
-            values = tuple(str(a.get_value(shot)[0]) for a in attributes)
+            try:
+                values = tuple(str(a.get_value(shot)[0]) for a in attributes)
+            except TreeException:
+                # assume the shot doesn't exist
+                # TODO: more careful treatment of exceptions, distinguish between shot missing and data missing...
+                values = tuple("NULL" for a in attributes)
             values_str = '('+','.join([str(shot), ','.join(values)])+')'
             update_str = ','.join(('%s=%s' %(a, values[ai]) for ai, a in enumerate(attr_names)))
             # TODO: can we use INSERT OR UPDATE to avoid duplication?
