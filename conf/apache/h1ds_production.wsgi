@@ -1,6 +1,9 @@
 import os
 import sys
 
+import djcelery
+djcelery.setup_loader()
+
 import site
 os.environ["CELERY_LOADER"] = "django"
 os.environ["MDS_PATH"] = '/usr/local/mdsplus'

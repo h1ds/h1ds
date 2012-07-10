@@ -127,7 +127,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'concurrent_server',
     'h1ds_core',
-    'djcelery.transport',
+    'djcelery',
     #'djkombu',
     'south',
     'django_openid_auth',
