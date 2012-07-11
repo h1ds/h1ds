@@ -84,7 +84,7 @@ class GetTime(H1DataAttributeScript):
     def do_script(self):
         try_these = (
             "\\h1data::top.operations:h18212sl:input_07",
-            "\\h1data::top.operations:h18212sl",
+            "\\h1data::top.operations:h18212sl:input_01",
             )
         min_time = datetime(1970,1,1,0,0)
         for node in try_these:
