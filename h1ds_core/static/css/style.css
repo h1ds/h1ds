@@ -1226,6 +1226,7 @@ table.main-table th {
     margin: 0.2em 0;
     padding: 0.5em;
     background: #eee;
+    font-size: xx-small;
 }
 
 table.main-table td {
