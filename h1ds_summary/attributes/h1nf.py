@@ -82,10 +82,18 @@ class KappaI(Kappa):
 class GetTime(H1DataAttributeScript):
     
     def do_script(self):
-        n = self.t.getNode("\\h1data::top.operations:h18212sl:input_07")
-        mds_time = n.getTimeInserted()
-        # convert MDSplus time into a Python dattime object
-        time_inserted = datetime.strptime(str(mds_time._getDate()), "%d-%b-%Y %H:%M:%S.%f")
+        try_these = (
+            "\\h1data::top.operations:h18212sl:input_07",
+            "\\h1data::top.operations:h18212sl",
+            )
+        min_time = datetime(1970,1,1,0,0)
+        for node in try_these:
+            n = self.t.getNode(node)
+            mds_time = n.getTimeInserted()
+            # convert MDSplus time into a Python dattime object
+            time_inserted = datetime.strptime(str(mds_time._getDate()), "%d-%b-%Y %H:%M:%S.%f")
+            if time_inserted > min_time:
+                break
 
         return ("'%s'" %time_inserted.strftime("%Y-%m-%d %H:%M:%S"), "DATETIME")
 
