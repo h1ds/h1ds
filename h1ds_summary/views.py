@@ -93,10 +93,11 @@ class SummaryView(View):
             new_row = []
             for j_i, j in enumerate(d):
                 fstr = format_strings.get(data_headers[j_i], None)
-                if fstr:
-                    new_row.append((fstr %j, data_headers[j_i]))
-                else:
-                    new_row.append((j, data_headers[j_i]))
+                try:
+                    val = fstr %j
+                except TypeError:
+                    val = j
+                new_row.append((val, data_headers[j_i]))
             new_data.append(new_row)
 
         return render_to_response('h1ds_summary/summary_table.html',
