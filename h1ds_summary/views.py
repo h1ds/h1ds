@@ -77,6 +77,12 @@ class SummaryView(View):
         cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
         data = cursor.fetchall()
 
+
+        # Make a dict of format strings for summary attributes
+        format_strings = {}
+        for att in SummaryAttribute.objects.all():
+            format_strings[att.slug] = att.format_string
+
         # This seems a bit messy, but  it's not clear to me how to refer
         # to a summary data value's  attribute slug name from within the
         # template, so let's attach it here...
@@ -86,7 +92,11 @@ class SummaryView(View):
         for d in data:
             new_row = []
             for j_i, j in enumerate(d):
-                new_row.append((j, data_headers[j_i]))
+                fstr = format_strings.get(data_headers[j_i], None)
+                if fstr:
+                    new_row.append((fstr %j, data_headers[j_i]))
+                else:
+                    new_row.append((j, data_headers[j_i]))
             new_data.append(new_row)
 
         return render_to_response('h1ds_summary/summary_table.html',

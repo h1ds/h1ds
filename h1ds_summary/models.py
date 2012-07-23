@@ -15,7 +15,9 @@ butes.h1nf.KappaH).",
     'is_default':"If true, this attribute will be shown in the default \
 list, e.g. for shot summary.",
     'display_order':"When visible, attributes will be displayed from \
-left to right with increasing display_order."
+left to right with increasing display_order.",
+    'format_string':'How value is to be displayed on website (optional).\
+e.g. %.2f will format a float to 2 decimal places.',
     }
 
 class SummaryAttribute(models.Model):
@@ -30,6 +32,10 @@ class SummaryAttribute(models.Model):
                                      help_text=sa_help_text['is_default'])
     display_order = models.IntegerField(default=1000, blank=False,
                                         help_text=sa_help_text['display_order'])
+
+    format_string = models.CharField(max_length=64, 
+                                     blank=True, 
+                                     help_text=sa_help_text['format_string'])
 
     class Meta:
         ordering = ["display_order"]
