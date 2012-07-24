@@ -4,8 +4,14 @@ from colorsys import hsv_to_rgb
 
 from django.db import connection, transaction
 from django.db.utils import DatabaseError
+from django.conf import settings
 
 from h1ds_summary import SUMMARY_TABLE_NAME
+
+try:
+    canonical_shot = settings.H1DS_SUMMARY_CANONICAL_SHOT
+except AttributeError:
+    canonical_shot = 0
 
 def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
     import h1ds_summary.models
@@ -181,7 +187,7 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     ## check if attribute already exists.
     attr_list = get_attr_list(cursor, table)
     attribute_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
-    attr_dtype = attribute_instance.get_value(0)[1]
+    attr_dtype = attribute_instance.get_value(canonical_shot)[1]
 
     attr_exists = False
     correct_dtype = False
