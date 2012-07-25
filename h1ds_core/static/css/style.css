@@ -1173,6 +1173,14 @@ span.right {
     float:right;
 }
 
+.sidebar-section-item {
+    padding: 0.4em;
+}
+.sidebar-section-item-delete {
+    display:inline;
+    float:right;
+}
+
 #mds-shot-previous {
     width:33%;
     display:inline;
