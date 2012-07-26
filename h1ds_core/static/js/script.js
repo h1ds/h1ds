@@ -60,7 +60,7 @@ function autoUpdateEvents() {
 }
 
 function updateLatestShot() {
- $.getJSON('/mdsplus/latest_shot/{{input_tree}}/', function(d){
+ $.getJSON('/mdsplus/_/latest_shot/', function(d){
  $(".latest_shot").text(d.latest_shot);
  }); // end getJSON
 } // end function
@@ -1788,7 +1788,7 @@ function plotSignal1D(id) {
 
 $(document).ready(function() {
     // updateLatestShot();
-    // autoUpdateLatestShot();
+    autoUpdateLatestShot();
     // autoUpdateEvents();
     loadCookie();
     var shot=$('#mds-nav-shot').text();
