@@ -7,4 +7,4 @@ MODULE_DOC_NAME = "Summary"
 SUMMARY_TABLE_NAME = "summary"
 
 # Don't try to use data from shots below this.
-MINIMUM_SUMMARY_TABLE_SHOT = 58198
+#MINIMUM_SUMMARY_TABLE_SHOT = 58198

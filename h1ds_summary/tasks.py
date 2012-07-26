@@ -11,10 +11,16 @@ from MDSplus import TreeException
 
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
 from h1ds_summary.utils import update_attribute_in_summary_table
-from h1ds_summary import SUMMARY_TABLE_NAME, MINIMUM_SUMMARY_TABLE_SHOT
+from h1ds_summary import SUMMARY_TABLE_NAME
 
 from h1ds_mdsplus.utils import get_latest_shot
 
+from django.conf import settings
+
+try: 
+    MINIMUM_SUMMARY_TABLE_SHOT = settings.MINIMUM_SUMMARY_TABLE_SHOT
+except AttributeError:
+    MINIMUM_SUMMARY_TABLE_SHOT = 1
 
 
 # Time between summary table synchronisations
