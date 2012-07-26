@@ -20,6 +20,11 @@ from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
 from h1ds_summary.tasks import populate_summary_table_task, populate_attribute_task
 
+## TODO: put any reference to h1ds_mdsplus in django settings
+## to keep summary and mds decoupled as much as possible.
+from h1ds_mdsplus.utils import get_latest_shot
+
+
 DEFAULT_SHOT_REGEX = "last10"
 
 class SummaryView(View):
@@ -102,6 +107,7 @@ class SummaryView(View):
 
         return render_to_response('h1ds_summary/summary_table.html',
                                   {'data':new_data, 'data_headers':data_headers,
+                                   'latest_shot':get_latest_shot(),
                                    'included_attrs':attribute_slugs,
                                    'excluded_attrs':excluded_attribute_slugs},
                                   context_instance=RequestContext(request))
