@@ -111,9 +111,12 @@ class JSONSummaryResponseMixin(SummaryMixin):
     def get(self, request, *args, **kwargs):
         
         data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
+
+        annotated_data = [{'d':i,'shot':i[0]} for i in data][::-1]
+        
         d = {
             'attributes':select_str.split(','),
-            'data':data
+            'data':annotated_data,
             }
         return HttpResponse(json.dumps(d), mimetype='application/json')
     
