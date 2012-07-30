@@ -17,7 +17,7 @@ from django.views.generic import View
 from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
-from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str
+from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str, get_latest_shot_from_summary_table
 from h1ds_summary.tasks import populate_summary_table_task, populate_attribute_task
 
 ## TODO: put any reference to h1ds_mdsplus in django settings
@@ -26,19 +26,37 @@ from h1ds_mdsplus.utils import get_latest_shot
 
 
 DEFAULT_SHOT_REGEX = "last10"
+DEFAULT_ATTR_STR = "default"
+DEFAULT_FILTER = None
 
-class SummaryView(View):
+class AJAXLatestSummaryShotView(View):
+    """Return latest shot."""
     
     http_method_names = ['get']
 
-    def get(self, request, shot_str="last10", attr_str="default", filter_str=None, table=SUMMARY_TABLE_NAME):
+    def get(self, request, *args, **kwargs):
+        latest_shot = get_latest_shot_from_summary_table()
+        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
+
+
+class SummaryMixin(object):
+
+    def get_attr_slugs(self, request, *args, **kwargs):
+        attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
+        return parse_attr_str(attr_str)
+
+
+    def get_summary_data(self, request, *args, **kwargs):
+        shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
+        attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
+        filter_str = kwargs.get("filter_str", DEFAULT_FILTER)
+        table = kwargs.get("table", SUMMARY_TABLE_NAME)
 
         # If there are no summary attributes, then tell the user
         if SummaryAttribute.objects.count() == 0:
-            return render_to_response('h1ds_summary/no_attributes.html', {}, 
-                                      context_instance=RequestContext(request))
-        
-        attribute_slugs = parse_attr_str(attr_str)
+            return self.no_attribute_response(request)
+
+        attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
                                          
         show_attrs = request.GET.get('show_attr', None)
         hide_attrs = request.GET.get('hide_attr', None)
@@ -58,19 +76,19 @@ class SummaryView(View):
             else:
                 new_attr_str = '+'.join(attribute_slugs)
             if filter_str:
+                # TODO: might work for html only - either pass get query(to get view value - html, json etc) or use per-view method
                 return HttpResponseRedirect(reverse('sdfsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str, 'filter_str':filter_str}))
             else:
+                # TODO: might work for html only - either pass get query(to get view value - html, json etc) or use per-view method
                 return HttpResponseRedirect(reverse('sdsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str}))
 
         select_list = ['shot']
         select_list.extend(attribute_slugs)
         select_str = ','.join(select_list)
 
-        excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
-
         shot_where = parse_shot_str(shot_str)
         if shot_where == None:
-            return render_to_response('h1ds_summary/no_shots.html', {}, context_instance=RequestContext(request))
+            return self.no_shot_response(request)
 
         if filter_str == None:
             where = shot_where
@@ -81,9 +99,46 @@ class SummaryView(View):
         cursor = connection.cursor()
         cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
         data = cursor.fetchall()
+        return (data, select_str, table, where)
 
+class JSONSummaryResponseMixin(SummaryMixin):
+    http_method_names = ['get']
 
-        # Make a dict of format strings for summary attributes
+    def no_attribute_response(self, request):
+        # TODO
+        pass
+
+    def get(self, request, *args, **kwargs):
+        
+        data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
+        d = {
+            'attributes':select_str.split(','),
+            'data':data
+            }
+        return HttpResponse(json.dumps(d), mimetype='application/json')
+    
+class HTMLSummaryResponseMixin(SummaryMixin):
+
+    http_method_names = ['get']
+
+    def no_attribute_response(self, request):
+        return render_to_response('h1ds_summary/no_attributes.html', {}, 
+                                  context_instance=RequestContext(request))
+        
+    def no_shot_response(self, request):
+        return render_to_response('h1ds_summary/no_shots.html', {}, 
+                                  context_instance=RequestContext(request))
+
+    def get(self, request, *args, **kwargs):
+        shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
+
+        data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
+
+        attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
+        excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
+
+        # Make a dict of format strings for summary attributes so we don't 
+        # have to look them up inside the loop.
         format_strings = {}
         for att in SummaryAttribute.objects.all():
             format_strings[att.slug] = att.format_string
@@ -105,12 +160,67 @@ class SummaryView(View):
                 new_row.append((val, data_headers[j_i]))
             new_data.append(new_row)
 
+        # should we poll server for shot updates?
+        poll_server = 'last' in shot_str
+
         return render_to_response('h1ds_summary/summary_table.html',
                                   {'data':new_data, 'data_headers':data_headers,
                                    'latest_shot':get_latest_shot(),
                                    'included_attrs':attribute_slugs,
+                                   'poll_server':poll_server,
                                    'excluded_attrs':excluded_attribute_slugs},
                                   context_instance=RequestContext(request))
+
+
+class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMixin):
+    """Dispatch to requested representation."""
+
+    representations = {
+        "html":HTMLSummaryResponseMixin,
+        "json":JSONSummaryResponseMixin,
+        }
+
+    def dispatch(self, request, *args, **kwargs):
+        # Try to dispatch to the right method for requested representation; 
+        # if a method doesn't exist, defer to the error handler. 
+        # Also defer to the error handler if the request method isn't on the approved list.
+        
+        # TODO: for now, we only support GET and POST, as we are using the query string to 
+        # determing which representation should be used, and the querydict is only available
+        # for GET and POST. Need to bone up on whether query strings even make sense on other
+        # HTTP verbs. Probably, we should use HTTP headers to figure out which content type should be
+        # returned - also, we might be able to support both URI and header based content type selection.
+        # http://stackoverflow.com/questions/381568/rest-content-type-should-it-be-based-on-extension-or-accept-header
+        # http://www.xml.com/pub/a/2004/08/11/rest.html
+
+        if request.method == 'GET':
+            requested_representation = request.GET.get('view', 'html').lower()
+        elif request.method == 'POST':
+            requested_representation = request.GET.get('view', 'html')
+        else:
+            # until we figure out how to determine appropriate content type
+            return self.http_method_not_allowed(request, *args, **kwargs)
+
+        if not requested_representation in self.representations:
+            # TODO: should handle this and let user know? rather than ignore?
+            requested_representation = 'html'
+            
+        rep_class = self.representations[requested_representation]
+
+        if request.method.lower() in rep_class.http_method_names:
+            handler = getattr(rep_class, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        return handler(self, request, *args, **kwargs)
+
+
+class SummaryView(MultiSummaryResponseMixin, View):
+    pass
+
+
 
 class RecomputeSummaryView(View):
     """Recompute requested subset of summary database.

@@ -6,12 +6,21 @@ from django.db import connection, transaction
 from django.db.utils import DatabaseError
 from django.conf import settings
 
+import numpy
+import MDSplus
+
 from h1ds_summary import SUMMARY_TABLE_NAME
+
+SIGNAL_LENGTH = 2**16
 
 try:
     canonical_shot = settings.H1DS_SUMMARY_CANONICAL_SHOT
 except AttributeError:
     canonical_shot = 0
+
+def drop_summary_table(table=SUMMARY_TABLE_NAME):
+    cursor = connection.cursor()
+    cursor.execute("DROP TABLE %s" %table)
 
 def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
     import h1ds_summary.models
@@ -136,8 +145,12 @@ def parse_filter_str(filter_str):
 
 def delete_attr_from_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
-    cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" %{'table':table, 'col':attr_slug})
-    
+    try:
+        cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" %{'table':table, 'col':attr_slug})
+    except DatabaseError:
+        # Assume this error is raised because table has been deleted before attributes removed
+        pass
+
 
 def RGBToHTMLColor(rgb_tuple):
     """ convert an (R, G, B) tuple to #RRGGBB """
@@ -148,6 +161,7 @@ def RGBToHTMLColor(rgb_tuple):
 def time_since_last_summary_table_modification(table = SUMMARY_TABLE_NAME):
     """Return timedelta since last modification of summary table."""
     cursor = connection.cursor()
+    #print datetime.now()
     try:
         cursor.execute("SELECT max(timestamp) FROM %(table)s" %{'table':table})
         latest_timestamp = cursor.fetchone()[0]
@@ -202,3 +216,32 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     elif not correct_dtype:
         cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
 
+def add_test_shot(tree_name = "test"):
+    if settings.DEBUG:
+        # get latest shot
+        latest_shot = MDSplus.Tree.getCurrent("test")
+        shot_number = latest_shot+1
+        t = MDSplus.Tree('test', shot_number, mode="NEW")
+        t.addNode('node_A')
+        t.addNode('node_B')
+
+        node_a = t.getNode('node_A')
+        node_a.setUsage("SIGNAL")
+        node_a.addTag("tag_A")
+
+        node_a.addNode('node_AA')
+        node_a.addNode('node_AB')
+
+        sig = MDSplus.Signal(MDSplus.makeArray(numpy.random.poisson(lam=10, size=SIGNAL_LENGTH)), 
+                             None, MDSplus.makeArray(0.1*numpy.arange(SIGNAL_LENGTH)))
+        node_a.putData(sig)
+
+        node_aa = t.getNode('\\test::top.node_A.node_AA')
+        node_aa.addTag("tag_AA")
+        node_aa.addNode("node_AAA")
+
+        t.setCurrent('test', shot_number)
+        t.write()
+
+        
+    

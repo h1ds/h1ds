@@ -68,6 +68,7 @@ def get_sync_info():
                  }
     # get time since last summary table modification...
     sync_info['time_since_last_mod'] = time_since_last_summary_table_modification()
+    #print sync_info['time_since_last_mod']
     if sync_info['time_since_last_mod'] > sync_timedelta:
         # Check if the latest summary table shot is up to date.
         sync_info['latest_mds_shot'] = get_latest_shot()
