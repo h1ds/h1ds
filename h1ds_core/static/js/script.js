@@ -1794,7 +1794,7 @@ function getLastShotInDisplayedPage() {
     d3.selectAll("table.main-table tr")
 	.each(function(d,i) {
 	    if (i > 0) {
-		var shot = d3.select(this).select("td").text();
+		var shot = Number(d3.select(this).select("td").text());
 		if (shot > latest_shot) {
 		    latest_shot = shot;
 		}
@@ -1804,6 +1804,19 @@ function getLastShotInDisplayedPage() {
     return latest_shot;
 }
 
+
+function summaryUpdateRequired() {
+    var latest_shot_in_doc = getLastShotInDisplayedPage();
+    var latest_summary_shot = -1;
+    $.ajax({url: '/summary/_/get_latest_summarydb_shot/', 
+	    dataType: "json",
+	    async:false})
+	.done(function(a) {
+	    latest_summary_shot = Number(a.latest_shot);
+	});
+    return latest_summary_shot > latest_shot_in_doc;
+}
+
 function updateSummaryDB() {
     var latest_shot_in_doc = getLastShotInDisplayedPage();
     var latest_summary_shot = -1;
@@ -1811,19 +1824,73 @@ function updateSummaryDB() {
 	    dataType: "json",
 	    async:false})
 	.done(function(a) {
-	    latest_summary_shot = a.latest_shot;
+	    latest_summary_shot = Number(a.latest_shot);
 	});
 
-    console.log(latest_shot_in_doc);
-    console.log(latest_summary_shot);
-
+    if (latest_summary_shot > latest_shot_in_doc) {
+	var query_char = window.location.search.length ? '&' : '?';
+	var query_str = window.location.search + query_char + 'view=json';
+	var json_url = window.location.toString()+query_str
+	// keep async = false, to make sure we don't check document for 
+	// current shot until we've updated the document.
+	$.ajax({url: json_url, 
+		dataType: "json",
+		async:false})
+	    .done(function(a) {
+		console.log(a);
+		// 
+	    });
+    }
 
 }
 
 function autoPollSummaryDB() {
     var do_poll = d3.select("#poll-summarydb-server").text();
     if (do_poll === 'True') {
-	setInterval(updateSummaryDB, 2000);
+	var query_char = window.location.search.length ? '&' : '?';
+	var query_str = window.location.search + query_char + 'view=json';
+	var json_url = window.location.toString()+query_str	
+	// select table elements
+	var table = d3.select("table.main-table tbody");
+	var rows = table.selectAll("tr")
+	    .data([], function(d) {return d.shot;})
+	    .enter().append("tr")
+	    .each(function(d,i) {
+		d3.select(this).selectAll("td").data(d.d).enter().append("td");
+		// console.log(d);
+	    });
+
+	//var cells = rows.selectAll("td")
+	//    .data()
+	console.log(rows);
+	setInterval(function() {
+	    if (summaryUpdateRequired()) {
+		$.ajax({url: json_url, 
+			dataType: "json",
+			async:false})
+		    .done(function(a) {
+			var rows = table.selectAll("tr")
+			    .data(a.data, function(d) { return d.shot;});
+			rows.enter()
+			    .insert("tr", "tr")
+			    .style('background-color', 'yellow')
+			    .each(function(d,i) {
+				d3.select(this).selectAll("td").data(d.d).enter()
+				    .append("td")
+				    .text(function(d,i){ return d; });
+				// console.log(d);
+			    });
+			rows.transition()
+			    .duration(60000)
+			    .style('background-color', 'white');
+
+			rows.exit().remove();
+			
+			//console.log(a);
+		
+		    });
+	    }
+	}, 2000);
     }
 }
 
