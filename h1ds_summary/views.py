@@ -1,4 +1,5 @@
 import json
+import datetime
 from urlparse import urlparse, urlunparse
 
 from django import forms
@@ -101,6 +102,16 @@ class SummaryMixin(object):
         data = cursor.fetchall()
         return (data, select_str, table, where)
 
+
+class MyEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+             return obj.strftime('%Y-%m-%d %H:%M:%S')
+
+        return json.JSONEncoder.default(self, obj)
+
+
 class JSONSummaryResponseMixin(SummaryMixin):
     http_method_names = ['get']
 
@@ -112,13 +123,14 @@ class JSONSummaryResponseMixin(SummaryMixin):
         
         data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
 
+
         annotated_data = [{'d':i,'shot':i[0]} for i in data][::-1]
-        
+
         d = {
             'attributes':select_str.split(','),
             'data':annotated_data,
             }
-        return HttpResponse(json.dumps(d), mimetype='application/json')
+        return HttpResponse(json.dumps(d, cls=MyEncoder), mimetype='application/json')
     
 class HTMLSummaryResponseMixin(SummaryMixin):
 
