@@ -1785,10 +1785,53 @@ function plotSignal1D(id) {
 }
 
 
+function getLastShotInDisplayedPage() {
+    // get latest shot in document
+    // TODO - this assumes shot is first column
+    // if we get more flexible about the table/data structure
+    // then we should get more clever about how we get this value
+    var latest_shot = -1;
+    d3.selectAll("table.main-table tr")
+	.each(function(d,i) {
+	    if (i > 0) {
+		var shot = d3.select(this).select("td").text();
+		if (shot > latest_shot) {
+		    latest_shot = shot;
+		}
+	    }
+	}
+	     );
+    return latest_shot;
+}
+
+function updateSummaryDB() {
+    var latest_shot_in_doc = getLastShotInDisplayedPage();
+    var latest_summary_shot = -1;
+    $.ajax({url: '/summary/_/get_latest_summarydb_shot/', 
+	    dataType: "json",
+	    async:false})
+	.done(function(a) {
+	    latest_summary_shot = a.latest_shot;
+	});
+
+    console.log(latest_shot_in_doc);
+    console.log(latest_summary_shot);
+
+
+}
+
+function autoPollSummaryDB() {
+    var do_poll = d3.select("#poll-summarydb-server").text();
+    if (do_poll === 'True') {
+	setInterval(updateSummaryDB, 2000);
+    }
+}
+
 
 $(document).ready(function() {
     // updateLatestShot();
     autoUpdateLatestShot();
+    autoPollSummaryDB();
     // autoUpdateEvents();
     loadCookie();
     var shot=$('#mds-nav-shot').text();
