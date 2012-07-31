@@ -1860,12 +1860,11 @@ function autoPollSummaryDB() {
 	//	// console.log(d);
 	//    });
 
-	function doSummaryUpdate() {
+	function doSummaryUpdate(fade_duration) {
 	    $.ajax({url: json_url, 
 		    dataType: "json",
 		    async:false})
 		.done(function(a) {
-		    //var table = d3.select("table.main-table tbody");
 		    var rows = table.selectAll("tr")
 			.data(a.data, function(d) { return d.shot;});
 		    rows.enter()
@@ -1875,19 +1874,18 @@ function autoPollSummaryDB() {
 			    d3.select(this).selectAll("td").data(d.d).enter()
 				.append("td")
 				.text(function(d,i){ return d; });
-			    // console.log(d);
 			});
 		    rows.transition()
-			.duration(60000)
+			.duration(fade_duration)
 			.style('background-color', 'white');
 		    
 		    rows.exit().remove();
 		});
 	}
-	doSummaryUpdate();
+	doSummaryUpdate(1000);
 	setInterval(function() {
 	    if (summaryUpdateRequired()) {
-		doSummaryUpdate();
+		doSummaryUpdate(90000);
 	    }
 	}, 2000);
     }
