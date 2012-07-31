@@ -1885,7 +1885,7 @@ function autoPollSummaryDB() {
 	doSummaryUpdate(1000);
 	setInterval(function() {
 	    if (summaryUpdateRequired()) {
-		doSummaryUpdate(90000);
+		doSummaryUpdate(300000);
 	    }
 	}, 2000);
     }
