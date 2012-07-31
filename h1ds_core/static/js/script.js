@@ -1873,7 +1873,7 @@ function autoPollSummaryDB() {
 			.each(function(d,i) {
 			    d3.select(this).selectAll("td").data(d.d).enter()
 				.append("td")
-				.text(function(d,i){ return d; });
+				.html(function(j,i){ return '<a href="/summary/_/go_to_source/'+a.attributes[i]+'/'+d.shot+'/" >'+j+'</a>'; });
 			});
 		    rows.transition()
 			.duration(fade_duration)
