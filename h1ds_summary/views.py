@@ -100,7 +100,31 @@ class SummaryMixin(object):
         cursor = connection.cursor()
         cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
         data = cursor.fetchall()
-        return (data, select_str, table, where)
+        
+        # Format data as specified in SummaryAttribute
+        # TODO: should make this optional
+
+        # Make a dict of format strings for summary attributes so we don't 
+        # have to look them up inside the loop.
+        format_strings = {}
+        for att in SummaryAttribute.objects.all():
+            format_strings[att.slug] = att.format_string
+
+
+        new_data = []
+        data_headers = select_str.split(',')
+        for d in data:
+            new_row = []
+            for j_i, j in enumerate(d):
+                fstr = format_strings.get(data_headers[j_i], None)
+                try:
+                    val = fstr %j
+                except TypeError:
+                    val = j
+                new_row.append(val)
+            new_data.append(new_row)
+
+        return (new_data, select_str, table, where)
 
 
 class MyEncoder(json.JSONEncoder):
@@ -152,11 +176,6 @@ class HTMLSummaryResponseMixin(SummaryMixin):
         attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
         excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
 
-        # Make a dict of format strings for summary attributes so we don't 
-        # have to look them up inside the loop.
-        format_strings = {}
-        for att in SummaryAttribute.objects.all():
-            format_strings[att.slug] = att.format_string
 
         # This seems a bit messy, but  it's not clear to me how to refer
         # to a summary data value's  attribute slug name from within the
@@ -165,14 +184,7 @@ class HTMLSummaryResponseMixin(SummaryMixin):
         new_data = []
         data_headers = select_str.split(',')
         for d in data:
-            new_row = []
-            for j_i, j in enumerate(d):
-                fstr = format_strings.get(data_headers[j_i], None)
-                try:
-                    val = fstr %j
-                except TypeError:
-                    val = j
-                new_row.append((val, data_headers[j_i]))
+            new_row = [(j,data_headers[j_i]) for j_i,j in enumerate(d)]
             new_data.append(new_row)
 
         # should we poll server for shot updates?
