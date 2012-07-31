@@ -1852,43 +1852,42 @@ function autoPollSummaryDB() {
 	var json_url = window.location.toString()+query_str	
 	// select table elements
 	var table = d3.select("table.main-table tbody");
-	var rows = table.selectAll("tr")
-	    .data([], function(d) {return d.shot;})
-	    .enter().append("tr")
-	    .each(function(d,i) {
-		d3.select(this).selectAll("td").data(d.d).enter().append("td");
-		// console.log(d);
-	    });
+	//var rows = table.selectAll("tr")
+	//    .data([], function(d) {return d.shot;})
+	//    .enter().append("tr")
+	//    .each(function(d,i) {
+	//	d3.select(this).selectAll("td").data(d.d).enter().append("td");
+	//	// console.log(d);
+	//    });
 
-	//var cells = rows.selectAll("td")
-	//    .data()
-	console.log(rows);
+	function doSummaryUpdate() {
+	    $.ajax({url: json_url, 
+		    dataType: "json",
+		    async:false})
+		.done(function(a) {
+		    //var table = d3.select("table.main-table tbody");
+		    var rows = table.selectAll("tr")
+			.data(a.data, function(d) { return d.shot;});
+		    rows.enter()
+			.insert("tr", "tr")
+			.style('background-color', 'yellow')
+			.each(function(d,i) {
+			    d3.select(this).selectAll("td").data(d.d).enter()
+				.append("td")
+				.text(function(d,i){ return d; });
+			    // console.log(d);
+			});
+		    rows.transition()
+			.duration(60000)
+			.style('background-color', 'white');
+		    
+		    rows.exit().remove();
+		});
+	}
+	doSummaryUpdate();
 	setInterval(function() {
 	    if (summaryUpdateRequired()) {
-		$.ajax({url: json_url, 
-			dataType: "json",
-			async:false})
-		    .done(function(a) {
-			var rows = table.selectAll("tr")
-			    .data(a.data, function(d) { return d.shot;});
-			rows.enter()
-			    .insert("tr", "tr")
-			    .style('background-color', 'yellow')
-			    .each(function(d,i) {
-				d3.select(this).selectAll("td").data(d.d).enter()
-				    .append("td")
-				    .text(function(d,i){ return d; });
-				// console.log(d);
-			    });
-			rows.transition()
-			    .duration(60000)
-			    .style('background-color', 'white');
-
-			rows.exit().remove();
-			
-			//console.log(a);
-		
-		    });
+		doSummaryUpdate();
 	    }
 	}, 2000);
     }
