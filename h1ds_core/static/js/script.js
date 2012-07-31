@@ -1894,7 +1894,7 @@ function autoPollSummaryDB() {
 
 $(document).ready(function() {
     // updateLatestShot();
-    autoUpdateLatestShot();
+    //autoUpdateLatestShot();
     autoPollSummaryDB();
     // autoUpdateEvents();
     loadCookie();
