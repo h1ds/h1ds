@@ -31,7 +31,7 @@ def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
     if attr_string != "":
         cols.append(attr_string)
     col_str = ','.join(cols)
-    cursor.execute("CREATE TABLE %(table)s (%(cols)s)" %{'table':table, 'cols':col_str})    
+    cursor.execute("CREATE TABLE %(table)s (%(cols)s)" %{'table':table, 'cols':col_str})
 
 def get_latest_shot_from_summary_table(table = SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
@@ -40,7 +40,7 @@ def get_latest_shot_from_summary_table(table = SUMMARY_TABLE_NAME):
     except DatabaseError:
         generate_base_summary_table(cursor)
         cursor.execute("SELECT MAX(shot) FROM %(table)s" %{'table':table})
-        
+
     latest_shot = cursor.fetchone()[0]
     return latest_shot
 
@@ -53,7 +53,7 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
 
     # Put the shot string into lower case so we can easily match 'last'
     shot_str = shot_str.lower()
-    
+
     if 'last' in shot_str:
         # Only touch the database if we need to...
         latest_shot = get_latest_shot_from_summary_table(table=table)
@@ -61,14 +61,14 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
             return None
         else:
             latest_shot = int(get_latest_shot_from_summary_table(table=table))
-        
+
     # We'll put  shot ranges (e.g. "35790-35800" )  and individual shots
     # into separate lists as they  require different handling in the SQL
     # WHERE syntax.
 
     individual_shots = []
     shot_ranges = []
-    
+
     # Now split the query into the separate components
     # i.e. "123+345-350" -> ["123", "345-350"]
     shot_components = shot_str.split('+')
@@ -80,7 +80,7 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
             shot_ranges.append(map(int, shot_comp.split('-')))
         else:
             individual_shots.append(shot_comp)
-    
+
     # Note that the SQL BETWEEN  operator requires the first argument to
     # be smaller than the second
     shot_where = " OR ".join("shot BETWEEN %d and %d" %(min(i), max(i)) for i in shot_ranges)
@@ -101,7 +101,7 @@ def parse_attr_str(attr_str):
      * all:     All SummaryAttributes are used
      * a+b+c+d: Attributes named 'a', 'b', 'c' and 'd' are used.
 
-    Return a list of attribute slug names. 
+    Return a list of attribute slug names.
     """
     if 'all' in attr_str.lower():
         return list(h1ds_summary.models.SummaryAttribute.objects.values_list('slug', flat=True))
@@ -117,7 +117,7 @@ def parse_attr_str(attr_str):
 
 def parse_filter_str(filter_str):
     """Parse URL path component corresponding to SQL queries.
-    
+
     SQL queries are separated by '+', and query components by '__' e.g.:
       mean_mirnov__gt__1.2+n_e__bw__0.5__1.5
     """
@@ -177,7 +177,7 @@ def time_since_last_summary_table_modification(table = SUMMARY_TABLE_NAME):
         latest_timestamp = datetime.strptime(latest_timestamp, "%Y-%m-%d %H:%M:%S")
         diff = datetime.now() - latest_timestamp
     return diff
-    
+
 def get_attr_list(cursor, table=SUMMARY_TABLE_NAME):
     try:
         # horrid hack
@@ -192,7 +192,7 @@ def get_attr_list(cursor, table=SUMMARY_TABLE_NAME):
         generate_base_summary_table(cursor)
         cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
         return [i for i in cursor.fetchall()[0][0][15+len(table):-1].split(',')]
-        
+
 def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     import h1ds_summary.models
     # TODO: need to get dtype from data source...
@@ -216,6 +216,15 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     elif not correct_dtype:
         cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
 
+def update_single_entry(attribute, shot, value, table=SUMMARY_TABLE_NAME):
+    cursor = connection.cursor()
+    cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" %(table, attribute, str(value), shot))
+    transaction.commit_unless_managed()
+
+###############################################################################
+### Development utils                                                       ###
+###############################################################################
+
 def add_test_shot(tree_name = "test"):
     if settings.DEBUG:
         # get latest shot
@@ -232,7 +241,7 @@ def add_test_shot(tree_name = "test"):
         node_a.addNode('node_AA')
         node_a.addNode('node_AB')
 
-        sig = MDSplus.Signal(MDSplus.makeArray(numpy.random.poisson(lam=10, size=SIGNAL_LENGTH)), 
+        sig = MDSplus.Signal(MDSplus.makeArray(numpy.random.poisson(lam=10, size=SIGNAL_LENGTH)),
                              None, MDSplus.makeArray(0.1*numpy.arange(SIGNAL_LENGTH)))
         node_a.putData(sig)
 
@@ -242,6 +251,3 @@ def add_test_shot(tree_name = "test"):
 
         t.setCurrent('test', shot_number)
         t.write()
-
-        
-    
