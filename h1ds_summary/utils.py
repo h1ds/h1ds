@@ -5,11 +5,14 @@ from colorsys import hsv_to_rgb
 from django.db import connection, transaction
 from django.db.utils import DatabaseError
 from django.conf import settings
+from django.core.cache import cache
 
 import numpy
 import MDSplus
 
 from h1ds_summary import SUMMARY_TABLE_NAME
+
+CACHE_UPDATE_TIMEOUT = 60*60*24*365
 
 SIGNAL_LENGTH = 2**16
 
@@ -32,6 +35,7 @@ def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
         cols.append(attr_string)
     col_str = ','.join(cols)
     cursor.execute("CREATE TABLE %(table)s (%(cols)s)" %{'table':table, 'cols':col_str})
+    cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
 
 def get_latest_shot_from_summary_table(table = SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
@@ -147,6 +151,7 @@ def delete_attr_from_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
     try:
         cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" %{'table':table, 'col':attr_slug})
+        cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
     except DatabaseError:
         # Assume this error is raised because table has been deleted before attributes removed
         pass
@@ -213,13 +218,17 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
                 correct_dtype = True
     if not attr_exists:
         cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_slug, attr_dtype))
+        cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
     elif not correct_dtype:
         cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
+        cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
+
 
 def update_single_entry(attribute, shot, value, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
     cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" %(table, attribute, str(value), shot))
     transaction.commit_unless_managed()
+    cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
 
 ###############################################################################
 ### Development utils                                                       ###

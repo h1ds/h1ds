@@ -2,7 +2,7 @@ from django.conf.urls.defaults import *
 
 from h1ds_summary.views import raw_sql, get_summary_attribute_form_from_url, go_to_source
 from h1ds_summary.views import SummaryView, AddSummaryAttribiteView, RecomputeSummaryView
-from h1ds_summary.views import AJAXLatestSummaryShotView
+from h1ds_summary.views import AJAXLatestSummaryShotView, AJAXLastUpdateTimeView
 
 urlpatterns = patterns('',
                        url(r'^_/get_summary_attribute_form_from_url/$', 
@@ -16,6 +16,9 @@ urlpatterns = patterns('',
                        url(r'^_/get_latest_summarydb_shot/$',
                            AJAXLatestSummaryShotView.as_view(),
                            name="summary-get-latest-shot"),
+                       url(r'^_/get_last_update_time/$',
+                           AJAXLastUpdateTimeView.as_view(),
+                           name="summary-get-last-update-time"),
                        url(r'^_/raw_sql/$', raw_sql, name="raw-sql"),
                        url(r'^_/recompute/$', 
                            RecomputeSummaryView.as_view(), name="summary-recompute"),

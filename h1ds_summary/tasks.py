@@ -1,5 +1,5 @@
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from celery.decorators import task, periodic_task
 from celery.task.schedules import crontab
@@ -11,13 +11,14 @@ from MDSplus import TreeException
 
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
 from h1ds_summary.utils import update_attribute_in_summary_table
+from h1ds_summary.utils import CACHE_UPDATE_TIMEOUT
 from h1ds_summary import SUMMARY_TABLE_NAME
 
 from h1ds_mdsplus.utils import get_latest_shot
 
 from django.conf import settings
 
-try: 
+try:
     MINIMUM_SUMMARY_TABLE_SHOT = settings.MINIMUM_SUMMARY_TABLE_SHOT
 except AttributeError:
     MINIMUM_SUMMARY_TABLE_SHOT = 1
@@ -55,6 +56,8 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
                                                                                    'shot':shot,
                                                                                    })
             transaction.commit_unless_managed()
+            cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
+
 
 @task()
 def populate_summary_table_task(shots, attributes='all', table=SUMMARY_TABLE_NAME):
@@ -72,12 +75,12 @@ def get_sync_info():
     if sync_info['time_since_last_mod'] > sync_timedelta:
         # Check if the latest summary table shot is up to date.
         sync_info['latest_mds_shot'] = get_latest_shot()
-        sync_info['latest_sql_shot'] = max(get_latest_shot_from_summary_table(), MINIMUM_SUMMARY_TABLE_SHOT)        
+        sync_info['latest_sql_shot'] = max(get_latest_shot_from_summary_table(), MINIMUM_SUMMARY_TABLE_SHOT)
         if sync_info['latest_sql_shot'] < sync_info['latest_mds_shot']:
             sync_info['do_sync'] = True
     return sync_info
 
-# need to run celery in beat mode for periodic tasks (-B), e.g. /manage.py celeryd -v 2 -B -s celery -E -l INFO  
+# need to run celery in beat mode for periodic tasks (-B), e.g. /manage.py celeryd -v 2 -B -s celery -E -l INFO
 @periodic_task(run_every=sync_timedelta)
 def sync_summary_table():
     """Check that the summary table is up to date.
@@ -92,7 +95,7 @@ def sync_summary_table():
         shot_range = range(sync_info['latest_sql_shot'], sync_info['latest_mds_shot']+1)
         shot_range.reverse()
         populate_summary_table(shot_range)
-        
+
 
 def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
     """Update the column for all shots in the summary database."""
@@ -110,6 +113,7 @@ def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
                                                                                      'val':value,
                                                                                      'shot':shot})
         transaction.commit_unless_managed()
+        cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
 
 
 @task()
@@ -125,4 +129,3 @@ def populate_attribute_task(attr_slug, table=SUMMARY_TABLE_NAME):
 
 ## TODO: hook up to h1ds_signal - where to specify h1ds_signal name? should we have a dedicated new shot signal?
 #new_shot_signal.connect(new_shot_callback)
-

@@ -32,12 +32,21 @@ DEFAULT_FILTER = None
 
 class AJAXLatestSummaryShotView(View):
     """Return latest shot."""
-    
+
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
         latest_shot = get_latest_shot_from_summary_table()
         return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
+
+
+class AJAXLastUpdateTimeView(View):
+    """Return value of timestamp cache which is updated whenever summarydb is updated"""
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse('{"last_update":"%s"}' %str(cache.get('last_summarydb_update')), 'application/javascript')
 
 
 class SummaryMixin(object):
@@ -58,7 +67,7 @@ class SummaryMixin(object):
             return self.no_attribute_response(request)
 
         attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
-                                         
+
         show_attrs = request.GET.get('show_attr', None)
         hide_attrs = request.GET.get('hide_attr', None)
 
@@ -100,11 +109,11 @@ class SummaryMixin(object):
         cursor = connection.cursor()
         cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
         data = cursor.fetchall()
-        
+
         # Format data as specified in SummaryAttribute
         # TODO: should make this optional
 
-        # Make a dict of format strings for summary attributes so we don't 
+        # Make a dict of format strings for summary attributes so we don't
         # have to look them up inside the loop.
         format_strings = {}
         for att in SummaryAttribute.objects.all():
@@ -144,28 +153,28 @@ class JSONSummaryResponseMixin(SummaryMixin):
         pass
 
     def get(self, request, *args, **kwargs):
-        
-        data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
 
+        data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
 
         annotated_data = [{'d':i,'shot':i[0]} for i in data][::-1]
 
         d = {
+            'timestamp':str(datetime.datetime.now()),
             'attributes':select_str.split(','),
             'data':annotated_data,
             }
         return HttpResponse(json.dumps(d, cls=MyEncoder), mimetype='application/json')
-    
+
 class HTMLSummaryResponseMixin(SummaryMixin):
 
     http_method_names = ['get']
 
     def no_attribute_response(self, request):
-        return render_to_response('h1ds_summary/no_attributes.html', {}, 
+        return render_to_response('h1ds_summary/no_attributes.html', {},
                                   context_instance=RequestContext(request))
-        
+
     def no_shot_response(self, request):
-        return render_to_response('h1ds_summary/no_shots.html', {}, 
+        return render_to_response('h1ds_summary/no_shots.html', {},
                                   context_instance=RequestContext(request))
 
     def get(self, request, *args, **kwargs):
@@ -208,11 +217,11 @@ class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMix
         }
 
     def dispatch(self, request, *args, **kwargs):
-        # Try to dispatch to the right method for requested representation; 
-        # if a method doesn't exist, defer to the error handler. 
+        # Try to dispatch to the right method for requested representation;
+        # if a method doesn't exist, defer to the error handler.
         # Also defer to the error handler if the request method isn't on the approved list.
-        
-        # TODO: for now, we only support GET and POST, as we are using the query string to 
+
+        # TODO: for now, we only support GET and POST, as we are using the query string to
         # determing which representation should be used, and the querydict is only available
         # for GET and POST. Need to bone up on whether query strings even make sense on other
         # HTTP verbs. Probably, we should use HTTP headers to figure out which content type should be
@@ -231,7 +240,7 @@ class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMix
         if not requested_representation in self.representations:
             # TODO: should handle this and let user know? rather than ignore?
             requested_representation = 'html'
-            
+
         rep_class = self.representations[requested_representation]
 
         if request.method.lower() in rep_class.http_method_names:
@@ -261,7 +270,7 @@ class RecomputeSummaryView(View):
     """
 
     http_method_names = ['post']
-    
+
     def post(self, request, *args, **kwargs):
         return_path = request.POST.get("return_path")
         if request.POST.has_key("shot"):
@@ -271,13 +280,13 @@ class RecomputeSummaryView(View):
             attribute = request.POST.get("attribute")
             populate_attribute_task.delay(attribute)
         return HttpResponseRedirect(return_path)
-        
+
 
 
 class AddSummaryAttribiteView(View):
     # Take a HTTP post with  a filled SummaryAttributeForm, and create a
     # SummaryAttribute instance.
-    # TODO: provide forms with return url, especially when 
+    # TODO: provide forms with return url, especially when
 
     http_method_names = ['post']
 
@@ -286,13 +295,13 @@ class AddSummaryAttribiteView(View):
         if summary_attribute_form.is_valid():
             summary_attribute_form.save()
             return_url = request.POST.get('return_url', reverse("h1ds-summary-homepage"))
-            return HttpResponseRedirect(return_url)            
+            return HttpResponseRedirect(return_url)
         else:
             return render_to_response('h1ds_summary/form.html',
                                       {'form': summary_attribute_form,
                                        'submit_url':reverse('add-summary-attribute')},
                                       context_instance=RequestContext(request))
-            
+
 
 def get_summary_attribute_form_from_url(request):
     """Take a H1DS mdsplus web URL and return a SummaryAttributeForm.
@@ -328,12 +337,12 @@ def get_summary_attribute_form_from_url(request):
     new_query = QueryDict(parsed_url_list[4]).copy()
 
     # Insert our new query dict into the request sent to this view...
-    request.GET = new_query    
+    request.GET = new_query
 
     # use HTTP GET, not POST
     request.method="GET"
     request.POST = None
-    
+
     # ...and use this request to call the view function and get the data
     # for the requested URL.
     kwargs['request'] = request
@@ -341,7 +350,7 @@ def get_summary_attribute_form_from_url(request):
 
     # url_response content is a string, let's convert it to a dictionary
     # using the json parser.
-    json_data = json.loads(url_response.content)    
+    json_data = json.loads(url_response.content)
 
     # Now we generalise the URL  for any shot, replacing the shot number
     # with __shot__
@@ -358,21 +367,21 @@ def get_summary_attribute_form_from_url(request):
     return render_to_response('h1ds_summary/form.html',
                               {'form': summary_attribute_form, 'submit_url':reverse('add-summary-attribute')},
                               context_instance=RequestContext(request))
-    
+
 def go_to_source(request, slug, shot):
     """Go to the MDSplus web interface corresponding to the summary data."""
 
-    
+
     attr = SummaryAttribute.objects.get(slug__iexact=slug)
     if attr.source.startswith('http://'):
         source_url = attr.source.replace('__shot__', str(shot))
-    
+
         # add view=html HTML query
-    
+
         parsed_url_list = [i for i in urlparse(source_url)]
-        
+
         parsed_url_list[4] = '&'.join([parsed_url_list[4], 'view=html'])
-        
+
         source_html_url = urlunparse(parsed_url_list)
     else:
         # TODO: don't annoy user with this - remove link on attributes which don't come from MDS interface.
@@ -388,12 +397,12 @@ class RawSqlForm(forms.Form):
 
 def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
     """Provide a form for users to request a raw SQL query and display the results.
-    
+
     """
     # to protect against SQL injection attacks, only allow users with permissions to do raw SQL queries.
     if not request.user.has_perm('h1ds_summary.raw_sql_query_summaryattribute'):
         return HttpResponseRedirect("/")
-    
+
     if request.method == 'POST':
         form = RawSqlForm(request.POST)
         if form.is_valid():
@@ -420,4 +429,3 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
 
     if request.method == 'GET':
         return HttpResponseRedirect("/")
-
