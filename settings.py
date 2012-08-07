@@ -1,5 +1,5 @@
 # Django settings for h1ds project.
-# Any of these settings can be overridden in 
+# Any of these settings can be overridden in
 # settings_(development|staging|production).py
 
 import os
@@ -26,6 +26,13 @@ DATABASES = {
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(VENV_DIR, 'serverfiles', 'django_cache'),
+        }
 }
 
 # Local time zone for this installation. Choices can be found here:
@@ -142,7 +149,7 @@ TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
                                "django.core.context_processors.static",
                                "django.contrib.messages.context_processors.messages",
                                "django.core.context_processors.request")
-                               
+
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 # A sample logging configuration. The only tangible logging
@@ -182,7 +189,7 @@ H1DS_EXTRA_SUBLINKS = (
 
 AUTHENTICATION_BACKENDS = (
     'django_openid_auth.auth.OpenIDBackend',
-    'django.contrib.auth.backends.ModelBackend',    
+    'django.contrib.auth.backends.ModelBackend',
     )
 
 OPENID_CREATE_USERS = True
