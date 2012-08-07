@@ -1805,16 +1805,17 @@ function getLastShotInDisplayedPage() {
 }
 
 
-function summaryUpdateRequired() {
-    var latest_shot_in_doc = getLastShotInDisplayedPage();
-    var latest_summary_shot = -1;
-    $.ajax({url: '/summary/_/get_latest_summarydb_shot/', 
+function summaryUpdateRequired(last_update) {
+    //var latest_shot_in_doc = getLastShotInDisplayedPage();
+    //var latest_summary_shot = -1;
+    $.ajax({url: '/summary/_/get_last_update_time/', 
 	    dataType: "json",
 	    async:false})
 	.done(function(a) {
-	    latest_summary_shot = Number(a.latest_shot);
+	    //latest_summary_shot = Number(a.latest_shot);
+	    latest_summdb_update = new Date(a.last_update);
 	});
-    return latest_summary_shot > latest_shot_in_doc;
+    return latest_summdb_update > last_update;
 }
 
 function updateSummaryDB() {
@@ -1844,9 +1845,23 @@ function updateSummaryDB() {
 
 }
 
+function cross(a) {
+    var data = [], di, ai, shot_dat;
+    for (di=0;di<a.data.length;di++) {
+	data[di] = [];
+	data[di].shot
+	for (ai=0; ai<a.attributes.length; ai++) {
+	    data[di][ai] = {'shot':a.data[di].shot, 'attr':a.attributes[ai], 'value':a.data[di].d[ai]};
+	}
+    }
+    return data;
+}
+
 function autoPollSummaryDB() {
-    var do_poll = d3.select("#poll-summarydb-server").text();
+    //var do_poll = d3.select("#poll-summarydb-server").text();
+    var do_poll = 'True';
     if (do_poll === 'True') {
+	var last_update = null;
 	var query_char = window.location.search.length ? '&' : '?';
 	var query_str = window.location.search + query_char + 'view=json';
 	var json_url = window.location.toString()+query_str	
@@ -1865,6 +1880,7 @@ function autoPollSummaryDB() {
 		    dataType: "json",
 		    async:false})
 		.done(function(a) {
+		    /*
 		    var rows = table.selectAll("tr")
 			.data(a.data, function(d) { return d.shot;});
 		    rows.enter()
@@ -1880,14 +1896,62 @@ function autoPollSummaryDB() {
 			.style('background-color', 'white');
 		    
 		    rows.exit().remove();
+		    */
+		    
+		    last_update = new Date(a.timestamp);
+		    var rows = table.selectAll("tr")
+			.data(cross(a), function(d) { return d[0].shot;});
+		    rows.enter()
+			.insert("tr", "tr")
+			.style('background-color', 'yellow');
+
+		    var td = rows.selectAll("td")
+			.data(function(d) { return d; });
+		    td.enter()
+			.append("td")
+		    //.style('background-color', 'yellow')
+			.html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
+			//.text(function(d) { return d.value; });
+		    
+		    td.transition()
+			.duration(500)
+			//.styleTween('background-color', function tween(d, i, a) {console.log([d,i,a, this]); return d3.interpolate('yellow', 'white');})
+			//.each(function(d) {console.log(d3.select(this))});
+			.each(function(d) {
+			    d3.select(this).html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
+			    });
+			//.text(function(d) {return d.value;});
+			//.html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
+			//.style('background-color', 'white');
+			
+		    rows.transition()
+			.duration(fade_duration)
+			.style('background-color', 'white');
+
+		    rows.exit().remove();
+			//.insert("tr", "tr")
+			//.style('background-color', 'yellow')
+			//.each(function(d,i) {
+			//    d3.select(this).selectAll("td").data(d.d).enter()
+		//		.append("td")
+			// .html(function(j,i){ return '<a href="/summary/_/go_to_source/'+a.attributes[i]+'/'+d.shot+'/" >'+j+'</a>'; });
+		//	});
+		  //  rows.transition()
+	//		.duration(fade_duration)
+	//		.style('background-color', 'white');
+		    
+	//	    rows.exit().remove();
 		});
 	}
 	doSummaryUpdate(1000);
 	setInterval(function() {
-	    if (summaryUpdateRequired()) {
+	    if (summaryUpdateRequired(last_update)) {
 		doSummaryUpdate(300000);
 	    }
 	}, 2000);
+	//setInterval(function() {
+	//    doSummaryUpdate(300000, last_update);
+	//}, 2000);
     }
 }
 
