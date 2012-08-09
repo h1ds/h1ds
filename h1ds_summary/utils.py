@@ -219,9 +219,10 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     if not attr_exists:
         cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_slug, attr_dtype))
         cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
-    elif not correct_dtype:
-        cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
-        cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
+    # TODO: fails for sqlite
+    # elif not correct_dtype: 
+    #    cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
+    #    cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
 
 
 def update_single_entry(attribute, shot, value, table=SUMMARY_TABLE_NAME):
