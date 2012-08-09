@@ -180,7 +180,15 @@ class HTMLSummaryResponseMixin(SummaryMixin):
     def get(self, request, *args, **kwargs):
         shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
 
-        data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
+        q = self.get_summary_data(request, *args, **kwargs)
+
+        # TODO need to fix get_summary_data so it doesn't return REsponse object...
+        summary_data = self.get_summary_data(request, *args, **kwargs)
+        try:
+            (data, select_str, table, where)  = summary_data
+        except ValueError:
+            # TODO: fix this hack!
+            return summary_data
 
         attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
         excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
