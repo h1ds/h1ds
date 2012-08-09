@@ -1897,7 +1897,6 @@ function autoPollSummaryDB() {
 		    
 		    rows.exit().remove();
 		    */
-		    
 		    last_update = new Date(a.timestamp);
 		    var rows = table.selectAll("tr")
 			.data(cross(a), function(d) { return d[0].shot;});
