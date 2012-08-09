@@ -38,7 +38,7 @@ class SummaryAttribute(models.Model):
                                      help_text=sa_help_text['format_string'])
 
     class Meta:
-        ordering = ["display_order"]
+        ordering = ["display_order", "slug"]
 
         permissions = (
             ("recompute_summaryattribute", "Can recompute the summary attribute and update the database."),
