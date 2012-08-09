@@ -46,7 +46,7 @@ class AJAXLastUpdateTimeView(View):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        return HttpResponse('{"last_update":"%s"}' %str(cache.get('last_summarydb_update')), 'application/javascript')
+        return HttpResponse('{"last_update":"%s"}' %str(cache.get('last_summarydb_update').isoformat()), 'application/javascript')
 
 
 class SummaryMixin(object):
@@ -159,7 +159,7 @@ class JSONSummaryResponseMixin(SummaryMixin):
         annotated_data = [{'d':i,'shot':i[0]} for i in data][::-1]
 
         d = {
-            'timestamp':str(datetime.datetime.now()),
+            'timestamp':str(datetime.datetime.now().isoformat()),
             'attributes':select_str.split(','),
             'data':annotated_data,
             }
