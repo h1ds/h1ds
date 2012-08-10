@@ -190,9 +190,38 @@ class Config(multiconfig.DefaultConfig):
     # Enable graphical charts, requires gdchart.
     #chart_options = {'width': 600, 'height': 300}
 
-    navi_bar.insert(0,page_front_page)    # put H1Log first on navigation bar at top 
-    navi_bar.insert(1, u'H1Upgrade')      # park H1Upgrade next to H1Log tab 
+    navi_bar.insert(0,page_front_page)    # put H1Log first on navigation bar at top
+    navi_bar.insert(1, u'H1Upgrade')      # park H1Upgrade next to H1Log tab
     navi_bar.append(u'CheatSheet')        # put CheatSheet after the standard
 
 
     tz_offset = 11
+
+    """
+    # default settings for reference
+    surge_action_limits = { # allow max. <count> <action> requests per <dt> secs
+    # action: (count, dt)
+    'show': (20, 60),
+    'raw': (20, 40),  # some people use this for css
+    'AttachFile': (60, 60),
+    'diff': (30, 60),
+    'fullsearch': (5, 60),
+    'edit': (10, 120),
+    'rss_rc': (1, 60),
+    'default': (30, 60),
+    }
+    surge_lockout_time = 3600 # secs you get locked out when you ignore warnings
+    """
+
+    surge_action_limits = { # allow max. <count> <action> requests per <dt> secs
+    # action: (count, dt)
+    'show': (200, 60),
+    'raw': (200, 40),  # some people use this for css
+    'AttachFile': (600, 60),
+    'diff': (300, 60),
+    'fullsearch': (50, 60),
+    'edit': (100, 120),
+    'rss_rc': (10, 60),
+    'default': (300, 60),
+    }
+    surge_lockout_time = 30 # secs you get locked out when you ignore warnings
