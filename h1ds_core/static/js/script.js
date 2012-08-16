@@ -1858,8 +1858,8 @@ function cross(a) {
 }
 
 function autoPollSummaryDB() {
-    var do_poll = d3.select("#poll-summarydb-server").text();
-    if (do_poll === 'True') {
+    var do_poll = d3.select("#poll-summarydb-server");
+    if (do_poll[0][0] !== null && do_poll.text() === 'True') {
 	var last_update = null;
 	var query_char = window.location.search.length ? '&' : '?';
 	var query_str = window.location.search + query_char + 'view=json';
