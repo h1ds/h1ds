@@ -415,7 +415,7 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
         form = RawSqlForm(request.POST)
         if form.is_valid():
             cursor=connection.cursor()
-            select_list = form.cleaned_data['select'].split(',')
+            select_list = [i.strip() for i in form.cleaned_data['select'].split(',')]
             if select_list[0] != 'shot':
                 _select_list = ['shot']
                 _select_list.extend(select_list)
