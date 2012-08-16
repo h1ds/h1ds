@@ -1857,6 +1857,15 @@ function cross(a) {
     return data;
 }
 
+$("span.toggleVertical").click(function() {
+    $(this).toggleClass("verticalText");
+    if ($(this).hasClass("verticalText")) {
+	$(this).html($(this).text().replace(/(.)/g, "$1<br />"));
+    } else {
+	$(this).html($(this).text().replace("$1<br />",""));
+    }
+});
+
 function autoPollSummaryDB() {
     var do_poll = d3.select("#poll-summarydb-server");
     if (do_poll[0][0] !== null && do_poll.text() === 'True') {

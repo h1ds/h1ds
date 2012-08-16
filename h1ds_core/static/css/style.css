@@ -544,6 +544,7 @@ td { vertical-align: top; }
    Author: Dave Pretty <david.pretty@anu.edu.au>
    ========================================================================== */
 
+
 /* general */
 
 h1 { font-size:190%; font-family: Georgia, Times, "Times New Roman", serif;}
@@ -1279,6 +1280,15 @@ form.inline {
 form.right {
     float: right;
 }
+
+.box_rotate {
+     -moz-transform: rotate(90deg);  /* FF3.5+ */
+       -o-transform: rotate(90deg);  /* Opera 10.5 */
+  -webkit-transform: rotate(90deg);  /* Saf3.1+, Chrome */
+             filter:  progid:DXImageTransform.Microsoft.BasicImage(rotation=0.083);  /* IE6,IE7 */
+         -ms-filter: "progid:DXImageTransform.Microsoft.BasicImage(rotation=0.083)"; /* IE8 */
+}
+
 
 /* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 
