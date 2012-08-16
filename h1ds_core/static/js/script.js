@@ -1857,12 +1857,23 @@ function cross(a) {
     return data;
 }
 
+$("span.toggleVertical").each(function() {
+    if ($.cookie("vertical-"+$(this).text()) === "true") {
+	$(this).toggleClass("verticalText");
+	$(this).html($(this).text().replace(/(.)/g, "$1<br />"));
+    }}
+);
+
+
 $("span.toggleVertical").click(function() {
     $(this).toggleClass("verticalText");
     if ($(this).hasClass("verticalText")) {
 	$(this).html($(this).text().replace(/(.)/g, "$1<br />"));
+	$.cookie("vertical-"+$(this).text(),true); 
+	
     } else {
 	$(this).html($(this).text().replace("$1<br />",""));
+	$.cookie("vertical-"+$(this).text(),false); 
     }
 });
 
