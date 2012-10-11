@@ -28,3 +28,6 @@ fabfile.py
 settings_development.py
 settings_staging.py
 settings_production.py
+
+
+rabbitmq-signing-key-public.asc
