@@ -22,9 +22,9 @@ def main():
     if options.clear:
         subprocess.call(["virtualenv", "--clear", "--distribute", virtualenv])
     file_path = os.path.dirname(__file__)
-    subprocess.call(["pip", "install", "-E", virtualenv, "--requirement",
+    subprocess.call(["pip", "install", "--requirement",
                      os.path.join(file_path, "requirements.txt")])
-    subprocess.call(["pip", "install", "-E", virtualenv, "--requirement",
+    subprocess.call(["pip", "install", "--requirement",
                      os.path.join(file_path, "recalcitrant_requirements.txt")])
 
 
