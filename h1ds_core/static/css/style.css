@@ -1289,6 +1289,11 @@ form.right {
          -ms-filter: "progid:DXImageTransform.Microsoft.BasicImage(rotation=0.083)"; /* IE8 */
 }
 
+form.inline-form {
+    margin: 0; 
+    padding: 0;
+    display:inline;
+}
 
 /* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 

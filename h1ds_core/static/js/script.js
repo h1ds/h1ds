@@ -1973,6 +1973,14 @@ function autoPollSummaryDB() {
     }
 }
 
+function toggleTrackLatestShot() {
+    console.log("toggled tracker");
+    //$("#mds-track-latest-shot").toggle("slide", {direction: 'up'}, 750);
+    //$("#mds-shot-controller").hide("slide", {direction: 'up'}, 750);
+    $("#mds-track-latest-shot").toggle();
+    $("#mds-shot-controller").hide();
+    return false;
+}  
 
 $(document).ready(function() {
     // updateLatestShot();
@@ -1985,6 +1993,14 @@ $(document).ready(function() {
     $(".mds-node-item").each(function() {
 	populateMDSNav(tree, shot, $(this));
     });
+
+    if ($("#mds-toggle-track-latest-shot").length) {
+	// temp
+	$("#mds-track-latest-shot").hide();
+	// end temp
+	$("#mds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="mds-toggle-track-shot" name="mds-toggle-track-shot" value="track latest shot"></FORM>');
+    }
+
     if ($("#signal-1d-placeholder").length) {
 	var pc = new NewPlotContainer("#signal-1d-placeholder", [300,250],[0.75,0.25]);
 	pc.addData("default", window.location.toString());
