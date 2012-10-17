@@ -46,8 +46,12 @@ class AJAXLastUpdateTimeView(View):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        return HttpResponse('{"last_update":"%s"}' %str(cache.get('last_summarydb_update').isoformat()), 'application/javascript')
-
+        last_update = cache.get('last_summarydb_update')
+        if last_update:
+            return HttpResponse('{"last_update":"%s"}' %str(last_update.isoformat()), 'application/javascript')
+        else:
+            # last_summarydb_update not in cache...
+            return HttpResponse('{"last_update":"null"}', 'application/javascript')
 
 class SummaryMixin(object):
 
