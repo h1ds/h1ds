@@ -139,6 +139,11 @@ def update_dir_structure():
                 run('touch %s' %t)
 
     with cd(env_dir):
+        with cd("static"):
+            if not exists("img"):
+                run("ln -s ../h1ds/moin/static/h1ds/img img")
+
+    with cd(env_dir):
         sudo('chmod -R ugo+rwX db')
         for sp in server_perm_paths:
             if exists(sp):
