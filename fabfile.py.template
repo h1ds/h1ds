@@ -5,6 +5,11 @@ and WORKON_HOME defined in .bash_profile.
 
 This is configured for Ubuntu systems.
 
+22/01/2013: The  current Ubuntu  version of virtualenvwrapper  creates a
+permission  error  on ~/.virtualenvs/hook.log  when  sudo  is used.  The
+current  workaround is  to not  use the  Ubuntu virtualenv  package, but
+install    it   outside    of   apt    -   e.g.     using   pip.     See
+https://bugs.launchpad.net/ubuntu/+source/virtualenvwrapper/+bug/870097
 """
 from __future__ import with_statement
 import os, platform, tempfile, time
