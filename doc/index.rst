@@ -3,8 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to H1DS's documentation!
-================================
+Welcome
+=======
+
+H1DS  is  a  an  exstensible  web interface  designed  for  data  from
+magnetically confined plasma experiments.
 
 Contents:
 
