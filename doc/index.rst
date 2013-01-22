@@ -14,6 +14,18 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   Installing H1DS <intro/install>
+
+Modules:
+
+.. toctree::
+   :maxdepth: 1
+
+   H1DS <modules/h1ds>
+   H1DS Core <modules/h1ds_core>
+   H1DS MDSplus <modules/h1ds_mdsplus>
+   H1DS Summary <modules/h1ds_summary>
+   H1DS ConfigDB <modules/h1ds_configdb>
 
 
 Indices and tables
