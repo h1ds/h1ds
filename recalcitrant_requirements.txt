@@ -1,8 +1,13 @@
-# matplotlib won't install in requirments file when we start from 
-# scratch. My guess is that when pip uses q requirements file it 
-# builds each package before installing any; and that matplotlib
-# requires numpy to be installed before it will build. For now, lets
-# just put matplotlib in a separate requirements file so our fabric
-# script can try installing it after all the well-behaved packages 
-# are installed.
+# matplotlib  won't  install in  requirments  file  when we  start  from
+# scratch.  My guess is that when pip uses q requirements file it builds
+# each package before installing any; and that matplotlib requires numpy
+# to  be  installed before  it  will  build.   For  now, lets  just  put
+# matplotlib in  a separate requirements  file so our fabric  script can
+# try installing it after all the well-behaved packages are installed.
+
 matplotlib
+
+# python-h1 requires scipy  which requires numpy to be built,  so it can
+# stay here also.
+
+-e git+git://code.h1svr.anu.edu.au/python-h1.git#egg=h1
