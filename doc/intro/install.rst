@@ -19,7 +19,7 @@ libraries used by H1DS.
 
     There is  an open issue  in the H1DS  issue tracker to  find exactly
     which       versions       of       Python       are       supported
-    (`<https://code.h1svr.anu.edu.au/issues/92>`_)
+    (`H1DS issue #92 <http://code.h1svr.anu.edu.au/issues/92>`_)
 
 
 Prerequisites
@@ -34,11 +34,11 @@ Ubuntu 12.10
 ^^^^^^^^^^^^
 
 First, install  `git <http://git-scm.com/>`_, virtualenv and  the python
-header files (needed for compiling some python libraries):
+header files (needed for compiling some python libraries). Currently we also need openssh server, as the script which deploys the production server over ssh is also used to set up the development server on the local computer (`H1DS issue #93 <http://code.h1svr.anu.edu.au/issues/93>`_).:
 
 .. code-block:: bash
 
-    $ sudo apt-get install git python-virtualenv python-dev
+    $ sudo apt-get install git python-virtualenv python-dev openssh-server gfortran libatlas-base-dev
 
 
 We               also               use               `virtualenvwrapper
@@ -65,7 +65,7 @@ been installed as a dependency of python-virtualenv):
     has been installed via pip.
 
 
-Now add the following to  your ``~/.bashrc`` file, replacing my_username
+Now add the following to both your ``~/.bashrc`` and ``~/.profile`` files, replacing my_username
 with   your  own   username  (you   can  use   whatever  you   like  for
 ``$WORKON_HOME``, it will be where all your virtualenvs are stored):
 
@@ -81,6 +81,11 @@ Then, either start a new terminal or read in your ``.bashrc`` file:
 .. code-block:: bash
 
     $ source ~/.bashrc
+
+The ``~/.profile`` is read when you  run the Fabric script (which uses a
+login    shell,     and    therefore    checks     ``~/.profile``    (or
+``~/.bash_profile``)  rather  than  ``~/.bashrc``,  which  is  read  for
+non-login shells.
 
 Setting up the development environment
 --------------------------------------
@@ -110,4 +115,37 @@ Now grab the H1DS fabric script (they call it a *fabfile*) template:
 
     (scratch)$ wget http://code.h1svr.anu.edu.au/projects/h1ds/repository/raw/fabfile.py.template -O fabfile.py
 
-xx
+Now we  create the H1DS  development virtualenv using the  fabric script
+(if this doesn't work, make sure you added the virtualenvwrapper code in
+your   ``~/.profile``  or   ``~/.bash_profile``   file   and  you   have
+``openssh-server`` installed):
+
+.. code-block:: bash
+
+    (scratch)$ fab dev initiate
+
+Now we can move across to our H1DS development virtualenv:
+
+.. code-block:: bash
+
+    (scratch)$ workon h1ds_development
+    (h1ds_development)$ cdvirtualenv
+    (h1ds_development)$ ls
+    bin db h1ds include lib log media pid serverfiles static wiki
+    (h1ds_development)$ cd h1ds
+    (h1ds_development)$ cp fabfile.py{.template,}
+    (h1ds_development)$ cp settings_development.py{.template,}
+    
+
+Open  up  ``settings_development.py``  in   an  editor  and  change  the
+``SECRET_KEY`` to something unique and unguessable.
+
+
+Then, install the rest of the required software:
+
+.. code-block:: bash
+
+    (h1ds_development)$ fab dev update
+
+
+
