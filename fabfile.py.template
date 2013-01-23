@@ -10,11 +10,14 @@ permission  error  on ~/.virtualenvs/hook.log  when  sudo  is used.  The
 current  workaround is  to not  use the  Ubuntu virtualenv  package, but
 install    it   outside    of   apt    -   e.g.     using   pip.     See
 https://bugs.launchpad.net/ubuntu/+source/virtualenvwrapper/+bug/870097
+
 """
+
 from __future__ import with_statement
 import os, platform, tempfile, time
 from fabric.api import *
 from fabric.contrib.files import exists
+
 ########################################################################
 ## Using Apache on a recent Ubuntu, you might get away with editing   ##
 ## just the user and host names                                       ##
@@ -100,9 +103,9 @@ def restart_supervisord():
 def update_dir_structure():
     """Create any missing dirs or files we need. Idempotent."""
 
-    # these dirs, if they exist, need to be changed to user perms
-    # so we can update dir structure without sudo. They are set back 
-    # to server perms when we've finished.
+    # these dirs, if they exist, need to  be changed to user perms so we
+    # can update dir structure without sudo. They are set back to server
+    # perms when we've finished.
     server_perms = (
         ('wiki',),
         ('serverfiles',),
@@ -156,8 +159,8 @@ def update_dir_structure():
 def initiate():
     """To be run once only. Non-idempotent.
 
-    Please avoid making changes to this function, as they will need to be 
-    manually applied to existing projects.
+    Please avoid making  changes to this function, as they  will need to
+    be manually applied to existing projects.
     """
 
     run('%(mkvirtualenv)s %(venv)s' % env)
@@ -179,9 +182,10 @@ def update():
 
     env.test_mds_dir = os.path.join(env_dir, 'test_mds_data')
 
-    # We assume the user has created the settings file for the requested 
-    # environment, and that it exists in the same directory as this file.
-    # We'll attempt to copy it to the virtual environment, and abort if the copy fails.
+    # We assume the user has created the settings file for the requested
+    # environment,  and that  it exists  in the  same directory  as this
+    # file.  We'll  attempt to copy  it to the virtual  environment, and
+    # abort if the copy fails.
     settings_filename = "settings_%(environment)s.py" %env
     with cd(project_dir):
         try:
@@ -209,20 +213,25 @@ def update():
         sudo('chmod -R ug+rwX wiki')
         sudo('chmod -R o-rwX wiki')
 
-    # Before we make any changes to the database, we change permissions of the db
-    # directory so we can run ./manage.py without sudo. Note that we shouldn't run sudo 
-    # within a virtual environment (i.e. with workon) as files like $WORKON_DIR/hook.log
-    # can have their permissions changed to those of the root user, which will cause problems
-    # when subsequent commands are run as a normal user.
+    # Before we make any changes  to the database, we change permissions
+    # of the db  directory so we can run ./manage.py  without sudo. Note
+    # that we shouldn't run sudo within a virtual environment (i.e. with
+    # workon)  as   files  like  $WORKON_DIR/hook.log  can   have  their
+    # permissions changed  to those of  the root user, which  will cause
+    # problems when subsequent commands are run as a normal user.
 
     with cd(env_dir):
         sudo('chown -R --reference=$PWD db')
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with prefix('cd %(project)s' %env):
-            run("./bootstrap.py")
-            # need server perms to run db through apache, so use sudo to modify db and 
-            # make sure we chown the db after to be sure.
+            run("pip install -r requirements.txt")
+            # the recalcitrant_requirements file contains packages which
+            # needs   those   in    requirements.txt   installed   first
+            # (e.g. numpy).
+            run("pip install -r recalcitrant_requirements.txt")
+            # need server perms to run db through apache, so use sudo to
+            # modify db and make sure we chown the db after to be sure.
             run('./manage.py syncdb --settings=%(settings)s' % env)
             run('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
@@ -230,8 +239,8 @@ def update():
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
             run("./manage.py createtree %(test_mds_dir)s --settings=%(settings)s" % env)
 
-    # Now that we have finished making changes to the database, change the permissions back
-    # to those appropriate for the server.
+    # Now that we  have finished making changes to  the database, change
+    # the permissions back to those appropriate for the server.
     with cd(env_dir):
         sudo('chown -R %(server_user)s:%(server_group)s db' %env)
 
