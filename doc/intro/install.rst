@@ -52,7 +52,7 @@ build ``matplotlib`` :
 
 .. code-block:: bash
 
-    $ sudo apt-get install git python-virtualenv python-dev ssh gfortran libatlas-base-dev libfreetype6-dev libpng12-dev
+    $ sudo apt-get install git python-virtualenv python-dev ssh gfortran build-essential libatlas-base-dev libfreetype6-dev libpng12-dev
 
 
 We               also               use               `virtualenvwrapper
@@ -162,4 +162,18 @@ Then, install the rest of the required software using the fabric script:
     If the above doesn't work, make sure you added the virtualenvwrapper
     code in your ``~/.profile`` or ``~/.bash_profile`` file and you have
     ``ssh`` installed):
+
+During  the update  you'll  be asked  if  you want  to  create a  Django
+superuser  account. Answer  ``yes``  and provide  the requested  details
+(name, email etc).
+
+
+You can now start the development server via:
+
+.. code-block:: bash
+
+    (h1ds_development)$ ./manage.py runcserver --settings=h1ds.settings_development
+
+You can update H1DS any time by repeating the ``fab dev update`` command.
+
 
