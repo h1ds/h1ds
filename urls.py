@@ -14,6 +14,7 @@ urlpatterns = patterns('',
                        (r'^mdsplus/', include('h1ds_mdsplus.urls')),
                        (r'^summary/', include('h1ds_summary.urls')),
                        (r'^configurations/', include('h1ds_configdb.urls')),
+                       (r'^docs/', include('sphinxdoc.urls')),
                        )
 
 if settings.DEBUG:

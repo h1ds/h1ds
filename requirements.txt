@@ -15,3 +15,4 @@ python-openid==2.2.5
 -e git+git://code.h1svr.anu.edu.au/h1ds/h1ds_summary.git#egg=h1ds_summary-dev
 moin==1.9.6
 sphinx
+django-sphinxdoc
