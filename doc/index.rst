@@ -15,7 +15,8 @@ Contents:
    :maxdepth: 2
 
    Installing H1DS <intro/install>
-
+   Deploying H1DS on a server <intro/deploy>
+   
 Modules:
 
 .. toctree::
