@@ -227,3 +227,5 @@ SHOT_TRACKER = "inotify"
 HAYSTACK_SITECONF='h1ds.search_site'
 HAYSTACK_SEARCH_ENGINE = 'whoosh'
 HAYSTACK_WHOOSH_PATH = os.path.join(THIS_DIR, 'whoosh_index')
+
+FIXTURE_DIRS = (os.path.join(THIS_DIR, 'fixtures'),)
