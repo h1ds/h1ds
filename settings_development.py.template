@@ -11,6 +11,14 @@ DATABASES = {
             }
     }
 
+
+H1DS_EXTRA_SUBLINKS = (
+    # ("Wiki", "/wiki", "Documentation wiki"),
+    # ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"),
+    ("Code", "https://code.h1svr.anu.edu.au", "H1 code repository"),
+    ("H1DS Documentation", "/docs/h1ds", "Documentation for the H1DS server"),
+)
+
 ########################################################################
 ## Wiki settings                                                      ##
 ########################################################################
