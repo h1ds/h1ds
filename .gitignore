@@ -34,3 +34,5 @@ rabbitmq-signing-key-public.asc
 
 # don't include built sphinx docs.
 doc/_build
+
+whoosh_index

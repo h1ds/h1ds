@@ -15,6 +15,7 @@ urlpatterns = patterns('',
                        (r'^summary/', include('h1ds_summary.urls')),
                        (r'^configurations/', include('h1ds_configdb.urls')),
                        (r'^docs/', include('sphinxdoc.urls')),
+                       (r'^search/', include('haystack.urls')),
                        )
 
 if settings.DEBUG:

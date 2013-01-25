@@ -149,6 +149,7 @@ INSTALLED_APPS = (
     'django_openid_auth',
     'h1ds_mdsplus',
     'h1ds_summary',
+    'haystack',
     'sphinxdoc',
 )
 
@@ -221,3 +222,8 @@ BROKER_URL = "django://"
 # Options: 
 # "inotify" - (linux only) listen for changes to shotid.sys.
 SHOT_TRACKER = "inotify"
+
+
+HAYSTACK_SITECONF='h1ds.search_site'
+HAYSTACK_SEARCH_ENGINE = 'whoosh'
+HAYSTACK_WHOOSH_PATH = os.path.join(THIS_DIR, 'whoosh_index')
