@@ -39,7 +39,7 @@ env.git_url = "git://code.h1svr.anu.edu.au/h1ds/h1ds.git"
 def dev():
     """localhost with django dev server"""
     env.environment = 'development'
-    env.venv = "%(project)s_%(environment)s" %env    
+    env.venv = "%(project)s_%(environment)s" %env
     if platform.linux_distribution()[0] == 'Ubuntu':
         env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
     else:
@@ -52,7 +52,7 @@ def dev():
 def staging():
     """localhost with apache"""
     env.environment = 'staging'
-    env.venv = "%(project)s_%(environment)s" %env    
+    env.venv = "%(project)s_%(environment)s" %env
     env.user = STAGING_USER
     env.hosts = [STAGING_HOST]
     if platform.linux_distribution()[0] == 'Ubuntu':
@@ -69,7 +69,7 @@ def staging():
 def production():
     """server with apache."""
     env.environment = 'production'
-    env.venv = "%(project)s_%(environment)s" %env    
+    env.venv = "%(project)s_%(environment)s" %env
     if platform.linux_distribution()[0] == 'Ubuntu':
         env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
     else:
@@ -98,7 +98,7 @@ def stop_supervisord():
 def restart_supervisord():
     stop_supervisord()
     start_supervisord()
-            
+
 
 def update_dir_structure():
     """Create any missing dirs or files we need. Idempotent."""
@@ -169,7 +169,7 @@ def initiate():
         run('git clone %(git_url)s %(project)s' % env)
         run('pip install fabric')
     update_dir_structure()
-        
+
 def update():
     """Can be run multiple times. Idempotent."""
 
@@ -222,6 +222,7 @@ def update():
 
     with cd(env_dir):
         sudo('chown -R --reference=$PWD db')
+        sudo('chown -R --reference=$PWD serverfiles')
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with prefix('cd %(project)s' %env):
@@ -237,15 +238,18 @@ def update():
             run("./manage.py migrate h1ds_core --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_mdsplus --settings=%(settings)s" % env)
             run("./manage.py migrate h1ds_summary --settings=%(settings)s" % env)
+            run("./manage.py migrate h1ds_configdb --settings=%(settings)s" % env)
+            run("./manage.py migrate djcelery --settings=%(settings)s" % env)
             run("./manage.py createtree %(test_mds_dir)s --settings=%(settings)s" % env)
             run("./manage.py loaddata sphinxdoc_project --settings=%(settings)s" % env)
             run("./manage.py updatedoc -b h1ds --settings=%(settings)s" % env)
-
+    
     # Now that we  have finished making changes to  the database, change
     # the permissions back to those appropriate for the server.
     with cd(env_dir):
         sudo('chown -R %(server_user)s:%(server_group)s db' %env)
-
+        sudo('chown -R %(server_user)s:%(server_group)s serverfiles' %env)
+    
     # Now, set up apache
     if env.environment in ['staging', 'production']:
         # Create Apache config from template
@@ -268,4 +272,3 @@ def update():
         sudo('/etc/init.d/apache2 reload')
 
     restart_supervisord()
-    
