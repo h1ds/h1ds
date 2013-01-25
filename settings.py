@@ -149,6 +149,7 @@ INSTALLED_APPS = (
     'django_openid_auth',
     'h1ds_mdsplus',
     'h1ds_summary',
+    'h1ds_configdb',
     'haystack',
     'sphinxdoc',
 )
