@@ -30,6 +30,12 @@ DEFAULT_SHOT_REGEX = "last10"
 DEFAULT_ATTR_STR = "default"
 DEFAULT_FILTER = None
 
+class NoAttributeException(Exception):
+    pass
+
+class NoShotException(Exception):
+    pass
+
 class AJAXLatestSummaryShotView(View):
     """Return latest shot."""
 
@@ -68,7 +74,8 @@ class SummaryMixin(object):
 
         # If there are no summary attributes, then tell the user
         if SummaryAttribute.objects.count() == 0:
-            return self.no_attribute_response(request)
+            raise NoAttributeException
+            #return self.no_attribute_response(request)
 
         attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
 
@@ -102,7 +109,8 @@ class SummaryMixin(object):
 
         shot_where = parse_shot_str(shot_str)
         if shot_where == None:
-            return self.no_shot_response(request)
+            #return self.no_shot_response(request)
+            raise NoShotException
 
         if filter_str == None:
             where = shot_where
@@ -153,8 +161,7 @@ class JSONSummaryResponseMixin(SummaryMixin):
     http_method_names = ['get']
 
     def no_attribute_response(self, request):
-        # TODO
-        pass
+        return HttpResponse(json.dumps({'error':'Summary database has no attributes..'}, cls=MyEncoder), mimetype='application/json')
 
     def get(self, request, *args, **kwargs):
 
@@ -188,6 +195,7 @@ class HTMLSummaryResponseMixin(SummaryMixin):
 
         # TODO need to fix get_summary_data so it doesn't return REsponse object...
         summary_data = self.get_summary_data(request, *args, **kwargs)
+
         try:
             (data, select_str, table, where)  = summary_data
         except ValueError:
@@ -262,7 +270,14 @@ class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMix
         self.request = request
         self.args = args
         self.kwargs = kwargs
-        return handler(self, request, *args, **kwargs)
+        try:
+            return handler(self, request, *args, **kwargs)
+        except NoAttributeException:
+            return rep_class.no_attribute_response(self, request)
+        except NoShotException:
+            return rep_class.no_shot_response(self, request)
+
+            
 
 
 class SummaryView(MultiSummaryResponseMixin, View):
