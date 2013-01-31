@@ -249,6 +249,31 @@ update the staging server:
     (h1ds_development)$ fab staging update
 
 
-You should be able to see H1DS running in a browser at the host-only IP address of the staging server (i.e. ``http://192.168.56.101``).
+You should be able  to see H1DS running in a  browser at the host-only
+IP address of the staging server (i.e. ``http://192.168.56.101``).
+
+
+If  everything appears  to be  working,  you probably  won't need  the
+graphical interface to your staging server as you really only need ssh
+and tcp (for http) access. It may be more convenient to run VirtualBox
+in  headless mode.  For  example,  if your  staging  server is  called
+``Ubuntu 12.04 LTS`` this would be:
+
+.. code-block:: bash
+
+    $ VBoxHeadless --startvm "Ubuntu 12.04 LTS"
+
+
+
+Setting up a production environment
+-----------------------------------
+
+The setup procedure for the  production environment is essentially the
+same as for  the staging environment. You'll just need  to install the
+prerequisites   and   Apache,   edit   the   ``PRODUCTION_USER``   and
+``PRODUCTION_HOST``      in      your      ``fabfile.py``,      create
+``settings_production.py`` from the template  and run ``fab production
+setup``  and ``fab production update``  from within  your  development
+environment.
 
 
