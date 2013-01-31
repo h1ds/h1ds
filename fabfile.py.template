@@ -55,16 +55,15 @@ def staging():
     env.venv = "%(project)s_%(environment)s" %env
     env.user = STAGING_USER
     env.hosts = [STAGING_HOST]
-    if platform.linux_distribution()[0] == 'Ubuntu':
-        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
-        env.server_user = 'www-data'
-        env.server_group = 'www-data'
+    # for Ubuntu staging server
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages"
+    env.server_user = 'www-data'
+    env.server_group = 'www-data'
 
-    else:
-        # assume Arch linux
-        env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
-        env.server_user = 'http'
-        env.server_group = 'http'
+    # for Arch linux staging server
+    #env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
+    #env.server_user = 'http'
+    #env.server_group = 'http'
 
 def production():
     """server with apache."""

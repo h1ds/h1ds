@@ -199,6 +199,15 @@ you have  your Ubuntu  virtual server  working, follow  the prerequisite
 steps above (see :ref:`installing_h1ds_prerequisites`).
 
 
+You'll also need to install the apache webserver and wsgi module:
+
+.. code-block:: bash
+
+    $ sudo apt-get install apache2 libapache2-mod-wsgi
+
+
+
+
 Next, set up a host-only network connection for your staging server. You
 may need to load the ``vboxnetadp`` and ``vboxnetflt`` kernel modules on
 your host (development) system. Then, in the general VirtualBox settings
