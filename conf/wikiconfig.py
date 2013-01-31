@@ -116,6 +116,7 @@ class Config(multiconfig.DefaultConfig):
     #acl_rights_before = u"YourName:read,write,delete,revert,admin"
 
     acl_rights_before = django_settings.WIKI_ACL_RIGHTS_BEFORE
+    acl_rights_default = django_settings.WIKI_ACL_RIGHTS_DEFAULT
 
     # The default (ENABLED) password_checker will keep users from choosing too
     # short or too easy passwords. If you don't like this and your site has

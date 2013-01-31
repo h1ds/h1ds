@@ -12,10 +12,10 @@ magnetically confined plasma experiments.
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    Installing H1DS <intro/install>
-   Deploying H1DS on a server <intro/deploy>
+   Overview of H1DS <intro/overview>   
    
 Modules:
 
