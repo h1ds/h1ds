@@ -215,6 +215,11 @@ With your staging server powered up, type ``ip addr`` to find the IP address of 
     STAGING_HOST = "192.168.56.101" # Host-only IP address of VirtualBox guest system
 
 
+Next, in your development virtualenv, run:
+
+.. code-block:: bash
+
+    (h1ds_development)$ fab staging setup
 
 
 

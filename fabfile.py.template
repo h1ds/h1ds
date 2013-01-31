@@ -156,7 +156,7 @@ def update_dir_structure():
             if exists(sp):
                 sudo('chown -R %s:%s %s' %(env.server_user, env.server_group, sp))
 
-def initiate():
+def setup():
     """To be run once only. Non-idempotent.
 
     Please avoid making  changes to this function, as they  will need to
