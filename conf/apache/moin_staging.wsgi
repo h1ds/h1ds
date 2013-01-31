@@ -19,10 +19,6 @@
 
 import sys, os
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-n_subdir = 3
-PROJECT_ROOT = THIS_DIR
-for i in range(n_subdir):
-    PROJECT_ROOT = os.path.dirname(PROJECT_ROOT)
 
 
 # a) Configuration of Python's code search path
@@ -31,16 +27,13 @@ for i in range(n_subdir):
 
 # a1) Path of the directory where the MoinMoin code package is located.
 #     Needed if you installed with --prefix=PREFIX or you didn't use setup.py.
-# Find the python dir in the virtualenv
-
-for dir in os.listdir(os.path.join(PROJECT_ROOT, 'lib')):
-    if dir.startswith('python'):
-       sys.path.insert(0, os.path.join(PROJECT_ROOT, 'lib', dir, 'site-packages'))
+#sys.path.insert(0, '/lib/python2.3/site-packages')
 
 # a2) Path of the directory where wikiconfig.py / farmconfig.py is located.
 #     See wiki/config/... for some sample config files.
 # TODO: don't use absolute path...
-sys.path.insert(0, os.path.dirname(THIS_DIR))
+sys.path.insert(0, THIS_DIR+'/../')
+#sys.path.insert(0, '/path/to/farmconfigdir')
 
 # b) Configuration of moin's logging
 #    If you have set up MOINLOGGINGCONF environment variable, you don't need this!
@@ -55,7 +48,8 @@ from MoinMoin.web.serving import make_application
 # use shared=True to have moin serve the builtin static docs
 # use shared=False to not have moin serve static docs
 #use shared='/my/path/to/htdocs' to serve static docs from that path
-
-static_dir = os.path.join(PROJECT_ROOT, 'h1ds', 'moin', 'static')
+static_dir = THIS_DIR
+for i in range(2):
+    static_dir = os.path.dirname(static_dir)
+static_dir = os.path.join(static_dir, 'moin', 'static')
 application = make_application(shared=static_dir)
-

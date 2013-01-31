@@ -206,8 +206,6 @@ You'll also need to install the apache webserver and wsgi module:
     $ sudo apt-get install apache2 libapache2-mod-wsgi
 
 
-
-
 Next, set up a host-only network connection for your staging server. You
 may need to load the ``vboxnetadp`` and ``vboxnetflt`` kernel modules on
 your host (development) system. Then, in the general VirtualBox settings
@@ -218,7 +216,11 @@ adapter and select the newly created  host-only network as its name (you
 may need to power off the virtual machine to edit the settings).
 
 
-With your staging server powered up, type ``ip addr`` to find the IP address of your staging server on the host-only network, it should be something like ``192.168.56.101``, and will likely be ``eth1``. Edit the staging server settings in `fabfile.py` in your development environment::
+With your staging  server powered up, type ``ip addr``  to find the IP
+address of your staging server on  the host-only network, it should be
+something like  ``192.168.56.101``, and will likely  be ``eth1``. Edit
+the  staging  server  settings  in `fabfile.py`  in  your  development
+environment::
 
     STAGING_USER = "username" # user on VirtualBox guest system
     STAGING_HOST = "192.168.56.101" # Host-only IP address of VirtualBox guest system
@@ -229,7 +231,14 @@ Next, in your development virtualenv, run:
 .. code-block:: bash
 
     (h1ds_development)$ fab staging setup
+    (h1ds_development)$ cp settings_staging.py{.template,}
 
+Make any desired  changes to ``settings_staging.py`` --  you should at
+least edit  ``SECRET_KEY`` to  something unique and  unguessable. Then
+update the staging server:
 
+.. code-block:: bash
+
+    (h1ds_development)$ fab staging update
 
 

@@ -1,12 +1,11 @@
 <VirtualHost *:80>
     WSGIScriptReloading On
-    WSGIDaemonProcess h1ds-staging
+    WSGIDaemonProcess h1ds-staging python-path=__venv_dir__:__venv_dir__/lib/python2.7/site-packages processes=5 threads=1
     WSGIProcessGroup h1ds-staging
     WSGIApplicationGroup h1ds-staging
     WSGIPassAuthorization On
     
     WSGIScriptAlias /wiki __venv_dir__/h1ds/conf/apache/moin_staging.wsgi/
-    WSGIScriptAlias /develop __venv_dir__/h1ds/conf/apache/trac_staging.wsgi/
     WSGIScriptAlias / __venv_dir__/h1ds/conf/apache/h1ds_staging.wsgi/
 
     <Location "/">
@@ -14,19 +13,16 @@
         Allow from all
     </Location>
 
-    <Location "/develop/login">
-        AuthType Digest
-        AuthName "trac"
-	AuthDigestDomain /develop
-	AuthUserFile __venv_dir__/trac.htpasswd
-	Require valid-user
-    </Location>
-    
     <Location "/static">
         SetHandler None
     </Location>
 
+    <Location "/media">
+        SetHandler None
+    </Location>
+
     Alias /static __venv_dir__/static
+    Alias /media __venv_dir__/media
     
     <Location "/admin-media">
         SetHandler None
