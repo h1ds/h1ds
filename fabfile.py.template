@@ -50,7 +50,7 @@ def dev():
     env.server_group = os.getgid()
 
 def staging():
-    """localhost with apache"""
+    """staging server with apache"""
     env.environment = 'staging'
     env.venv = "%(project)s_%(environment)s" %env
     env.user = STAGING_USER

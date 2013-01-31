@@ -28,6 +28,7 @@ support  other systems.  If  you are  interested in  using  H1DS with  a
 non-MDSplus system,  I'd be  happy to  help you  with the  required code
 changes.
 
+.. _installing_h1ds_prerequisites:
 
 Prerequisites
 -------------
@@ -175,5 +176,46 @@ You can now start the development server via:
     (h1ds_development)$ ./manage.py runcserver --settings=h1ds.settings_development
 
 You can update H1DS any time by repeating the ``fab dev update`` command.
+
+Setting up a staging environment
+--------------------------------
+
+If you are making  changes to the H1DS code for  a production server, it
+helps to have the production  environment replicated in a staging server
+so  you can  make  sure  your code  changes  behave  as expected  before
+changing the code on your public website.
+
+
+Here we use `VirtualBox <https://www.virtualbox.org/>`_ to replicate the
+production server,  run on the  development system (i.e. laptop)  with a
+host-only network connection between  the development system and staging
+server. We will use Ubuntu 12.04 LTS for the staging server.
+
+
+First, you'll  need to install VirtualBox  and start a new  Ubuntu 12.04
+guest operating system. There are plenty of resources on the web to help
+you with that, so I won't go into  any detail here on how to do it. Once
+you have  your Ubuntu  virtual server  working, follow  the prerequisite
+steps above (see :ref:`installing_h1ds_prerequisites`).
+
+
+Next, set up a host-only network connection for your staging server. You
+may need to load the ``vboxnetadp`` and ``vboxnetflt`` kernel modules on
+your host (development) system. Then, in the general VirtualBox settings
+(``File -> Preferences...``) go to the network settings and create a new
+host-only  network. Then  in the  VirtualBox settings  for your  staging
+server select  ``Network`` and add  a new adapter attached  to host-only
+adapter and select the newly created  host-only network as its name (you
+may need to power off the virtual machine to edit the settings).
+
+
+With your staging server powered up, type ``ip addr`` to find the IP address of your staging server on the host-only network, it should be something like ``192.168.56.101``, and will likely be ``eth1``. Edit the staging server settings in `fabfile.py` in your development environment::
+
+    STAGING_USER = "username" # user on VirtualBox guest system
+    STAGING_HOST = "192.168.56.101" # Host-only IP address of VirtualBox guest system
+
+
+
+
 
 
