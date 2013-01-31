@@ -205,6 +205,13 @@ You'll also need to install the apache webserver and wsgi module:
 
     $ sudo apt-get install apache2 libapache2-mod-wsgi
 
+Also deactivate the default apache site on your staging server:
+
+.. code-block:: bash
+
+    $ sudo a2dissite 000-default
+    $ sudo service apache2 reload
+
 
 Next, set up a host-only network connection for your staging server. You
 may need to load the ``vboxnetadp`` and ``vboxnetflt`` kernel modules on
@@ -240,5 +247,8 @@ update the staging server:
 .. code-block:: bash
 
     (h1ds_development)$ fab staging update
+
+
+You should be able to see H1DS running in a browser at the host-only IP address of the staging server (i.e. ``http://192.168.56.101``).
 
 

@@ -20,3 +20,14 @@ WIKI_EDITOR_GROUPS = [u"EditorGroup", ]
 # in the wiki. Please use CamelCase for all usernames.
 WIKI_SUPERUSERS = [u"MyUsername", ]
 WIKI_ACL_RIGHTS_BEFORE = u"MyUsername:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
+
+########################################################################
+## Settings which should be optional                                  ##
+########################################################################
+
+import h1.metadata
+H1DS_CONFIGDB_METADATA_FUNCTION = h1.metadata.read_metadata
+
+########################################################################
+## Optional settings                                                  ##
+########################################################################
