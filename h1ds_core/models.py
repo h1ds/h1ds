@@ -1,4 +1,9 @@
-"""..."""
+"""Model classes for h1ds_core
+
+H1DS Core contains models for communicating between H1DS modules.
+
+
+"""
 
 from django.db import models
 

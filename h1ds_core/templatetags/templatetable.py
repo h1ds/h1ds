@@ -102,52 +102,55 @@ class ColumnSortedTableNode(TableNode):
 
 @register.tag(name="table")
 def do_table(parser,token):
-    """
-    Tag to help rendering tables. Replicates the django for tag,
-    but add's in more helpers specific to tables.
+    """Tag to help rendering tables. 
 
-    {{table.counter0}}
-    {{table.counter}}
-    {{table.rowcounter0}}
-    {{table.rowcounter}}
-    {{table.startrow}}
-    {{table.endrow}}
-    {{table.oddrow}}
-    {{table.evenrow}}
-    {{table.firstrow}}
-    {{table.lastrow}}
-    {{table.firstcell}}
-    {{table.lastcell}}
-    {{table.lastcellinrow}}
-    {{table.evencol}}
-    {{table.oddcol}}
-    {{table.parenttable}}
+    Replicates the django for tag,  but add's in more helpers specific
+    to tables.
 
-    EX:
-    (this is a some what more complicated example, which
-    hopefully illustrates this tags use better):
-    <table width="100%">
-        {% table genre artist.genres.all 5 %}
-            {% if table.startrow %}
-                {% if table.oddrow %}
-                <tr class="highlight">
-                {% else %}
-                <tr>
+    Usage::
+
+        {{table.counter0}}
+        {{table.counter}}
+        {{table.rowcounter0}}
+        {{table.rowcounter}}
+        {{table.startrow}}
+        {{table.endrow}}
+        {{table.oddrow}}
+        {{table.evenrow}}
+        {{table.firstrow}}
+        {{table.lastrow}}
+        {{table.firstcell}}
+        {{table.lastcell}}
+        {{table.lastcellinrow}}
+        {{table.evencol}}
+        {{table.oddcol}}
+        {{table.parenttable}}
+
+        EX:
+        (this is a some what more complicated example, which
+        hopefully illustrates this tags use better):
+        <table width="100%">
+            {% table genre artist.genres.all 5 %}
+                {% if table.startrow %}
+                    {% if table.oddrow %}
+                    <tr class="highlight">
+                    {% else %}
+                    <tr>
+                    {% endif %}
                 {% endif %}
-            {% endif %}
-            {% if table.lastcellinrow %}
-                <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust removeableGenre">
-            {% else %}
-                <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust removeableGenre">
-            {% endif %}
-                <div class="options displayNone"></div>
-                {{genre.name}}
-                </td>
-            {% if table.endrow %}
-            </tr>
-            {% endif %}
-        {% endtable %}
-    </table>
+                {% if table.lastcellinrow %}
+                    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust removeableGenre">
+                {% else %}
+                    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust removeableGenre">
+                {% endif %}
+                    <div class="options displayNone"></div>
+                    {{genre.name}}
+                    </td>
+                {% if table.endrow %}
+                </tr>
+                {% endif %}
+            {% endtable %}
+        </table>
     """
     bits=token.contents.split()
     cellvar=bits[1]
