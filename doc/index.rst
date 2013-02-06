@@ -15,7 +15,8 @@ Contents:
    :maxdepth: 1
 
    Installing H1DS <intro/install>
-   Overview of H1DS <intro/overview>   
+   Overview of H1DS <intro/overview>
+   H1DS Concepts<intro/concepts>
    
 Modules:
 
