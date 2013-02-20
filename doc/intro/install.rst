@@ -199,6 +199,55 @@ you have  your Ubuntu  virtual server  working, follow  the prerequisite
 steps above (see :ref:`installing_h1ds_prerequisites`).
 
 
+You can set up H1DS to use either the Nginx or Apache web servers. Nginx
+is recommended,  as it better  handles long connections and  server side
+events,   which  allow   us  to   have  server-side   events  and   data
+streaming. For  an Nginx setup,  edit your `fabfile.py`  settings to
+include::
+
+    STAGING_WEBSERVER = "nginx"
+
+For Apache, use::
+
+    STAGING_WEBSERVER = "apache"
+
+
+
+Using Nginx
+^^^^^^^^^^^
+
+You'll need to install the nginx webserver:
+
+.. code-block:: bash
+
+    $ sudo apt-get install nginx
+
+As Nginx acts  as a reverse proxy,  we need a server  running the actual
+django  code. We'll  use gunicorn  and  gevent, which  the fabfile  will
+install into the virtualenv. However, to build gevent we need to install
+another system library:
+
+.. code-block:: bash
+
+    $ sudo apt-get install libevent-dev
+
+
+The default Nginx install includes a default site configuration which we
+need    to    remove.     We    remove   the    symbolic    line    from
+`/etc/nginx/sites-enabled`,   the  original   file  can   be  found   at
+`/etc/nginx/sites-available/default` if  you need  to refer  to it  at a
+later time:
+
+.. code-block:: bash
+
+    $ sudo rm /etc/nginx/site-enabled/default
+
+
+
+
+Using Apache
+^^^^^^^^^^^^
+
 You'll also need to install the apache webserver and wsgi module:
 
 .. code-block:: bash
