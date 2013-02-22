@@ -1,7 +1,7 @@
 ipython
 numpy==1.6.2
 supervisor
-django==1.3.6
+django==1.4.5
 http://people.physics.anu.edu.au/~dgp112/python-mdsplus/MDSplus-4.0_2.tgz
 South==0.7.3
 celery==3.0
