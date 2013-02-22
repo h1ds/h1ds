@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-LOGFILE=__venv_dir/log/h1ds.gunicorn.log
+LOGFILE=__venv_dir__/log/h1ds.gunicorn.log
 LOGDIR=$(dirname $LOGFILE)
 NUM_WORKERS=3
 # user/group to run as
