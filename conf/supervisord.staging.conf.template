@@ -7,7 +7,7 @@ pidfile=%(here)s/../../pid/supervisord.pid
 [program:django]
 directory = %(here)s/../
 user = __user__
-command = %(here)s/../gunicorn.sh
+command = %(here)s/../gunicorn.staging.sh
 stdout_logfile = %(here)s/../../log/gunicorn.out.log
 stderr_logfile = %(here)s/../../log/gunicorn.err.log
 
