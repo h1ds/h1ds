@@ -230,3 +230,11 @@ HAYSTACK_SEARCH_ENGINE = 'whoosh'
 HAYSTACK_WHOOSH_PATH = os.path.join(THIS_DIR, 'whoosh_index')
 
 FIXTURE_DIRS = (os.path.join(THIS_DIR, 'fixtures'),)
+
+# Example
+#WIKI_ACL_RIGHTS_BEFORE = u"BoydBlackwell:read,write,delete,revert,admin"
+#WIKI_ACL_RIGHTS_DEFAULT = u"EditorGroup:read,write,delete +All:read -All:write,delete,revert,admin"
+
+WIKI_ACL_RIGHTS_BEFORE = u""
+WIKI_ACL_RIGHTS_DEFAULT = u""
+
