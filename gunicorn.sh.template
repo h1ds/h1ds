@@ -6,10 +6,10 @@ NUM_WORKERS=3
 # user/group to run as
 USER=__user__
 GROUP=__group__
-ADDRESS=127.0.0.1:8081
-cd __venv_dir__/h1ds
-source ../bin/activate
+ADDRESS=unix:/tmp/h1ds.gunicorn.sock
+cd __venv_dir__
+source bin/activate
 test -d $LOGDIR || mkdir -p $LOGDIR
-exec ../bin/gunicorn h1ds.wsgi:application -w $NUM_WORKERS \
+exec bin/gunicorn h1ds.wsgi:application -w $NUM_WORKERS \
     --user=$USER --group=$GROUP --log-level=info --bind=$ADDRESS \
     --log-file=$LOGFILE 2>>$LOGFILE
