@@ -8,8 +8,15 @@ from h1ds_configdb.models import ConfigDBFile, ConfigDBFileType
 from h1ds_configdb.models import ConfigDBPropertyType, ConfigDBProperty
 from h1ds_configdb.models import value_type_mapping
 
-metadata_scanner = settings.H1DS_CONFIGDB_METADATA_FUNCTION
+def dummy_metadata_scanner(full_filename):
+    raise NotImplementedError
 
+metadata_scanner = getattr(settings, 
+                           "H1DS_CONFIGDB_METADATA_FUNCTION", 
+                           dummy_metadata_scanner)
+
+    
+    
 def md5_for_filename(fn, block_size=2**20):
     with open(fn, 'rb') as f:
         md5 = hashlib.md5()
