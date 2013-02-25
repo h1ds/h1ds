@@ -14,7 +14,7 @@ stderr_logfile = %(here)s/../../log/gunicorn.err.log
 [program:celery]
 command=%(here)s/../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO --settings=h1ds.settings_staging
 directory=%(here)s/../../
-user=nobody
+; user=nobody
 numprocs=1
 stdout_logfile=%(here)s/../../log/celeryd.out.log
 stderr_logfile=%(here)s/../../log/celeryd.err.log
