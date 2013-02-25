@@ -144,7 +144,7 @@ INSTALLED_APPS = (
     'concurrent_server',
     'h1ds_core',
     'djcelery',
-    #'djkombu',
+    'kombu.transport.django',
     'south',
     'django_openid_auth',
     'h1ds_mdsplus',
