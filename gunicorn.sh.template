@@ -7,7 +7,7 @@ NUM_WORKERS=3
 USER=__user__
 GROUP=__group__
 ADDRESS=unix:/tmp/h1ds.gunicorn.sock
-SETTINGS=h1ds.settings___venv__
+export DJANGO_SETTINGS_MODULE=h1ds.settings___venv__
 cd __venv_dir__
 source bin/activate
 test -d $LOGDIR || mkdir -p $LOGDIR
@@ -16,4 +16,4 @@ test -d $LOGDIR || mkdir -p $LOGDIR
 #    --log-file=$LOGFILE 2>>$LOGFILE
 exec bin/gunicorn h1ds.wsgi:application -w $NUM_WORKERS \
     --log-level=info --bind=$ADDRESS \
-    --log-file=$LOGFILE 2>>$LOGFILE --settings=$SETTINGS
+    --log-file=$LOGFILE 2>>$LOGFILE
