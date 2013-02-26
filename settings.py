@@ -141,7 +141,6 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'concurrent_server',
     'h1ds_core',
     'djcelery',
     'kombu.transport.django',
