@@ -7,7 +7,7 @@ South==0.7.3
 celery==3.0.15
 django-celery==3.0.11
 python-openid==2.2.5
--e git://github.com/dpretty/django-concurrent-server.git#egg=django_concurrent_server-dev
+-e git://github.com/ashchristopher/django-concurrent-server.git@586989bda43be0a206c7f1d579d8c0f2a9a4580d#egg=django_concurrent_server-dev
 -e git+git://code.h1svr.anu.edu.au/h1ds/django-openid-auth.git#egg=django_openid_auth-dev
 -e git+git://code.h1svr.anu.edu.au/h1ds/h1ds_configdb.git#egg=h1ds_configdb-dev
 -e git+git://code.h1svr.anu.edu.au/h1ds/h1ds_core.git#egg=h1ds_core-dev
