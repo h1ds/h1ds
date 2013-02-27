@@ -4,9 +4,24 @@ pidfile=%(here)s/../../pid/supervisord.pid
 
 [supervisorctl]
 
+[program:django]
+directory = %(here)s/../
+; user = __user__
+command = %(here)s/../gunicorn.production.sh
+stdout_logfile = %(here)s/../../log/gunicorn.out.log
+stderr_logfile = %(here)s/../../log/gunicorn.err.log
+
+[program:moin]
+directory = %(here)s/../
+; user = __user__
+command = %(here)s/../moin.production.sh
+stdout_logfile = %(here)s/../../log/moin.out.log
+stderr_logfile = %(here)s/../../log/moin.err.log
+
 [program:celery]
-command=sh %(here)s/../scripts/runinenv.sh %(here)s/../../../h1ds_production %(here)s/../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=WARNING --settings=h1ds.settings_production
+command=%(here)s/../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO --settings=h1ds.settings_production
 directory=%(here)s/../../
+; user=nobody
 numprocs=1
 stdout_logfile=%(here)s/../../log/celeryd.out.log
 stderr_logfile=%(here)s/../../log/celeryd.err.log
