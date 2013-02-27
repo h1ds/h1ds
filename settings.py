@@ -171,7 +171,23 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+            },
+        },
     'handlers': {
+        'default': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(VENV_DIR, 'log', 'django.log'),
+            'maxBytes': 1024*1024*50, # 50 MB
+            'backupCount': 10,
+            'formatter':'verbose',
+            },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
