@@ -258,3 +258,6 @@ FIXTURE_DIRS = (os.path.join(THIS_DIR, 'fixtures'),)
 WIKI_ACL_RIGHTS_BEFORE = u""
 WIKI_ACL_RIGHTS_DEFAULT = u""
 
+# See https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-ALLOWED_HOSTS
+# You should set this to the list of used servers in settings_production.py
+ALLOWED_HOSTS = ['*',]
