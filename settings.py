@@ -149,8 +149,8 @@ INSTALLED_APPS = (
     'h1ds_mdsplus',
     'h1ds_summary',
     'h1ds_configdb',
-    'haystack',
-    'sphinxdoc',
+    #'haystack',
+    #'sphinxdoc',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
