@@ -10,10 +10,7 @@ it  should  run  on  any  other operating  system  supported  by  Python
 
 
 H1DS is  known to run on  Python 2.7. It  is built using the  Django web
-framework,  currently  version 1.3  which  supports  Python 2.4  to  2.7,
-however  it  is unlikely  Python  2.4  or 2.5  will  work  due to  other
-libraries used by H1DS.
-
+framework, currently version 1.5 which supports Python 2.6.5 and above.
 
 .. note::
 
@@ -74,15 +71,16 @@ been installed as a dependency of python-virtualenv):
 
     The Ubuntu virtualenv package only causes  a problem when it is used
     with  sudo, which  is required  when deploying  a production  server
-    (e.g. when  we need to  restart Apache). If  you are looking  to run
-    H1DS just on your  own computer you might be able  to use the Ubuntu
-    package. However, to keep things simple here we'll assume virtualenv
-    has been installed via pip.
+    (e.g. when we  need to reload the webserver). If  you are looking to
+    run H1DS  just on  your own computer  you might be  able to  use the
+    Ubuntu package.  However, to  keep things  simple here  we'll assume
+    virtualenv has been installed via pip.
 
 
-Now add the following to both your ``~/.bashrc`` and ``~/.profile`` files, replacing my_username
-with   your  own   username  (you   can  use   whatever  you   like  for
-``$WORKON_HOME``, it will be where all your virtualenvs are stored):
+Now  add the  following to  both your  ``~/.bashrc`` and  ``~/.profile``
+files, replacing  ``my_username`` with  your own  username (you  can use
+whatever  you like  for  ``$WORKON_HOME``,  it will  be  where all  your
+virtualenvs are stored):
 
 .. code-block:: bash
 
@@ -149,7 +147,7 @@ a *fabfile*) and the Django project settings file:
     (h1ds_development)$ cp settings_development.py{.template,}
 
 Open  up  ``settings_development.py``  in   an  editor  and  change  the
-``SECRET_KEY`` to something unique and unguessable.
+``SECRET_KEY`` to something unique and unguessable. For other options in the configuration file, see :ref:`config_settings`.
 
 
 Then, install the rest of the required software using the fabric script:
@@ -168,12 +166,11 @@ During  the update  you'll  be asked  if  you want  to  create a  Django
 superuser  account. Answer  ``yes``  and provide  the requested  details
 (name, email etc).
 
-
 You can now start the development server via:
 
 .. code-block:: bash
 
-    (h1ds_development)$ ./manage.py runcserver --settings=h1ds.settings_development
+    (h1ds_development)$ ./manage.py runserver --settings=h1ds.settings_development
 
 You can update H1DS any time by repeating the ``fab dev update`` command.
 
@@ -212,54 +209,50 @@ For Apache, use::
     STAGING_WEBSERVER = "apache"
 
 
+.. topic:: Using Nginx (recommended)
 
-Using Nginx
-^^^^^^^^^^^
-
-You'll need to install the nginx webserver:
-
-.. code-block:: bash
-
-    $ sudo apt-get install nginx
-
-As Nginx acts  as a reverse proxy,  we need a server  running the actual
-django  code. We'll  use gunicorn  and  gevent, which  the fabfile  will
-install into the virtualenv. However, to build gevent we need to install
-another system library:
-
-.. code-block:: bash
-
-    $ sudo apt-get install libevent-dev
+    You'll need to install the nginx webserver:
+    
+    .. code-block:: bash
+    
+        $ sudo apt-get install nginx
+    
+    As Nginx acts  as a reverse proxy,  we need a server  running the actual
+    django  code. We'll  use gunicorn  and  gevent, which  the fabfile  will
+    install into the virtualenv. However, to build gevent we need to install
+    another system library:
+    
+    .. code-block:: bash
+    
+        $ sudo apt-get install libevent-dev
 
 
-The default Nginx install includes a default site configuration which we
-need    to    remove.     We    remove   the    symbolic    line    from
-`/etc/nginx/sites-enabled`,   the  original   file  can   be  found   at
-`/etc/nginx/sites-available/default` if  you need  to refer  to it  at a
-later time:
+    The default Nginx install includes a default site configuration which we
+    need    to    remove.     We    remove   the    symbolic    line    from
+    `/etc/nginx/sites-enabled`,   the  original   file  can   be  found   at
+    `/etc/nginx/sites-available/default` if  you need  to refer  to it  at a
+    later time:
+    
+    .. code-block:: bash
+    
+        $ sudo rm /etc/nginx/site-enabled/default
+    
 
-.. code-block:: bash
-
-    $ sudo rm /etc/nginx/site-enabled/default
-
-
-
-
-Using Apache
-^^^^^^^^^^^^
-
-You'll also need to install the apache webserver and wsgi module:
-
-.. code-block:: bash
-
-    $ sudo apt-get install apache2 libapache2-mod-wsgi
-
-Also deactivate the default apache site on your staging server:
-
-.. code-block:: bash
-
-    $ sudo a2dissite 000-default
-    $ sudo service apache2 reload
+.. topic:: Using Apache (deprecated & no longer tested)
+    
+    You'll need to install the apache webserver and wsgi module:
+    
+    .. code-block:: bash
+    
+        $ sudo apt-get install apache2 libapache2-mod-wsgi
+    
+    Also deactivate the default apache site on your staging server:
+    
+    .. code-block:: bash
+    
+        $ sudo a2dissite 000-default
+        $ sudo service apache2 reload
+    
 
 
 Next, set up a host-only network connection for your staging server. You
@@ -311,6 +304,12 @@ in  headless mode.  For  example,  if your  staging  server is  called
 .. code-block:: bash
 
     $ VBoxHeadless --startvm "Ubuntu 12.04 LTS"
+
+When you want to close the virtual machine, without powering it off, type:
+
+.. code-block:: bash
+
+    $ vboxmanage controlvm "Ubuntu 12.04 LTS" savestate
 
 
 
