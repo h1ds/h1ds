@@ -77,7 +77,7 @@
     <div class="portlet-header">SQL query</div>
     <div class="portlet-content">
       <div class="sidebarcontent fullform">
-	<form action="{% url raw-sql %}" method="post">{% csrf_token %}
+	<form action="{% url "raw-sql" %}" method="post">{% csrf_token %}
 	  <span class="left">select</span>
 	  <INPUT style="width:100%" type="text" id="select" name="select" value="{{select}}"/>
 	  <span class="left">where</span>
