@@ -23,6 +23,7 @@ from django.conf.urls.defaults import patterns, include, url
 from django.contrib import admin
 from django.conf import settings
 
+from h1ds import AVAILABLE_H1DS_MODULES
 from h1ds.views import TextTemplateView
 
 admin.autodiscover()
@@ -35,7 +36,7 @@ urlpatterns = patterns('',
                        (r'^openid/', include('django_openid_auth.urls')),
                        )
 
-for mod_name in ['h1ds_mdsplus', 'h1ds_summary', 'h1ds_configdb']:
+for mod_name in AVAILABLE_H1DS_MODULES:
     if mod_name in settings.INSTALLED_APPS:
         mod = __import__(mod_name)
         urlpatterns += patterns('',

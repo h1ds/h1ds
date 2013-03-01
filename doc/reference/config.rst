@@ -48,8 +48,8 @@ Example: ``WIKI_ACL_RIGHTS_DEFAULT = u"EditorGroup:read,write,delete +All:read -
 Settings for h1ds_mdsplus
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-MODULE_ROOT_URL
-"""""""""""""""
+H1DS_MDSPLUS_ROOT_URL
+"""""""""""""""""""""
 
 Default: ``"mdsplus"``
 
@@ -92,8 +92,8 @@ Options:
 Settings for h1ds_summary
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-MODULE_ROOT_URL
-"""""""""""""""
+H1DS_SUMMARY_ROOT_URL
+"""""""""""""""""""""
 
 Default: ``"summary"``
 
@@ -103,8 +103,8 @@ Root URL for module.
 Settings for h1ds_configdb
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-MODULE_ROOT_URL
-"""""""""""""""
+H1DS_CONFIGDB_ROOT_URL
+""""""""""""""""""""""
 
 Default: ``"configurations"``
 

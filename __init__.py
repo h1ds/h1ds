@@ -6,3 +6,6 @@ documentation, configuration files etc.   What is the difference between
 project, whereas :mod:`h1ds_core` is a django app.
 
 """
+
+
+AVAILABLE_H1DS_MODULES = ['h1ds_mdsplus', 'h1ds_summary', 'h1ds_configdb']
