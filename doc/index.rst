@@ -17,6 +17,7 @@ Contents:
    Installing H1DS <intro/install>
    Overview of H1DS <intro/overview>
    H1DS Concepts<intro/concepts>
+   Configuration<reference/config>
    
 Modules:
 

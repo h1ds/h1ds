@@ -1,5 +1,8 @@
 H1DS module
 ===========
-
 .. automodule:: h1ds
-    :members:
+
+
+h1ds.urls
+---------
+.. automodule:: h1ds.urls

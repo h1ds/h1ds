@@ -1,3 +1,21 @@
+"""Base URLs for H1DS project.
+
+This module provides a small number of urls, and forwards app-specific URLS to the relevant apps.
+
+URLS provided by this module:
+
+* '^robots\.txt$' -- tell web-crawlers (Google et al.) which which areas to leave alone.
+* '^admin/doc/'   -- docs for admin interface
+* '^admin/'       -- admin interface
+* '^openid/'      -- OpenID authentication
+
+URLS passed to other H1DS modules.
+
+* '' -- all queries are first checked against h1ds_core for a match.
+
+
+
+"""
 from django.conf.urls.defaults import patterns, include, url
 from django.contrib import admin
 from django.conf import settings
