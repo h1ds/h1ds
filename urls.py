@@ -1,6 +1,7 @@
 """Base URLs for H1DS project.
 
-This module provides a small number of urls, and forwards app-specific URLS to the relevant apps.
+This module provides a small number of urls, and forwards app-specific
+URLS to the relevant apps.
 
 URLS provided by this module:
 
@@ -13,8 +14,21 @@ URLS passed to other H1DS modules.
 
 * '' -- all queries are first checked against h1ds_core for a match.
 
+For   the  optional   submodules  (i.e.   h1ds_mdsplus,  h1ds_summary,
+h1ds_configdb),  settings.INSTALLED_APPS  is  checked to  see  if  the
+submodule is installed. If  it is, then the root url  is read from the
+configuration settings:
 
+============= ====================== ==================
+module name   setting                default
+============= ====================== ==================
+h1ds_mdsplus  H1DS_MDSPLUS_ROOT_URL  '^mdsplus/'
+h1ds_summary  H1DS_SUMMARY_ROOT_URL  '^summary/'
+h1ds_configdb H1DS_CONFIGDB_ROOT_URL '^configurations/'
+============= ====================== ==================
 
+In the development environment  (i.e. settings.DEBUG==True), the media
+files (settings.MEDIA_ROOT) are served under '^media/'
 
 """
 import sys
