@@ -48,6 +48,14 @@ Example: ``WIKI_ACL_RIGHTS_DEFAULT = u"EditorGroup:read,write,delete +All:read -
 Settings for h1ds_mdsplus
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+MODULE_ROOT_URL
+"""""""""""""""
+
+Default: ``"mdsplus"``
+
+Root URL for module.
+
+
 H1DS_MDSPLUS_NODE_BLACKLIST
 """""""""""""""""""""""""""
 
@@ -79,6 +87,28 @@ Method for tracking shot changes.
 Options:
 
 * "inotify" - (linux only) listen for changes to shotid.sys.
+
+
+Settings for h1ds_summary
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MODULE_ROOT_URL
+"""""""""""""""
+
+Default: ``"summary"``
+
+Root URL for module.
+
+
+Settings for h1ds_configdb
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MODULE_ROOT_URL
+"""""""""""""""
+
+Default: ``"configurations"``
+
+Root URL for module.
 
 
 

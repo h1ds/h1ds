@@ -15,7 +15,10 @@ URLS passed to other H1DS modules.
 
 
 
+
 """
+import sys
+
 from django.conf.urls.defaults import patterns, include, url
 from django.contrib import admin
 from django.conf import settings
@@ -30,12 +33,16 @@ urlpatterns = patterns('',
                        (r'^admin/doc/', include('django.contrib.admindocs.urls')),
                        (r'^admin/', include(admin.site.urls)),
                        (r'^openid/', include('django_openid_auth.urls')),
-                       (r'^mdsplus/', include('h1ds_mdsplus.urls')),
-                       (r'^summary/', include('h1ds_summary.urls')),
-                       (r'^configurations/', include('h1ds_configdb.urls')),
-# (r'^docs/', include('sphinxdoc.urls')),
-# (r'^search/', include('haystack.urls')),
                        )
+
+for mod_name in ['h1ds_mdsplus', 'h1ds_summary', 'h1ds_configdb']:
+    if mod_name in settings.INSTALLED_APPS:
+        mod = __import__(mod_name)
+        urlpatterns += patterns('',
+        (r'^{}/'.format(mod.MODULE_ROOT_URL), 
+         include('{}.urls'.format(mod_name))),
+            )
+                                
 
 if settings.DEBUG:
     urlpatterns += patterns('',
