@@ -19,13 +19,21 @@ h1ds_configdb),  settings.INSTALLED_APPS  is  checked to  see  if  the
 submodule is installed. If  it is, then the root url  is read from the
 configuration settings:
 
-============= ====================== ==================
-module name   setting                default
-============= ====================== ==================
-h1ds_mdsplus  H1DS_MDSPLUS_ROOT_URL  '^mdsplus/'
-h1ds_summary  H1DS_SUMMARY_ROOT_URL  '^summary/'
-h1ds_configdb H1DS_CONFIGDB_ROOT_URL '^configurations/'
-============= ====================== ==================
+.. topic:: H1DS module root URL configuration
+
+    The root URLS for the H1DS modules can be configured individually.
+
+    ============= ========================== ==================
+    module name   setting                    default
+    ============= ========================== ==================
+    h1ds_mdsplus  ``H1DS_MDSPLUS_ROOT_URL``  ``mdsplus``
+    h1ds_summary  ``H1DS_SUMMARY_ROOT_URL``  ``summary``
+    h1ds_configdb ``H1DS_CONFIGDB_ROOT_URL`` ``configurations``
+    ============= ========================== ==================
+
+    The  URL regular  expression used  is ``'^config_value/'``,  where
+    ``config_value`` is specified by the relevant setting in the above
+    table.
 
 In the development environment  (i.e. settings.DEBUG==True), the media
 files (settings.MEDIA_ROOT) are served under '^media/'
@@ -42,22 +50,28 @@ from h1ds.views import TextTemplateView
 
 admin.autodiscover()
 
+def module_urlpattern(mod_name):
+    mod = __import__(mod_name)
+    mod_url_re = r'^{}/'.format(mod.MODULE_ROOT_URL)
+    mod_url_target = include('{}.urls'.format(mod_name))
+    return patterns(mod_url_re, mod_url_target)
+
+
+h1ds_mods = [m for m in AVAILABLE_H1DS_MODULES if m in settings.INSTALLED_APPS]
+
 urlpatterns = patterns('',
-                       (r'^robots\.txt$', TextTemplateView.as_view(template_name='robots.txt')),
+                       (r'^robots\.txt$', 
+                        TextTemplateView.as_view(template_name='robots.txt')
+                        ),
                        (r'', include('h1ds_core.urls')),
-                       (r'^admin/doc/', include('django.contrib.admindocs.urls')),
+                       (r'^admin/doc/', 
+                        include('django.contrib.admindocs.urls')),
                        (r'^admin/', include(admin.site.urls)),
                        (r'^openid/', include('django_openid_auth.urls')),
                        )
 
-for mod_name in AVAILABLE_H1DS_MODULES:
-    if mod_name in settings.INSTALLED_APPS:
-        mod = __import__(mod_name)
-        urlpatterns += patterns('',
-        (r'^{}/'.format(mod.MODULE_ROOT_URL), 
-         include('{}.urls'.format(mod_name))),
-            )
-                                
+for mod_name in h1ds_mods:
+    urlpatterns += module_urlpattern(mod_name)
 
 if settings.DEBUG:
     urlpatterns += patterns('',
