@@ -54,7 +54,7 @@ def module_urlpattern(mod_name):
     mod = __import__(mod_name)
     mod_url_re = r'^{}/'.format(mod.MODULE_ROOT_URL)
     mod_url_target = include('{}.urls'.format(mod_name))
-    return patterns('', mod_url_re, mod_url_target)
+    return patterns('', (mod_url_re, mod_url_target))
 
 
 h1ds_mods = [m for m in AVAILABLE_H1DS_MODULES if m in settings.INSTALLED_APPS]
