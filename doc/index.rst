@@ -6,7 +6,7 @@
 Welcome
 =======
 
-H1DS  is  a  an  extensible  web interface  designed  for  data  from
+H1DS  is  an  extensible  web interface  designed  for  data  from
 magnetically confined plasma experiments.
 
 Contents:

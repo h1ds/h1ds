@@ -1,3 +1,5 @@
+.. _H1DS-configuration:
+
 H1DS configuration
 ==================
 
