@@ -111,6 +111,11 @@ class Theme(ThemeBase):
         h1ds_footer = h1ds_headfoot.H1DSFooterNode()
         context = ""
         return unicode(h1ds_footer.render(context))
+
+    def google_tracker(self, d, **keywords):
+        tracker = h1ds_headfoot.H1DSGoogleTrackerNode()
+        context = ""
+        return unicode(tracker.render(context))
     
     def footer(self, d, **keywords):
         """ Assemble wiki footer
@@ -152,6 +157,7 @@ class Theme(ThemeBase):
             u'<script defer src="%sjs/script.js"></script>' %(django_settings.STATIC_URL),
             u'<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>',
             self.guiEditorScript(d),
+            self.google_tracker(d, **keywords),
             u'<!--[if lt IE 7 ]>',
             u'<script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>',
             u"<script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>",
