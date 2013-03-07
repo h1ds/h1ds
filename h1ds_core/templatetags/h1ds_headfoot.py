@@ -7,6 +7,9 @@ register = template.Library()
 h1ds_installed_apps = [a for a in settings.INSTALLED_APPS if a.startswith('h1ds_')]
     
 
+google_track_script = "<script type=\"text/javascript\">var _gaq = _gaq || [];_gaq.push(['_setAccount', 'GOOGLE_TRACKING_ID']);_gaq.push(['_trackPageview']);(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script>"
+
+
 class H1DSTitleNode(template.Node):
     def render(self, context):
         try:
@@ -59,10 +62,26 @@ def do_h1ds_footer(parser, token):
     """This populates the H1DS footer, showing registered H1DS modules with version numbers."""
     return H1DSFooterNode()
 
+class H1DSGoogleTrackerNode(template.Node):
+    def render(self, context):
+        if hasattr(settings, 'GOOGLE_TRACKING_ID'):
+            tracking_string = google_track_script.replace("GOOGLE_TRACKING_ID", settings.GOOGLE_TRACKING_ID)
+        else:
+            tracking_string = ""
+        return tracking_string
+
+def do_google_tracker(parser, token):
+    """If settings contain GOOGLE_TRACKER_ID, then add tracking script."""
+    return(H1DSGoogleTrackerNode())
+
+
+
 register.tag('h1ds_title', do_h1ds_title)
 register.tag('h1ds_header', do_h1ds_header)
 register.tag('h1ds_footer', do_h1ds_footer)
+register.tag('google_tracker', do_google_tracker)
+
 do_h1ds_title.is_safe = True
 do_h1ds_header.is_safe = True
 do_h1ds_footer.is_safe = True
-
+do_google_tracker.is_safe = True
