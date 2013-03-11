@@ -82,13 +82,14 @@ Default: ``"test"``
 
 SHOT_TRACKER
 """"""""""""
-Default: ``"inotify"``
+Default: ``"ping"``
 
 Method for tracking shot changes.
 
 Options:
 
-* "inotify" - (linux only) listen for changes to shotid.sys.
+* "ping" - periodically ask MDSplus for the latest shot.
+* "inotify" [not implemented] - (linux only) listen for changes to shotid.sys.
 
 
 Settings for h1ds_summary

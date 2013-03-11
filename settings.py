@@ -241,8 +241,12 @@ BROKER_URL = "django://"
 
 # Method for tracking shot changes.
 # Options: 
-# "inotify" - (linux only) listen for changes to shotid.sys.
-SHOT_TRACKER = "inotify"
+# "inotify" [not implemented] - (linux only) listen for changes to shotid.sys.
+# "ping" - periodically ask MDSplus for latest shot.
+SHOT_TRACKER = "ping"
+
+# number of seconds between pinging MDSplus for latest shot
+SHOT_TRACKER_PING_INTERVAL = 2
 
 
 HAYSTACK_SITECONF='h1ds.search_site'
