@@ -23,6 +23,7 @@ class H1DSSignalInstance(models.Model):
     """Records an instance of an H1DS signal."""
     signal = models.ForeignKey(H1DSSignal)
     time = models.DateTimeField(auto_now_add=True)
+    value = models.CharField(max_length=1024, blank=True)
 
     def __unicode__(self):
         return unicode("%s: %s" %(self.time, self.signal))
