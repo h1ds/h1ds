@@ -15,5 +15,5 @@ test -d $LOGDIR || mkdir -p $LOGDIR
 #    --user=$USER --group=$GROUP --log-level=info --bind=$ADDRESS \
 #    --log-file=$LOGFILE 2>>$LOGFILE
 exec bin/gunicorn h1ds.wsgi:application -w $NUM_WORKERS \
-    --log-level=info --bind=$ADDRESS \
+    --log-level=info --bind=$ADDRESS -k gevent \
     --log-file=$LOGFILE 2>>$LOGFILE
