@@ -36,3 +36,13 @@ rabbitmq-signing-key-public.asc
 doc/_build
 
 whoosh_index
+
+moin.staging.sh
+moin.production.sh
+gunicorn.staging.sh
+gunicorn.production.sh
+
+conf/nginx/h1ds_staging.conf
+conf/nginx/h1ds_production.conf
+conf/supervisord.staging.conf
+conf/supervisord.production.conf
