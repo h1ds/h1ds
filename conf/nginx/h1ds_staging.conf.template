@@ -37,7 +37,7 @@ server {
         # max time between shots - this looks like ~max supported for nginx                                                                                    
         proxy_read_timeout 24d;
 
-
+    }
     location / {
         proxy_pass http://unix:/tmp/h1ds.gunicorn.sock:;
         proxy_set_header Host $host;
