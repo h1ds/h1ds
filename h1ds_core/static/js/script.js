@@ -168,6 +168,13 @@ function loadCookie() {
 	}
     });
 
+    // load latest-shot-tracking state.
+    var shotTracking = $.cookie('shotTracking');
+    if (shotTracking === 'true') {
+	turnOnShotTracker();
+    } else {
+	turnOffShotTracker();
+    }
 }
 
 
@@ -1973,12 +1980,29 @@ function autoPollSummaryDB() {
     }
 }
 
-function toggleTrackLatestShot() {
-    console.log("toggled tracker");
-    //$("#mds-track-latest-shot").toggle("slide", {direction: 'up'}, 750);
-    //$("#mds-shot-controller").hide("slide", {direction: 'up'}, 750);
-    $("#mds-track-latest-shot").toggle();
+function turnOffShotTracker() {
+    $("#mds-track-latest-shot").hide();
+    $("#mds-shot-controller").show();
+    $("#mds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="mds-toggle-track-shot" name="mds-toggle-track-shot" value="track latest shot"></FORM>');
+    $.cookie("shotTracking", 'false', {path:'/'});	    
+
+}
+
+function turnOnShotTracker() {
     $("#mds-shot-controller").hide();
+    $("#mds-track-latest-shot").show();
+    $("#mds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="mds-toggle-track-shot" name="mds-toggle-track-shot" value="stop tracking latest shot"></FORM>');
+    $.cookie("shotTracking", 'true', {path:'/'});	    
+}
+
+function toggleTrackLatestShot() {
+    // Keep toggle state in cookie so we can retain user preference through navigation etc.
+    var currentState = $.cookie("shotTracking");
+    if (currentState === 'true') {
+	turnOffShotTracker();
+    } else {
+	turnOnShotTracker();
+    }
     return false;
 }  
 
@@ -1993,13 +2017,6 @@ $(document).ready(function() {
     $(".mds-node-item").each(function() {
 	populateMDSNav(tree, shot, $(this));
     });
-
-//    if ($("#mds-toggle-track-latest-shot").length) {
-//	// temp
-//	$("#mds-track-latest-shot").hide();
-//	// end temp
-//	$("#mds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="mds-toggle-track-shot" name="mds-toggle-track-shot" value="track latest shot"></FORM>');
-//    }
 
     if ($("#signal-1d-placeholder").length) {
 	var pc = new NewPlotContainer("#signal-1d-placeholder", [300,250],[0.75,0.25]);
