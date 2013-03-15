@@ -1980,19 +1980,32 @@ function autoPollSummaryDB() {
     }
 }
 
+var shot_stream_client = new XMLHttpRequest();
+
 function turnOffShotTracker() {
     $("#mds-track-latest-shot").hide();
     $("#mds-shot-controller").show();
     $("#mds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="mds-toggle-track-shot" name="mds-toggle-track-shot" value="track latest shot"></FORM>');
-    $.cookie("shotTracking", 'false', {path:'/'});	    
-
+    $.cookie("shotTracking", 'false', {path:'/'});
+    shot_stream_client.abort();
 }
 
 function turnOnShotTracker() {
     $("#mds-shot-controller").hide();
     $("#mds-track-latest-shot").show();
     $("#mds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="mds-toggle-track-shot" name="mds-toggle-track-shot" value="stop tracking latest shot"></FORM>');
-    $.cookie("shotTracking", 'true', {path:'/'});	    
+    $.cookie("shotTracking", 'true', {path:'/'});
+
+    shot_stream_client.open('get', '/mdsplus/_/shot_stream/');
+    shot_stream_client.send();
+    shot_stream_client.onprogress = function(){
+	var split_response = this.responseText.split("\n");
+	// -2 because each shot has a trailing \n
+	var new_shot = split_response[split_response.length-2];
+	$.getJSON("/mdsplus/_/url_for_shot",
+		  {'input_path':window.location.toString(), 'shot':new_shot},
+		  function(d){window.location = d.new_url;});
+    };
 }
 
 function toggleTrackLatestShot() {
