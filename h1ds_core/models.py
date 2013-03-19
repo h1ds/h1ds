@@ -6,6 +6,7 @@ H1DS Core contains models for communicating between H1DS modules.
 """
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.db import models
 
 
@@ -51,8 +52,20 @@ class Worksheet(models.Model):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=256)
     description = models.TextField()
+    slug = models.SlugField(max_length=256)
     is_public = models.BooleanField(default=public_worksheets_default)
     pagelets = models.ManyToManyField(Pagelet, through='PageletCoordinates')
+
+    class Meta:
+        unique_together = (("user", "slug"),)
+
+    def __unicode__(self):
+        return unicode("[%s] %s" %(self.user, self.name))
+
+    def get_absolute_url(self):
+        return reverse("h1ds-user-worksheet",kwargs={
+            "username":self.user.username,
+            "worksheet":self.slug})
 
 class PageletCoordinates(models.Model):
     pagelet = models.ForeignKey(Pagelet)

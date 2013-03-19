@@ -1,28 +1,21 @@
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.core import serializers
 from django.http import HttpResponse
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django import forms
-    
-from h1ds_core.models import H1DSSignalInstance
+from django.views.generic import ListView, DetailView
+from django.utils.decorators import method_decorator
+
+from h1ds_core.models import H1DSSignalInstance, Worksheet
 
 def homepage(request):
     """Return the H1DS homepage."""
     return render_to_response('h1ds_core/homepage.html', 
                               context_instance=RequestContext(request))
-
-def dashboard(request):
-    """Return the H1DS homepage."""
-    signals = H1DSSignalInstance.objects.all()[:20]
-    if request.is_ajax():
-        signals_json = serializers.serialize('json', reversed(signals), use_natural_keys=True)
-        return HttpResponse(signals_json, 'application/javascript')
-    return render_to_response('h1ds_core/dashboard.html',{'signals':signals}, 
-                              context_instance=RequestContext(request))
-
 
 def logout_view(request):
     """Log the user out of H1DS."""
@@ -35,6 +28,25 @@ class ChangeProfileForm(forms.Form):
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
     email = forms.EmailField()
+
+
+class UserMainView(ListView):
+
+    def get_queryset(self):
+        return Worksheet.objects.filter(user=self.request.user)
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(UserMainView, self).dispatch(*args, **kwargs)
+
+class WorksheetView(DetailView):
+
+    def get_object(self):
+        w = get_object_or_404(Worksheet, user__username=self.kwargs['username'], slug=self.kwargs['worksheet'])
+        if w.is_public or w.user == self.request.user:
+            return w
+        else:
+            raise PermissionDenied
 
 
 @login_required
