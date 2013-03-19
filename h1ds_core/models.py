@@ -41,7 +41,24 @@ class H1DSSignalInstance(models.Model):
         get_latest_by = 'time'
 
 
-class WorkSheet(models.Model):
+class Pagelet(models.Model):
+    name = models.CharField(max_length=1024)
+    pagelet_type = models.CharField(max_length=128)
+    url = models.URLField(max_length=2048)
+        
+class Worksheet(models.Model):
     """A page for users to organise and store content."""
-    user = models.ManyToManyField(User)
+    user = models.ForeignKey(User)
+    name = models.CharField(max_length=256)
+    description = models.TextField()
     is_public = models.BooleanField(default=public_worksheets_default)
+    pagelets = models.ManyToManyField(Pagelet, through='PageletCoordinates')
+
+class PageletCoordinates(model.Model):
+    pagelet = models.ForeignKey(Pagelet)
+    worksheet = models.ForeignKey(Worksheet)
+    coordinates = models.CharField(max_length=128)
+
+    def get_coordinates(self):
+        pass
+    
