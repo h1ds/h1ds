@@ -4,8 +4,16 @@ H1DS Core contains models for communicating between H1DS modules.
 
 
 """
-
+from django.conf import settings
+from django.contrib.auth.models import User
 from django.db import models
+
+
+if hasattr(settings, "WORKSHEETS_PUBLIC_BY_DEFAULT"):
+    public_worksheets_default = settings.WORKSHEETS_PUBLIC_BY_DEFAULT
+else:
+    public_worksheets_default = False
+
 
 
 class H1DSSignal(models.Model):
@@ -32,3 +40,8 @@ class H1DSSignalInstance(models.Model):
         ordering = ('-time',)
         get_latest_by = 'time'
 
+
+class WorkSheet(models.Model):
+    """A page for users to organise and store content."""
+    user = models.ManyToManyField(User)
+    is_public = models.BooleanField(default=public_worksheets_default)
