@@ -54,7 +54,7 @@ class Worksheet(models.Model):
     is_public = models.BooleanField(default=public_worksheets_default)
     pagelets = models.ManyToManyField(Pagelet, through='PageletCoordinates')
 
-class PageletCoordinates(model.Model):
+class PageletCoordinates(models.Model):
     pagelet = models.ForeignKey(Pagelet)
     worksheet = models.ForeignKey(Worksheet)
     coordinates = models.CharField(max_length=128)
