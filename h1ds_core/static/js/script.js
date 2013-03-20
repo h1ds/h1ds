@@ -2019,6 +2019,33 @@ function toggleTrackLatestShot() {
     return false;
 }  
 
+function populatePagelet(d) {
+    // get URL for pagelet data
+    var pagelet_url = d.attr("data-pagelet-url");
+    if (typeof pagelet_url === 'undefined') {
+	pagelet_url = window.location.toString();
+    }
+    var _json_url = new MdsUri(pagelet_url);
+    _json_url.non_mds_query['view'] = 'json';
+    var json_url = _json_url.renderUri();
+
+    var dtype = d.attr("data-dtype");
+    var ndim = d.attr("data-ndim");
+
+    
+
+    /*
+    $.ajax({url: data_url, 
+	    dataType: "json",
+	    async:true})
+	.done(function(a) {
+	    
+	});
+    */
+    console.log(json_url);
+    d.text(json_url);
+}
+
 $(document).ready(function() {
     // updateLatestShot();
     //autoUpdateLatestShot();
@@ -2030,7 +2057,10 @@ $(document).ready(function() {
     $(".mds-node-item").each(function() {
 	populateMDSNav(tree, shot, $(this));
     });
-
+    $(".h1ds-pagelet").each(function() {
+	populatePagelet($(this));
+    });
+    /*
     if ($("#signal-1d-placeholder").length) {
 	var pc = new NewPlotContainer("#signal-1d-placeholder", [300,250],[0.75,0.25]);
 	pc.addData("default", window.location.toString());
@@ -2053,7 +2083,7 @@ $(document).ready(function() {
     if ($("#signal-3d-placeholder").length) {
 	data = plotSignal3D();
     }
-
+    */
 });
 
 
