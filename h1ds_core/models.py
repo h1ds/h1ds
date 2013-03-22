@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import models
+from django.forms import ModelForm
 
 
 if hasattr(settings, "WORKSHEETS_PUBLIC_BY_DEFAULT"):
@@ -75,3 +76,23 @@ class PageletCoordinates(models.Model):
     def get_coordinates(self):
         pass
     
+class UserSignal(models.Model):
+    """Save data URLs for user."""
+
+    # TODO: unique together user, name
+
+    user = models.ForeignKey(User, editable=False)
+    url = models.URLField(max_length=2048)
+    name = models.CharField(max_length=1024)
+    ordering = models.IntegerField(blank=True)
+    is_fixed_to_shot = models.BooleanField(default=True)
+    shot = models.IntegerField(blank=True, null=True)
+
+    def __unicode__(self):
+        return unicode("%s" %(self.name))
+
+
+class UserSignalForm(ModelForm):
+    class Meta:
+        model = UserSignal
+        fields = ('name','is_fixed_to_shot',)

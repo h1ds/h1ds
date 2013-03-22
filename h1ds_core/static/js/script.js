@@ -1,5 +1,5 @@
 ﻿// Custom javascript code for H1 data system
-// David Pretty, 2010-2012
+// David Pretty, 2010-2013
 
 var isOdd = function(someNumber){
     return (someNumber%2 == 0) ? false : true;
@@ -1468,7 +1468,7 @@ Plot1D.prototype.drawLegend = function() {
 // and  zooming  of  plot  TODO:  more  usable FFT  plots,  maybe  a  2D
 // spectrogram plot, which is selectable and applies filters to the freq
 // range selected.
-function plotSignal1D(id) {
+function _old_plotSignal1D(id) {
     // Get margins and plot width  for container, so we can resample the
     // data to fit the window width.
     var width_data = getPlotWidth(id);
@@ -2019,6 +2019,37 @@ function toggleTrackLatestShot() {
     return false;
 }  
 
+function plotScalar(d, url) {
+    return 0;
+}
+
+function plot1DimArray(d, url) {
+	var pc = new NewPlotContainer("#"+d, [300,250],[0.75,0.25]);
+	pc.addData("default", url);
+	
+	pc.setPlot(2, {"plotType":"spectrogram"});
+	pc.addDataToPlot("default", 2, false);
+
+	pc.setPlot(0, {"plotType":"raw", "bindAxis":[2,-1]});
+	pc.addDataToPlot("default", 0, false);
+
+	pc.setPlot(3, {"plotType":"powerspectrum", "flip":true, 'bindAxis':[-1,2]});
+	pc.addDataToPlot("default", 3, true);
+
+}
+
+function getPlotFunction(dtype, ndim) {
+    // TODO: check dtype etc
+    switch(ndim) {
+	case "0":
+	return plotScalar;
+	break;
+	case "1":
+	return plot1DimArray;
+	break;
+    }
+}
+
 function populatePagelet(d) {
     // get URL for pagelet data
     var pagelet_url = d.attr("data-pagelet-url");
@@ -2032,8 +2063,8 @@ function populatePagelet(d) {
     var dtype = d.attr("data-dtype");
     var ndim = d.attr("data-ndim");
 
-    
-
+    var plot_fn = getPlotFunction(dtype, ndim);
+    plot_fn(d.attr("id"), json_url);
     /*
     $.ajax({url: data_url, 
 	    dataType: "json",
@@ -2042,8 +2073,8 @@ function populatePagelet(d) {
 	    
 	});
     */
-    console.log(json_url);
-    d.text(json_url);
+    console.log(d.attr("id"));
+    //d.text(json_url);
 }
 
 $(document).ready(function() {

@@ -5,7 +5,8 @@ from django.core.urlresolvers import reverse
 register = template.Library()
 
 h1ds_installed_apps = [a for a in settings.INSTALLED_APPS if a.startswith('h1ds_')]
-    
+h1ds_ignore = settings.H1DS_DATA_MODULES
+h1ds_ignore.append('h1ds_core')
 
 google_track_script = "<script type=\"text/javascript\">var _gaq = _gaq || [];_gaq.push(['_setAccount', 'GOOGLE_TRACKING_ID']);_gaq.push(['_trackPageview']);(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script>"
 
@@ -23,9 +24,9 @@ def do_h1ds_title(parser, token):
 
 class H1DSHeaderNode(template.Node):
     def render(self, context):
-        subtitle_string_list = []
+        subtitle_string_list = ['<a href="/data">Data</a>']
         for app in h1ds_installed_apps:
-            if app != 'h1ds_core':
+            if app not in h1ds_ignore:
                 app_module =  __import__(app, globals(), locals(), [])
                 app_doc_name = app_module.MODULE_DOC_NAME
                 homepage_url_name = app.replace('_', '-')+'-homepage'

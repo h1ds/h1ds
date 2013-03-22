@@ -1,3 +1,6 @@
+import inspect
+import re
+
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.core import serializers
@@ -7,10 +10,53 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django import forms
-from django.views.generic import ListView, DetailView
+from django.views.generic import View, ListView, DetailView, RedirectView
 from django.utils.decorators import method_decorator
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.conf import settings
+from django.utils.importlib import import_module
+from django.core.exceptions import ImproperlyConfigured
 
 from h1ds_core.models import H1DSSignalInstance, Worksheet
+from h1ds_core.models import UserSignal, UserSignalForm
+
+
+def get_shot_stream_generator():
+    i = settings.LATEST_SHOT_FUNCTION.rfind('.')
+    module, attr = settings.LATEST_SHOT_FUNCTION[:i], settings.LATEST_SHOT_FUNCTION[i+1:]
+    try:
+        mod = import_module(module)
+    except ImportError as e:
+        raise ImproperlyConfigured('Error importing request processor module %s: "%s"' % (module, e))
+    try:
+        func  = getattr(mod, attr)
+    except AttributeError:
+        raise ImproperlyConfigured('Module "%s" does not define a "%s" callable request processor' % (module, attr))
+    def new_shot_generator():
+        latest_shot = func()
+        while True:
+            time.sleep(1)
+            tmp = func()
+            if tmp != latest_shot:
+                latest_shot = tmp
+                yield "{}\n".format(latest_shot)
+    return new_shot_generator
+    
+new_shot_generator = get_shot_stream_generator()
+
+### TEMP ###
+import h1ds_mdsplus.filters as df
+############
+
+# Match strings "f(fid)_name", where fid is the filter ID
+filter_name_regex = re.compile('^f(?P<fid>\d+?)_name')
+
+# Match strings "f(fid)_arg(arg number)", where fid is the filter ID
+filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
+
+# Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
+filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
+
 
 def homepage(request):
     """Return the H1DS homepage."""
@@ -84,4 +130,188 @@ def edit_profile(request, username=''):
     else:
         return redirect('/')
 
+def get_filter_list(request):
+    """Parse GET query sring and return sorted list of filter names.
 
+    Arguments:
+    request -- a HttpRequest instance with HTTP GET parameters.
+    
+    """
+    filter_list = []
+
+    if not request.method == 'GET':
+        # If the HTTP method is not GET, return an empty list.
+        return filter_list
+
+    # First, create a dictionary with filter numbers as keys:
+    # e.g. {1:{'name':filter, 'args':{1:arg1, 2:arg2, ...}, kwargs:{}}
+    # note  that the  args  are stored  in  a dictionary  at this  point
+    # because we cannot assume GET query will be ordered.
+    filter_dict = {}
+    for key, value in request.GET.iteritems():
+        
+        name_match = filter_name_regex.match(key)
+        if name_match != None:
+            fid = int(name_match.groups()[0])
+            if not filter_dict.has_key(fid):
+                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+            filter_dict[fid]['name'] = value
+            continue
+
+        arg_match = filter_arg_regex.match(key)
+        if arg_match != None:
+            fid = int(arg_match.groups()[0])
+            argn = int(arg_match.groups()[1])
+            if not filter_dict.has_key(fid):
+                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+            filter_dict[fid]['args'][argn] = value
+            continue
+
+        kwarg_match = filter_kwarg_regex.match(key)
+        if kwarg_match != None:
+            fid = int(arg_match.groups()[0])
+            kwarg = arg_match.groups()[1]
+            if not filter_dict.has_key(fid):
+                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+            filter_dict[fid]['kwargs'][kwarg] = value
+            continue
+    
+    for fid, filter_data in sorted(filter_dict.items()):
+        arg_list = [i[1] for i in sorted(filter_data['args'].items())]
+        filter_list.append([fid, filter_data['name'], arg_list, filter_data['kwargs']])
+                           
+    return filter_list
+
+def get_max_fid(request):
+    # get maximum filter number
+    filter_list = get_filter_list(request)
+    if len(filter_list) == 0:
+        max_filter_num = 0
+    else:
+        max_filter_num = max([i[0] for i in filter_list])
+    return max_filter_num
+
+class FilterBaseView(RedirectView):
+    """Read in filter info from HTTP query and apply H1DS filter syntax.
+
+    The request GET query must contain  a field named 'filter' which has
+    the filter function  name as its value. Separate fields  for each of
+    the filter arguments  are also required, where the  argument name is
+    as it appears in the filter function code.
+
+    If  overwrite_fid is  False,  the new  filter will  have  an FID  +1
+    greater than the highest existing  filter. If overwrite_fid is True,
+    we expect a query field with an fid to overwrite.
+    
+    TODO: Do  we really  need path  to be passed  explicitly as  a query
+    field? or can we  use session info? - largest FID  is taken from the
+    request, but we return url from path... can't be good.
+    TODO: kwargs are not yet supported for filter functions.
+    """
+    
+    http_method_name = ['get']
+
+    def get_filter_url(self, overwrite_fid=False):
+        # Get name of filter function
+        qdict = self.request.GET.copy()
+        filter_name = qdict.pop('filter')[-1]
+
+        # Get the actual filter function
+        filter_function = getattr(df, filter_name)
+
+        # We'll append the filter to this path and redirect there.
+        return_path = qdict.pop('path')[-1]
+
+        if overwrite_fid:
+            fid = int(qdict.pop('fid')[-1])
+            for k,v in qdict.items():
+                if k.startswith('f%d_' %fid):
+                    qdict.pop(k)
+        else:
+            # Find the maximum fid in the existing query and +1
+            fid = get_max_fid(self.request)+1
+
+        # We expect the filter arguments to be passed as key&value in the HTTP query.
+        filter_arg_names = inspect.getargspec(filter_function).args[1:]
+        filter_arg_values = [qdict.pop(a)[-1] for a in filter_arg_names]
+
+        # add new filter to query dict
+        qdict.update({'f%d_name' %(fid):filter_name})
+        for argn, arg_val in enumerate(filter_arg_values):
+            qdict.update({'f%d_arg%d' %(fid,argn):arg_val})
+
+        return '?'.join([return_path, qdict.urlencode()])
+
+class ApplyFilterView(FilterBaseView):
+    def get_redirect_url(self, **kwargs):
+        return self.get_filter_url()
+
+class UpdateFilterView(FilterBaseView):
+    def get_redirect_url(self, **kwargs):
+        return self.get_filter_url(overwrite_fid=True)
+
+class RemoveFilterView(RedirectView):
+
+    http_method_names = ['get']
+
+    def get_redirect_url(self, **kwargs):
+        qdict = self.request.GET.copy()
+        filter_id = int(qdict.pop('fid')[-1])
+        return_path = qdict.pop('path')[-1]
+        new_filter_values = []
+        for k,v in qdict.items():
+            if k.startswith('f%d_' %filter_id):
+                qdict.pop(k)
+        return '?'.join([return_path, qdict.urlencode()])
+
+
+
+
+class UserSignalCreateView(CreateView):
+
+    form_class = UserSignalForm
+
+    def get_success_url(self):
+        return self.request.POST.get('url', "/")
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.user = self.request.user
+        self.object.ordering = 1 # TODO
+        self.object.url = self.request.POST.get('url', "/")
+        self.object.save()
+        return super(UserSignalCreateView, self).form_valid(form)
+
+
+class UserSignalUpdateView(UpdateView):
+    model = UserSignal
+
+    def get_success_url(self):
+        return self.request.POST.get('redirect_url', "/")
+
+    def get_context_data(self, **kwargs):
+        context = super(UserSignalUpdateView, self).get_context_data(**kwargs)
+        context['redirect_url'] = self.request.GET.get('redirect_url', "/")
+        return context
+
+class UserSignalDeleteView(DeleteView):
+    model = UserSignal
+
+    def get_success_url(self):
+        return self.request.POST.get('url', "/")
+
+
+        
+class ShotStreamView(View):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        return StreamingHttpResponse(new_shot_generator())
+
+class Node(object):
+    pass
+
+class NodeView(View):
+    pass
+    
