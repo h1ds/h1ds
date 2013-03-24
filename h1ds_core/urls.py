@@ -7,11 +7,11 @@ from django.conf import settings
 from h1ds_core.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
 from h1ds_core.views import UserSignalCreateView, UserSignalDeleteView, UserSignalUpdateView
 from h1ds_core.views import ShotStreamView
+from h1ds_core.views import RequestShotView
+from h1ds_core.views import AJAXShotRequestURL
+from h1ds_core.views import AJAXLatestShotView
 
 ### TEMP
-from h1ds_mdsplus.views import RequestShotView
-from h1ds_mdsplus.views import AJAXLatestShotView
-from h1ds_mdsplus.views import AJAXShotRequestURL
 from h1ds_mdsplus.views import request_url
 ###
 
@@ -41,18 +41,19 @@ urlpatterns += patterns('',
                        url(r'^_/usersignal/delete/(?P<pk>\d+)$', UserSignalDeleteView.as_view(), name="h1ds-delete-user-signal"),
                        url(r'^_/usersignal/update/(?P<pk>\d+)$', UserSignalUpdateView.as_view(), name="h1ds-update-user-signal"),
                        url(r'^_/shot_stream/$', ShotStreamView.as_view(), name="h1ds-shot-stream"),
-                       ###
                        url(r'^_/request_shot$', RequestShotView.as_view(), name="h1ds-request-shot"),
-                       url(r'^_/request_url$', request_url, name="h1ds-request-url"),
+                       url(r'^_/url_for_shot$', AJAXShotRequestURL.as_view(), name="h1ds-shot-request-url"),
                        ## don't need separate AJAX views - call with ?view=json
                        url(r'^_/latest_shot/$', AJAXLatestShotView.as_view(), name="h1ds-latest-shot-for-default-tree"),
                        url(r'^_/latest_shot/(?P<tree_name>[^/]+)/$', AJAXLatestShotView.as_view(), name="h1ds-latest-shot"),
-                       url(r'^_/url_for_shot$', AJAXShotRequestURL.as_view(), name="h1ds-shot-request-url"),
-                       )
+                       ###
+                       url(r'^_/request_url$', request_url, name="h1ds-request-url"),
+    )
 
 # Data modules
-data_patterns = patterns('',)
-for mod_name in settings.H1DS_DATA_MODULES:
-    data_patterns += module_urlpattern(mod_name)
+data_patterns = module_urlpattern(settings.H1DS_DATA_MODULE)
+data_url = r""
+if hasattr(settings, "H1DS_DATA_PREFIX"):
+    data_url = r'^{}/'.format(settings.H1DS_DATA_PREFIX)
 urlpatterns += patterns('',
-                         url(r'^data/', include(data_patterns)))
+                         url(data_url, include(data_patterns)))

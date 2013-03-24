@@ -5,8 +5,7 @@ from django.core.urlresolvers import reverse
 register = template.Library()
 
 h1ds_installed_apps = [a for a in settings.INSTALLED_APPS if a.startswith('h1ds_')]
-h1ds_ignore = settings.H1DS_DATA_MODULES
-h1ds_ignore.append('h1ds_core')
+h1ds_ignore = [settings.H1DS_DATA_MODULE, 'h1ds_core']
 
 google_track_script = "<script type=\"text/javascript\">var _gaq = _gaq || [];_gaq.push(['_setAccount', 'GOOGLE_TRACKING_ID']);_gaq.push(['_trackPageview']);(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();</script>"
 

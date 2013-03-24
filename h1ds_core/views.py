@@ -1,5 +1,6 @@
 import inspect
 import re
+import xml.etree.ElementTree as etree
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
@@ -20,8 +21,11 @@ from django.core.exceptions import ImproperlyConfigured
 from h1ds_core.models import H1DSSignalInstance, Worksheet
 from h1ds_core.models import UserSignal, UserSignalForm
 
+data_module = import_module(settings.H1DS_DATA_MODULE)
+URLProcessor = getattr(data_module, 'URLProcessor')
 
-def get_shot_stream_generator():
+
+def get_latest_shot_function():
     i = settings.LATEST_SHOT_FUNCTION.rfind('.')
     module, attr = settings.LATEST_SHOT_FUNCTION[:i], settings.LATEST_SHOT_FUNCTION[i+1:]
     try:
@@ -32,11 +36,16 @@ def get_shot_stream_generator():
         func  = getattr(mod, attr)
     except AttributeError:
         raise ImproperlyConfigured('Module "%s" does not define a "%s" callable request processor' % (module, attr))
+    return func
+
+get_latest_shot = get_latest_shot_function()
+
+def get_shot_stream_generator():
     def new_shot_generator():
-        latest_shot = func()
+        latest_shot = get_latest_shot()
         while True:
             time.sleep(1)
-            tmp = func()
+            tmp = get_latest_shot()
             if tmp != latest_shot:
                 latest_shot = tmp
                 yield "{}\n".format(latest_shot)
@@ -308,6 +317,82 @@ class ShotStreamView(View):
 
     def get(self, request, *args, **kwargs):
         return StreamingHttpResponse(new_shot_generator())
+
+
+class RequestShotView(RedirectView):
+    """Redirect to shot, as requested by HTTP post."""
+
+    http_method_names = ['post']
+
+    def get_redirect_url(self, **kwargs):
+        shot = self.request.POST['go_to_shot']
+        input_path = self.request.POST['reqpath']
+        url = URLProcessor(url=input_path)
+        url.shot = int(shot)
+        return url.get_url()
+
+class AJAXShotRequestURL(View):
+    """Return URL modified for requested shot"""
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        input_path = request.GET.get('input_path')
+        shot = int(request.GET.get('shot'))
+        input_shot = shot_regex.findall(input_path)[0]
+        new_url = input_path.replace("/"+str(input_shot)+"/", "/"+str(shot)+"/")
+        output_json = '{"new_url":"%s"}' %new_url
+        return HttpResponse(output_json, 'application/javascript')
+
+def xml_latest_shot(request):
+    """Hack to get IDL client working again - this should be merged with other latest shot view"""
+    
+    shot = str(get_latest_shot())
+    response_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsurlmap',
+                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    
+    shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
+    shot_number.text = shot
+    return HttpResponse(etree.tostring(response_xml), mimetype='text/xml; charset=utf-8')
+
+class AJAXLatestShotView(View):
+    """Return latest shot."""
+    
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        view = request.GET.get('view', 'json')
+        if view.lower() == 'xml':
+            return xml_latest_shot(request)
+        latest_shot = get_latest_shot()
+        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
+
+def request_url(request):
+    """Return the URL for the requested parameters."""
+
+    shot = request.GET['shot']
+    path = request.GET['path']
+    tree = request.GET['tree']
+
+    
+    url_xml = etree.Element('{http://h1svr.anu.edu.au/}mdsurlmap',
+                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    
+    # add mds info
+    shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
+    shot_number.text = shot
+    mds_path = etree.SubElement(url_xml, 'path', attrib={})
+    mds_path.text = path
+    mds_tree = etree.SubElement(url_xml, 'tree', attrib={})
+    mds_tree.text = tree
+
+    url_processor = URLProcessor(shot=int(shot), tree=tree, path=path)
+    url = url_processor.get_url()
+    url_el = etree.SubElement(url_xml, 'url', attrib={})
+    url_el.text = url
+
+    return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')
+
 
 class Node(object):
     pass
