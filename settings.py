@@ -153,6 +153,10 @@ INSTALLED_APPS = (
     #'sphinxdoc',
 )
 
+H1DS_DATA_MODULE = 'h1ds_mdsplus'
+H1DS_DATA_PREFIX = "data"
+LATEST_SHOT_FUNCTION = 'h1ds_mdsplus.utils.get_latest_shot'
+
 TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
                                "django.core.context_processors.debug",
                                "django.core.context_processors.i18n",
@@ -265,3 +269,4 @@ WIKI_ACL_RIGHTS_DEFAULT = u""
 # See https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-ALLOWED_HOSTS
 # You should set this to the list of used servers in settings_production.py
 ALLOWED_HOSTS = ['*',]
+

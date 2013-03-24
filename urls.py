@@ -48,6 +48,8 @@ from django.conf import settings
 from h1ds import AVAILABLE_H1DS_MODULES
 from h1ds.views import TextTemplateView
 
+
+
 admin.autodiscover()
 
 def module_urlpattern(mod_name):
@@ -57,7 +59,7 @@ def module_urlpattern(mod_name):
     return patterns('', (mod_url_re, mod_url_target))
 
 
-h1ds_mods = [m for m in AVAILABLE_H1DS_MODULES if m in settings.INSTALLED_APPS]
+h1ds_mods = [m for m in AVAILABLE_H1DS_MODULES if (m in settings.INSTALLED_APPS and m != settings.H1DS_DATA_MODULE)]
 
 urlpatterns = patterns('',
                        (r'^robots\.txt$', 
