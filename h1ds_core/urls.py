@@ -10,10 +10,8 @@ from h1ds_core.views import ShotStreamView
 from h1ds_core.views import RequestShotView
 from h1ds_core.views import AJAXShotRequestURL
 from h1ds_core.views import AJAXLatestShotView
-
-### TEMP
-from h1ds_mdsplus.views import request_url
-###
+from h1ds_core.views import request_url
+from h1ds_core.views import NodeView
 
 def module_urlpattern(mod_name):
     mod = __import__(mod_name)
@@ -43,17 +41,17 @@ urlpatterns += patterns('',
                        url(r'^_/shot_stream/$', ShotStreamView.as_view(), name="h1ds-shot-stream"),
                        url(r'^_/request_shot$', RequestShotView.as_view(), name="h1ds-request-shot"),
                        url(r'^_/url_for_shot$', AJAXShotRequestURL.as_view(), name="h1ds-shot-request-url"),
-                       ## don't need separate AJAX views - call with ?view=json
+                       ## should not have separate AJAX views - e.g. call with ?view=json
                        url(r'^_/latest_shot/$', AJAXLatestShotView.as_view(), name="h1ds-latest-shot-for-default-tree"),
                        url(r'^_/latest_shot/(?P<tree_name>[^/]+)/$', AJAXLatestShotView.as_view(), name="h1ds-latest-shot"),
-                       ###
                        url(r'^_/request_url$', request_url, name="h1ds-request-url"),
     )
 
 # Data modules
-data_patterns = module_urlpattern(settings.H1DS_DATA_MODULE)
-data_url = r""
+#data_patterns = module_urlpattern(settings.H1DS_DATA_MODULE)
+data_prefix = r"^"
 if hasattr(settings, "H1DS_DATA_PREFIX"):
-    data_url = r'^{}/'.format(settings.H1DS_DATA_PREFIX)
+    data_prefix = r'^{}'.format(settings.H1DS_DATA_PREFIX)
+
 urlpatterns += patterns('',
-                         url(data_url, include(data_patterns)))
+                         url(data_prefix+"(?P<url>.+)$", NodeView.as_view(), name="h1ds-node"))

@@ -1,6 +1,7 @@
 import inspect
 import re
 import xml.etree.ElementTree as etree
+import numpy as np
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
@@ -20,10 +21,12 @@ from django.core.exceptions import ImproperlyConfigured
 
 from h1ds_core.models import H1DSSignalInstance, Worksheet
 from h1ds_core.models import UserSignal, UserSignalForm
+from h1ds_core.base import get_filter_list
 
 data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
-
+#DataInterface = getattr(data_module, 'DataInterface')
+Node = getattr(data_module, 'Node')
 
 def get_latest_shot_function():
     i = settings.LATEST_SHOT_FUNCTION.rfind('.')
@@ -54,7 +57,7 @@ def get_shot_stream_generator():
 new_shot_generator = get_shot_stream_generator()
 
 ### TEMP ###
-import h1ds_mdsplus.filters as df
+import h1ds_core.filters as df
 ############
 
 # Match strings "f(fid)_name", where fid is the filter ID
@@ -139,57 +142,6 @@ def edit_profile(request, username=''):
     else:
         return redirect('/')
 
-def get_filter_list(request):
-    """Parse GET query sring and return sorted list of filter names.
-
-    Arguments:
-    request -- a HttpRequest instance with HTTP GET parameters.
-    
-    """
-    filter_list = []
-
-    if not request.method == 'GET':
-        # If the HTTP method is not GET, return an empty list.
-        return filter_list
-
-    # First, create a dictionary with filter numbers as keys:
-    # e.g. {1:{'name':filter, 'args':{1:arg1, 2:arg2, ...}, kwargs:{}}
-    # note  that the  args  are stored  in  a dictionary  at this  point
-    # because we cannot assume GET query will be ordered.
-    filter_dict = {}
-    for key, value in request.GET.iteritems():
-        
-        name_match = filter_name_regex.match(key)
-        if name_match != None:
-            fid = int(name_match.groups()[0])
-            if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
-            filter_dict[fid]['name'] = value
-            continue
-
-        arg_match = filter_arg_regex.match(key)
-        if arg_match != None:
-            fid = int(arg_match.groups()[0])
-            argn = int(arg_match.groups()[1])
-            if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
-            filter_dict[fid]['args'][argn] = value
-            continue
-
-        kwarg_match = filter_kwarg_regex.match(key)
-        if kwarg_match != None:
-            fid = int(arg_match.groups()[0])
-            kwarg = arg_match.groups()[1]
-            if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
-            filter_dict[fid]['kwargs'][kwarg] = value
-            continue
-    
-    for fid, filter_data in sorted(filter_dict.items()):
-        arg_list = [i[1] for i in sorted(filter_data['args'].items())]
-        filter_list.append([fid, filter_data['name'], arg_list, filter_data['kwargs']])
-                           
-    return filter_list
 
 def get_max_fid(request):
     # get maximum filter number
@@ -369,7 +321,7 @@ class AJAXLatestShotView(View):
 
 def request_url(request):
     """Return the URL for the requested parameters."""
-
+    
     shot = request.GET['shot']
     path = request.GET['path']
     tree = request.GET['tree']
@@ -378,13 +330,12 @@ def request_url(request):
     url_xml = etree.Element('{http://h1svr.anu.edu.au/}mdsurlmap',
                              attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
     
-    # add mds info
     shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
     shot_number.text = shot
-    mds_path = etree.SubElement(url_xml, 'path', attrib={})
-    mds_path.text = path
-    mds_tree = etree.SubElement(url_xml, 'tree', attrib={})
-    mds_tree.text = tree
+    data_path = etree.SubElement(url_xml, 'path', attrib={})
+    data_path.text = path
+    data_tree = etree.SubElement(url_xml, 'tree', attrib={})
+    data_tree.text = tree
 
     url_processor = URLProcessor(shot=int(shot), tree=tree, path=path)
     url = url_processor.get_url()
@@ -394,9 +345,230 @@ def request_url(request):
     return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')
 
 
-class Node(object):
-    pass
+####
 
-class NodeView(View):
-    pass
+class JSONNodeResponseMixin(object):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        data_dict = self.node.get_view('json', dict_only=True)
+        metadata = {
+            'path':unicode(self.node.url_processor.path),
+            'tree':self.node.url_processor.tree,
+            'shot':self.node.url_processor.shot,
+            #'mds_node_id':self.node.mds_object.nid,
+            }
+        # add metadata...
+        data_dict.update({'meta':metadata})
+        return HttpResponse(json.dumps(data_dict), mimetype='application/json')
+
+class CSVNodeResponseMixin(object):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        data = self.node.get_view('csv')
+        
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=data.csv'
+
+        writer = csv.writer(response)
+        for i in data:
+            writer.writerow(map(str, i))
+        return response
+
+
+class XMLNodeResponseMixin(object):
+    """TODO: Generalise this for all datatypes"""
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        # TODO: this should be handled by wrappers
+        # however, at present self.node.get_view
+        # calls get_view on the data object which
+        # doesn't ?? know about shot info, etc
+        # the proper fix might be to have wrappers
+        # take as args wrappers rather than data objects?
+        
+        data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsdata',
+                                 attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+
+        # add shot info
+        shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
+        shot_number.text = str(self.node.mds_object.tree.shot)
+        shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
+        shot_time.text = str(self.node.mds_object.getTimeInserted().date)
+        
+
+        # add data info
+        tree = etree.SubElement(data_xml, 'tree', attrib={})
+        tree.text = self.node.url_processor.tree
+        path = etree.SubElement(data_xml, 'path', attrib={})
+        path.text = self.node.url_processor.path
+
+        signal = etree.SubElement(data_xml, 'data', attrib={'type':'signal'})
+
+        ## make xlink ? to signal binary 
+        ## for now, just text link
+        #### should use proper url joining rather than string hacking...
+        signal.text = request.build_absolute_uri()
+        if '?' in signal.text:
+            # it doesn't matter if we have multiple 'view' get queries - only the last one is used
+            signal.text += '&view=bin' 
+        else:
+            signal.text += '?view=bin'
+
+        return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
+
+class PNGNodeResponseMixin(object):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        data = self.node.get_view('png')
+        img_buffer = StringIO.StringIO()
+        pylab.imsave(img_buffer, data.data, format='png')
+        return HttpResponse(img_buffer.getvalue(), mimetype='image/png')
+
+class BinaryNodeResponseMixin(object):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        disc_data = self.node.get_view('bin')
+        response = HttpResponse(disc_data['iarr'].tostring(), mimetype='application/octet-stream')
+        response['X-H1DS-signal-min'] = disc_data['minarr']
+        response['X-H1DS-signal-delta'] = disc_data['deltar']
+        response['X-H1DS-dim-t0'] = self.node.data.dim[0]
+        response['X-H1DS-dim-delta'] = self.node.data.dim[1]-self.node.data.dim[0]
+        response['X-H1DS-dim-length'] = len(self.node.data.dim)
+        response['X-H1DS-signal-units'] = self.node.data.units
+        response['X-H1DS-signal-dtype'] = str(disc_data['iarr'].dtype)
+        response['X-H1DS-dim-units'] = self.node.data.dim_units
+        return response
+
     
+class HTMLNodeResponseMixin(object):
+
+    http_method_names = ['get']
+
+    def get(self, request, *args, **kwargs):
+        # get any saved signals for the user
+        if request.user.is_authenticated():
+            user_signals = UserSignal.objects.filter(user=request.user)
+            user_signal_form = UserSignalForm()
+        else:
+            user_signals = []
+            user_signal_form = None            
+        html_metadata = {
+            'tree':self.node.url_processor.tree,
+            'shot':self.node.url_processor.shot, 
+            #'mds_node_id':self.node.mds_object.nid,
+            #'user_signals':user_signals,
+            #'node_display_info':self.node.get_display_info(),
+            }
+        
+        if self.node.get_data() == None:
+            template = "node_nodata.html"
+        elif np.isscalar(self.node.get_data()):
+            template = "node_scalar.html"
+        elif 1 <= len(self.node.get_data().shape) <= 3:
+            template = "node_{}d.html".format(len(self.node.get_data().shape))
+        else:
+            template = "node_unknown_data.html"
+        
+        return render_to_response('h1ds_core/{}'.format(template), 
+                                  {#'node_content':self.node.get_view('html'),
+                                   #'html_metadata':html_metadata,
+                                   'user_signals':user_signals,
+                                   'user_signal_form':user_signal_form,
+                                   'node':self.node,
+                                   'request_fullpath':request.get_full_path()},
+                                  context_instance=RequestContext(request))
+
+class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
+                             PNGNodeResponseMixin, XMLNodeResponseMixin,
+                             BinaryNodeResponseMixin, CSVNodeResponseMixin):
+    """Dispatch to requested representation."""
+
+    representations = {
+        "html":HTMLNodeResponseMixin,
+        "json":JSONNodeResponseMixin,
+        "png":PNGNodeResponseMixin,
+        "xml":XMLNodeResponseMixin,
+        "bin":BinaryNodeResponseMixin,
+        "csv":CSVNodeResponseMixin,
+        }
+
+    """
+    def get_node(self):
+        tagname = self.kwargs.get('tagname', DEFAULT_TAGNAME)
+        nodepath = self.kwargs.get('nodepath', DEFAULT_NODEPATH)
+        try:
+            mds_tree = Tree(self.kwargs['tree'], int(self.kwargs['shot']), 'READONLY')
+        except TreeException:
+            # If the  data cannot be  found, raise HTTP 404  error. HTTP
+            # 404 is  appropriate, as  the requested resource  cannot be
+            # found,  but may be  available in  the future  (i.e. future
+            # shot number)
+            raise Http404
+        mds_path = url_path_components_to_mds_path(self.kwargs['tree'], tagname, nodepath)
+        return NodeWrapper(mds_tree.getNode(mds_path))
+
+    def get_filtered_node(self, request):
+        node = self.get_node()
+        
+        for fid, name, args, kwargs in get_filter_list(request):
+            #if u'' in args:
+            #    messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
+            #    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+            node.data.apply_filter(fid, name, *args, **kwargs)
+        return node
+    """
+    def dispatch(self, request, *args, **kwargs):
+        # Try to dispatch to the right method for requested representation; 
+        # if a method doesn't exist, defer to the error handler. 
+        # Also defer to the error handler if the request method isn't on the approved list.
+        
+        # TODO: for now, we only support GET and POST, as we are using the query string to 
+        # determing which representation should be used, and the querydict is only available
+        # for GET and POST. Need to bone up on whether query strings even make sense on other
+        # HTTP verbs. Probably, we should use HTTP headers to figure out which content type should be
+        # returned - also, we might be able to support both URI and header based content type selection.
+        # http://stackoverflow.com/questions/381568/rest-content-type-should-it-be-based-on-extension-or-accept-header
+        # http://www.xml.com/pub/a/2004/08/11/rest.html
+
+        if request.method == 'GET':
+            requested_representation = request.GET.get('view', 'html').lower()
+        elif request.method == 'POST':
+            requested_representation = request.GET.get('view', 'html')
+        else:
+            # until we figure out how to determine appropriate content type
+            return self.http_method_not_allowed(request, *args, **kwargs)
+
+        if not requested_representation in self.representations:
+            # TODO: should handle this and let user know? rather than ignore?
+            requested_representation = 'html'
+
+        self.url_processor = URLProcessor(url=self.kwargs['url'])
+        #data_interface = DataInterface(self.url_processor)
+        #self.node = data_interface.get_node()
+        self.node = Node(url_processor = self.url_processor)
+        self.node.apply_filters(request=request)
+        
+        rep_class = self.representations[requested_representation]
+
+        if request.method.lower() in rep_class.http_method_names:
+            handler = getattr(rep_class, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        return handler(self, request, *args, **kwargs)
+
+
+class NodeView(MultiNodeResponseMixin, View):
+    pass

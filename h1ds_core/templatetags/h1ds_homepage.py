@@ -7,7 +7,7 @@ item_template = '<div class="mbox"><h2><a href="%(url)s">%(name)s</a></h2><p>%(d
 
 class H1DSHomepageNode(template.Node):
     def render(self, context):
-        h1ds_installed_apps = [a for a in settings.INSTALLED_APPS if a.startswith('h1ds_') and a != 'h1ds_core']
+        h1ds_installed_apps = [a for a in settings.INSTALLED_APPS if a.startswith('h1ds_') and not a in ['h1ds_core', settings.H1DS_DATA_MODULE]]
         
         tag_string = ""
         for app in h1ds_installed_apps:
