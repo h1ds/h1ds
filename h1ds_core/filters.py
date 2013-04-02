@@ -1,12 +1,10 @@
 from urlparse import urlparse, urlunparse
 import urllib2, json
 from django.core.urlresolvers import reverse
-import MDSplus
 import numpy as np
 
-def http_arg(dwrapper, arg):
+def http_arg(arg):
     if arg.startswith("http://"):
-        url = arg.replace('__shot__', str(dwrapper.original_mds['shot']))
         # make sure we get the JSON view, in case the user didn't add view=json
         # Split URL into [scheme, netloc, path, params, query, fragments]
         parsed_url = urlparse(url)
@@ -47,7 +45,7 @@ def first_pulse(dwrapper, threshold):
     threshold = 'mid' will use (max(signal)+min(signal))/2
     """
 
-    _threshold = http_arg(dwrapper, threshold)
+    _threshold = http_arg(threshold)
     if _threshold.lower() == 'mid':
         _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
     else:
@@ -63,7 +61,7 @@ def pulse_width(dwrapper, threshold):
     pulse width...
 
     """
-    _threshold = http_arg(dwrapper, threshold)
+    _threshold = http_arg(threshold)
     if _threshold.lower() == 'mid':
         _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
     else:
@@ -84,7 +82,7 @@ def pulse_number(dwrapper, threshold):
     number of pulses...??
 
     """
-    _threshold = http_arg(dwrapper, threshold)
+    _threshold = http_arg(threshold)
     if _threshold.lower() == 'mid':
         _threshold = (max(dwrapper.data)+min(dwrapper.data))/2
     else:
@@ -115,7 +113,7 @@ def max_of(dwrapper, value):
     value should be a float
 
     """
-    _value = float(http_arg(dwrapper, value))
+    _value = float(http_arg(value))
     if isinstance(dwrapper.data, np.ndarray):
         dwrapper.data[dwrapper.data<_value] = _value
     else:
@@ -146,7 +144,7 @@ def element(dwrapper, index):
 
     The first element has index 0.
     """
-    _index = int(http_arg(dwrapper, index))
+    _index = int(http_arg(index))
     dwrapper.data = dwrapper.data[_index]
     dwrapper.dim = None
     dwrapper.label = ('%s[%s]' %(dwrapper.label[0], index),)
@@ -175,7 +173,7 @@ def slanted_baseline(dwrapper, window):
     endpoints are computed at the first (window) and last (window) samples.
 
     """
-    _window = int(http_arg(dwrapper, window))
+    _window = int(http_arg(window))
     start = np.mean(dwrapper.data[:_window])
     end = np.mean(dwrapper.data[-_window:])
 
@@ -201,13 +199,13 @@ def prl_lpn(dwrapper, f0, order):
 
     TODO: only working for order = 1
     """
-    _f0 = float(http_arg(dwrapper, f0))
-    _order = int(http_arg(dwrapper, order))
+    _f0 = float(http_arg(f0))
+    _order = int(http_arg(order))
     dwrapper.data = _do_prl_lpn(dwrapper.data, dwrapper.dim, _f0, _order)
     dwrapper.label = ('prl_lpn(%s, %s, %s)' %(dwrapper.label[0], f0, order),)
 
 def resample(dwrapper, max_samples):
-    _max_samples = int(http_arg(dwrapper, max_samples))
+    _max_samples = int(http_arg(max_samples))
     signal_length = dwrapper.data.T.shape[0]
     delta_sample = signal_length/_max_samples
 
@@ -217,28 +215,29 @@ def resample(dwrapper, max_samples):
     dwrapper.label = ('resample(%s, %s)' %(dwrapper.label[0], max_samples),)
 
 
-def resample_minmax(dwrapper, n_bins):
+def resample_minmax(node, n_bins):
     """TODO: only works for 1D array..."""
-    _n_bins = int(http_arg(dwrapper, n_bins))
-    signal_length = dwrapper.data.T.shape[0]
+    _n_bins = int(http_arg(n_bins))
+    
+    signal_length = node.data.T.shape[0]
     if signal_length >= 2*_n_bins:
         delta_sample = signal_length/_n_bins
-        dwrapper.dim = dwrapper.dim[::delta_sample][:_n_bins]
+        node.dim = node.get_dim()[::delta_sample][:_n_bins]
         max_data = []
         min_data = []
 
         for i in range(_n_bins):
-            tmp = dwrapper.data[i*delta_sample:(i+1)*delta_sample]
+            tmp = node.data[i*delta_sample:(i+1)*delta_sample]
             max_data.append(max(tmp))
             min_data.append(min(tmp))
 
-        dwrapper.label = ('min', 'max',)
-        dwrapper.data = np.array([min_data, max_data])
+        node.label = ('min', 'max',)
+        node.data = np.array([min_data, max_data])
 
 def norm_dim_range(dwrapper, min_val, max_val):
     """Reduce range of signal."""
-    _min_val = float(http_arg(dwrapper, min_val))
-    _max_val = float(http_arg(dwrapper, max_val))
+    _min_val = float(http_arg(min_val))
+    _max_val = float(http_arg(max_val))
     min_e, max_e = int(_min_val*len(dwrapper.dim)), int(_max_val*len(dwrapper.dim))
     dwrapper.data = dwrapper.data[min_e:max_e]
     dwrapper.dim = dwrapper.dim[min_e:max_e]
@@ -246,26 +245,26 @@ def norm_dim_range(dwrapper, min_val, max_val):
 
 def dim_range(dwrapper, min_val, max_val):
     """Reduce range of signal."""
-    _min_val = float(http_arg(dwrapper, min_val))
-    _max_val = float(http_arg(dwrapper, max_val))
+    _min_val = float(http_arg(min_val))
+    _max_val = float(http_arg(max_val))
     min_e, max_e = np.searchsorted(dwrapper.dim, [_min_val, _max_val])
     dwrapper.data = dwrapper.data[min_e:max_e]
     dwrapper.dim = dwrapper.dim[min_e:max_e]
     dwrapper.label = ('dim_range(%s, %s, %s)' %(dwrapper.label[0], min_val, max_val),)
 
-def power_spectrum(dwrapper):
+def power_spectrum(node):
     """power spectrum of signal."""
-    output_size = 2**np.searchsorted(binary_powers, dwrapper.data.shape[0])
-    dwrapper.data = np.abs(np.fft.fft(dwrapper.data, n=output_size))
-    length = len(dwrapper.data)
-    sample_rate = np.mean(dwrapper.dim[1:] - dwrapper.dim[:-1])
-    dwrapper.dim = (1./sample_rate)*np.arange(length)/(length-1)
-    dwrapper.label = ('power_spectrum(%s)' %(dwrapper.label[0]),)
+    output_size = 2**np.searchsorted(binary_powers, node.data.shape[0])
+    node.data = np.abs(np.fft.fft(node.data, n=output_size))
+    length = len(node.data)
+    sample_rate = np.mean(node.get_dim()[1:] - node.get_dim()[:-1])
+    node.dim = (1./sample_rate)*np.arange(length)/(length-1)
+    node.label = ('power_spectrum(%s)' %(node.label[0]),)
 
 # TODO: generalise energy limits between 1d and 2d signals.
 def x_axis_energy_limit(dwrapper, threshold):
     """for 1d signal, limit range to include fraction of total energy"""
-    _threshold = float(http_arg(dwrapper, threshold))
+    _threshold = float(http_arg(threshold))
 
     ## TODO: need to get x,y dimensions standardised for matrix
     ## which dimension should be which??
@@ -295,14 +294,14 @@ def x_axis_energy_limit(dwrapper, threshold):
 def multiply(dwrapper, factor):
     """Multiply data by scale factor"""
 
-    _factor = float_or_array(http_arg(dwrapper, factor))
+    _factor = float_or_array(http_arg(factor))
 
     dwrapper.data = _factor*dwrapper.data
     dwrapper.label = ('%s*(%s)' %(factor, dwrapper.label[0]),)
 
 def divide(dwrapper, factor):
     """Divide data by scale factor"""
-    _factor = float(http_arg(dwrapper, factor))
+    _factor = float(http_arg(factor))
     dwrapper.data = dwrapper.data/_factor
     dwrapper.label = ('(%s)/%s' %(dwrapper.label[0], factor),)
 
@@ -310,7 +309,7 @@ def subtract(dwrapper, value):
     """Subtract the value.
 
     """
-    _value = float(http_arg(dwrapper, value))
+    _value = float(http_arg(value))
 
     dwrapper.data = dwrapper.data - _value
     dwrapper.label = ('%s - %s' %(dwrapper.label[0], value),)
@@ -319,7 +318,7 @@ def add(dwrapper, value):
     """Add the value.
 
     """
-    _value = float(http_arg(dwrapper, value))
+    _value = float(http_arg(value))
 
     dwrapper.data = dwrapper.data + _value
     dwrapper.label = ('%s + %s' %(dwrapper.label[0], value),)
@@ -327,7 +326,7 @@ def add(dwrapper, value):
 def exponent(dwrapper, value):
     """Raise data to the (value)th power."""
 
-    _value =float(http_arg(dwrapper, value))
+    _value =float(http_arg(value))
     dwrapper.data = dwrapper.data**_value
     dwrapper.label = ('%s^%s' %(dwrapper.label[0], value),)
 
@@ -336,26 +335,26 @@ def exponent(dwrapper, value):
 ## 1d signals -> 2d                                                   ##
 ########################################################################
 
-def spectrogram(dwrapper, bin_size):
+def spectrogram(node, bin_size):
     """spectrogram of signal. use bin_size=-1 for auto"""
-    _bin_size =int(http_arg(dwrapper, bin_size))
+    _bin_size =int(http_arg(bin_size))
     if _bin_size < 0:
         # have a guess...
-        approx_bin_size = np.sqrt(len(dwrapper.dim))
+        approx_bin_size = np.sqrt(len(node.get_dim()))
         _bin_size=2**np.searchsorted(binary_powers, approx_bin_size)
-    sample_rate = np.mean(dwrapper.dim[1:] - dwrapper.dim[:-1])
+    sample_rate = np.mean(node.dim[1:] - node.dim[:-1])
 
-    new_x_dim = dwrapper.dim[::_bin_size]
+    new_x_dim = node.dim[::_bin_size]
     new_y_dim = (1./sample_rate)*np.arange(_bin_size,dtype=float)/(_bin_size-1)
 
     #new_y_dim = new_y_dim[:_bin_size/2]
 
     new_data = []
-    for t_el in np.arange(len(dwrapper.data))[::_bin_size]:
+    for t_el in np.arange(len(node.data))[::_bin_size]:
         #new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size/2]).tolist())
-        new_data.append(np.abs(np.fft.fft(dwrapper.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size]).tolist())
+        new_data.append(np.abs(np.fft.fft(node.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size]).tolist())
 
-    dwrapper.data = np.array(new_data)
+    node.data = np.array(new_data)
 
     # TODO: this is a hack because I don't properly understand how numpy
     # determines dtypes - if new x and y dims are the same then it will have
@@ -367,12 +366,12 @@ def spectrogram(dwrapper, bin_size):
     # >>> q=np.array([[1,2,3],[2,3,4]], dtype=np.object)
     # >>> q[1] = q[1][:2] ** fails
     # it fails when we later try and have different shaped elements.
-    # So, let's create dwrapper.dim as something we know we can resizt
-    dwrapper.dim = np.array([[None],[None, None]])
-    dwrapper.dim[0] = new_x_dim.tolist()
-    dwrapper.dim[1] = new_y_dim.tolist()
+    # So, let's create node.dim as something we know we can resizt
+    node.dim = np.array([[None],[None, None]])
+    node.dim[0] = new_x_dim.tolist()
+    node.dim[1] = new_y_dim.tolist()
 
-    dwrapper.label = ('spectrogram(%s,%d)' %(dwrapper.label[0],_bin_size),)
+    node.label = ('spectrogram(%s,%d)' %(node.label[0],_bin_size),)
 
 
 
@@ -413,10 +412,10 @@ def flip_horizontal(dwrapper):
 
 def norm_dim_range_2d(dwrapper, min_x_val, max_x_val, min_y_val, max_y_val):
     """Reduce range of signal."""
-    _min_x_val = float(http_arg(dwrapper, min_x_val))
-    _max_x_val = float(http_arg(dwrapper, max_x_val))
-    _min_y_val = float(http_arg(dwrapper, min_y_val))
-    _max_y_val = float(http_arg(dwrapper, max_y_val))
+    _min_x_val = float(http_arg(min_x_val))
+    _max_x_val = float(http_arg(max_x_val))
+    _min_y_val = float(http_arg(min_y_val))
+    _max_y_val = float(http_arg(max_y_val))
 
     min_xe, max_xe = int(_min_x_val*len(dwrapper.dim[0])), int(_max_x_val*len(dwrapper.dim[0]))
     min_ye, max_ye = int(_min_y_val*len(dwrapper.dim[1])), int(_max_y_val*len(dwrapper.dim[1]))
@@ -426,14 +425,14 @@ def norm_dim_range_2d(dwrapper, min_x_val, max_x_val, min_y_val, max_y_val):
     dwrapper.dim[1] = dwrapper.dim[1][min_ye:max_ye]
     dwrapper.label = ('2d_normdim_range(%s, %s, %s, %s, %s)' %(dwrapper.label[0], min_x_val, max_x_val,min_y_val,max_y_val),)
 
-def y_axis_energy_limit(dwrapper, threshold):
+def y_axis_energy_limit(node, threshold):
     "2D reduce y-axis range to threshold*100% of total signal energy"
-    _threshold = float(http_arg(dwrapper, threshold))
+    _threshold = float(http_arg(threshold))
 
     ## TODO: need to get x,y dimensions standardised for matrix
     ## which dimension should be which??
 
-    total_power = np.sum(dwrapper.data.ravel()**2)
+    total_power = np.sum(node.data.ravel()**2)
 
     # if the result is going to be less than min_y_resolution then don't do it.
     min_y_resolution = 10
@@ -442,8 +441,8 @@ def y_axis_energy_limit(dwrapper, threshold):
     high_counter = -1
     removed_power = 0
     while removed_power < (1-_threshold)*total_power:
-        lower = np.sum(dwrapper.data[:,low_counter]**2)
-        upper = np.sum(dwrapper.data[:,high_counter]**2)
+        lower = np.sum(node.data[:,low_counter]**2)
+        upper = np.sum(node.data[:,high_counter]**2)
         if (min(lower, upper) + removed_power) > _threshold*total_power:
             break
         if lower < upper:
@@ -452,17 +451,17 @@ def y_axis_energy_limit(dwrapper, threshold):
         else:
             removed_power += upper
             high_counter -= 1
-    if len(dwrapper.dim[1][low_counter:high_counter]) > min_y_resolution:
-        dwrapper.data = dwrapper.data[:,low_counter:high_counter]
-        dwrapper.dim[1] = dwrapper.dim[1][low_counter:high_counter]
+    if len(node.dim[1][low_counter:high_counter]) > min_y_resolution:
+        node.data = node.data[:,low_counter:high_counter]
+        node.dim[1] = node.dim[1][low_counter:high_counter]
 
 ########################################################################
 ## Other                                                              ##
 ########################################################################
 
-def dim_of(dwrapper):
+def dim_of(node):
     """Return the dim of the data as the data."""
 
-    dwrapper.data = dwrapper.dim
-    dwrapper.dim = np.arange(len(dwrapper.data))
-    dwrapper.label = ('dim_of(%s)' %(dwrapper.label[0]),)
+    node.data = node.dim
+    node.dim = np.arange(len(node.data))
+    node.label = ('dim_of(%s)' %(node.label[0]),)

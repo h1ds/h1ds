@@ -1,7 +1,21 @@
+import re
 import numpy as np
 from django.conf import settings
+from django.utils.importlib import import_module
 
 import h1ds_core.filters
+
+data_module = import_module(settings.H1DS_DATA_MODULE)
+
+# Match strings "f(fid)_name", where fid is the filter ID
+filter_name_regex = re.compile('^f(?P<fid>\d+?)_name')
+
+# Match strings "f(fid)_arg(arg number)", where fid is the filter ID
+filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
+
+# Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
+filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
+
 
 class BaseURLProcessor(object):
     def __init__(self, **kwargs):
@@ -45,13 +59,29 @@ class BaseURLProcessor(object):
         return url
     
     def get_components_from_url(self, url):
-        t, s, p = url.split("/", 2)
-        tree = self.deurlize_tree(t)
-        shot = self.deurlize_shot(s)
-        path = self.deurlize_path(p)
+        stripped_url = url.strip("/")
+        n_slash = stripped_url.count("/")
+        if n_slash == 0:
+            tree = self.deurlize_tree(stripped_url)
+            shot = data_module.get_latest_shot(tree)
+            path = self.deurlize_path("")
+        elif n_slash == 1:
+            t, s = stripped_url.split("/")            
+            tree = self.deurlize_tree(t)
+            shot = self.deurlize_shot(s)
+            path = self.deurlize_path("")
+        else:
+            t, s, p = stripped_url.split("/", 2)            
+            tree = self.deurlize_tree(t)
+            shot = self.deurlize_shot(s)
+            path = self.deurlize_path(p)
         return tree, shot, path
         
     def get_url(self):
+        print "a"
+        print self.urlized_tree()
+        print self.urlized_shot()
+        print self.urlized_path()
         return self.apply_prefix("/".join([self.urlized_tree(),
                                            self.urlized_shot(),
                                            self.urlized_path()]))
@@ -78,26 +108,77 @@ class BaseNode(object):
     def __init__(self, url_processor=None):
         self.url_processor = url_processor
         self.filter_history = []
-        
+        self.data = None
+        self.dim = None
+        # TODO: get_ methods for following
+        self.label = ('data',)
         
     def apply_filters(self, request):
-        for f_id, f_name, f_args, f_kwargs in get_filter_list(request):
-            self.apply_filter(f_id, f_name, *f_args, **f_kwargs)
+        for fid, name, args, kwargs in get_filter_list(request):
+            self.apply_filter(fid, name, *args, **kwargs)
         
-    def apply_filter(self, f_id, f_name, *f_args, **f_kwargs):
-        filter_function = getattr(h1ds_core.filters, f_name)
-        filter_function(self.data)
+    def apply_filter(self, fid, name, *args, **kwargs):
+        d = self.get_data()
+        f_args, f_kwargs = self.preprocess_filter_args(args, kwargs)
+        filter_function = getattr(h1ds_core.filters, name)
+        filter_function(self, *f_args, **f_kwargs)
         #self.filter_history.append((fid, filter_function, args))
         #self.summary_dtype = sql_type_mapping.get(type(self.data))
         #self.available_filters = get_dtype_mappings(self.data)['filters']
         #self.available_views = get_dtype_mappings(self.data)['views'].keys()
 
+    def preprocess_filter_args(self, args, kwargs):
+        for i,a in enumerate(args):
+            if isinstance(a, str):
+                if "__shot__" in a:
+                    args[i] = a.replace("__shot__", str(self.url_processor.shot))
+        for k,v in kwargs.iteritems():
+            if isinstance(v, str):
+                if "__shot__" in v:
+                    kwargs[k] = v.replace("__shot__", str(self.url_processor.shot))
+        return args, kwargs
+        
+    def get_data(self):
+        if type(self.data) == type(None):
+            self.data = self.get_raw_data()
+        return self.data
+
+    def get_dim(self):
+        # TODO - scalars etc will have dim None, shouldn't re-read from node for these cases...
+        if type(self.dim) == type(None):
+            self.dim = self.get_raw_dim()
+        return self.dim
+        
+            
+    def get_raw_data(self):
+        return None
+    
     def get_parent(self):
         return None
 
     def get_children(self):
         return None
+
+    def get_ancestors(self):
+        ancestors = []
+        p = self.get_parent()
+        if p != None:
+            ancestors.extend(p.get_ancestors())
+            ancestors.append(p)
+        return ancestors
         
+
+    def get_long_name(self):
+        return unicode(self.url_processor.path)
+
+    def get_short_name(self):
+        return unicode(self.url_processor.path)
+
+    def __str__(self):
+        return self.get_long_name()
+
+    def __repr__(self):
+        return self.get_long_name()
 """
 class BaseDataInterface(object):
 

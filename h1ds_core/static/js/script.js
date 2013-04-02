@@ -466,7 +466,7 @@ NewPlotContainer.prototype.plotLine = function(selection) {
 	.classed("path-filled", function(d) { return d.data.is_minmax })
 	.style("stroke", function(d,i) { return d.data.colour; })
 	.style("fill", function(d,i) { return d.data.colour; })
-	.attr("d", function(d,i) {  
+	.attr("d", function(d,i) {
 	    if (d.data.is_minmax) {
 		var fill_data = fillPlot(d.data);
 		var line = d3.svg.line()

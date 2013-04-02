@@ -1,6 +1,7 @@
 import inspect
 import re
 import xml.etree.ElementTree as etree
+import json
 import numpy as np
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
@@ -25,8 +26,8 @@ from h1ds_core.base import get_filter_list
 
 data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
-#DataInterface = getattr(data_module, 'DataInterface')
 Node = getattr(data_module, 'Node')
+get_trees = getattr(data_module, 'get_trees')
 
 def get_latest_shot_function():
     i = settings.LATEST_SHOT_FUNCTION.rfind('.')
@@ -59,15 +60,6 @@ new_shot_generator = get_shot_stream_generator()
 ### TEMP ###
 import h1ds_core.filters as df
 ############
-
-# Match strings "f(fid)_name", where fid is the filter ID
-filter_name_regex = re.compile('^f(?P<fid>\d+?)_name')
-
-# Match strings "f(fid)_arg(arg number)", where fid is the filter ID
-filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
-
-# Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
-filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
 
 
 def homepage(request):
@@ -352,7 +344,20 @@ class JSONNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        data_dict = self.node.get_view('json', dict_only=True)
+        
+        response_data = {'labels':self.node.label}
+        if self.node.get_data() == None:
+            response_data['data'] = None
+            response_data['dim'] = None
+        elif np.isscalar(self.node.get_data()):
+            response_data['data'] = self.node.get_data()
+            response_data['dim'] = None
+        elif 1 <= len(self.node.get_data().shape) <= 3:
+            response_data['data'] =  self.node.get_data().tolist()
+            response_data['dim'] = self.node.get_dim().tolist()
+        else:
+            response_data['data'] = "unknown data"
+            response_data['dim'] = None
         metadata = {
             'path':unicode(self.node.url_processor.path),
             'tree':self.node.url_processor.tree,
@@ -360,8 +365,8 @@ class JSONNodeResponseMixin(object):
             #'mds_node_id':self.node.mds_object.nid,
             }
         # add metadata...
-        data_dict.update({'meta':metadata})
-        return HttpResponse(json.dumps(data_dict), mimetype='application/json')
+        response_data.update({'meta':metadata})
+        return HttpResponse(json.dumps(response_data), mimetype='application/json')
 
 class CSVNodeResponseMixin(object):
 
@@ -478,6 +483,9 @@ class HTMLNodeResponseMixin(object):
             template = "node_{}d.html".format(len(self.node.get_data().shape))
         else:
             template = "node_unknown_data.html"
+
+        trees = {'current':self.node.url_processor.tree}
+        trees['other'] = [t for t in get_trees() if t.lower() != trees['current'].lower()]
         
         return render_to_response('h1ds_core/{}'.format(template), 
                                   {#'node_content':self.node.get_view('html'),
@@ -485,6 +493,7 @@ class HTMLNodeResponseMixin(object):
                                    'user_signals':user_signals,
                                    'user_signal_form':user_signal_form,
                                    'node':self.node,
+                                   'trees':trees,
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 
