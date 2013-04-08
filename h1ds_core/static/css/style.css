@@ -1190,27 +1190,27 @@ span.right {
     float:right;
 }
 
-#mds-shot-previous {
+#h1ds-shot-previous {
     width:33%;
     display:inline;
     float:left;
 }
 
-#mds-shot-previous form {
+#h1ds-shot-previous form {
     display:inline;
 }
 
-#mds-shot-current {
+#h1ds-shot-current {
     width:33%;
     float:left;
     text-align:center;
 }
-#mds-shot-next {
+#h1ds-shot-next {
     width:32%;
     float:right;
 }
 
-#mds-shot-next form {
+#h1ds-shot-next form {
     display:inline;
     float:right;
 }

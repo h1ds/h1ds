@@ -292,7 +292,8 @@ def xml_latest_shot(request):
     """Hack to get IDL client working again - this should be merged with other latest shot view"""
     
     shot = str(get_latest_shot())
-    response_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsurlmap',
+    # TODO - get URI from settings, don't hardwire h1svr
+    response_xml = etree.Element('{http://h1svr.anu.edu.au/data}dataurlmap',
                              attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
     
     shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
@@ -319,7 +320,7 @@ def request_url(request):
     tree = request.GET['tree']
 
     
-    url_xml = etree.Element('{http://h1svr.anu.edu.au/}mdsurlmap',
+    url_xml = etree.Element('{http://h1svr.anu.edu.au/}dataurlmap',
                              attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
     
     shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
@@ -362,7 +363,6 @@ class JSONNodeResponseMixin(object):
             'path':unicode(self.node.url_processor.path),
             'tree':self.node.url_processor.tree,
             'shot':self.node.url_processor.shot,
-            #'mds_node_id':self.node.mds_object.nid,
             }
         # add metadata...
         response_data.update({'meta':metadata})
@@ -397,14 +397,14 @@ class XMLNodeResponseMixin(object):
         # the proper fix might be to have wrappers
         # take as args wrappers rather than data objects?
         
-        data_xml = etree.Element('{http://h1svr.anu.edu.au/mdsplus}mdsdata',
+        data_xml = etree.Element('{http://h1svr.anu.edu.au/data}data',
                                  attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
 
         # add shot info
         shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
-        shot_number.text = str(self.node.mds_object.tree.shot)
+        shot_number.text = str(self.node.url_processor.shot)
         shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
-        shot_time.text = str(self.node.mds_object.getTimeInserted().date)
+        shot_time.text = str(self.node.get_data_time())
         
 
         # add data info
@@ -470,7 +470,6 @@ class HTMLNodeResponseMixin(object):
         html_metadata = {
             'tree':self.node.url_processor.tree,
             'shot':self.node.url_processor.shot, 
-            #'mds_node_id':self.node.mds_object.nid,
             #'user_signals':user_signals,
             #'node_display_info':self.node.get_display_info(),
             }
@@ -483,10 +482,10 @@ class HTMLNodeResponseMixin(object):
             template = "node_{}d.html".format(len(self.node.get_data().shape))
         else:
             template = "node_unknown_data.html"
-
+        x = get_trees()
         trees = {'current':self.node.url_processor.tree}
         trees['other'] = [t for t in get_trees() if t.lower() != trees['current'].lower()]
-        
+        alt_formats = ['json', 'png', 'xml', 'csv', 'bin']
         return render_to_response('h1ds_core/{}'.format(template), 
                                   {#'node_content':self.node.get_view('html'),
                                    #'html_metadata':html_metadata,
@@ -494,6 +493,7 @@ class HTMLNodeResponseMixin(object):
                                    'user_signal_form':user_signal_form,
                                    'node':self.node,
                                    'trees':trees,
+                                   'alt_formats':alt_formats,
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 
@@ -511,31 +511,6 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
         "csv":CSVNodeResponseMixin,
         }
 
-    """
-    def get_node(self):
-        tagname = self.kwargs.get('tagname', DEFAULT_TAGNAME)
-        nodepath = self.kwargs.get('nodepath', DEFAULT_NODEPATH)
-        try:
-            mds_tree = Tree(self.kwargs['tree'], int(self.kwargs['shot']), 'READONLY')
-        except TreeException:
-            # If the  data cannot be  found, raise HTTP 404  error. HTTP
-            # 404 is  appropriate, as  the requested resource  cannot be
-            # found,  but may be  available in  the future  (i.e. future
-            # shot number)
-            raise Http404
-        mds_path = url_path_components_to_mds_path(self.kwargs['tree'], tagname, nodepath)
-        return NodeWrapper(mds_tree.getNode(mds_path))
-
-    def get_filtered_node(self, request):
-        node = self.get_node()
-        
-        for fid, name, args, kwargs in get_filter_list(request):
-            #if u'' in args:
-            #    messages.info(request, "Error: Filter '%s' is missing argument(s)" %(name))
-            #    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-            node.data.apply_filter(fid, name, *args, **kwargs)
-        return node
-    """
     def dispatch(self, request, *args, **kwargs):
         # Try to dispatch to the right method for requested representation; 
         # if a method doesn't exist, defer to the error handler. 

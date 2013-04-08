@@ -1,13 +1,15 @@
+"""
+Note, don't confuse  H1DS Data nodes with Django template  nodes. Try to
+make each type obvious by their name.
+"""
 import inspect
 from django import template
 from django.core.urlresolvers import reverse
 from django.utils.html import escape
 
-#from h1ds_mdsplus.views import shot_regex
-
 register = template.Library()
 
-class MDSDataTemplateNode(template.Node):
+class H1DSDataTemplateNode(template.Node):
     def __init__(self, node_name):
         self.node_var = template.Variable(node_name)
     def render(self, context):
@@ -23,7 +25,7 @@ def display_data(parser, token):
         tag_name, data_name = token.split_contents()
     except ValueError:
         raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
-    return MDSDataTemplateNode(data_name)
+    return H1DSDataTemplateNode(data_name)
 
 
 register.tag('display_data', display_data)
@@ -101,19 +103,19 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
         raise
 
 @register.simple_tag(takes_context=True)
-def show_filters(context, mdsnode):
+def show_filters(context, data_node):
     # TODO: HACK
-    return ""#.join([get_filter(context, f) for f in mdsnode.data.available_filters])
+    return ""#.join([get_filter(context, f) for f in data_node.data.available_filters])
 
 
 @register.simple_tag(takes_context=True)
-def show_active_filters(context, mdsnode):
-    return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in mdsnode.data.filter_history])
+def show_active_filters(context, data_node):
+    return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in data_node.data.filter_history])
 
 @register.simple_tag(takes_context=True)
-def show_info(context, mdsnode):
+def show_info(context, data_node):
     # TODO
-    return ""#"TODO... dtype: %s" % escape(str(type(mdsnode.data.data)))
+    return ""#"TODO... dtype: %s" % escape(str(type(data_node.data.data)))
 
 @register.simple_tag(takes_context=True)
 def get_url_for_shot(context, url, new_shot):

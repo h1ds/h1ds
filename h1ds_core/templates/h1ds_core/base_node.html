@@ -1,8 +1,8 @@
 {% extends "h1ds_core/base.html" %}
 
 <!-- This loads the 'display_data' and 'show_filter' template tags, used
-for displaying mds data and H1DS data filters in the template. -->
-{% load mdsdata %}
+for displaying data and H1DS data filters in the template. -->
+{% load h1dsdata %}
 
 <!-- This loads the 'table' template tag, used for dynamic generation of
 HTML tables. -->
@@ -13,13 +13,13 @@ HTML tables. -->
 <meta name="{{name}}" content="{{content}}" />{% endfor%}{% endblock%}
 <div class="fixed-centre">
 {% block content %}
-<div class="column w20" id="mds-column-left">
+<div class="column w20" id="h1ds-column-left">
   <!--  This generates  the 'select  shot'  form in  the top  left of  the
 	page. -->
-  <div class="portlet" id="mds-portlet-shot">
+  <div class="portlet" id="h1ds-portlet-shot">
     <div class="portlet-header">shot</div>
     <div class="portlet-content">
-      <div id="mds-shot-controller">
+      <div id="h1ds-shot-controller">
 	<div class="sidebarcontent">
 	  <FORM class="inline-form" action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
@@ -27,31 +27,30 @@ HTML tables. -->
 	  </FORM>
 	</div>
 	<div class="sidebarcontent">
-	  <div id="mds-shot-previous">	<FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
+	  <div id="h1ds-shot-previous">	<FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	      <INPUT type="hidden" name="go_to_shot" value="{{mdsnode.shot|add:'-1'}}">
+	      <INPUT type="hidden" name="go_to_shot" value="{{node.url_processor.shot|add:'-1'}}">
 	      <INPUT title="go to shot" type="submit" value="<">
 	    </FORM>
 	  </div>
-	  <div id="mds-shot-current"><strong> {{mdsnode.shot}} </strong></div>
-	  <div id="mds-shot-next">	
+	  <div id="h1ds-shot-current"><strong> {{node.url_processor.shot}} </strong></div>
+	  <div id="h1ds-shot-next">	
 	    <FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	      <INPUT type="hidden" name="go_to_shot" value="{{mdsnode.shot|add:'1'}}">
+	      <INPUT type="hidden" name="go_to_shot" value="{{node.url_processor.shot|add:'1'}}">
 	      <INPUT title="go to shot" type="submit" value=">">
 	    </FORM>
 	  </div>
 	</div>
       </div>
-      <div id="mds-track-latest-shot"></div>
-      <div id="mds-toggle-track-latest-shot"></div>
+      <div id="h1ds-track-latest-shot"></div>
+      <div id="h1ds-toggle-track-latest-shot"></div>
     </div>
   </div>
 
 
-  <!--  Generate  a  table  with  links to  mdsplus  trees  recognised  by
-	H1DS. -->
-  <div class="portlet" id="mds-portlet-trees">
+  <!--  Navigation of data  trees. -->
+  <div class="portlet" id="h1ds-portlet-trees">
     <div class="portlet-header">navigation</div>
     <div class="portlet-content">
       <ul>
@@ -77,17 +76,12 @@ HTML tables. -->
 
 
 <!-- *************************************************************** -->
-<!-- ****** MDSplus data ******************************************* -->
+<!-- ****** Data *************************************************** -->
 <!-- *************************************************************** -->
 
 
-<div class="column w60" id="mds-column-centre">
-  <div class="portlet" id="mds-portlet-path">
-    <div class="portlet-header">path</div>
-    <div class="portlet-content">{{mdsnode.path_breadcrumbs|safe}}</div>
-    {% block node_error %}{% endblock node_error %}
-  </div>
-  <div class="portlet" id="mds-portlet-data">
+<div class="column w60" id="h1ds-column-centre">
+  <div class="portlet" id="h1ds-portlet-data">
     <div class="portlet-header">data</div>
     <div class="portlet-content">
       {% block node_data %}{% endblock node_data %}
@@ -102,12 +96,12 @@ HTML tables. -->
 <!-- *************************************************************** -->
 
 
-<div class="column w20" id="mds-column-right">
+<div class="column w20" id="h1ds-column-right">
   <!-- If there is a summary data (SQL) dtype associated with the filtered
        data then display a form for adding the data to the summary database -->
   {% if perms.h1ds_summary.add_summaryattribute %}
-  {% if mdsnode.data.summary_dtype %}
-  <div class="portlet" id="mds-portlet-summarydb">
+  {% if node.get_summary_dtype %}
+  <div class="portlet" id="h1ds-portlet-summarydb">
     <div class="portlet-header">add to summary db</div>
     <div class="portlet-content">
       <FORM action="{% url "get-summary-attribute-form-from-url" %}" method="post">{% csrf_token %}
@@ -123,25 +117,25 @@ HTML tables. -->
 
   <!--  If the  data has  been filtered,  display the  applied  filters in
 	order, with option to adjust or remove each filter -->
-  {% if mdsnode.data.filter_history %}
-  <div class="portlet" id="mds-portlet-activefilters">
+  {% if node.filter_history %}
+  <div class="portlet" id="h1ds-portlet-activefilters">
     <div class="portlet-header">active filters</div>
     <div class="portlet-content">
-      {% show_active_filters mdsnode %}
+      {% show_active_filters node %}
     </div>
   </div>
   {% endif %}
 
   <!-- List the views (H1DS views such as html, json, etc, not django view
        functions) available for the node data type -->
-  <div class="portlet" id="mds-portlet-views">
-    <div class="portlet-header">views</div>
+  <div class="portlet" id="h1ds-portlet-views">
+    <div class="portlet-header">alternative formats</div>
     <div class="portlet-content">
-      {% for view_name in mdsnode.data.available_views %}{% show_view view_name %} {% endfor %}
+      {% for format in alt_formats %}{% show_view format %} {% endfor %}
     </div>
   </div>
 
-  <div class="portlet" id="mds-portlet-savedsignals">
+  <div class="portlet" id="h1ds-portlet-savedsignals">
     <div class="portlet-header">my signals</div>
     <div class="portlet-content">
       {% if user.is_authenticated %}
@@ -156,7 +150,7 @@ HTML tables. -->
 	{% if sig.is_fixed_to_shot %}
 	<a href="{% get_url_for_shot sig.url sig.shot %}">{{sig}}</a>[{{sig.shot}}]
 	{% else %}
-	<a href="{% get_url_for_shot sig.url mdsnode.shot %}">{{sig}}</a>
+	<a href="{% get_url_for_shot sig.url node.url_processor.shot %}">{{sig}}</a>
 	{% endif %}
 
 	<div class="sidebar-section-item-delete">
@@ -180,15 +174,15 @@ HTML tables. -->
 
   <!--  List the filters  which can  be applied  to the  (possibly already
 	filtered) data -->
-  <div class="portlet" id="mds-portlet-filters">
+  <div class="portlet" id="h1ds-portlet-filters">
     <div class="portlet-header">filters</div>
     <div class="portlet-content">
-      {% show_filters mdsnode %}
+      {% show_filters node %}
     </div>
   </div>
 </div>
 {% endblock content %}
 {% block rightpanel %}
-{% block mdsmeta %}{% endblock mdsmeta %}
+{% block nodemeta %}{% endblock nodemeta %}
 </div>
 {% endblock %}

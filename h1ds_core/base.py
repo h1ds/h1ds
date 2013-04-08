@@ -1,4 +1,5 @@
 import re
+import datetime
 import numpy as np
 from django.conf import settings
 from django.utils.importlib import import_module
@@ -16,6 +17,11 @@ filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
 # Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
 filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
 
+sql_type_mapping = {
+    np.float32:"FLOAT",
+    np.float64:"FLOAT",
+    np.int32:"INT",
+    }
 
 class BaseURLProcessor(object):
     def __init__(self, **kwargs):
@@ -78,10 +84,6 @@ class BaseURLProcessor(object):
         return tree, shot, path
         
     def get_url(self):
-        print "a"
-        print self.urlized_tree()
-        print self.urlized_shot()
-        print self.urlized_path()
         return self.apply_prefix("/".join([self.urlized_tree(),
                                            self.urlized_shot(),
                                            self.urlized_path()]))
@@ -96,7 +98,10 @@ class BaseURLProcessor(object):
         return self.path
 
     def deurlize_tree(self, url_tree):
-        return url_tree
+        if url_tree == "":
+            return settings.DEFAULT_TREE
+        else:
+            return url_tree
 
     def deurlize_shot(self, url_shot):
         return int(url_shot)
@@ -122,7 +127,7 @@ class BaseNode(object):
         f_args, f_kwargs = self.preprocess_filter_args(args, kwargs)
         filter_function = getattr(h1ds_core.filters, name)
         filter_function(self, *f_args, **f_kwargs)
-        #self.filter_history.append((fid, filter_function, args))
+        self.filter_history.append((fid, filter_function, args))
         #self.summary_dtype = sql_type_mapping.get(type(self.data))
         #self.available_filters = get_dtype_mappings(self.data)['filters']
         #self.available_views = get_dtype_mappings(self.data)['views'].keys()
@@ -148,8 +153,7 @@ class BaseNode(object):
         if type(self.dim) == type(None):
             self.dim = self.get_raw_dim()
         return self.dim
-        
-            
+                    
     def get_raw_data(self):
         return None
     
@@ -167,7 +171,6 @@ class BaseNode(object):
             ancestors.append(p)
         return ancestors
         
-
     def get_long_name(self):
         return unicode(self.url_processor.path)
 
@@ -179,6 +182,15 @@ class BaseNode(object):
 
     def __repr__(self):
         return self.get_long_name()
+
+    def get_data_time(self):
+        return datetime.datetime.fromordinal(1)
+    
+    def get_summary_dtype(self):
+        d = self.get_data()
+        return sql_type_mapping.get(type(d), None)
+        
+
 """
 class BaseDataInterface(object):
 
