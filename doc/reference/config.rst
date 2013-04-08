@@ -74,7 +74,7 @@ Default: ``[('test', os.path.join(VENV_DIR, 'test_mds_data'))]``
 list of extra mds trees to load into environment each entry should be a (name, path), for example ``EXTRA_MDS_TREES = [('extratree1', 'mdsserver::'), ('anothertree', '/data/tree'),]``
 
 
-DEFAULT_MDS_TREE
+DEFAULT_TREE
 """"""""""""""""
 
 Default: ``"test"``
