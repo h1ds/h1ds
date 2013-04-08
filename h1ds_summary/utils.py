@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.cache import cache
 
 import numpy
-import MDSplus
 
 from h1ds_summary import SUMMARY_TABLE_NAME
 
@@ -230,34 +229,3 @@ def update_single_entry(attribute, shot, value, table=SUMMARY_TABLE_NAME):
     cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" %(table, attribute, str(value), shot))
     transaction.commit_unless_managed()
     cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
-
-###############################################################################
-### Development utils                                                       ###
-###############################################################################
-
-def add_test_shot(tree_name = "test"):
-    if settings.DEBUG:
-        # get latest shot
-        latest_shot = MDSplus.Tree.getCurrent("test")
-        shot_number = latest_shot+1
-        t = MDSplus.Tree('test', shot_number, mode="NEW")
-        t.addNode('node_A')
-        t.addNode('node_B')
-
-        node_a = t.getNode('node_A')
-        node_a.setUsage("SIGNAL")
-        node_a.addTag("tag_A")
-
-        node_a.addNode('node_AA')
-        node_a.addNode('node_AB')
-
-        sig = MDSplus.Signal(MDSplus.makeArray(numpy.random.poisson(lam=10, size=SIGNAL_LENGTH)),
-                             None, MDSplus.makeArray(0.1*numpy.arange(SIGNAL_LENGTH)))
-        node_a.putData(sig)
-
-        node_aa = t.getNode('\\test::top.node_A.node_AA')
-        node_aa.addTag("tag_AA")
-        node_aa.addNode("node_AAA")
-
-        t.setCurrent('test', shot_number)
-        t.write()

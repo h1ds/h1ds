@@ -8,7 +8,7 @@ from h1ds_summary.tasks import populate_attribute_task
 sa_help_text={
     'slug':"Name of the attribute as it appears in the URL.",
     'name':"Full name of the attribute.",
-    'source':"Either URL from H1DS MDSplus web service (must start with \
+    'source':"Either URL from H1DS  web service (must start with \
 http://) or name of class, e.g. h1nf.KappaH (will use h1ds_summary.attri\
 butes.h1nf.KappaH).",
     'description':"Full description of the summary attribute.",
@@ -65,7 +65,7 @@ class SummaryAttribute(models.Model):
                 request = urllib2.Request(fetch_url)
                 response = json.loads(urllib2.urlopen(request).read())
                 value = response['data']
-                dtype = response['summary_dtype']
+                dtype = response['meta']['summary_dtype']
                 if value == None:
                     value = 'NULL'
                 return (value, dtype)
@@ -73,13 +73,16 @@ class SummaryAttribute(models.Model):
                 return ('NULL', 'NULL')
         else:
             # assume source is inside a module in h1ds_summary.attributes
-            split_name = self.source.split('.')
-            submodule_name = '.'.join(split_name[:-1])
-            module_name = '.'.join(['h1ds_summary.attributes', submodule_name])
-            class_name = split_name[-1]
-            source_module = __import__(module_name, globals(), 
-                                       locals(), [class_name], -1)
-            source_class = source_module.__getattribute__(class_name)
-            return source_class(shot_number).do_script()
+            try:
+                split_name = self.source.split('.')
+                submodule_name = '.'.join(split_name[:-1])
+                module_name = '.'.join(['h1ds_summary.attributes', submodule_name])
+                class_name = split_name[-1]
+                source_module = __import__(module_name, globals(), 
+                                           locals(), [class_name], -1)
+                source_class = source_module.__getattribute__(class_name)
+                return source_class(shot_number).do_script()
+            except:
+                return ('NULL', 'NULL')
 
 

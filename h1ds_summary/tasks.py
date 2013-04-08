@@ -6,24 +6,21 @@ from celery.task.schedules import crontab
 from django.core.cache import cache
 from django.core.urlresolvers import reverse, resolve
 from django.db import connection, transaction
+from django.conf import settings
 
-from MDSplus import TreeException
-
+from h1ds_core.base import get_latest_shot_function
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
 from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary.utils import CACHE_UPDATE_TIMEOUT
 from h1ds_summary import SUMMARY_TABLE_NAME
-
-from h1ds_mdsplus.utils import get_latest_shot
-
-from django.conf import settings
 
 try:
     MINIMUM_SUMMARY_TABLE_SHOT = settings.MINIMUM_SUMMARY_TABLE_SHOT
 except AttributeError:
     MINIMUM_SUMMARY_TABLE_SHOT = 1
 
-
+get_latest_shot = get_latest_shot_function()
+    
 # Time between summary table synchronisations
 sync_timedelta = timedelta(minutes=1)
 #sync_timedelta = timedelta(seconds=10)
@@ -37,12 +34,7 @@ def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
         attr_names = tuple(a.slug for a in attributes)
         attr_name_str = '('+','.join(['shot', ','.join((a.slug for a in attributes))]) + ')'
         for shot in shots:
-            try:
-                values = tuple(str(a.get_value(shot)[0]) for a in attributes)
-            except TreeException:
-                # assume the shot doesn't exist
-                # TODO: more careful treatment of exceptions, distinguish between shot missing and data missing...
-                values = tuple("NULL" for a in attributes)
+            values = tuple(str(a.get_value(shot)[0]) for a in attributes)
             values_str = '('+','.join([str(shot), ','.join(values)])+')'
             update_str = ','.join(('%s=%s' %(a, values[ai]) for ai, a in enumerate(attr_names)))
             # TODO: can we use INSERT OR UPDATE to avoid duplication?
@@ -65,7 +57,7 @@ def populate_summary_table_task(shots, attributes='all', table=SUMMARY_TABLE_NAM
 
 def get_sync_info():
     sync_info = {'do_sync':False,
-                 'latest_mds_shot':None,
+                 'latest_h1ds_shot':None,
                  'latest_sql_shot':None,
                  'time_since_last_mod':None,
                  }
@@ -74,9 +66,9 @@ def get_sync_info():
     #print sync_info['time_since_last_mod']
     if sync_info['time_since_last_mod'] > sync_timedelta:
         # Check if the latest summary table shot is up to date.
-        sync_info['latest_mds_shot'] = get_latest_shot()
+        sync_info['latest_h1ds_shot'] = get_latest_shot()
         sync_info['latest_sql_shot'] = max(get_latest_shot_from_summary_table(), MINIMUM_SUMMARY_TABLE_SHOT)
-        if sync_info['latest_sql_shot'] < sync_info['latest_mds_shot']:
+        if sync_info['latest_sql_shot'] < sync_info['latest_h1ds_shot']:
             sync_info['do_sync'] = True
     return sync_info
 
@@ -87,12 +79,12 @@ def sync_summary_table():
 
     If the summary table has not been altered since the last sync, check
     that  the latest  shot in  the summary  database matches  the latest
-    MDSplus  shot. If  not, backfill  the  summary table  from the  most
-    recent MDSplus shot.
+    H1DS data shot. If  not, backfill  the  summary table  from the  most
+    recent h1ds shot.
     """
     sync_info = get_sync_info()
     if sync_info['do_sync']:
-        shot_range = range(sync_info['latest_sql_shot'], sync_info['latest_mds_shot']+1)
+        shot_range = range(sync_info['latest_sql_shot'], sync_info['latest_h1ds_shot']+1)
         shot_range.reverse()
         populate_summary_table(shot_range)
 

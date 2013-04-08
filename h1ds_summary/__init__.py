@@ -1,4 +1,4 @@
-"""Summary database for reduced MDSplus data."""
+"""Summary database for scalar H1DS data."""
 
 from django.conf import settings
 
