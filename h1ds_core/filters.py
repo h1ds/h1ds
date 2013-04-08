@@ -7,7 +7,7 @@ def http_arg(arg):
     if arg.startswith("http://"):
         # make sure we get the JSON view, in case the user didn't add view=json
         # Split URL into [scheme, netloc, path, params, query, fragments]
-        parsed_url = urlparse(url)
+        parsed_url = urlparse(arg)
 
         # parsed_url is an immutable ParseResult instance, copy it to a (mutable) list
         parsed_url_list = [i for i in parsed_url]

@@ -1,13 +1,18 @@
+import csv
 import inspect
 import re
 import xml.etree.ElementTree as etree
 import json
+import time
+import StringIO
 import numpy as np
+
+import pylab
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -271,8 +276,11 @@ class AJAXShotRequestURL(View):
     def get(self, request, *args, **kwargs):
         input_path = request.GET.get('input_path')
         shot = int(request.GET.get('shot'))
-        input_shot = shot_regex.findall(input_path)[0]
-        new_url = input_path.replace("/"+str(input_shot)+"/", "/"+str(shot)+"/")
+        url_processor = URLProcessor(url=input_path)
+        #input_shot = shot_regex.findall(input_path)[0]
+        url_processor.shot = shot
+        #new_url = input_path.replace("/"+str(input_shot)+"/", "/"+str(shot)+"/")
+        new_url = url_processor.get_url()
         output_json = '{"new_url":"%s"}' %new_url
         return HttpResponse(output_json, 'application/javascript')
 
@@ -501,15 +509,19 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
         }
 
     def dispatch(self, request, *args, **kwargs):
-        # Try to dispatch to the right method for requested representation; 
-        # if a method doesn't exist, defer to the error handler. 
-        # Also defer to the error handler if the request method isn't on the approved list.
+        # Try  to   dispatch  to   the  right  method   for  requested
+        # representation;  if a  method  doesn't exist,  defer to  the
+        # error  handler.  Also  defer  to the  error  handler if  the
+        # request method isn't on the approved list.
         
-        # TODO: for now, we only support GET and POST, as we are using the query string to 
-        # determing which representation should be used, and the querydict is only available
-        # for GET and POST. Need to bone up on whether query strings even make sense on other
-        # HTTP verbs. Probably, we should use HTTP headers to figure out which content type should be
-        # returned - also, we might be able to support both URI and header based content type selection.
+        # TODO: for now, we only support GET and POST, as we are using
+        # the query string to determing which representation should be
+        # used,  and  the querydict  is  only  available for  GET  and
+        # POST. Need  to bone  up on whether  query strings  even make
+        # sense  on other  HTTP verbs.  Probably, we  should use  HTTP
+        # headers to figure out which  content type should be returned
+        # - also,  we might  be able  to support  both URI  and header
+        # based content type selection.
         # http://stackoverflow.com/questions/381568/rest-content-type-should-it-be-based-on-extension-or-accept-header
         # http://www.xml.com/pub/a/2004/08/11/rest.html
 

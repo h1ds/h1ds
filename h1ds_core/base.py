@@ -2,6 +2,7 @@ import re
 import datetime
 import numpy as np
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
 
 import h1ds_core.filters
@@ -162,6 +163,9 @@ class BaseNode(object):
             self.data = self.get_raw_data()
         return self.data
 
+    def get_raw_dim(self):
+        return None
+    
     def get_dim(self):
         # TODO - scalars etc will have dim None, shouldn't re-read from node for these cases...
         if type(self.dim) == type(None):
