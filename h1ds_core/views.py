@@ -22,25 +22,13 @@ from django.core.exceptions import ImproperlyConfigured
 
 from h1ds_core.models import H1DSSignalInstance, Worksheet
 from h1ds_core.models import UserSignal, UserSignalForm
-from h1ds_core.base import get_filter_list
+from h1ds_core.base import get_filter_list, get_latest_shot_function
 
 data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
 Node = getattr(data_module, 'Node')
 get_trees = getattr(data_module, 'get_trees')
 
-def get_latest_shot_function():
-    i = settings.LATEST_SHOT_FUNCTION.rfind('.')
-    module, attr = settings.LATEST_SHOT_FUNCTION[:i], settings.LATEST_SHOT_FUNCTION[i+1:]
-    try:
-        mod = import_module(module)
-    except ImportError as e:
-        raise ImproperlyConfigured('Error importing request processor module %s: "%s"' % (module, e))
-    try:
-        func  = getattr(mod, attr)
-    except AttributeError:
-        raise ImproperlyConfigured('Module "%s" does not define a "%s" callable request processor' % (module, attr))
-    return func
 
 get_latest_shot = get_latest_shot_function()
 
@@ -351,7 +339,7 @@ class JSONNodeResponseMixin(object):
             response_data['data'] = None
             response_data['dim'] = None
         elif np.isscalar(self.node.get_data()):
-            response_data['data'] = self.node.get_data()
+            response_data['data'] = np.asscalar(self.node.get_data())
             response_data['dim'] = None
         elif 1 <= len(self.node.get_data().shape) <= 3:
             response_data['data'] =  self.node.get_data().tolist()
@@ -363,6 +351,7 @@ class JSONNodeResponseMixin(object):
             'path':unicode(self.node.url_processor.path),
             'tree':self.node.url_processor.tree,
             'shot':self.node.url_processor.shot,
+            'summary_dtype':self.node.get_summary_dtype(),
             }
         # add metadata...
         response_data.update({'meta':metadata})

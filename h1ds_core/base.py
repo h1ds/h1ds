@@ -21,7 +21,21 @@ sql_type_mapping = {
     np.float32:"FLOAT",
     np.float64:"FLOAT",
     np.int32:"INT",
+    np.int64:"INT",
     }
+
+def get_latest_shot_function():
+    i = settings.LATEST_SHOT_FUNCTION.rfind('.')
+    module, attr = settings.LATEST_SHOT_FUNCTION[:i], settings.LATEST_SHOT_FUNCTION[i+1:]
+    try:
+        mod = import_module(module)
+    except ImportError as e:
+        raise ImproperlyConfigured('Error importing request processor module %s: "%s"' % (module, e))
+    try:
+        func  = getattr(mod, attr)
+    except AttributeError:
+        raise ImproperlyConfigured('Module "%s" does not define a "%s" callable request processor' % (module, attr))
+    return func
 
 class BaseURLProcessor(object):
     def __init__(self, **kwargs):
@@ -188,6 +202,8 @@ class BaseNode(object):
     
     def get_summary_dtype(self):
         d = self.get_data()
+        print "data: ", type(d)
+        print "lkjdsf ", sql_type_mapping.get(type(d), None)
         return sql_type_mapping.get(type(d), None)
         
 

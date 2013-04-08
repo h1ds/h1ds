@@ -110,7 +110,7 @@ def show_filters(context, data_node):
 
 @register.simple_tag(takes_context=True)
 def show_active_filters(context, data_node):
-    return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in data_node.data.filter_history])
+    return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in data_node.filter_history])
 
 @register.simple_tag(takes_context=True)
 def show_info(context, data_node):

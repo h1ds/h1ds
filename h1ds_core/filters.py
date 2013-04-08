@@ -99,11 +99,11 @@ def pulse_number(dwrapper, threshold):
     dwrapper.label = ('pulse_number(%s, %s)' %(dwrapper.label[0], threshold), )
 
 
-def max_val(dwrapper):
+def max_val(node):
     """TODO: test for 2+ dimensional arrays"""
-    dwrapper.data = np.max(dwrapper.data)
-    dwrapper.dim = None
-    dwrapper.label = ('max(%s)' %dwrapper.label[0],)
+    node.data = np.max(node.data)
+    node.dim = None
+    node.label = ('max(%s)' %node.label[0],)
 
 
 def max_of(dwrapper, value):
