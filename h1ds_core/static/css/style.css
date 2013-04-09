@@ -1295,6 +1295,60 @@ form.inline-form {
     display:inline;
 }
 
+//#h1ds-portlet-trees ul {
+//    list-style-type:none;
+//    padding: 0 0 0 1em;
+//    margin: 0;
+//}
+
+//#h1ds-portlet-trees li {
+//    background:blue;
+//    margin: 0.2em;
+//}
+
+ 
+#h1ds-portlet-trees ul {
+  list-style-type: none;
+  margin: 0;
+    padding: 0 0 0 1em;
+//  padding: 0;
+}
+ 
+#h1ds-portlet-trees li {
+//  font: 200 20px/1.5 Helvetica, Verdana, sans-serif;
+  border-bottom: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+}
+ 
+#h1ds-portlet-trees li:last-child {
+  border: none;
+}
+ 
+#h1ds-portlet-trees li a {
+  text-decoration: none;
+  color: #000;
+  display: block;
+  width: 100%;
+ 
+  -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+  -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+  -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+  -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+  transition: font-size 0.3s ease, background-color 0.3s ease;
+}
+ 
+#h1ds-portlet-trees li a:hover {
+  font-size: 20px;
+  background: #f6f6f6;
+}
+
+#h1ds-portlet-trees span.current {
+  background: #ddd;
+  display: block;
+  width: 100%;
+}
+
+
 /* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 
    ============================================================ */
