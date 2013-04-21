@@ -9,7 +9,10 @@ class H1DSHomepageNode(template.Node):
     def render(self, context):
         h1ds_installed_apps = [a for a in settings.INSTALLED_APPS if a.startswith('h1ds_') and not a in ['h1ds_core', settings.H1DS_DATA_MODULE]]
         
-        tag_string = ""
+        # TODO - don't hardcode this stuff
+        tag_string = item_template %{"url":"/data", "name":"Data", "description":"Data viewer"}
+        
+        
         for app in h1ds_installed_apps:
             homepage_url_name = app.replace('_', '-')+'-homepage'
             homepage_url = reverse(homepage_url_name)
