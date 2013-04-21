@@ -1,22 +1,26 @@
 import re
 import datetime
+import inspect
 import numpy as np
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
 
 import h1ds_core.filters
+from h1ds_core.filters import BaseFilter, excluded_filters
 
 data_module = import_module(settings.H1DS_DATA_MODULE)
 
 # Match strings "f(fid)_name", where fid is the filter ID
-filter_name_regex = re.compile('^f(?P<fid>\d+?)_name')
+filter_name_regex = re.compile('^f(?P<fid>\d+?)')
 
 # Match strings "f(fid)_arg(arg number)", where fid is the filter ID
-filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
+#filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
 
 # Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
-filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
+#filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
+filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_(?P<kwarg>.+)')
 
 sql_type_mapping = {
     np.float32:"FLOAT",
@@ -24,6 +28,38 @@ sql_type_mapping = {
     np.int32:"INT",
     np.int64:"INT",
     }
+
+def get_all_filters():
+    filters = {}
+    for filter_module_name in settings.DATA_FILTER_MODULES:
+        mod = import_module(filter_module_name)
+        mod_filters = [cl for name,cl in inspect.getmembers(mod) if
+                       inspect.isclass(cl) and issubclass(cl,BaseFilter) and
+                       not cl in excluded_filters]
+        filters.update((f.get_slug(), f) for f in mod_filters)
+    return filters
+        
+class FilterManager(object):
+    def __init__(self):
+        self.filters = get_all_filters()
+        self.cache = {}
+
+    def get_filters(self, data):
+        ndim = data.ndim if hasattr(data, "ndim") else 0
+        if ndim == 0:
+            t = type(data)
+        else:
+            t = data.dtype
+        data_type = (ndim, t)
+        if not self.cache.has_key(data_type):
+            data_filters = {}
+            for fname,f in self.filters.iteritems():
+                if f.is_filterable(data):
+                    data_filters[fname] = f
+            self.cache[data_type] = data_filters
+        return self.cache[data_type]
+
+filter_manager = FilterManager()    
 
 def get_latest_shot_function():
     i = settings.LATEST_SHOT_FUNCTION.rfind('.')
@@ -134,29 +170,33 @@ class BaseNode(object):
         self.label = ('data',)
         
     def apply_filters(self, request):
-        for fid, name, args, kwargs in get_filter_list(request):
-            self.apply_filter(fid, name, *args, **kwargs)
+        for fid, name, kwargs in get_filter_list(request):
+            self.apply_filter(fid, name, **kwargs)
         
-    def apply_filter(self, fid, name, *args, **kwargs):
+    def apply_filter(self, fid, name, **kwargs):
         d = self.get_data()
-        f_args, f_kwargs = self.preprocess_filter_args(args, kwargs)
-        filter_function = getattr(h1ds_core.filters, name)
-        filter_function(self, *f_args, **f_kwargs)
-        self.filter_history.append((fid, filter_function, args))
+        f_kwargs = self.preprocess_filter_kwargs(kwargs)
+        #filter_class = filter_manager.filters[name](*f_args, **f_kwargs)
+        filter_class = filter_manager.filters[name](**f_kwargs)
+        filter_class.apply(self)
+        
+        #self.filter_history.append((fid, name, kwargs))
+        self.filter_history.append((fid, filter_class, kwargs))
         #self.summary_dtype = sql_type_mapping.get(type(self.data))
         #self.available_filters = get_dtype_mappings(self.data)['filters']
         #self.available_views = get_dtype_mappings(self.data)['views'].keys()
 
-    def preprocess_filter_args(self, args, kwargs):
-        for i,a in enumerate(args):
-            if isinstance(a, str):
-                if "__shot__" in a:
-                    args[i] = a.replace("__shot__", str(self.url_processor.shot))
+    def preprocess_filter_kwargs(self, kwargs):
+        # TODO: should filters.http_arg be put here instead?
+        #for i,a in enumerate(args):
+        #    if isinstance(a, str):
+        #        if "__shot__" in a:
+        #            args[i] = a.replace("__shot__", str(self.url_processor.shot))
         for k,v in kwargs.iteritems():
             if isinstance(v, str):
                 if "__shot__" in v:
                     kwargs[k] = v.replace("__shot__", str(self.url_processor.shot))
-        return args, kwargs
+        return kwargs
         
     def get_data(self):
         if type(self.data) == type(None):
@@ -206,10 +246,10 @@ class BaseNode(object):
     
     def get_summary_dtype(self):
         d = self.get_data()
-        print "data: ", type(d)
-        print "lkjdsf ", sql_type_mapping.get(type(d), None)
         return sql_type_mapping.get(type(d), None)
-        
+
+    def get_available_filters(self):
+        return filter_manager.get_filters(self.data)
 
 """
 class BaseDataInterface(object):
@@ -248,14 +288,8 @@ def get_filter_list(request):
     filter_dict = {}
     for key, value in request.GET.iteritems():
         
-        name_match = filter_name_regex.match(key)
-        if name_match != None:
-            fid = int(name_match.groups()[0])
-            if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
-            filter_dict[fid]['name'] = value
-            continue
-
+        """
+        # deprecated - use only kwargs
         arg_match = filter_arg_regex.match(key)
         if arg_match != None:
             fid = int(arg_match.groups()[0])
@@ -264,18 +298,29 @@ def get_filter_list(request):
                 filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
             filter_dict[fid]['args'][argn] = value
             continue
-
+        """
         kwarg_match = filter_kwarg_regex.match(key)
         if kwarg_match != None:
-            fid = int(arg_match.groups()[0])
-            kwarg = arg_match.groups()[1]
+            fid = int(kwarg_match.groups()[0])
+            kwarg = kwarg_match.groups()[1]
             if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+                #filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+                filter_dict[fid] = {'name':"", 'kwargs':{}}
             filter_dict[fid]['kwargs'][kwarg] = value
+            continue
+        
+        name_match = filter_name_regex.match(key)
+        if name_match != None:
+            fid = int(name_match.groups()[0])
+            if not filter_dict.has_key(fid):
+                #filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
+                filter_dict[fid] = {'name':"", 'kwargs':{}}
+            filter_dict[fid]['name'] = value
             continue
     
     for fid, filter_data in sorted(filter_dict.items()):
-        arg_list = [i[1] for i in sorted(filter_data['args'].items())]
-        filter_list.append([fid, filter_data['name'], arg_list, filter_data['kwargs']])
+        #arg_list = [i[1] for i in sorted(filter_data['args'].items())]
+        #filter_list.append([fid, filter_data['name'], arg_list, filter_data['kwargs']])
+        filter_list.append([fid, filter_data['name'], filter_data['kwargs']])
                            
     return filter_list

@@ -307,37 +307,6 @@ function isMinMaxPlot(signal_data) {
 
 
 /*
- * getPlotQueryString
- *
- * Generate a URL query string for filtered data.
- *
- * arguments: any number of [filter_number, filter_name, arg1, arg2,...]
- * returns: current URL with query string generated from filters.
- *
- * Example:
- *     getPlotURL(['1','filter_a','10','20'], ['999','filter_b'])
- * returns:
- *   ?(current query string)&f1_name=filter_a&f1_arg0=10&f1_arg1=20&\
- *   f999_name=filter_b&view=json
- *
- */
-function getPlotQueryString() {
-    // If the current URL has a query string, then we append to to ('&')
-    // otherwise we create it '?'.
-    var plot_url = window.location.search + (window.location.search.length ? '&' : '?');
-
-    for (var i=0; i < arguments.length; i++) {
-	if (i>0) plot_url += '&';
-	plot_url += 'f'+arguments[i][0]+'_name='+arguments[i][1];
-	for (var j=2; j< arguments[i].length; j++) {
-	    plot_url += '&f'+arguments[i][0]+'_arg'+(j-2)+'='+arguments[i][j];
-	}
-    }
-    
-    return (plot_url += '&view=json');
-}
-
-/*
  * Interactive data plots.
  * 
  */
@@ -350,19 +319,20 @@ function H1DSUri(original_uri) {
     this.uri_components = parseUri(original_uri);
     this.h1ds_filters = {};
     this.non_h1ds_query = {};
-    var filter_re = /^f(\d+)_(name|arg(\d+))$/;
+    //var filter_re = /^f(\d+)_(name|arg(\d+))$/;
+    var filter_re = /^f(\d+)(_(\w+))?/;
     for (var key in this.uri_components.queryKey) {
 	if (this.uri_components.queryKey.hasOwnProperty(key)) {
 	    var filter_info = filter_re.exec(key);
 	    if (filter_info) {
 		if (!this.h1ds_filters.hasOwnProperty(filter_info[1])) {
-		    this.h1ds_filters[filter_info[1]] = {'name':"", "args":[]};
+		    this.h1ds_filters[filter_info[1]] = {'name':"", "kwargs":{}};
 		}
-		if (filter_info[2] === 'name') {
+		if (typeof filter_info[2] === 'undefined') {
 		    this.h1ds_filters[filter_info[1]].name = this.uri_components.queryKey[key];
 		}
-		else if (filter_info[2].substring(0,3) === 'arg') {
-		    this.h1ds_filters[filter_info[1]].args[filter_info[3]] = this.uri_components.queryKey[key];
+		else {
+		    this.h1ds_filters[filter_info[1]].kwargs[filter_info[3]] = this.uri_components.queryKey[key];
 		}
 	    }
 	    else {
@@ -382,9 +352,9 @@ H1DSUri.prototype.getNextFilterID = function() {
     return largest_fid + 1;
 };
 
-H1DSUri.prototype.appendFilter = function(filter_name, filter_args) {
+H1DSUri.prototype.appendFilter = function(filter_name, filter_kwargs) {
     var new_id = this.getNextFilterID();
-    this.h1ds_filters[String(new_id)] = {'name':filter_name,'args':filter_args};
+    this.h1ds_filters[String(new_id)] = {'name':filter_name,'kwargs':filter_kwargs};
 };
 
 H1DSUri.prototype.renderUri = function() {
@@ -397,9 +367,12 @@ H1DSUri.prototype.renderUri = function() {
 
     for (var key in this.h1ds_filters) {
 	if (this.h1ds_filters.hasOwnProperty(key)) {
-	    newQueryKey["f"+key+"_name"] = this.h1ds_filters[key].name;
-	    for (var i=0; i<this.h1ds_filters[key].args.length;i++) {
-		newQueryKey["f"+key+"_arg"+i] = this.h1ds_filters[key].args[i];
+	    newQueryKey["f"+key] = this.h1ds_filters[key].name;
+	   // for (var i=0; i<this.h1ds_filters[key].args.length;i++) { // can 
+		// newQueryKey["f"+key+"_arg"+i] = this.h1ds_filters[key].args[i];
+	    //}
+	    for (var fkey in this.h1ds_filters[key].kwargs) {
+		newQueryKey["f"+key+"_"+fkey] = this.h1ds_filters[key].kwargs[fkey];
 	    }
 	}
     }
@@ -414,10 +387,10 @@ H1DSUri.prototype.renderUri = function() {
 function getSpectrogramUri(original_uri) {
     // assume original_url gives a timeseries.
     var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('slanted_baseline', [10]);
-    h1ds_uri.appendFilter('spectrogram', [-1]);
-    h1ds_uri.appendFilter('norm_dim_range_2d', [0,1,0,0.5]);
-    h1ds_uri.appendFilter('y_axis_energy_limit',[0.995]);
+    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
+    h1ds_uri.appendFilter('spectrogram', {'bin_size':-1});
+    h1ds_uri.appendFilter('norm_dim_range_2d', {'x_min':0, 'x_max':1, 'y_min':0, 'y_max':0.5});
+    h1ds_uri.appendFilter('y_axis_energy_limit', {'threshold':0.995});
     h1ds_uri.non_h1ds_query['view'] = 'json';
     var new_uri = h1ds_uri.renderUri();
     return new_uri;
@@ -426,11 +399,11 @@ function getSpectrogramUri(original_uri) {
 function getPowerspectrumUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('slanted_baseline', [10]);
-    h1ds_uri.appendFilter('power_spectrum', []);
-    h1ds_uri.appendFilter('norm_dim_range', [0,0.5]);
-    //h1ds_uri.appendFilter('x_axis_energy_limit',[0.995]);
-    h1ds_uri.appendFilter('resample_minmax', [width]);
+    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
+    h1ds_uri.appendFilter('power_spectrum', {});
+    h1ds_uri.appendFilter('norm_dim_range', {'min':0,'max':0.5});
+    //h1ds_uri.appendFilter('x_axis_energy_limit',{'threshold':0.995});
+    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
     h1ds_uri.non_h1ds_query['view'] = 'json';
     var new_uri = h1ds_uri.renderUri();
     return new_uri;
@@ -439,7 +412,7 @@ function getPowerspectrumUri(original_uri, width) {
 function getRawUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('resample_minmax', [width]);
+    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
     h1ds_uri.non_h1ds_query['view'] = 'json';
     var new_uri = h1ds_uri.renderUri();
     return new_uri;

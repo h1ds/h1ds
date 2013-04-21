@@ -51,9 +51,10 @@ def get_shot_stream_generator():
 new_shot_generator = get_shot_stream_generator()
 
 ### TEMP ###
-import h1ds_core.filters as df
+#import h1ds_core.filters
+from h1ds_core.base import get_all_filters
 ############
-
+all_filters = get_all_filters()
 
 def homepage(request):
     """Return the H1DS homepage."""
@@ -163,28 +164,32 @@ class FilterBaseView(RedirectView):
         filter_name = qdict.pop('filter')[-1]
 
         # Get the actual filter function
-        filter_function = getattr(df, filter_name)
-
+        #filter_function = getattr(df, filter_name)
+        filter_class = all_filters[filter_name]
+        
         # We'll append the filter to this path and redirect there.
         return_path = qdict.pop('path')[-1]
 
         if overwrite_fid:
             fid = int(qdict.pop('fid')[-1])
             for k,v in qdict.items():
-                if k.startswith('f%d_' %fid):
+                if k.startswith('f%d' %fid):
                     qdict.pop(k)
         else:
             # Find the maximum fid in the existing query and +1
             fid = get_max_fid(self.request)+1
 
         # We expect the filter arguments to be passed as key&value in the HTTP query.
-        filter_arg_names = inspect.getargspec(filter_function).args[1:]
-        filter_arg_values = [qdict.pop(a)[-1] for a in filter_arg_names]
+        #filter_arg_names = inspect.getargspec(filter_function).args[1:]
+        #filter_arg_values = [qdict.pop(a)[-1] for a in filter_arg_names]
+        filter_arg_values = [qdict.pop(a)[-1] for a in filter_class.kwarg_names]
 
         # add new filter to query dict
-        qdict.update({'f%d_name' %(fid):filter_name})
-        for argn, arg_val in enumerate(filter_arg_values):
-            qdict.update({'f%d_arg%d' %(fid,argn):arg_val})
+        qdict.update({'f%d' %(fid):filter_name})
+        #for argn, arg_val in enumerate(filter_arg_values):
+        #    qdict.update({'f%d_arg%d' %(fid,argn):arg_val})
+        for name, val in zip(filter_class.kwarg_names, filter_arg_values):
+            qdict.update({'f%d_%s' %(fid,name):val})
 
         return '?'.join([return_path, qdict.urlencode()])
 
@@ -206,7 +211,7 @@ class RemoveFilterView(RedirectView):
         return_path = qdict.pop('path')[-1]
         new_filter_values = []
         for k,v in qdict.items():
-            if k.startswith('f%d_' %filter_id):
+            if k.startswith('f%d' %filter_id):
                 qdict.pop(k)
         return '?'.join([return_path, qdict.urlencode()])
 

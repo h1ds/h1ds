@@ -62,24 +62,25 @@ active_filter_html ="""\
 </div>
 """
 
-def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=None):
+def get_filter(context, filter_class, is_active=False, fid=None, filter_data=None):
     try:
         request = context['request']
         existing_query_string = ''.join(['<input type="hidden" name="%s" value="%s" />' %(k,v) for k,v in request.GET.items()])
-        arg_list = inspect.getargspec(filter_instance).args[1:]
-        docstring = inspect.getdoc(filter_instance)
+        #arg_list = inspect.getargspec(filter_class).args[1:]
+        arg_list = filter_class.kwarg_names
+        docstring = inspect.getdoc(filter_class)
         if is_active:
             if filter_data == None:
                 filter_data = []
             update_url = reverse("update-filter")
             remove_url = reverse("remove-filter")
-            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':filter_data[i]} for i,j in enumerate(arg_list)])
+            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':filter_data[j]} for i,j in enumerate(arg_list)])
 
             return_string = active_filter_html %{
                 'update_url':update_url,
                 'text':docstring,
                 'input_str':input_str,
-                'clsname':filter_instance.__name__,
+                'clsname':filter_class.slug,
                 'path':request.path,
                 'input_query':existing_query_string,
                 'fid':fid,
@@ -93,7 +94,7 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
             input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" placeholder="%(name)s">' %{'name':j} for j in arg_list])
             return_string =  filter_html %{'text':docstring,
                                            'input_str':input_str,
-                                           'clsname':filter_instance.__name__,
+                                           'clsname':filter_class.slug,
                                            'submit_url':submit_url,
                                            'path':request.path,
                                            'input_query':existing_query_string}
@@ -105,11 +106,12 @@ def get_filter(context, filter_instance, is_active=False, fid=None, filter_data=
 @register.simple_tag(takes_context=True)
 def show_filters(context, data_node):
     # TODO: HACK
-    return ""#.join([get_filter(context, f) for f in data_node.data.available_filters])
+    return "".join([get_filter(context, f) for n,f in data_node.get_available_filters().iteritems()])
 
 
 @register.simple_tag(takes_context=True)
 def show_active_filters(context, data_node):
+    print "xxx ", data_node.filter_history 
     return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in data_node.filter_history])
 
 @register.simple_tag(takes_context=True)
