@@ -32,7 +32,7 @@ server {
     	     rewrite ^/mdsplus/(.*)$ /data/$1 break;
     }
 
-    location /data/_/shot_stream/ {
+    location /_/shot_stream/ {
         proxy_buffering off;
         proxy_pass http://unix:/tmp/h1ds.gunicorn.sock:;
         proxy_set_header Host $host;
