@@ -157,6 +157,11 @@ H1DS_DATA_MODULE = 'h1ds_mdsplus'
 H1DS_DATA_PREFIX = "data"
 LATEST_SHOT_FUNCTION = 'h1ds_mdsplus.utils.get_latest_shot'
 
+DATA_FILTER_MODULES = (
+    'h1ds_core.filters',
+    )
+
+
 TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
                                "django.core.context_processors.debug",
                                "django.core.context_processors.i18n",
