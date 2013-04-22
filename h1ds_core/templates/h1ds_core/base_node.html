@@ -56,9 +56,9 @@ HTML tables. -->
       <ul>
 	<!-- current tree -->
 	{% for a in node.get_ancestors %}
-	<li class="treenode"><a href="{{a.url_processor.get_url}}">{{ a.get_short_name }}</a><ul>
+	<li class="treenode"><a href="{{a.url_processor.get_url}}">{% if forloop.first %}{{ node.url_processor.tree}}: {% endif %}{{ a.get_short_name }}</a><ul>
 	{% endfor %}
-	<li class="treenode"><span class="current">{{ node.get_short_name }}</span>
+	<li class="treenode"><span class="current">{% if node.get_ancestors|length == 0 %}{{ node.url_processor.tree}}: {% endif %}{{ node.get_short_name }}</span>
 	  <ul>
 	  {% for c in node.get_children %}
 	  <li> <a href="{{c.url_processor.get_url}}">{{ c.get_short_name }}</a> </li>
