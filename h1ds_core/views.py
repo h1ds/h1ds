@@ -487,6 +487,7 @@ class HTMLNodeResponseMixin(object):
         x = get_trees()
         trees = {'current':self.node.url_processor.tree}
         trees['other'] = [t for t in get_trees() if t.lower() != trees['current'].lower()]
+        trees['all'] = sorted(get_trees())
         alt_formats = ['json', 'png', 'xml', 'csv', 'bin']
         return render_to_response('h1ds_core/{}'.format(template), 
                                   {#'node_content':self.node.get_view('html'),

@@ -54,11 +54,13 @@ HTML tables. -->
     <div class="portlet-header">navigation</div>
     <div class="portlet-content">
       <ul>
+	{% for t in trees.all %}
+	{% ifequal t trees.current %}
 	<!-- current tree -->
 	{% for a in node.get_ancestors %}
-	<li class="treenode"><a href="{{a.url_processor.get_url}}">{% if forloop.first %}{{ node.url_processor.tree}}: {% endif %}{{ a.get_short_name }}</a><ul>
+	<li class="treenode"><a href="{{a.url_processor.get_url}}">{% if forloop.first %}{{ trees.current }}: {% endif %}{{ a.get_short_name }}</a><ul>
 	{% endfor %}
-	<li class="treenode"><span class="current">{% if node.get_ancestors|length == 0 %}{{ node.url_processor.tree}}: {% endif %}{{ node.get_short_name }}</span>
+	<li class="treenode"><span class="current">{% if node.get_ancestors|length == 0 %}{{ trees.current }}: {% endif %}{{ node.get_short_name }}</span>
 	  <ul>
 	  {% for c in node.get_children %}
 	  <li> <a href="{{c.url_processor.get_url}}">{{ c.get_short_name }}</a> </li>
@@ -66,8 +68,9 @@ HTML tables. -->
 	  </ul>
 	  {% for i in node.get_ancestors %}</ul>{% endfor %}
 	</li>
-	{% for t in trees.other %}
+	{% else %}
 	<li class="datatree"><a href="{% get_tree_url node.url_processor t %}">{{ t }}</a></li>
+	{% endifequal %}
 	{% endfor%}
       </ul>
     </div>
