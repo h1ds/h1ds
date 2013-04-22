@@ -67,7 +67,7 @@ HTML tables. -->
 	  {% for i in node.get_ancestors %}</ul>{% endfor %}
 	</li>
 	{% for t in trees.other %}
-	<li class="datatree">{{ t }}</li>
+	<li class="datatree"><a href="{% get_tree_url node.url_processor t %}">{{ t }}</a></li>
 	{% endfor%}
       </ul>
     </div>

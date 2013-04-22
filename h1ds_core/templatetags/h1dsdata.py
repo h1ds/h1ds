@@ -169,4 +169,27 @@ def get_absolute_uri(parser, token):
 
 register.tag('get_absolute_uri', get_absolute_uri)
 
+class GetTreeURLNode(template.Node):
+    def __init__(self, url_processor, tree):
+        self.url_processor = template.Variable(url_processor)
+        self.tree = template.Variable(tree)
+
+    def render(self, context):
+        try:
+            url_p = self.url_processor.resolve(context)
+            t = self.tree.resolve(context)
+            return url_p.get_url_for_tree(t)
+
+        except template.VariableDoesNotExist:
+            return ''
+
+def get_tree_url(parser, token):
+    try:
+        tag_name, url_processor, tree = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError, "%r tag requires three arguments" % token.contents.split()[0]
+    return GetTreeURLNode(url_processor, tree)
+
+register.tag('get_tree_url', get_tree_url)
+
 

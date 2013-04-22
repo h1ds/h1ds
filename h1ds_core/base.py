@@ -139,6 +139,10 @@ class BaseURLProcessor(object):
                                            self.urlized_shot(),
                                            self.urlized_path()]))
         
+    def get_url_for_tree(self, tree):
+        """TODO: apply urlized_tree to tree arg"""
+        return self.apply_prefix("/".join([tree, self.urlized_shot()]))
+    
     def urlized_tree(self):
         return self.tree
 
