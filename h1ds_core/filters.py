@@ -189,9 +189,9 @@ class PulseNumber(Array1DimNumericBaseFilter):
         node.label = ('pulse_number(%s, %s)' %(node.label[0], self.kwargs["threshold"]), )
 
 
-class MaxVal(Array1DimNumericBaseFilter):
+class Max(Array1DimNumericBaseFilter):
     
-    slug = "max_val"
+    slug = "max"
     kwarg_names = []
     
     def apply(self, node):
@@ -224,13 +224,13 @@ class DimOfMaxVal(Array1DimNumericBaseFilter):
 
     """
 
-    slug = "dim_of_max_val"
+    slug = "dim_of_max"
     kwarg_names = []
     
     def apply(self, node):
         node.data = node.dim[np.argmax(node.data)]
         node.dim = None
-        node.label = ('dim_of_max_val(%s)' %node.label[0],)
+        node.label = ('dim_of_max(%s)' %node.label[0],)
 
 class Mean(Array1DimNumericBaseFilter):
 
@@ -384,9 +384,9 @@ class NormDimRange(Array1DimNumericBaseFilter):
     kwarg_names = ["min", "max"]
     
     def apply(self, node):
-        _min_val = float(self.kwargs["min"])
-        _max_val = float(self.kwargs["max"])
-        min_e, max_e = int(_min_val*len(node.dim)), int(_max_val*len(node.dim))
+        _min = float(self.kwargs["min"])
+        _max = float(self.kwargs["max"])
+        min_e, max_e = int(_min*len(node.dim)), int(_max*len(node.dim))
         node.data = node.data[min_e:max_e]
         node.dim = node.dim[min_e:max_e]
         node.label = ('normdim_range(%s, %s, %s)' %(node.label[0], self.kwargs["min"], self.kwargs["max"]),)
@@ -395,15 +395,15 @@ class DimRange(Array1DimNumericBaseFilter):
     """Reduce range of signal."""
 
     slug = "dim_range"
-    kwarg_names = ["min_val", "max_val"]
+    kwarg_names = ["min", "max"]
     
     def apply(self, node):
-        _min_val = float(self.kwargs["min_val"])
-        _max_val = float(self.kwargs["max_val"])
-        min_e, max_e = np.searchsorted(node.dim, [_min_val, _max_val])
+        _min = float(self.kwargs["min"])
+        _max = float(self.kwargs["max"])
+        min_e, max_e = np.searchsorted(node.dim, [_min, _max])
         node.data = node.data[min_e:max_e]
         node.dim = node.dim[min_e:max_e]
-        node.label = ('dim_range(%s, %s, %s)' %(node.label[0], self.kwargs["min_val"], self.kwargs["max_val"]),)
+        node.label = ('dim_range(%s, %s, %s)' %(node.label[0], self.kwargs["min"], self.kwargs["max"]),)
 
 class PowerSpectrum(Array1DimNumericBaseFilter):
     """power spectrum of signal."""
