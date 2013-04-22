@@ -3,6 +3,7 @@ server {
     server_name h1ds.anu.edu.au;
     access_log /var/log/nginx/h1ds.access.log;
     error_log /var/log/nginx/h1ds.error.log;
+    rewrite ^/mdsplus/(.*)$ http://h1ds.anu.edu.au/data/$1 permanent;
 
     # https://docs.djangoproject.com/en/dev/howto/static-files/#serving-static-files-in-production
     location /static/ { # STATIC_URL
@@ -26,10 +27,6 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    location /mdsplus/ {
-    	     rewrite ^/mdsplus/(.*)$ /data/$1 break;
     }
 
     location /_/shot_stream/ {
