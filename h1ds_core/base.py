@@ -144,13 +144,13 @@ class BaseURLProcessor(object):
         return self.apply_prefix("/".join([tree, self.urlized_shot()]))
     
     def urlized_tree(self):
-        return self.tree
+        return str(self.tree)
 
     def urlized_shot(self):
         return str(self.shot)
 
     def urlized_path(self):
-        return self.path
+        return str(self.path)
 
     def deurlize_tree(self, url_tree):
         if url_tree == "":

@@ -55,7 +55,7 @@ HTML tables. -->
     <div class="portlet-content">
       <ul>
 	{% for t in trees.all %}
-	{% ifequal t trees.current %}
+	{% ifequal t|lower trees.current|lower %}
 	<!-- current tree -->
 	{% for a in node.get_ancestors %}
 	<li class="treenode"><a href="{{a.url_processor.get_url}}">{% if forloop.first %}{{ trees.current }}: {% endif %}{{ a.get_short_name }}</a><ul>
@@ -69,7 +69,7 @@ HTML tables. -->
 	  {% for i in node.get_ancestors %}</ul>{% endfor %}
 	</li>
 	{% else %}
-	<li class="datatree"><a href="{% get_tree_url node.url_processor t %}">{{ t }}</a></li>
+	<li class="treenode"><a href="{% get_tree_url node.url_processor t %}">{{ t }}</a></li>
 	{% endifequal %}
 	{% endfor%}
       </ul>
