@@ -354,9 +354,23 @@ class JSONNodeResponseMixin(object):
         elif np.isscalar(self.node.get_data()):
             response_data['data'] = np.asscalar(self.node.get_data())
             response_data['dim'] = None
-        elif 1 <= len(self.node.get_data().shape) <= 3:
-            response_data['data'] =  self.node.get_data().tolist()
+        elif len(self.node.get_data().shape) == 1:
+            response_data['data'] = self.node.get_data().tolist()
             response_data['dim'] = self.node.get_dim().tolist()
+        elif 1 < len(self.node.get_data().shape) <= 3:
+            data, dim = [],[]
+            for i in self.node.get_data():
+                if hasattr(i, "tolist"):
+                    data.append(i.tolist())
+                else:
+                    data.append(i)
+            for i in self.node.get_dim():
+                if hasattr(i, "tolist"):
+                    dim.append(i.tolist())
+                else:
+                    dim.append(i)
+            response_data['data'] =  data
+            response_data['dim'] = dim
         else:
             response_data['data'] = "unknown data"
             response_data['dim'] = None

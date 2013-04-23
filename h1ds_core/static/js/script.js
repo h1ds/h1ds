@@ -237,7 +237,7 @@ function loadCookie() {
 
 function plotSignal2D() {
     // custom image manipulation for data
-    var container  = $("#signal-2d-placeholder");
+    var container  = $("#dummy");
     var query_char = window.location.search.length ? '&' : '?';
     var image_query = window.location.search + query_char + 'view=json';
 
@@ -457,6 +457,10 @@ function NewPlotContainer(id, rows, columns) {
 	'spectrogram':this.plotSpectrogram,
 	//'powerspectrum':this.plotPowerSpectrum,
 	'powerspectrum':this.plotLine,
+	//'raw2d':this.plotRaw2D,
+	// TODO - plotSpectrogram just plots 2d? - rename
+	// spectrogram stuff is really in the getSpectrogramUri
+	'raw2d':this.plotSpectrogram,
     }
 
     // create SVG
@@ -511,6 +515,10 @@ NewPlotContainer.prototype.plotLine = function(selection) {
 	    }
 	});
 };
+
+NewPlotContainer.prototype.plotRaw2D = function(selection) {
+
+}
 
 NewPlotContainer.prototype.plotSpectrogram = function(selection) {
     var rect_data = [];
@@ -1075,6 +1083,22 @@ function plot1DimArray(d, url) {
 
 }
 
+function plot2DimArray(d, url) {
+	var pc = new NewPlotContainer("#"+d, [500],[1.0]);
+	pc.addData("default", url);
+	pc.setPlot(0, {"plotType":"raw2d"});
+	pc.addDataToPlot("default", 0, true);
+	
+	//pc.setPlot(2, {"plotType":"spectrogram"});
+	//pc.addDataToPlot("default", 2, false);
+
+	//pc.setPlot(0, {"plotType":"raw", "bindAxis":[2,-1]});
+	//pc.addDataToPlot("default", 0, false);
+
+	//pc.setPlot(3, {"plotType":"powerspectrum", "flip":true, 'bindAxis':[-1,2]});
+	//pc.addDataToPlot("default", 3, true);
+}
+
 function getPlotFunction(dtype, ndim) {
     // TODO: check dtype etc
     switch(ndim) {
@@ -1083,6 +1107,9 @@ function getPlotFunction(dtype, ndim) {
 	break;
 	case "1":
 	return plot1DimArray;
+	break;
+	case "2":
+	return plot2DimArray;
 	break;
     }
 }
@@ -1110,7 +1137,7 @@ function populatePagelet(d) {
 	    
 	});
     */
-    console.log(d.attr("id"));
+    // console.log(d.attr("id"));
     //d.text(json_url);
 }
 
