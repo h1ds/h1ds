@@ -7,7 +7,9 @@ server {
 
     # enable compression
     gzip on;
-    gzip_types text/plain application/xml application/json application/x-javascript application/javascript;
+    #gzip_types text/plain application/xml application/json application/x-javascript application/javascript;
+    # compress all the things.
+    gzip_types *;
 
     # https://docs.djangoproject.com/en/dev/howto/static-files/#serving-static-files-in-production
     location /static/ { # STATIC_URL
