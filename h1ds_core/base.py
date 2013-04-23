@@ -178,7 +178,9 @@ class BaseNode(object):
             self.apply_filter(fid, name, **kwargs)
         
     def apply_filter(self, fid, name, **kwargs):
+        # make sure data and dim can be accessed via node.data, node.dim... 
         d = self.get_data()
+        dim = self.get_dim()
         f_kwargs = self.preprocess_filter_kwargs(kwargs)
         #filter_class = filter_manager.filters[name](*f_args, **f_kwargs)
         filter_class = filter_manager.filters[name](**f_kwargs)

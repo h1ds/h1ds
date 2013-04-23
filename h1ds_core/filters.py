@@ -1,3 +1,5 @@
+"""Filters for h1ds data
+"""
 from urlparse import urlparse, urlunparse
 import urllib2, json
 from django.core.urlresolvers import reverse
@@ -365,7 +367,7 @@ class ResampleMinMax(Array1DimNumericBaseFilter):
         signal_length = node.data.T.shape[0]
         if signal_length >= 2*_n_bins:
             delta_sample = signal_length/_n_bins
-            node.dim = node.get_dim()[::delta_sample][:_n_bins]
+            node.dim = node.dim[::delta_sample][:_n_bins]
             max_data = []
             min_data = []
 
@@ -415,7 +417,7 @@ class PowerSpectrum(Array1DimNumericBaseFilter):
         output_size = 2**np.searchsorted(binary_powers, node.data.shape[0])
         node.data = np.abs(np.fft.fft(node.data, n=output_size))
         length = len(node.data)
-        sample_rate = np.mean(node.get_dim()[1:] - node.get_dim()[:-1])
+        sample_rate = np.mean(node.dim[1:] - node.dim[:-1])
         node.dim = (1./sample_rate)*np.arange(length)/(length-1)
         node.label = ('power_spectrum(%s)' %(node.label[0]),)
 
@@ -539,7 +541,7 @@ class Spectrogram(Array1DimNumericBaseFilter):
         _bin_size =int(self.kwargs["bin_size"])
         if _bin_size < 0:
             # have a guess...
-            approx_bin_size = np.sqrt(len(node.get_dim()))
+            approx_bin_size = np.sqrt(len(node.dim))
             _bin_size=2**np.searchsorted(binary_powers, approx_bin_size)
         sample_rate = np.mean(node.dim[1:] - node.dim[:-1])
 
