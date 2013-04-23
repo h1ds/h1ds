@@ -5,6 +5,10 @@ server {
     error_log /var/log/nginx/h1ds.error.log;
     rewrite ^/mdsplus/(.*)$ http://h1ds.anu.edu.au/data/$1 permanent;
 
+    # enable compression
+    gzip on;
+    gzip_types text/plain application/xml application/json;
+
     # https://docs.djangoproject.com/en/dev/howto/static-files/#serving-static-files-in-production
     location /static/ { # STATIC_URL
         alias __venv_dir__/static/; # STATIC_ROOT
