@@ -5,6 +5,9 @@ server {
     error_log /var/log/nginx/h1ds.error.log;
     rewrite ^/mdsplus/(.*)$ http://h1ds.anu.edu.au/data/$1 permanent;
 
+    # IPs to block
+    include __venv_dir__/h1ds/conf/block.conf;
+
     # enable compression
     gzip on;
     #gzip_types text/plain application/xml application/json application/x-javascript application/javascript;
