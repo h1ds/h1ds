@@ -239,7 +239,7 @@ function plotSignal2D() {
     // custom image manipulation for data
     var container  = $("#dummy");
     var query_char = window.location.search.length ? '&' : '?';
-    var image_query = window.location.search + query_char + 'view=json';
+    var image_query = window.location.search + query_char + 'format=json';
 
     $.getJSON(image_query, dataReady);
 
@@ -391,7 +391,7 @@ function getSpectrogramUri(original_uri) {
     h1ds_uri.appendFilter('spectrogram', {'bin_size':-1});
     h1ds_uri.appendFilter('norm_dim_range_2d', {'x_min':0, 'x_max':1, 'y_min':0, 'y_max':0.5});
     h1ds_uri.appendFilter('y_axis_energy_limit', {'threshold':0.995});
-    h1ds_uri.non_h1ds_query['view'] = 'json';
+    h1ds_uri.non_h1ds_query['format'] = 'json';
     var new_uri = h1ds_uri.renderUri();
     return new_uri;
 }
@@ -404,7 +404,7 @@ function getPowerspectrumUri(original_uri, width) {
     h1ds_uri.appendFilter('norm_dim_range', {'min':0,'max':0.5});
     //h1ds_uri.appendFilter('x_axis_energy_limit',{'threshold':0.995});
     h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
-    h1ds_uri.non_h1ds_query['view'] = 'json';
+    h1ds_uri.non_h1ds_query['format'] = 'json';
     var new_uri = h1ds_uri.renderUri();
     return new_uri;
 }
@@ -413,7 +413,7 @@ function getRawUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var h1ds_uri = new H1DSUri(original_uri);
     h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
-    h1ds_uri.non_h1ds_query['view'] = 'json';
+    h1ds_uri.non_h1ds_query['format'] = 'json';
     var new_uri = h1ds_uri.renderUri();
     return new_uri;
 }
@@ -647,7 +647,7 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
     // the actual data we request uses a modified URL which resamples the data to the screen resolution
     // does data_url contain a query string?
     //var query_char = data_url.match(/\?.+/) ? '&' : '?';
-    //plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&view=json');
+    //plot_data_url = data_url + (query_char+'f999_name=resample_minmax&f999_arg0='+(this.svg.attr("width"))+'&format=json');
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
     // TODO: refactor code to be able to cope with async URL loading.
@@ -883,7 +883,7 @@ function updateSummaryDB() {
 
     if (latest_summary_shot > latest_shot_in_doc) {
 	var query_char = window.location.search.length ? '&' : '?';
-	var query_str = window.location.search + query_char + 'view=json';
+	var query_str = window.location.search + query_char + 'format=json';
 	var json_url = window.location.toString()+query_str
 	// keep async = false, to make sure we don't check document for 
 	// current shot until we've updated the document.
@@ -934,7 +934,7 @@ function autoPollSummaryDB() {
     if (do_poll[0][0] !== null && do_poll.text() === 'True') {
 	var last_update = null;
 	var query_char = window.location.search.length ? '&' : '?';
-	var query_str = window.location.search + query_char + 'view=json';
+	var query_str = window.location.search + query_char + 'format=json';
 	var json_url = window.location.toString()+query_str	
 	// select table elements
 	var table = d3.select("table.main-table tbody");
@@ -1121,7 +1121,7 @@ function populatePagelet(d) {
 	pagelet_url = window.location.toString();
     }
     var _json_url = new H1DSUri(pagelet_url);
-    _json_url.non_h1ds_query['view'] = 'json';
+    _json_url.non_h1ds_query['format'] = 'json';
     var json_url = _json_url.renderUri();
 
     var dtype = d.attr("data-dtype");

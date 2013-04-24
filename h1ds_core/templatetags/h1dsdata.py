@@ -15,7 +15,7 @@ class H1DSDataTemplateNode(template.Node):
     def render(self, context):
         try:
             node = self.node_var.resolve(context)
-            return '<div class="centrecontent"><div class="data">%s</div></div>' %(node.get_view('html'))
+            return '<div class="centrecontent"><div class="data">%s</div></div>' %(node.get_format('html'))
         except template.VariableDoesNotExist:
             return ''
 
@@ -126,30 +126,30 @@ def get_url_for_shot(context, url, new_shot):
     return url#url.replace(str(input_shot), str(new_shot))
 
 
-class H1DSViewNode(template.Node):
-    def __init__(self, view_name):
-        self.view_name_var = template.Variable(view_name)
+class H1DSFormatNode(template.Node):
+    def __init__(self, format_name):
+        self.format_name_var = template.Variable(format_name)
 
     def render(self, context):
         try:
-            view_name = self.view_name_var.resolve(context)
+            format_name = self.format_name_var.resolve(context)
             request = context['request']
             qd_copy = request.GET.copy()
-            qd_copy.update({'view': view_name})
+            qd_copy.update({'format': format_name})
             link_url = '?'.join([request.path, qd_copy.urlencode()])
-            return '<a href="%s">%s</a>' %(link_url, view_name)
+            return '<a href="%s">%s</a>' %(link_url, format_name)
         except template.VariableDoesNotExist:
             return ''
 
-def show_view(parser, token):
+def show_format(parser, token):
     try:
         # split_contents() knows not to split quoted strings.
-        tag_name, view_name = token.split_contents()
+        tag_name, format_name = token.split_contents()
     except ValueError:
         raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
-    return H1DSViewNode(view_name)
+    return H1DSFormatNode(format_name)
 
-register.tag('show_view', show_view)
+register.tag('show_format', show_format)
 
 
 class GetAbsoluteUriNode(template.Node):

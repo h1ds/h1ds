@@ -56,6 +56,18 @@ from h1ds_core.base import get_all_filters
 ############
 all_filters = get_all_filters()
 
+def get_format(request, default='html'):
+    """get format URI query key.
+
+    Fall back to 'view' for backwards compatability.
+
+    """
+    format_ =  request.GET.get('format', None)
+    if not format_:
+        format_ = request.GET.get('view', default)
+    return format_
+
+    
 def homepage(request):
     """Return the H1DS homepage."""
     return render_to_response('h1ds_core/homepage.html', 
@@ -307,8 +319,8 @@ class AJAXLatestShotView(View):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        view = request.GET.get('view', 'json')
-        if view.lower() == 'xml':
+        format_ = get_format(request, default='json')
+        if format_.lower() == 'xml':
             return xml_latest_shot(request)
         latest_shot = get_latest_shot()
         return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
@@ -389,7 +401,7 @@ class CSVNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        data = self.node.get_view('csv')
+        data = self.node.get_format('csv')
         
         response = HttpResponse(mimetype='text/csv')
         response['Content-Disposition'] = 'attachment; filename=data.csv'
@@ -406,7 +418,7 @@ class XMLNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        # TODO: this should be handled by wrappers
+        # TODO (depecated - much code change): this should be handled by wrappers
         # however, at present self.node.get_view
         # calls get_view on the data object which
         # doesn't ?? know about shot info, etc
@@ -436,10 +448,10 @@ class XMLNodeResponseMixin(object):
         #### should use proper url joining rather than string hacking...
         signal.text = request.build_absolute_uri()
         if '?' in signal.text:
-            # it doesn't matter if we have multiple 'view' get queries - only the last one is used
-            signal.text += '&view=bin' 
+            # it doesn't matter if we have multiple 'format' get queries - only the last one is used
+            signal.text += '&format=bin' 
         else:
-            signal.text += '?view=bin'
+            signal.text += '?format=bin'
 
         return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
 
@@ -448,7 +460,7 @@ class PNGNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        data = self.node.get_view('png')
+        data = self.node.get_format('png')
         img_buffer = StringIO.StringIO()
         pylab.imsave(img_buffer, data.data, format='png')
         return HttpResponse(img_buffer.getvalue(), mimetype='image/png')
@@ -458,7 +470,7 @@ class BinaryNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        disc_data = self.node.get_view('bin')
+        disc_data = self.node.get_format('bin')
         response = HttpResponse(disc_data['iarr'].tostring(), mimetype='application/octet-stream')
         response['X-H1DS-signal-min'] = disc_data['minarr']
         response['X-H1DS-signal-delta'] = disc_data['deltar']
@@ -504,7 +516,7 @@ class HTMLNodeResponseMixin(object):
         trees['all'] = sorted(get_trees())
         alt_formats = ['json', 'png', 'xml', 'csv', 'bin']
         return render_to_response('h1ds_core/{}'.format(template), 
-                                  {#'node_content':self.node.get_view('html'),
+                                  {#'node_content':self.node.get_format('html'),
                                    #'html_metadata':html_metadata,
                                    'user_signals':user_signals,
                                    'user_signal_form':user_signal_form,
@@ -546,9 +558,9 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
         # http://www.xml.com/pub/a/2004/08/11/rest.html
 
         if request.method == 'GET':
-            requested_representation = request.GET.get('view', 'html').lower()
+            requested_representation = get_format(request).lower()
         elif request.method == 'POST':
-            requested_representation = request.GET.get('view', 'html')
+            requested_representation = gte_format(request)
         else:
             # until we figure out how to determine appropriate content type
             return self.http_method_not_allowed(request, *args, **kwargs)

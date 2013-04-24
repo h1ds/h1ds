@@ -129,12 +129,11 @@ HTML tables. -->
   </div>
   {% endif %}
 
-  <!-- List the views (H1DS views such as html, json, etc, not django view
-       functions) available for the node data type -->
-  <div class="portlet" id="h1ds-portlet-views">
+  <!-- List the formats available for the node data type -->
+  <div class="portlet" id="h1ds-portlet-formats">
     <div class="portlet-header">alternative formats</div>
     <div class="portlet-content">
-      {% for format in alt_formats %}{% show_view format %} {% endfor %}
+      {% for format in alt_formats %}{% show_format format %} {% endfor %}
     </div>
   </div>
 

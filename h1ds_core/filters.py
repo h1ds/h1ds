@@ -29,17 +29,17 @@ is_string = lambda cls, d: isinstance(d, basestring)
     
 def http_arg(arg):
     if arg.startswith("http://"):
-        # make sure we get the JSON view, in case the user didn't add view=json
+        # make sure we get the JSON format, in case the user didn't add format=json
         # Split URL into [scheme, netloc, path, params, query, fragments]
         parsed_url = urlparse(arg)
 
         # parsed_url is an immutable ParseResult instance, copy it to a (mutable) list
         parsed_url_list = [i for i in parsed_url]
 
-        # Now we can update the URL query string to enforce the JSON view.
-        parsed_url_list[4] = '&'.join([parsed_url[4], 'view=json'])
+        # Now we can update the URL query string to enforce the JSON format.
+        parsed_url_list[4] = '&'.join([parsed_url[4], 'format=json'])
 
-        # And here is our original URL with view=json query added
+        # And here is our original URL with format=json query added
         attr_url_json = urlunparse(parsed_url_list)
         request = urllib2.Request(attr_url_json)
         response = json.loads(urllib2.urlopen(request).read())
