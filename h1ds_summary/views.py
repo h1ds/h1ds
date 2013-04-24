@@ -30,10 +30,20 @@ get_latest_shot = get_latest_shot_function()
 data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
 
-
 DEFAULT_SHOT_REGEX = "last10"
 DEFAULT_ATTR_STR = "default"
 DEFAULT_FILTER = None
+
+def get_format(request, default='html'):
+    """get format URI query key.
+
+    Fall back to 'view' for backwards compatability.
+
+    """
+    format_ =  request.GET.get('format', None)
+    if not format_:
+        format_ = request.GET.get('view', default)
+    return format_
 
 class NoAttributeException(Exception):
     pass
@@ -102,10 +112,10 @@ class SummaryMixin(object):
             else:
                 new_attr_str = '+'.join(attribute_slugs)
             if filter_str:
-                # TODO: might work for html only - either pass get query(to get view value - html, json etc) or use per-view method
+                # TODO: might work for html only - either pass get query(to get format value - html, json etc) or use per-format method
                 return HttpResponseRedirect(reverse('sdfsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str, 'filter_str':filter_str}))
             else:
-                # TODO: might work for html only - either pass get query(to get view value - html, json etc) or use per-view method
+                # TODO: might work for html only - either pass get query(to get format value - html, json etc) or use per-format method
                 return HttpResponseRedirect(reverse('sdsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str}))
 
         select_list = ['shot']
@@ -255,9 +265,9 @@ class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMix
         # http://www.xml.com/pub/a/2004/08/11/rest.html
 
         if request.method == 'GET':
-            requested_representation = request.GET.get('view', 'html').lower()
+            requested_representation = get_format(request).lower()
         elif request.method == 'POST':
-            requested_representation = request.GET.get('view', 'html')
+            requested_representation = get_format(request)
         else:
             # until we figure out how to determine appropriate content type
             return self.http_method_not_allowed(request, *args, **kwargs)
@@ -355,10 +365,10 @@ def get_summary_attribute_form_from_url(request):
     # parsed_url is an immutable ParseResult instance, copy it to a (mutable) list
     parsed_url_list = [i for i in parsed_url]
 
-    # Now we can update the URL query string to enforce the JSON view.
-    parsed_url_list[4] = '&'.join([parsed_url[4], 'view=json'])
+    # Now we can update the URL query string to enforce the JSON format.
+    parsed_url_list[4] = '&'.join([parsed_url[4], 'format=json'])
 
-    # And here is our original URL with view=json query added
+    # And here is our original URL with format=json query added
     attr_url_json = urlunparse(parsed_url_list)
 
     # Get the django view function corresponding to the URL path
@@ -408,11 +418,11 @@ def go_to_source(request, slug, shot):
     if attr.source.startswith('http://'):
         source_url = attr.source.replace('__shot__', str(shot))
 
-        # add view=html HTML query
+        # add format=html HTML query
 
         parsed_url_list = [i for i in urlparse(source_url)]
 
-        parsed_url_list[4] = '&'.join([parsed_url_list[4], 'view=html'])
+        parsed_url_list[4] = '&'.join([parsed_url_list[4], 'format=html'])
 
         source_html_url = urlunparse(parsed_url_list)
     else:
