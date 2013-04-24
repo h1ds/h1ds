@@ -2,12 +2,17 @@
 # robots.txt for H1DS 
 #
 
-# Don't let robots trawl through data system.
-# There's no benefit to search engines in going though
-# the databases, and they put a heavy load on the server.
+# Don't let robots  trawl through data system.  There's  no benefit to
+# search engines in  going though the databases, and they  put a heavy
+# load on the server.
+# Update: 24/4/13 - disallow all,  wouldn't mind having wiki searched,
+# robox.txt doesn't  do regex and  we don't  want trawling of  all the
+# revisions and diffs etc - too much traffic.
 User-agent: *
-Disallow: /mdsplus
-Disallow: /summary
-Disallow: /static
-Disallow: /configurations
+Disallow: /
+#Disallow: /mdsplus
+#Disallow: /data
+#Disallow: /summary
+#Disallow: /static
+#Disallow: /configurations
 
