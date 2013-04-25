@@ -64,13 +64,19 @@ class BaseFilter:
 
     __metaclass__ = BaseFilterMetaclass
 
+    ndim = 0
+    
     def __init__(self, **kwargs):
         self.kwargs = dict((k, http_arg(v)) for k,v in kwargs.iteritems())
-    
+
+    @classmethod
+    def valid_ndim(cls, data):
+        data_ndim = data.ndim if hasattr(data, 'ndim') else 0
+        return (data_ndim == cls.ndim or cls.ndim == "any")
+        
     @classmethod
     def is_filterable(cls, data):
-        ndim = data.ndim if hasattr(data, 'ndim') else 0
-        return (ndim == cls.ndim or cls.ndim == "any") and cls.valid_dtype(data)
+        return cls.valid_ndim(data) and cls.valid_dtype(data)
 
     @classmethod
     def get_slug(cls):
@@ -700,3 +706,16 @@ class DimOf(BaseFilter):
         node.data = node.dim
         node.dim = np.arange(len(node.data))
         node.label = ('dim_of(%s)' %(node.label[0]),)
+
+class Cast(BaseFilter):
+    """Recast dtype"""
+    slug = "cast"
+    ndim = "any"
+    valid_dtype = is_numeric
+    kwarg_names = ["dtype"]
+
+    def apply(self, node):
+        cast_dtype = getattr(np, self.kwargs["dtype"])
+        node.data = cast_dtype(node.data)
+        node.dim = cast_dtype(node.dim)
+        
