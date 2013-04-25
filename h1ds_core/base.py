@@ -247,8 +247,8 @@ class BaseNode(object):
     def __repr__(self):
         return self.get_long_name()
 
-    def get_data_time(self):
-        return datetime.datetime.fromordinal(1)
+    #def get_data_time(self):
+    #    return datetime.datetime.fromordinal(1)
     
     def get_summary_dtype(self):
         d = self.get_data()
@@ -256,6 +256,9 @@ class BaseNode(object):
 
     def get_available_filters(self):
         return filter_manager.get_filters(self.data)
+
+    def get_metadata(self):
+        return dict()
 
 """
 class BaseDataInterface(object):

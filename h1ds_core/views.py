@@ -431,8 +431,9 @@ class XMLNodeResponseMixin(object):
         # add shot info
         shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
         shot_number.text = str(self.node.url_processor.shot)
-        shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
-        shot_time.text = str(self.node.get_data_time())
+        ## TODO: add metadata (for mds, shot time can go into metadata)
+        #shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
+        #shot_time.text = str(self.node.get_data_time())
         
 
         # add data info
