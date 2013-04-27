@@ -533,20 +533,20 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
     // TODO: last column... 
     for (var x_i = 0; x_i<data.data.dim[0].length-1; x_i++) {
 	for (var y_i = 0; y_i<data.data.dim[1].length-1; y_i++) {
-	    rect_data.push(
-		{'x1':data.data.dim[0][x_i],
-		 'x2':data.data.dim[0][x_i+1],
-		 'y1':data.data.dim[1][y_i],
-		 'y2':data.data.dim[1][y_i+1],
-		 'value':data.data.data[x_i][y_i]
-		}
-		
-	    );
+	    if (data.data.data[x_i][y_i] > 0) {
+		rect_data.push(
+		    {'x1':data.data.dim[0][x_i],
+		     'x2':data.data.dim[0][x_i+1],
+		     'y1':data.data.dim[1][y_i],
+		     'y2':data.data.dim[1][y_i+1],
+		     'value':data.data.data[x_i][y_i]
+		    }
+		);
+	    }
 	    if (data.data.data[x_i][y_i] > max_value) max_value = data.data.data[x_i][y_i];
 	}
     }
     var rects = selection.selectAll("rect").data(rect_data);
-    
     rects.enter().append("rect")
 	.attr("x", function(d,i) {return data.plot.x(d.x1)})
 	.attr("y", function(d,i) {return data.plot.y(d.y1)})
