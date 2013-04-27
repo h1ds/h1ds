@@ -471,16 +471,53 @@ class BinaryNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        disc_data = self.node.get_format('bin')
-        response = HttpResponse(disc_data['iarr'].tostring(), mimetype='application/octet-stream')
-        response['X-H1DS-signal-min'] = disc_data['minarr']
-        response['X-H1DS-signal-delta'] = disc_data['deltar']
-        response['X-H1DS-dim-t0'] = self.node.data.dim[0]
-        response['X-H1DS-dim-delta'] = self.node.data.dim[1]-self.node.data.dim[0]
-        response['X-H1DS-dim-length'] = len(self.node.data.dim)
-        response['X-H1DS-signal-units'] = self.node.data.units
-        response['X-H1DS-signal-dtype'] = str(disc_data['iarr'].dtype)
-        response['X-H1DS-dim-units'] = self.node.data.dim_units
+        response = HttpResponse(mimetype='application/octet-stream')
+
+        # TODO: make this available through HTTP query or settings.
+        # error_threshold = 1.e-3
+
+        # TODO: do  we want a  consistency check that checks  the node
+        # dimension info matches the dimensionality of the data?
+        
+        # TODO: we  assume dim  can be  parameterised, this  should be
+        # generalised (e.g. if cannot  be paramterised, put in message
+        # body)
+
+        param_dim = self.node.parameterised_dim()
+        
+        response['X-H1DS-ndim'] = param_dim['ndim']
+        for d in xrange(param_dim['ndim']):
+            for k,v in param_dim[d].iteritems():
+                response['X-H1DS-{}-{}'.format(d,k)] = v
+
+        requested_dtype = request.GET.get('bin_assert_dtype', None)
+        if requested_dtype != None:
+            try:
+                requested_dtype = getattr(np, requested_dtype)
+            except AttributeError:
+                requested_dtype = None
+                
+        discretised_data = self.node.discretised_data(assert_dtype=requested_dtype)
+        response.write(discretised_data['data'].tostring())
+        response['X-H1DS-data-min'] = discretised_data['min']
+        response['X-H1DS-data-delta'] = discretised_data['delta']
+        response['X-H1DS-data-rmserr'] = discretised_data['rms_err']
+
+    
+        # For data, if requested, quantize with requested bitlength
+        # X-H1DS-data-quantised: True or False
+        ## if quantised, give error value.
+        
+        #disc_data = self.node.get_format('bin')
+        #response = HttpResponse(disc_data['iarr'].tostring(), mimetype='application/octet-stream') ## use response.write()
+        #response['X-H1DS-signal-min'] = disc_data['minarr']
+        #response['X-H1DS-signal-delta'] = disc_data['deltar']
+        #response['X-H1DS-dim-t0'] = self.node.data.dim[0]
+        #response['X-H1DS-dim-delta'] = self.node.data.dim[1]-self.node.data.dim[0]
+        #response['X-H1DS-dim-length'] = len(self.node.data.dim)
+        #response['X-H1DS-signal-units'] = self.node.data.units
+        #response['X-H1DS-signal-dtype'] = str(disc_data['iarr'].dtype)
+        #response['X-H1DS-dim-units'] = self.node.data.dim_units
         return response
 
     

@@ -213,7 +213,7 @@ class BaseNode(object):
         return None
     
     def get_dim(self):
-        # TODO - scalars etc will have dim None, shouldn't re-read from node for these cases...
+        # TODO - scalars etc will have dim None (or should they have dim 0), shouldn't re-read from node for these cases...
         if type(self.dim) == type(None):
             self.dim = self.get_raw_dim()
         return self.dim
@@ -257,8 +257,88 @@ class BaseNode(object):
     def get_available_filters(self):
         return filter_manager.get_filters(self.data)
 
+    def get_ndim(self):
+        """get ndim from data"""
+        data = self.get_data()
+        return data.ndim if hasattr(data, 'ndim') else 0
+
     def get_metadata(self):
         return dict()
+
+    def _get_shape_from_data(self):
+        data = self.get_data()
+        try:
+            return data.shape
+        except AttributeError:
+            return 0
+
+    def _get_shape_from_dim(self):
+        dim = self.get_dim()
+        try:
+            dim_lengths = tuple(len(i) for i in dim)
+        except TypeError:
+            return 0
+        return dim_lengths
+    
+    def consistent_dim(self):
+        # check that data and dim shapes match
+        
+        data_shape = self._get_shape_from_data()
+        dim_shape = self._get_shape_from_dim()
+        return data_shape == dim_shape
+
+    def parameterised_dim(self):
+        """Return start, delta, length for dimension data."""        
+        pdim = {}
+        dim = self.get_dim()
+        dim_shape = self._get_shape_from_dim()
+        if dim_shape == 0:
+            pdim['ndim'] = 0
+            return pdim
+        else:
+            pdim['ndim'] = len(dim_shape)
+            
+        for di, d in enumerate(dim_shape):
+            pdim[di] = {'length':d}
+            if pdim[di]['length'] > 0:
+                darr = np.array(dim[di])
+                pdim[di]['first'] = darr[0]
+                pdim[di]['delta'] = np.mean(np.diff(darr))
+                reconst_dim = pdim[di]['delta']*np.arange(pdim[di]['length'])+pdim[di]['start']
+                pdim[di]['rms_err'] = np.sqrt(np.mean((darr - reconst_dim)**2))
+        return pdim
+
+    def discretised_data(self, error_threshold=1.e-3, assert_dtype=None):
+        """
+        return int array of data with scales (min, delta)
+
+        TODO: return smallest dtype which falls within error threshold
+        using Boyd's discretise_array
+
+        if assert_dtype (integer dtype) is provided, error_threshold is ignored.
+
+        """
+        
+        data = self.get_data()
+        data_min, data_max = np.min(data), np.max(data)
+        dtype_info = np.iinfo(assert_dtype)
+        dtype_min, dtype_max = dtype_info.min, dtype_info.max
+
+        rescaled_data = ((data-data_min)/data_max)*(dtype_max-dtype_min) + dtype_min
+        recast_data = assert_dtype(rescaled_data)
+
+        ret_val = {'data':recast_data,
+                   'min':data_min,
+                   'delta':(data_max-data_min)/(dtype_max-dtype_min)}
+
+        reconstructed_data = ret_val['delta']*recast_data+data_min
+        ret_val['rms_err'] = np.sqrt(np.mean((data-reconstructed_data)**2))
+
+        return ret_val
+
+            
+        
+            
 
 """
 class BaseDataInterface(object):
