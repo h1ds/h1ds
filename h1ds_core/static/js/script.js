@@ -382,6 +382,12 @@ H1DSUri.prototype.renderUri = function() {
     return makeUri(new_uri_components);
 };
 
+H1DSUri.prototype.isBinary = function() {
+    return (this.non_h1ds_query['format'] === 'bin') 
+}
+
+
+
 // Functions to modify a URL to return data suitable for a given plot type
 
 function getSpectrogramUri(original_uri) {
@@ -391,9 +397,9 @@ function getSpectrogramUri(original_uri) {
     h1ds_uri.appendFilter('spectrogram', {'bin_size':-1});
     h1ds_uri.appendFilter('norm_dim_range_2d', {'x_min':0, 'x_max':1, 'y_min':0, 'y_max':0.5});
     h1ds_uri.appendFilter('y_axis_energy_limit', {'threshold':0.995});
-    h1ds_uri.non_h1ds_query['format'] = 'json';
-    var new_uri = h1ds_uri.renderUri();
-    return new_uri;
+    h1ds_uri.non_h1ds_query['format'] = 'bin';
+    h1ds_uri.non_h1ds_query['bin_assert_dtype'] = 'uint8';
+    return h1ds_uri;
 }
 
 function getPowerspectrumUri(original_uri, width) {
@@ -405,8 +411,7 @@ function getPowerspectrumUri(original_uri, width) {
     //h1ds_uri.appendFilter('x_axis_energy_limit',{'threshold':0.995});
     h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
     h1ds_uri.non_h1ds_query['format'] = 'json';
-    var new_uri = h1ds_uri.renderUri();
-    return new_uri;
+    return h1ds_uri;
 }
 
 function getRawUri(original_uri, width) {
@@ -414,8 +419,7 @@ function getRawUri(original_uri, width) {
     var h1ds_uri = new H1DSUri(original_uri);
     h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
     h1ds_uri.non_h1ds_query['format'] = 'json';
-    var new_uri = h1ds_uri.renderUri();
-    return new_uri;
+    return h1ds_uri;
 }
 
 
@@ -642,7 +646,99 @@ NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
     }
 };
 
-NewPlotContainer.prototype.loadURL = function(data_url) {
+ProcessH1DSHeaders = function(header_string) {
+    var lines = header_string.split("\n");
+    var processed_headers = {};
+    for (var header_i=0;header_i<lines.length;header_i++) {
+	// split the keys and values
+	var header_kv = lines[header_i].split(":");
+	if (header_kv.length === 2) { // so we can ignore trailing \n
+	    if (header_kv[0].match("^X-H1DS")) {
+		processed_headers[header_kv[0]] = $.trim(header_kv[1]);
+	    }
+	}
+    }
+    return processed_headers;
+}
+
+ProcessBinaryData = function(data_string, headers) {
+    // TODO: only works with uint8 for now...
+    var bin_data = new Uint8Array(str2ab(data_string));    
+    var ndim = parseInt(headers["X-H1DS-ndim"]);
+    var counter = 0;
+    var output = {'data':[], 'dim':[], 'n_dim':ndim};
+    // populate dim
+    for (var dim=0; dim<ndim; dim++) {
+	output['dim'][dim] = [];
+	var dim_length = parseInt(headers["X-H1DS-dim-"+dim+"-length"]);
+	var dim_delta = parseFloat(headers["X-H1DS-dim-"+dim+"-delta"]);
+	var dim_first = parseFloat(headers["X-H1DS-dim-"+dim+"-first"]);	
+	for (var i=0; i<dim_length; i++) {
+	    output['dim'][dim][i] = dim_delta*i+dim_first;
+	}
+    }
+    // populate data
+    // TODO: use a recursion to populate arbitary ndim. 
+    var data_delta = parseFloat(headers["X-H1DS-data-delta"]);
+    var data_min = parseFloat(headers["X-H1DS-data-min"]);	
+
+    if (ndim > 0) {
+	var dim_0_length = parseInt(headers["X-H1DS-dim-0-length"]);
+	var dim_0_delta = parseFloat(headers["X-H1DS-dim-0-delta"]);
+	var dim_0_first = parseFloat(headers["X-H1DS-dim-0-first"]);	
+	for (var i0=0; i0<dim_0_length; i0++){
+	    if (ndim > 1) {
+		output['data'][i0] = [];
+		var dim_1_length = parseInt(headers["X-H1DS-dim-1-length"]);
+		var dim_1_delta = parseFloat(headers["X-H1DS-dim-1-delta"]);
+		var dim_1_first = parseFloat(headers["X-H1DS-dim-1-first"]);
+		for (var i1=0; i1<dim_1_length; i1++){
+		    if (ndim > 2) {
+			output['data'][i0][i1] = [];
+			var dim_2_length = parseInt(headers["X-H2DS-dim-2-length"]);
+			var dim_2_delta = parseFloat(headers["X-H1DS-dim-2-delta"]);
+			var dim_2_first = parseFloat(headers["X-H1DS-dim-2-first"]);
+			for (var i2=0; i2<dim_2_length; i2++){
+			    // TODO: only up to 3d supported, generalise
+			    output['data'][i0][i1][i2] = data_delta*bin_data[counter]+data_min;
+			    counter++;
+			}
+		    } else {
+			//output['data'][i0][i1] = data_delta*bin_data[counter]+data_min;
+			// TODO: putting back delta and min screw up the spectrogram, why?
+			output['data'][i0][i1] = bin_data[counter];
+			counter++;
+		    }
+		}		
+	    } else {
+		output['data'][i0] = data_delta*bin_data[counter]+data_min;
+		counter++;
+	    }
+	}
+    }
+    return output;
+}
+
+
+// from http://updates.html5rocks.com/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
+// changed to Uint8Array for UTF-8
+function ab2str(buf) {
+    //return String.fromCharCode.apply(null, new Uint16Array(buf));
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+function str2ab(str) {
+    //var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+    var buf = new ArrayBuffer(str.length);
+    //var bufView = new Uint16Array(buf);
+    var bufView = new Uint8Array(buf);
+    for (var i=0, strLen=str.length; i<strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
+}
+   
+
+NewPlotContainer.prototype.loadURL = function(data_url, is_binary) {
     var that = this;
     // the actual data we request uses a modified URL which resamples the data to the screen resolution
     // does data_url contain a query string?
@@ -651,6 +747,21 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
     // TODO: we should be able to easily inspect returned data to see
     // if it is minmax, rather than needing a dedicated js function
     // TODO: refactor code to be able to cope with async URL loading.
+    if (is_binary) {
+	var response = $.ajax({url: data_url, 
+		//dataType: "string",
+		async:false,
+	       });
+	var headers = ProcessH1DSHeaders(response.getAllResponseHeaders());
+	response.done(function(a) {
+	    data = ProcessBinaryData(a, headers);
+	    //a.is_minmax = isMinMaxPlot(a);	    
+	    // TODO: 1D signal dim might not be an element, so dim.length will be large...
+	    // TODO:   - need to make this consistent b/w signals of different dim 
+	    //a.n_dim = a.dim.length === 2 ? 2 : 1
+	    that.url_cache[data_url] = data;
+	});
+    } else {
     $.ajax({url: data_url, 
 	    dataType: "json",
 	    async:false})
@@ -661,29 +772,32 @@ NewPlotContainer.prototype.loadURL = function(data_url) {
 	    a.n_dim = a.dim.length === 2 ? 2 : 1
 	    that.url_cache[data_url] = a;
 	});
+    }
 };
-
 
 NewPlotContainer.prototype.getData = function(data_id, plot_type) {
     var return_data = {};
     switch(plot_type) {
     case 'raw':
 	var new_uri = getRawUri(this.data_ids[data_id].uri,this.svg.attr("width"));
-	this.loadURL(new_uri);
-	return_data = this.url_cache[new_uri];
+	var rendered_uri = new_uri.renderUri()
+	this.loadURL(rendered_uri, new_uri.isBinary());
+	return_data = this.url_cache[rendered_uri];
 	break;
     case 'spectrogram':
 	var new_uri = getSpectrogramUri(this.data_ids[data_id].uri);
-	this.loadURL(new_uri);
-	return_data = this.url_cache[new_uri];
+	var rendered_uri = new_uri.renderUri()
+	this.loadURL(rendered_uri,  new_uri.isBinary());
+	return_data = this.url_cache[rendered_uri];
 	break;
     case 'powerspectrum':
 	var new_uri = getPowerspectrumUri(this.data_ids[data_id].uri, this.svg.attr("width"));
-	this.loadURL(new_uri);
-	return_data = this.url_cache[new_uri];
+	var rendered_uri = new_uri.renderUri()
+	this.loadURL(rendered_uri,  new_uri.isBinary());
+	return_data = this.url_cache[rendered_uri];
 	break;
     default:
-	this.loadURL(this.data_ids[data_id].uri);
+	this.loadURL(this.data_ids[data_id].uri,  false);
 	return_data = this.url_cache[this.data_ids[data_id].uri];
 	break;
     }

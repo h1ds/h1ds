@@ -471,8 +471,8 @@ class BinaryNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        response = HttpResponse(mimetype='application/octet-stream')
-
+        #response = HttpResponse(mimetype='application/octet-stream')
+        response = HttpResponse(mimetype="text/plain; charset=x-user-defined")
         # TODO: make this available through HTTP query or settings.
         # error_threshold = 1.e-3
 
@@ -488,7 +488,7 @@ class BinaryNodeResponseMixin(object):
         response['X-H1DS-ndim'] = param_dim['ndim']
         for d in xrange(param_dim['ndim']):
             for k,v in param_dim[d].iteritems():
-                response['X-H1DS-{}-{}'.format(d,k)] = v
+                response['X-H1DS-dim-{}-{}'.format(d,k)] = v
 
         requested_dtype = request.GET.get('bin_assert_dtype', None)
         if requested_dtype != None:
@@ -502,7 +502,9 @@ class BinaryNodeResponseMixin(object):
         response['X-H1DS-data-min'] = discretised_data['min']
         response['X-H1DS-data-delta'] = discretised_data['delta']
         response['X-H1DS-data-rmserr'] = discretised_data['rms_err']
-
+        response['X-H1DS-data-dtype'] = discretised_data['data'].dtype.name
+        response['X-H1DS-data-shape'] = ",".join(str(i) for i in discretised_data['data'].shape)
+        
     
         # For data, if requested, quantize with requested bitlength
         # X-H1DS-data-quantised: True or False

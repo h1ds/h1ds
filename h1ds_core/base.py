@@ -304,7 +304,7 @@ class BaseNode(object):
                 darr = np.array(dim[di])
                 pdim[di]['first'] = darr[0]
                 pdim[di]['delta'] = np.mean(np.diff(darr))
-                reconst_dim = pdim[di]['delta']*np.arange(pdim[di]['length'])+pdim[di]['start']
+                reconst_dim = pdim[di]['delta']*np.arange(pdim[di]['length'])+pdim[di]['first']
                 pdim[di]['rms_err'] = np.sqrt(np.mean((darr - reconst_dim)**2))
         return pdim
 
@@ -324,7 +324,7 @@ class BaseNode(object):
         dtype_info = np.iinfo(assert_dtype)
         dtype_min, dtype_max = dtype_info.min, dtype_info.max
 
-        rescaled_data = ((data-data_min)/data_max)*(dtype_max-dtype_min) + dtype_min
+        rescaled_data = ((data-data_min)/(data_max-data_min))*(dtype_max-dtype_min) + dtype_min
         recast_data = assert_dtype(rescaled_data)
 
         ret_val = {'data':recast_data,
