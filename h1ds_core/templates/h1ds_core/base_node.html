@@ -18,21 +18,21 @@ HTML tables. -->
 	page. -->
   <div class="portlet" id="h1ds-portlet-shot">
     <div class="portlet-header">shot</div>
-    <div class="portlet-content">
+    <div class="portlet-content"> 
       <div id="h1ds-shot-controller">
 	<div class="sidebarcontent">
 	  <FORM class="inline-form" action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
 	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="shot #" size="8">
 	  </FORM>
-	</div>
+	</div> <!-- end sidebarcontent -->
 	<div class="sidebarcontent">
 	  <div id="h1ds-shot-previous">	<FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
 	      <INPUT type="hidden" name="go_to_shot" value="{{node.url_processor.shot|add:'-1'}}">
 	      <INPUT title="go to shot" type="submit" value="<">
 	    </FORM>
-	  </div>
+	  </div>  <!-- end h1ds-shot-previous -->
 	  <div id="h1ds-shot-current"><strong> {{node.url_processor.shot}} </strong></div>
 	  <div id="h1ds-shot-next">	
 	    <FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
@@ -40,15 +40,13 @@ HTML tables. -->
 	      <INPUT type="hidden" name="go_to_shot" value="{{node.url_processor.shot|add:'1'}}">
 	      <INPUT title="go to shot" type="submit" value=">">
 	    </FORM>
-	  </div>
-	</div>
-      </div>
+	  </div>  <!-- end h1ds-shot-next -->
+	</div>  <!-- end sidebarcontent -->
+      </div> <!-- end h1ds-shot-controller -->
       <div id="h1ds-track-latest-shot"></div>
       <div id="h1ds-toggle-track-latest-shot"></div>
-    </div>
-  </div>
-
-
+    </div>  <!-- end portlet-content -->
+    </div> <!-- end portlet -->
   <!--  Navigation of data  trees. -->
   <div class="portlet" id="h1ds-portlet-trees">
     <div class="portlet-header">navigation</div>
@@ -73,33 +71,10 @@ HTML tables. -->
 	{% endifequal %}
 	{% endfor%}
       </ul>
-    </div>
-  </div>
-</div>
-
-
-<!-- *************************************************************** -->
-<!-- ****** Data *************************************************** -->
-<!-- *************************************************************** -->
-
-
-<div class="column w60" id="h1ds-column-centre">
-  <div class="portlet" id="h1ds-portlet-data">
-    <div class="portlet-header">data</div>
-    <div class="portlet-content">
-      {% block node_data %}{% endblock node_data %}
-    </div>
+    </div> <!-- end portlet-content -->
   </div> <!-- end portlet -->
-</div> <!-- end column -->
 
 
-
-<!-- *************************************************************** -->
-<!-- ****** Right panel ******************************************** -->
-<!-- *************************************************************** -->
-
-
-<div class="column w20" id="h1ds-column-right">
   <!-- If there is a summary data (SQL) dtype associated with the filtered
        data then display a form for adding the data to the summary database -->
   {% if perms.h1ds_summary.add_summaryattribute %}
@@ -113,8 +88,8 @@ HTML tables. -->
 	  <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
 	  <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
       </FORM>
-    </div>
-  </div>
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
   {% endif %}
   {% endif %}
 
@@ -125,17 +100,10 @@ HTML tables. -->
     <div class="portlet-header">active filters</div>
     <div class="portlet-content">
       {% show_active_filters node %}
-    </div>
-  </div>
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
   {% endif %}
 
-  <!-- List the formats available for the node data type -->
-  <div class="portlet" id="h1ds-portlet-formats">
-    <div class="portlet-header">alternative formats</div>
-    <div class="portlet-content">
-      {% for format in alt_formats %}{% show_format format %} {% endfor %}
-    </div>
-  </div>
 
   <div class="portlet" id="h1ds-portlet-savedsignals">
     <div class="portlet-header">my signals</div>
@@ -160,19 +128,19 @@ HTML tables. -->
 	    <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
 	    <INPUT title="go to shot" type="submit" value="-">
 	  </FORM>
-	</div>
+	</div> <!-- end sidebar-section-item-delete -->
 	<div class="sidebar-section-item-edit">
 	  <a href="{% url "h1ds-update-user-signal" sig.pk %}?redirect_url={% get_absolute_uri %}">edit</a>
-	</div>
+	</div> <!-- end sidebar-section-item-edit -->
 
-      </div>
+      </div> <!-- end sidebar-section-item -->
       {% endfor %}
-      </div>
+      </div> <!-- end sidebar-secton -->
       {% else %}
       Log in to save and restore signals.
-      {% endif %}
-    </div>
-  </div>
+      {% endif %} 
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
 
   <!--  List the filters  which can  be applied  to the  (possibly already
 	filtered) data -->
@@ -180,9 +148,33 @@ HTML tables. -->
     <div class="portlet-header">filters</div>
     <div class="portlet-content">
       {% show_filters node %}
-    </div>
-  </div>
+    </div> <!-- end portlet-content -->
+  </div> <!--end portlet -->
+  <!-- List the formats available for the node data type -->
+  <div class="portlet" id="h1ds-portlet-formats">
+    <div class="portlet-header">alternative formats</div>
+    <div class="portlet-content">
+      {% for format in alt_formats %}{% show_format format %} {% endfor %}
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+
 </div>
+
+<!-- *************************************************************** -->
+<!-- ****** Data *************************************************** -->
+<!-- *************************************************************** -->
+
+
+<div class="column w80" id="h1ds-column-centre">
+  <div class="portlet" id="h1ds-portlet-data">
+    <div class="portlet-header">data</div>
+    <div class="portlet-content">
+      {% block node_data %}{% endblock node_data %}
+    </div>
+  </div> <!-- end portlet -->
+</div> <!-- end column -->
+
+
 {% endblock content %}
 {% block rightpanel %}
 {% block nodemeta %}{% endblock nodemeta %}
