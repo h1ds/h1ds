@@ -564,6 +564,7 @@ class HTMLNodeResponseMixin(object):
                                    'trees':trees,
                                    'alt_formats':alt_formats,
                                    'is_debug':str(settings.DEBUG),
+                                   'node_meta': self.node.get_metadata(),
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 

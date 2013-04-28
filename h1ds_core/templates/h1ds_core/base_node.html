@@ -166,11 +166,22 @@ HTML tables. -->
       {% show_filters node %}
     </div> <!-- end portlet-content -->
   </div> <!--end portlet -->
+
   <!-- List the formats available for the node data type -->
   <div class="portlet" id="h1ds-portlet-formats">
     <div class="portlet-header">alternative formats</div>
     <div class="portlet-content">
       {% for format in alt_formats %}{% show_format format %} {% endfor %}
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+
+  <!-- Node metadata -->
+  <div class="portlet" id="h1ds-portlet-metadata">
+    <div class="portlet-header">metadata</div>
+    <div class="portlet-content">
+      {% for key, value in node_meta.items %}
+      <div class="h1ds-meta-item"><span class="h1ds-meta-key">{{key}}</span><span class="h1ds-meta-value">{{value}}</span></div>
+      {% endfor%}
     </div> <!-- end portlet-content -->
   </div> <!-- end portlet -->
 
