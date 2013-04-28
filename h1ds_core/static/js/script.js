@@ -525,36 +525,48 @@ NewPlotContainer.prototype.plotRaw2D = function(selection) {
 }
 
 NewPlotContainer.prototype.plotSpectrogram = function(selection) {
+    // Assume array w/ rects w/ same height and width
     var rect_data = [];
     var cscale=d3.scale.linear().domain([0,1]).range(["blue","red"]);
     var ascale=d3.scale.linear().domain([0,1]).range([0,1]);
-    var max_value = -Number.MAX_VALUE;
+    var max_value = 0;
     data = selection.datum();
+    var rect_width = data.plot.x(data.data.dim[0][1]) - data.plot.x(data.data.dim[0][0]);
+    var rect_height = data.plot.y(data.data.dim[1][0]) - data.plot.y(data.data.dim[1][1]);
+    var x_0 = data.plot.x(data.data.dim[0][0]);
+    var y_0 = data.plot.y(data.data.dim[1][0]);
     // TODO: last column... 
     for (var x_i = 0; x_i<data.data.dim[0].length-1; x_i++) {
 	for (var y_i = 0; y_i<data.data.dim[1].length-1; y_i++) {
 	    if (data.data.data[x_i][y_i] > 0) {
 		rect_data.push(
-		    {'x1':data.data.dim[0][x_i],
-		     'x2':data.data.dim[0][x_i+1],
-		     'y1':data.data.dim[1][y_i],
-		     'y2':data.data.dim[1][y_i+1],
-		     'value':data.data.data[x_i][y_i]
+		    {//'x1':data.data.dim[0][x_i],
+		     //'x2':data.data.dim[0][x_i+1],
+		     //'y1':data.data.dim[1][y_i],
+			'xi':x_i,
+			'yi':y_i,
+		     //'y2':data.data.dim[1][y_i+1],
+		     //'value':data.data.data[x_i][y_i]
 		    }
 		);
+		if (data.data.data[x_i][y_i] > max_value) max_value = data.data.data[x_i][y_i];
 	    }
-	    if (data.data.data[x_i][y_i] > max_value) max_value = data.data.data[x_i][y_i];
 	}
     }
     var rects = selection.selectAll("rect").data(rect_data);
     rects.enter().append("rect")
-	.attr("x", function(d,i) {return data.plot.x(d.x1)})
-	.attr("y", function(d,i) {return data.plot.y(d.y1)})
-	.attr("width", function(d,i) {return data.plot.x(d.x2)-data.plot.x(d.x1)})
-	.attr("height", function(d,i) {return data.plot.y(d.y1)-data.plot.y(d.y2)})
+	//.attr("x", function(d,i) {return data.plot.x(d.x1)})
+	.attr("x", function(d,i) {return x_0+d.xi*rect_width})
+	//.attr("y", function(d,i) {return data.plot.y(d.y1)})
+	.attr("y", function(d,i) {return y_0-d.yi*rect_height})
+	//.attr("width", function(d,i) {return data.plot.x(d.x2)-data.plot.x(d.x1)})
+	//.attr("height", function(d,i) {return data.plot.y(d.y1)-data.plot.y(d.y2)})
+	.attr("width", rect_width)
+	.attr("height", rect_height)
 	//.style("fill", function(d,i) {return cscale(d.value/max_value)})
 	.style("fill", function(d,i) {return data.data.colour})
-	.style("fill-opacity", function(d,i) {return d.value/max_value});
+	//.style("fill-opacity", function(d,i) {return d.value/max_value});
+	.style("fill-opacity", function(d,i) {return data.data.data[d.xi][d.yi]/max_value});
     
 };
 
