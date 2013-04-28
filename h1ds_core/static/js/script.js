@@ -457,14 +457,14 @@ function NewPlotContainer(id, rows, columns) {
 
     // "raw" should plot any unaltered data? not just line?
     this.plotTypes = {
-	'raw':this.plotLine,
+	'raw':this.plotLine, 
 	'spectrogram':this.plotSpectrogram,
 	//'powerspectrum':this.plotPowerSpectrum,
 	'powerspectrum':this.plotLine,
 	//'raw2d':this.plotRaw2D,
 	// TODO - plotSpectrogram just plots 2d? - rename
 	// spectrogram stuff is really in the getSpectrogramUri
-	'raw2d':this.plotSpectrogram,
+	'raw2d':this.plotSpectrogram
     }
 
     // create SVG
@@ -539,16 +539,7 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
     for (var x_i = 0; x_i<data.data.dim[0].length-1; x_i++) {
 	for (var y_i = 0; y_i<data.data.dim[1].length-1; y_i++) {
 	    if (data.data.data[x_i][y_i] > 0) {
-		rect_data.push(
-		    {//'x1':data.data.dim[0][x_i],
-		     //'x2':data.data.dim[0][x_i+1],
-		     //'y1':data.data.dim[1][y_i],
-			'xi':x_i,
-			'yi':y_i,
-		     //'y2':data.data.dim[1][y_i+1],
-		     //'value':data.data.data[x_i][y_i]
-		    }
-		);
+		rect_data.push({'xi':x_i, 'yi':y_i});
 		if (data.data.data[x_i][y_i] > max_value) max_value = data.data.data[x_i][y_i];
 	    }
 	}
@@ -629,7 +620,7 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
 		'data':[],
 		'plotType':"",
 		'flip':false,
-		'bindAxis':[-1,-1],
+		'bindAxis':[-1,-1]
 	    };
 	    col_translate += column_pixels[col_i];
 	    plot_id_counter++;	    
@@ -762,7 +753,7 @@ NewPlotContainer.prototype.loadURL = function(data_url, is_binary) {
     if (is_binary) {
 	var response = $.ajax({url: data_url, 
 		//dataType: "string",
-		async:false,
+		async:false
 	       });
 	var headers = ProcessH1DSHeaders(response.getAllResponseHeaders());
 	response.done(function(a) {
