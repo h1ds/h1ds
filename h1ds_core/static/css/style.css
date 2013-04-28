@@ -1338,8 +1338,7 @@ form.inline-form {
 }
  
 #h1ds-portlet-trees li a:hover {
-  font-size: 20px;
-  background: #f6f6f6;
+  background: #ffff33;
 }
 
 #h1ds-portlet-trees span.current {
