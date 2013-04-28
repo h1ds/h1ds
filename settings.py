@@ -3,6 +3,10 @@
 Any     of      these     settings     can     be      overridden     in
 settings_(development|staging|production).py.
 """
+# Monkey patch to work around python threading bug.
+# See http://stackoverflow.com/questions/13193278/understand-python-threading-bug
+import threading
+threading._DummyThread._Thread__stop = lambda x: 42
 
 import os
 import djcelery
