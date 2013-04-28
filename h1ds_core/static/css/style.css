@@ -1352,7 +1352,8 @@ form.inline-form {
    from http://jqueryui.com/demos/sortable/#portlets 
    ============================================================ */
 
-.column { float: left; padding-bottom: 100px; }
+/*.column { float: left; padding-bottom: 100px; } */
+.column { float: left; padding-bottom: 5px; }
 .dummycolumn { float: left; padding-bottom: 100px; }
 .w20 { width: 20%}
 .w40 { width: 40%}
@@ -1473,7 +1474,12 @@ g.button.active rect {
     margin:auto;
 }
 
-
+#h1ds-column-sidebar {
+    width:100%;
+}
+#h1ds-column-main {
+    width:100%;
+}
 
 }
 
@@ -1490,6 +1496,13 @@ div.mbox {
     width:362px;
     padding:8px;
     margin: 2px;
+}
+#h1ds-column-sidebar {
+    width:20%;
+}
+#h1ds-column-main {
+    width:80%;
+    float:right;
 }
 
 

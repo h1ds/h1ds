@@ -13,7 +13,23 @@ HTML tables. -->
 <meta name="{{name}}" content="{{content}}" />{% endfor%}{% endblock%}
 <div class="fixed-centre">
 {% block content %}
-<div class="column w20" id="h1ds-column-left">
+
+<!-- *************************************************************** -->
+<!-- ****** Data *************************************************** -->
+<!-- *************************************************************** -->
+
+
+<div class="column" id="h1ds-column-main">
+  <div class="portlet" id="h1ds-portlet-data">
+    <div class="portlet-header">data</div>
+    <div class="portlet-content">
+      {% block node_data %}{% endblock node_data %}
+    </div>
+  </div> <!-- end portlet -->
+</div> <!-- end column -->
+
+
+<div class="column" id="h1ds-column-sidebar">
   <!--  This generates  the 'select  shot'  form in  the top  left of  the
 	page. -->
   <div class="portlet" id="h1ds-portlet-shot">
@@ -159,20 +175,6 @@ HTML tables. -->
   </div> <!-- end portlet -->
 
 </div>
-
-<!-- *************************************************************** -->
-<!-- ****** Data *************************************************** -->
-<!-- *************************************************************** -->
-
-
-<div class="column w80" id="h1ds-column-centre">
-  <div class="portlet" id="h1ds-portlet-data">
-    <div class="portlet-header">data</div>
-    <div class="portlet-content">
-      {% block node_data %}{% endblock node_data %}
-    </div>
-  </div> <!-- end portlet -->
-</div> <!-- end column -->
 
 
 {% endblock content %}
