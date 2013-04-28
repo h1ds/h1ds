@@ -14,6 +14,16 @@ server {
     # compress all the things.
     gzip_types *;
 
+    pagespeed on;
+    pagespeed FileCachePath /var/ngx_pagespeed_cache;
+
+    location ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+" { add_header "" ""; }
+    location ~ "^/ngx_pagespeed_static/" { }
+    location ~ "^/ngx_pagespeed_beacon$" { }
+    location /ngx_pagespeed_statistics { allow 127.0.0.1; deny all; }
+    location /ngx_pagespeed_message { allow 127.0.0.1; deny all; }
+
+
     # https://docs.djangoproject.com/en/dev/howto/static-files/#serving-static-files-in-production
     location /static/ { # STATIC_URL
         alias __venv_dir__/static/; # STATIC_ROOT
