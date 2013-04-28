@@ -26,6 +26,19 @@ HTML tables. -->
       {% block node_data %}{% endblock node_data %}
     </div>
   </div> <!-- end portlet -->
+
+
+  <!-- Node metadata -->
+  <div class="portlet" id="h1ds-portlet-metadata">
+    <div class="portlet-header">metadata</div>
+    <div class="portlet-content">
+      {% for key, value in node_meta.items %}
+      <div class="h1ds-meta-item"><span class="h1ds-meta-key">{{key}}</span><span class="h1ds-meta-value">{{value}}</span></div>
+      {% endfor%}
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+
+
 </div> <!-- end column -->
 
 
@@ -175,15 +188,6 @@ HTML tables. -->
     </div> <!-- end portlet-content -->
   </div> <!-- end portlet -->
 
-  <!-- Node metadata -->
-  <div class="portlet" id="h1ds-portlet-metadata">
-    <div class="portlet-header">metadata</div>
-    <div class="portlet-content">
-      {% for key, value in node_meta.items %}
-      <div class="h1ds-meta-item"><span class="h1ds-meta-key">{{key}}</span><span class="h1ds-meta-value">{{value}}</span></div>
-      {% endfor%}
-    </div> <!-- end portlet-content -->
-  </div> <!-- end portlet -->
 
 </div>
 
