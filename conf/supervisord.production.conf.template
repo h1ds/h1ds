@@ -21,7 +21,8 @@ stderr_logfile = %(here)s/../../log/moin.err.log
 autorestart=true
 
 [program:celery]
-command=%(here)s/../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO --settings=h1ds.settings_production
+; command=%(here)s/../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO --settings=h1ds.settings_production
+command=%(here)s/../manage.py celeryd -v 2 -B --loglevel=INFO --settings=h1ds.settings_production
 directory=%(here)s/../../
 ; user=nobody
 numprocs=1
