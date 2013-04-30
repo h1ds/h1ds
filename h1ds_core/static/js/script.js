@@ -209,7 +209,7 @@ function loadCookie() {
 		$("#"+id).appendTo(thisColumn);
 	    });
 	}
-	$(this).sortable('options');
+	$(this).sortable();
     });
 
     // also load toggle states
@@ -1266,7 +1266,7 @@ $.fn.scrollView = function () {
     return this.each(function () {
         $('html, body').animate({
             scrollTop: $(this).offset().top
-        }, 100);
+        }, 0);
     });
 }
 
