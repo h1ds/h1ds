@@ -142,7 +142,7 @@ class FirstPulse(Array1DimNumericBaseFilter):
         first_element = np.where(node.data>_threshold)[0][0]
         node.data = node.dim[first_element]
         node.dim = None
-        node.label = ('first_pulse(%s, %s)' %(node.label[0], self.kwargs["threshold"]), )
+        node.labels = ('first_pulse(%s, %s)' %(node.labels[0], self.kwargs["threshold"]), )
         
 
 class PulseWidth(Array1DimNumericBaseFilter):
@@ -167,7 +167,7 @@ class PulseWidth(Array1DimNumericBaseFilter):
 
         node.data = np.min(end1[:use_size]-t[:use_size])
         node.dim = None
-        node.label = ('pulse_width(%s, %s)' %(node.label[0], self.kwargs["threshold"]), )
+        node.labels = ('pulse_width(%s, %s)' %(node.labels[0], self.kwargs["threshold"]), )
     
 
 class PulseNumber(Array1DimNumericBaseFilter):
@@ -194,7 +194,7 @@ class PulseNumber(Array1DimNumericBaseFilter):
         # says it is numpy.int32, but it is somehow different to the numpy.int32 in the dtype_mapping key.
         node.data = np.int32(np.min([t.shape[0], end1.shape[0]]))
         node.dim = None
-        node.label = ('pulse_number(%s, %s)' %(node.label[0], self.kwargs["threshold"]), )
+        node.labels = ('pulse_number(%s, %s)' %(node.labels[0], self.kwargs["threshold"]), )
 
 
 class Max(Array1DimNumericBaseFilter):
@@ -205,7 +205,7 @@ class Max(Array1DimNumericBaseFilter):
     def apply(self, node):
         node.data = np.max(node.data)
         node.dim = None
-        node.label = ('max(%s)' %node.label[0],)
+        node.labels = ('max(%s)' %node.labels[0],)
 
 class MaxOf(Array1DimNumericBaseFilter):
 
@@ -225,7 +225,7 @@ class MaxOf(Array1DimNumericBaseFilter):
             node.data[node.data<_value] = _value
         else:
             node.data =  np.max([node.data, _value])
-        node.label = ('max_of(%s, %s)' %(node.label[0], self.kwargs["values"]),)
+        node.labels = ('max_of(%s, %s)' %(node.labels[0], self.kwargs["values"]),)
 
 class DimOfMaxVal(Array1DimNumericBaseFilter):
     """Returns dim at signal peak.
@@ -238,7 +238,7 @@ class DimOfMaxVal(Array1DimNumericBaseFilter):
     def apply(self, node):
         node.data = node.dim[np.argmax(node.data)]
         node.dim = None
-        node.label = ('dim_of_max(%s)' %node.label[0],)
+        node.labels = ('dim_of_max(%s)' %node.labels[0],)
 
 class Mean(Array1DimNumericBaseFilter):
 
@@ -251,7 +251,7 @@ class Mean(Array1DimNumericBaseFilter):
         else:
             node.data = None
         node.dim = None
-        node.label = ('mean(%s)' %node.label[0],)
+        node.labels = ('mean(%s)' %node.labels[0],)
 
 class Element(Array1DimNumericBaseFilter):
     """Get an element of an array.
@@ -266,7 +266,7 @@ class Element(Array1DimNumericBaseFilter):
         _index = int(self.kwargs["index"])
         node.data = node.data[_index]
         node.dim = None
-        node.label = ('%s[%s]' %(node.label[0], self.kwargs["index"]),)
+        node.labels = ('%s[%s]' %(node.labels[0], self.kwargs["index"]),)
 
 class PeakToPeak(Array1DimNumericBaseFilter):
     """Max(signal) - min(signal)."""
@@ -277,7 +277,7 @@ class PeakToPeak(Array1DimNumericBaseFilter):
     def apply(self, node):
         node.data = max(node.data) - min(node.data)
         node.dim = None
-        node.label = ('max(%(lab)s)-min(%(lab)s)' %{'lab':node.label[0]},)
+        node.labels = ('max(%(lab)s)-min(%(lab)s)' %{'lab':node.labels[0]},)
 
 class NSignals(Array1DimNumericBaseFilter):
     """Single trace returns 1, images return > 1
@@ -292,7 +292,7 @@ class NSignals(Array1DimNumericBaseFilter):
         """Single trace returns 1, images return > 1"""
         node.data = np.int16(node.data.ndim)
         node.dim = None
-        node.label = ('n_signals(%(lab)s)' %{'lab':node.label[0]},)
+        node.labels = ('n_signals(%(lab)s)' %{'lab':node.labels[0]},)
 
 ########################################################################
 ## signal -> signal                                                   ##
@@ -318,7 +318,7 @@ class SlantedBaseline(Array1DimNumericBaseFilter):
 
         baseline = start + (end-start)*np.arange(node.data.shape[0], dtype=float)/(node.data.shape[0]-1)
         node.data -= baseline
-        node.label = ('slanted_baseline(%(lab)s, %(win)s)' %{'lab':node.label[0], 'win':self.kwargs["window"]},)
+        node.labels = ('slanted_baseline(%(lab)s, %(win)s)' %{'lab':node.labels[0], 'win':self.kwargs["window"]},)
 
 class PrlLpn(Array1DimNumericBaseFilter):
     """prl_lpn
@@ -345,7 +345,7 @@ class PrlLpn(Array1DimNumericBaseFilter):
         _f0 = float(self.kwargs["f0"])
         _order = int(self.kwargs["order"])
         node.data = self._do_prl_lpn(node.data, node.dim, _f0, _order)
-        node.label = ('prl_lpn(%s, %s, %s)' %(node.label[0], self.kwargs["f0"], self.kwargs["order"]),)
+        node.labels = ('prl_lpn(%s, %s, %s)' %(node.labels[0], self.kwargs["f0"], self.kwargs["order"]),)
 
 class Resample(Array1DimNumericBaseFilter):
     slug = "resample"
@@ -359,7 +359,7 @@ class Resample(Array1DimNumericBaseFilter):
         # put trailing [:max_samples] in case we get an extra one at the end
         node.data = node.data[::delta_sample][:_max_samples]
         node.dim = node.dim[::delta_sample][:_max_samples]
-        node.label = ('resample(%s, %s)' %(node.label[0], self.kwargs["max_samples"]),)
+        node.labels = ('resample(%s, %s)' %(node.labels[0], self.kwargs["max_samples"]),)
 
 class ResampleMinMax(Array1DimNumericBaseFilter):
     """TODO: only works for 1D array..."""
@@ -382,7 +382,7 @@ class ResampleMinMax(Array1DimNumericBaseFilter):
                 max_data.append(max(tmp))
                 min_data.append(min(tmp))
 
-            node.label = ('min', 'max',)
+            node.labels = ('min', 'max',)
             node.data = np.array([min_data, max_data])
 
 class NormDimRange(Array1DimNumericBaseFilter):
@@ -397,7 +397,7 @@ class NormDimRange(Array1DimNumericBaseFilter):
         min_e, max_e = int(_min*len(node.dim)), int(_max*len(node.dim))
         node.data = node.data[min_e:max_e]
         node.dim = node.dim[min_e:max_e]
-        node.label = ('normdim_range(%s, %s, %s)' %(node.label[0], self.kwargs["min"], self.kwargs["max"]),)
+        node.labels = ('normdim_range(%s, %s, %s)' %(node.labels[0], self.kwargs["min"], self.kwargs["max"]),)
 
 class DimRange(Array1DimNumericBaseFilter):
     """Reduce range of signal."""
@@ -411,7 +411,7 @@ class DimRange(Array1DimNumericBaseFilter):
         min_e, max_e = np.searchsorted(node.dim, [_min, _max])
         node.data = node.data[min_e:max_e]
         node.dim = node.dim[min_e:max_e]
-        node.label = ('dim_range(%s, %s, %s)' %(node.label[0], self.kwargs["min"], self.kwargs["max"]),)
+        node.labels = ('dim_range(%s, %s, %s)' %(node.labels[0], self.kwargs["min"], self.kwargs["max"]),)
 
 class PowerSpectrum(Array1DimNumericBaseFilter):
     """power spectrum of signal."""
@@ -425,7 +425,7 @@ class PowerSpectrum(Array1DimNumericBaseFilter):
         length = len(node.data)
         sample_rate = np.mean(node.dim[1:] - node.dim[:-1])
         node.dim = (1./sample_rate)*np.arange(length)/(length-1)
-        node.label = ('power_spectrum(%s)' %(node.label[0]),)
+        node.labels = ('power_spectrum(%s)' %(node.labels[0]),)
 
 # TODO: generalise energy limits between 1d and 2d signals.
 class XAxisEnergyLimit(Array1DimNumericBaseFilter):
@@ -475,7 +475,7 @@ class Multiply(BaseFilter):
         _factor = float_or_array(self.kwargs["factor"])
 
         node.data = _factor*node.data
-        node.label = ('%s*(%s)' %(self.kwargs["factor"], node.label[0]),)
+        node.labels = ('%s*(%s)' %(self.kwargs["factor"], node.labels[0]),)
 
 
 class Divide(BaseFilter):
@@ -489,7 +489,7 @@ class Divide(BaseFilter):
     def apply(self, node):
         _factor = float(self.kwargs["factor"])
         node.data = node.data/_factor
-        node.label = ('(%s)/%s' %(node.label[0], self.kwargs["factor"]),)
+        node.labels = ('(%s)/%s' %(node.labels[0], self.kwargs["factor"]),)
 
 class Subtract(BaseFilter):
     """Subtract the value.
@@ -504,7 +504,7 @@ class Subtract(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data = node.data - _value
-        node.label = ('%s - %s' %(node.label[0], self.kwargs["value"]),)
+        node.labels = ('%s - %s' %(node.labels[0], self.kwargs["value"]),)
 
 class Add(BaseFilter):        
     """Add the value.
@@ -518,7 +518,7 @@ class Add(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data = node.data + _value
-        node.label = ('%s + %s' %(node.label[0], self.kwargs["value"]),)
+        node.labels = ('%s + %s' %(node.labels[0], self.kwargs["value"]),)
 
 class Exponent(BaseFilter):        
     """Raise data to the (value)th power."""
@@ -531,7 +531,7 @@ class Exponent(BaseFilter):
     def apply(self, node):
         _value =float(self.kwargs["value"])
         node.data = node.data**_value
-        node.label = ('%s^%s' %(node.label[0], self.kwargs["value"]),)
+        node.labels = ('%s^%s' %(node.labels[0], self.kwargs["value"]),)
 
 
 ########################################################################
@@ -578,7 +578,7 @@ class Spectrogram(Array1DimNumericBaseFilter):
         node.dim[0] = new_x_dim.tolist()
         node.dim[1] = new_y_dim.tolist()
 
-        node.label = ('spectrogram(%s,%d)' %(node.label[0],_bin_size),)
+        node.labels = ('spectrogram(%s,%d)' %(node.labels[0],_bin_size),)
 
 
 
@@ -596,7 +596,7 @@ class Shape(Array2DimNumericBaseFilter):
         node.data = {"rows":node.data.shape[0],
                         "columns":node.data.shape[1]}
         node.dim = None
-        node.label = ('shape(%s)' %(node.label[0]),)
+        node.labels = ('shape(%s)' %(node.labels[0]),)
 
 class Transpose(Array2DimNumericBaseFilter):
     """Transpose a 2d array"""
@@ -607,7 +607,7 @@ class Transpose(Array2DimNumericBaseFilter):
     def apply(self, node):
         node.data = np.transpose(node.data)
         #TODO: how to treat dim?
-        node.label = ('transpose(%s)' %(node.label[0]),)
+        node.labels = ('transpose(%s)' %(node.labels[0]),)
 
 class FlipVertical(Array2DimNumericBaseFilter):
     """Flip array vertically"""
@@ -621,7 +621,7 @@ class FlipVertical(Array2DimNumericBaseFilter):
             node.data[r,:] = tmp_data[-(r+1),:]
             node.data[-(r+1),:] = tmp_data[r,:]
         #TODO: how to treat dim?
-        node.label = ('vertical_flip(%s)' %(node.label[0]),)
+        node.labels = ('vertical_flip(%s)' %(node.labels[0]),)
 
 class FlipHorizontal(Array2DimNumericBaseFilter):
     """Flip array horizontally"""
@@ -635,7 +635,7 @@ class FlipHorizontal(Array2DimNumericBaseFilter):
             node.data[:,c] = tmp_data[:,-(c+1)]
             node.data[:,-(c+1)] = tmp_data[:,c]
         #TODO: how to treat dim?
-        node.label = ('horizontal_flip(%s)' %(node.label[0]),)
+        node.labels = ('horizontal_flip(%s)' %(node.labels[0]),)
 
 class NormDimRange2D(Array2DimNumericBaseFilter):
     """Reduce range of signal."""
@@ -654,7 +654,7 @@ class NormDimRange2D(Array2DimNumericBaseFilter):
         node.data = node.data[min_xe:max_xe,min_ye:max_ye]
         node.dim[0] = node.dim[0][min_xe:max_xe]
         node.dim[1] = node.dim[1][min_ye:max_ye]
-        node.label = ('2d_normdim_range(%s, %s, %s, %s, %s)' %(node.label[0], self.kwargs["x_min"], self.kwargs["x_max"], self.kwargs["y_min"], self.kwargs["y_max"]),)
+        node.labels = ('2d_normdim_range(%s, %s, %s, %s, %s)' %(node.labels[0], self.kwargs["x_min"], self.kwargs["x_max"], self.kwargs["y_min"], self.kwargs["y_max"]),)
 
 class YAxisEnergyLimit(Array2DimNumericBaseFilter):
     "2D reduce y-axis range to threshold*100% of total signal energy"
@@ -705,7 +705,7 @@ class DimOf(BaseFilter):
     def apply(self, node):
         node.data = node.dim
         node.dim = np.arange(len(node.data))
-        node.label = ('dim_of(%s)' %(node.label[0]),)
+        node.labels = ('dim_of(%s)' %(node.labels[0]),)
 
 class Cast(BaseFilter):
     """Recast dtype"""

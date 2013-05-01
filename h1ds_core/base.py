@@ -170,8 +170,8 @@ class BaseNode(object):
         self.filter_history = []
         self.data = None
         self.dim = None
-        # TODO: get_ methods for following
-        self.label = ('data',)
+        self.labels = []
+        self.units = []
         
     def apply_filters(self, request):
         for fid, name, kwargs in get_filter_list(request):
@@ -336,9 +336,35 @@ class BaseNode(object):
 
         return ret_val
 
-            
-        
-            
+    def get_labels(self):
+        # [data label, dim0 label, dim1 label, etc]
+        if not self.labels:
+            ndim = self.get_ndim()
+            self.labels = ["data"]
+            self.labels.extend(["d%d" %i for i in xrange(ndim)])
+        return self.labels
+
+    def get_units(self):
+        # [data units, dim0 units, dim1 units, etc]
+        if not self.units:
+            ndim = self.get_ndim()
+            self.units = ["data units"]
+            self.units.extend(["d%d units" %i for i in xrange(ndim)])
+        return self.units
+
+    def get_info(self):
+        # node info to return to user via html, xml etc.
+        node_info = {
+            'data': self.get_data(),
+            'dim': self.get_dim(),
+            'name_long': self.get_long_name(),
+            'name_short': self.get_short_name(),
+            'ndim': self.get_ndim(),
+            'metadata': self.get_metadata(),
+            'labels': self.get_labels(),
+            'units': self.get_units(),
+            }
+
 
 """
 class BaseDataInterface(object):

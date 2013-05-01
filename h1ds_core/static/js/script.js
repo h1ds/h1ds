@@ -851,7 +851,7 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	.attr("text-anchor", "middle")
 	.attr("x", function(d) { return that.yAxisPadding+0.5*(d.width-that.yAxisPadding); })
 	.attr("y", function(d) { return 0.8*that.xAxisPadding; })
-	.text(function(d) { return "x"; });
+	.text(function(d) { return "["+d.data[0].units[1]+"]"; }); // TODO: uses data[0], rather than data for this plot.
 
     // # y axis
     plots.append("g")
@@ -864,7 +864,8 @@ NewPlotContainer.prototype.updateDisplay = function() {
 	.attr("transform", "rotate(-90)")
 	.attr("x", function(d) { return -0.5*(d.height-that.xAxisPadding); })
 	.attr("y", function(d) { return -0.8*that.yAxisPadding; })
-	.text(function(d) { return "y"; });
+	.text(function(d) { return "["+d.data[0].units[0]+"]"; }); // TODO: uses data[0], rather than data for this plot.
+
 
     var plotitems = plots
 	.selectAll("g.data")
@@ -1186,17 +1187,20 @@ function plotScalar(d, url) {
 }
 
 function plot1DimArray(d, url) {
-	var pc = new NewPlotContainer("#"+d, [300,250],[0.75,0.25]);
-	pc.addData("default", url);
-	
-	pc.setPlot(2, {"plotType":"spectrogram"});
-	pc.addDataToPlot("default", 2, false);
-
-	pc.setPlot(0, {"plotType":"raw", "bindAxis":[2,-1]});
-	pc.addDataToPlot("default", 0, false);
-
-	pc.setPlot(3, {"plotType":"powerspectrum", "flip":true, 'bindAxis':[-1,2]});
-	pc.addDataToPlot("default", 3, true);
+    //var pc = new NewPlotContainer("#"+d, [300,250],[0.75,0.25]);
+    var pc = new NewPlotContainer("#"+d, [500],[1.0]);
+    pc.addData("default", url);
+    
+    //pc.setPlot(2, {"plotType":"spectrogram"});
+    //pc.addDataToPlot("default", 2, false);
+    
+    //pc.setPlot(0, {"plotType":"raw", "bindAxis":[2,-1]});
+    pc.setPlot(0, {"plotType":"raw"});
+    //pc.addDataToPlot("default", 0, false);
+    pc.addDataToPlot("default", 0, true);
+    
+    //pc.setPlot(3, {"plotType":"powerspectrum", "flip":true, 'bindAxis':[-1,2]});
+    //pc.addDataToPlot("default", 3, true);
 
 }
 
@@ -1243,6 +1247,8 @@ function populatePagelet(d) {
 
     var dtype = d.attr("data-dtype");
     var ndim = d.attr("data-ndim");
+
+    
 
     var plot_fn = getPlotFunction(dtype, ndim);
     plot_fn(d.attr("id"), json_url);

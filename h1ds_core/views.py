@@ -359,7 +359,8 @@ class JSONNodeResponseMixin(object):
 
     def get(self, request, *args, **kwargs):
         
-        response_data = {'labels':self.node.label}
+        response_data = {'labels':map(str,self.node.get_labels()),
+                         'units':map(str,self.node.get_units())}
         if self.node.get_data() == None:
             response_data['data'] = None
             response_data['dim'] = None
@@ -484,9 +485,12 @@ class BinaryNodeResponseMixin(object):
         # body)
 
         param_dim = self.node.parameterised_dim()
-        
+        labels = self.node.get_labels()
+        units = self.node.get_units()
         response['X-H1DS-ndim'] = param_dim['ndim']
         for d in xrange(param_dim['ndim']):
+            response['X-H1DS-dim-{}-units'.format(d)] = units[d+1]
+            response['X-H1DS-dim-{}-label'.format(d)] = labels[d+1]
             for k,v in param_dim[d].iteritems():
                 response['X-H1DS-dim-{}-{}'.format(d,k)] = v
 
@@ -504,6 +508,8 @@ class BinaryNodeResponseMixin(object):
         response['X-H1DS-data-rmserr'] = discretised_data['rms_err']
         response['X-H1DS-data-dtype'] = discretised_data['data'].dtype.name
         response['X-H1DS-data-shape'] = ",".join(str(i) for i in discretised_data['data'].shape)
+        response['X-H1DS-data-units'] = units[0]
+        response['X-H1DS-data-label'] = labels[0]
         
     
         # For data, if requested, quantize with requested bitlength
