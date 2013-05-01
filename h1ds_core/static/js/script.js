@@ -601,9 +601,25 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
     var column_pixels = [];
     var svg_width = this.svg.attr("width");
 
+    // use golden ratio 
+    // TODO: allow more flexibiity with height - e.g. user resize portlet
+    var _svg_height = svg_width/1.618;
+    // but don't make it more than 90% of browser height..
+    var svg_height = d3.min([_svg_height, 0.9*$(window).height()])
+
+    // normalise row heights
+    var row_sum = d3.sum(rows);
+    var row_pixels = [];
+
     for (var i=0; i<columns.length; i++) {
 	column_pixels[i] = svg_width*columns[i]/column_sum;
     }
+
+    for (var i=0; i<rows.length; i++) {
+	row_pixels[i] = svg_height*rows[i]/row_sum;
+    }
+
+    
   
     var plot_grid = [];
     var plot_id_counter = 0;
@@ -615,7 +631,7 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
 	    plot_grid[plot_id_counter] = {
 		'translate':[col_translate, row_translate], 
 		'width':column_pixels[col_i], 
-		'height':rows[row_i],
+		'height':row_pixels[row_i],
 		'data_ids':[],
 		'data':[],
 		'plotType':"",
@@ -625,7 +641,7 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
 	    col_translate += column_pixels[col_i];
 	    plot_id_counter++;	    
 	} // end col_i
-	row_translate += rows[row_i];
+	row_translate += row_pixels[row_i];
     } // end row_i
 
     this.svg.attr("height",row_translate);
