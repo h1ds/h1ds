@@ -57,20 +57,24 @@
 
   <!-- JavaScript at the bottom for fast page loading -->
 
-  <!-- Grab Google CDN's jQuery, with a protocol relative URL-->
-  <script defer src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script defer src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
-
-
     {% if is_debug == "True" %}
     <script defer src="{{ STATIC_URL }}js/plugins.js"></script>
     <script defer src="{{ STATIC_URL }}js/script.js"></script>
+    <!-- Grab Google CDN's jQuery, with a protocol relative URL-->
+    <script defer src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script defer src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
     {% else %} 
-  <script type="text/javascript"> <!-- isn't this just the same as <script defer> ? -->
+  <script type="text/javascript"> 
     function downloadJSAtOnload() {
-    var element = document.createElement("script");
-    element.src = "{{ STATIC_URL }}js/h1ds.min.js";
-    document.body.appendChild(element);
+    var element1 = document.createElement("script");
+    element1.src = "//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js";
+    document.body.appendChild(element1);
+    var element2 = document.createElement("script");
+    element2.src = "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js";
+    document.body.appendChild(element2);
+    var element3 = document.createElement("script");
+    element3.src = "{{ STATIC_URL }}js/h1ds.min.js";
+    document.body.appendChild(element3);
     }
     
     // Check for browser support of event handling capability
