@@ -425,7 +425,7 @@ function getRawUri(original_uri, width) {
 
 /*
  * planned API:
- * var pc = new NewPlotContainer("#signal-1d-placeholder", [row_1, row_2,..], [col_1, col_2,..]);
+ * var pc = new PlotContainer("#signal-1d-placeholder", [row_1, row_2,..], [col_1, col_2,..]);
  * col_1, col_2 numbers which are normalised to width of container
  * e.g. col_1 -> col_1/(coil_1+col_2) * container_width
  * row_i row heights in pixels
@@ -440,7 +440,7 @@ function getRawUri(original_uri, width) {
  *
  */
 
-function NewPlotContainer(id, rows, columns) {
+function PlotContainer(id, rows, columns) {
     this.id = id;
 
     // TODO: we want same padding for each row, column so we get alignment in 
@@ -448,12 +448,6 @@ function NewPlotContainer(id, rows, columns) {
     // columm/row
     // Layout settings
     this.plotSpacing = 5;
-
-
-    this._plotTypes = {
-	'main':{'height':400},
-	'overview':{'height':200}
-    };
 
     // "raw" should plot any unaltered data? not just line?
     this.plotTypes = {
@@ -496,7 +490,7 @@ function NewPlotContainer(id, rows, columns) {
 }
 
 
-NewPlotContainer.prototype.plotLine = function(selection) {
+PlotContainer.prototype.plotLine = function(selection) {
 
     var do_flip = selection.datum().plot.flip;
 
@@ -520,11 +514,11 @@ NewPlotContainer.prototype.plotLine = function(selection) {
 	});
 };
 
-NewPlotContainer.prototype.plotRaw2D = function(selection) {
+PlotContainer.prototype.plotRaw2D = function(selection) {
 
 }
 
-NewPlotContainer.prototype.plotSpectrogram = function(selection) {
+PlotContainer.prototype.plotSpectrogram = function(selection) {
     // Assume array w/ rects w/ same height and width
     var rect_data = [];
     var cscale=d3.scale.linear().domain([0,1]).range(["blue","red"]);
@@ -561,7 +555,7 @@ NewPlotContainer.prototype.plotSpectrogram = function(selection) {
     
 };
 
-NewPlotContainer.prototype.plotPowerSpectrum = function(selection) {
+PlotContainer.prototype.plotPowerSpectrum = function(selection) {
         
 };
 
@@ -569,7 +563,7 @@ NewPlotContainer.prototype.plotPowerSpectrum = function(selection) {
 // rendered first, before another plot links to its axis.
 // TODO: it might be better to decouple axes from plots to avoid the problem
 // of determining render order (with potential for infinite recursion).
-//NewPlotContainer.prototype.updateRenderOrder = function() {
+//PlotContainer.prototype.updateRenderOrder = function() {
 //    var new_order = [];
 //    //for (var i=0; i<this.plotRenderOrder.length; i++) {
 //    //
@@ -578,7 +572,7 @@ NewPlotContainer.prototype.plotPowerSpectrum = function(selection) {
 //};
 
 // New properties is an object whose properties will be added to the plotGrid data
-NewPlotContainer.prototype.setPlot = function(plot_id, new_properties, update) {
+PlotContainer.prototype.setPlot = function(plot_id, new_properties, update) {
     update = typeof update !== 'undefined' ? update : false;
 
     for (var attrname in new_properties) { 
@@ -595,7 +589,7 @@ NewPlotContainer.prototype.setPlot = function(plot_id, new_properties, update) {
     
 };
 
-NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
+PlotContainer.prototype.setPlotGrid = function(rows, columns) {
     // convert columns from relative widths to absolute pixel widths
     var column_sum = d3.sum(columns);
     var column_pixels = [];
@@ -650,12 +644,12 @@ NewPlotContainer.prototype.setPlotGrid = function(rows, columns) {
     return plot_grid;
 };
 
-NewPlotContainer.prototype.addData = function(data_id, data_url) {
+PlotContainer.prototype.addData = function(data_id, data_url) {
     this.data_ids[data_id] = {'uri':data_url, 'colour':this.data_colours.pop()};
 };
 
 
-NewPlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
+PlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
     update = typeof update !== 'undefined' ? update : true;
 
     this.plotGrid[plot_id].data_ids.push(data_id);
@@ -757,7 +751,7 @@ function str2ab(str) {
 }
    
 
-NewPlotContainer.prototype.loadURL = function(data_url, is_binary) {
+PlotContainer.prototype.loadURL = function(data_url, is_binary) {
     var that = this;
     // the actual data we request uses a modified URL which resamples the data to the screen resolution
     // does data_url contain a query string?
@@ -794,7 +788,7 @@ NewPlotContainer.prototype.loadURL = function(data_url, is_binary) {
     }
 };
 
-NewPlotContainer.prototype.getData = function(data_id, plot_type) {
+PlotContainer.prototype.getData = function(data_id, plot_type) {
     var return_data = {};
     switch(plot_type) {
     case 'raw':
@@ -823,7 +817,7 @@ NewPlotContainer.prototype.getData = function(data_id, plot_type) {
     return return_data;
 }
 
-NewPlotContainer.prototype.updateDisplay = function() {
+PlotContainer.prototype.updateDisplay = function() {
     var that = this;
 
     // load data for plots...
@@ -898,7 +892,7 @@ NewPlotContainer.prototype.updateDisplay = function() {
     plotitems.exit().remove();
 };
 
-NewPlotContainer.prototype.linkAxes = function(plot_id) {
+PlotContainer.prototype.linkAxes = function(plot_id) {
     var that = this;
     var use_x_id  = (this.plotGrid[plot_id].bindAxis[0] >= 0 && this.plotGrid[plot_id].bindAxis[0] !== plot_id)?this.plotGrid[plot_id].bindAxis[0]:plot_id;
     var use_y_id  = (this.plotGrid[plot_id].bindAxis[1] >= 0 && this.plotGrid[plot_id].bindAxis[1] !== plot_id)?this.plotGrid[plot_id].bindAxis[1]:plot_id;
@@ -907,7 +901,7 @@ NewPlotContainer.prototype.linkAxes = function(plot_id) {
     
 };
 
-NewPlotContainer.prototype.updatePlot = function(plot_id) {
+PlotContainer.prototype.updatePlot = function(plot_id) {
     var that = this;
     var do_flip = this.plotGrid[plot_id].flip;
 
@@ -1203,8 +1197,8 @@ function plotScalar(d, url) {
 }
 
 function plot1DimArray(d, url) {
-    //var pc = new NewPlotContainer("#"+d, [300,250],[0.75,0.25]);
-    var pc = new NewPlotContainer("#"+d, [500],[1.0]);
+    //var pc = new PlotContainer("#"+d, [300,250],[0.75,0.25]);
+    var pc = new PlotContainer("#"+d, [500],[1.0]);
     pc.addData("default", url);
     
     //pc.setPlot(2, {"plotType":"spectrogram"});
@@ -1221,7 +1215,7 @@ function plot1DimArray(d, url) {
 }
 
 function plot2DimArray(d, url) {
-	var pc = new NewPlotContainer("#"+d, [500],[1.0]);
+	var pc = new PlotContainer("#"+d, [500],[1.0]);
 	pc.addData("default", url);
 	pc.setPlot(0, {"plotType":"raw2d"});
 	pc.addDataToPlot("default", 0, true);
