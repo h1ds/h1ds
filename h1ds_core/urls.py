@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 
 from h1ds_core.views import homepage, logout_view, edit_profile
 from h1ds_core.views import UserMainView, WorksheetView
+from django.views.decorators.cache import cache_page
 from django.conf import settings
 
 from h1ds_core.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
@@ -54,4 +55,4 @@ if hasattr(settings, "H1DS_DATA_PREFIX"):
     data_prefix = r'^{}'.format(settings.H1DS_DATA_PREFIX)
 
 urlpatterns += patterns('',
-                         url(data_prefix+"(?P<url>.+)$", NodeView.as_view(), name="h1ds-node"))
+                         url(data_prefix+"(?P<url>.+)$", cache_page(60*30)(NodeView.as_view()), name="h1ds-node"))
