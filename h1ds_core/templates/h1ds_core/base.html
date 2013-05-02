@@ -58,16 +58,30 @@
   <!-- JavaScript at the bottom for fast page loading -->
 
   <!-- Grab Google CDN's jQuery, with a protocol relative URL-->
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+  <script defer src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script defer src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+
 
     {% if is_debug == "True" %}
     <script defer src="{{ STATIC_URL }}js/plugins.js"></script>
     <script defer src="{{ STATIC_URL }}js/script.js"></script>
-    {% else %}
-    <script defer src="{{ STATIC_URL }}js/h1ds.min.js"></script>  
+    {% else %} 
+  <script type="text/javascript"> <!-- isn't this just the same as <script defer> ? -->
+    function downloadJSAtOnload() {
+    var element = document.createElement("script");
+    element.src = "{{ STATIC_URL }}js/h1ds.min.js";
+    document.body.appendChild(element);
+    }
+    
+    // Check for browser support of event handling capability
+    if (window.addEventListener)
+    window.addEventListener("load", downloadJSAtOnload, false);
+    else if (window.attachEvent)
+    window.attachEvent("onload", downloadJSAtOnload);
+    else window.onload = downloadJSAtOnload;    
+  </script>
     {% endif %}
-  <!-- end scripts-->
+
 
 	
   <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.
@@ -76,6 +90,7 @@
     <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
     <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
   <![endif]-->
+
 
   {% google_tracker %}
   
