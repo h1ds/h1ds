@@ -428,7 +428,7 @@ function getRawUri(original_uri, width) {
  * var pc = new PlotContainer("#signal-1d-placeholder", [row_1, row_2,..], [col_1, col_2,..]);
  * col_1, col_2 numbers which are normalised to width of container
  * e.g. col_1 -> col_1/(coil_1+col_2) * container_width
- * row_i row heights in pixels
+ * row_i normalised row heights (height set min of to golden ratio and 90% browser height)
  * 
  * pc.setPlotType(plot number, plot type)
  * pc.addData(dataid, url)
@@ -441,15 +441,11 @@ function getRawUri(original_uri, width) {
  */
 
 function PlotContainer(id, rows, columns) {
+    // Store element ID selector
     this.id = id;
 
-    // TODO: we want same padding for each row, column so we get alignment in 
-    // grid layout. Probably should get rid of spacing, and have padding for each
-    // columm/row
-    // Layout settings
-    this.plotSpacing = 5;
-
     // "raw" should plot any unaltered data? not just line?
+    // TODO: js has first class functions - shouldn't we just pass functions around and inspect?
     this.plotTypes = {
 	'raw':this.plotLine, 
 	'spectrogram':this.plotSpectrogram,
@@ -462,9 +458,16 @@ function PlotContainer(id, rows, columns) {
     }
 
     // create SVG
+    var w = $(id).width();
+    // TODO: allow more flexibiity with height - e.g. user resize portlet
+    var _h = w/1.618;
+    // but don't make it more than 90% of browser height..
+    var h = d3.min([_h, 0.9*$(window).height()])
+    
     this.svg = d3.select(id)
 	.append("svg:svg")
-	.attr("width",$(id).width());
+	.attr("width", w)
+	.attr("height", h);
 
     // TODO: replace with algorithm to generate distinct colours.
     this.data_colours = ['#A11D20', '#662C91', '#1859A9', '#008C47', '#ED2D2E', '#010101'];
@@ -590,20 +593,13 @@ PlotContainer.prototype.setPlot = function(plot_id, new_properties, update) {
 };
 
 PlotContainer.prototype.setPlotGrid = function(rows, columns) {
-    // convert columns from relative widths to absolute pixel widths
+    // convert rows, columns from relative widths to absolute pixel widths
     var column_sum = d3.sum(columns);
-    var column_pixels = [];
-    var svg_width = this.svg.attr("width");
-
-    // use golden ratio 
-    // TODO: allow more flexibiity with height - e.g. user resize portlet
-    var _svg_height = svg_width/1.618;
-    // but don't make it more than 90% of browser height..
-    var svg_height = d3.min([_svg_height, 0.9*$(window).height()])
-
-    // normalise row heights
     var row_sum = d3.sum(rows);
+    var column_pixels = [];
     var row_pixels = [];
+    var svg_width = this.svg.attr("width");
+    var svg_height = this.svg.attr("height");
 
     for (var i=0; i<columns.length; i++) {
 	column_pixels[i] = svg_width*columns[i]/column_sum;
@@ -613,8 +609,6 @@ PlotContainer.prototype.setPlotGrid = function(rows, columns) {
 	row_pixels[i] = svg_height*rows[i]/row_sum;
     }
 
-    
-  
     var plot_grid = [];
     var plot_id_counter = 0;
     var row_translate = 0;
