@@ -181,6 +181,7 @@ class BaseNode(object):
         # make sure data and dim can be accessed via node.data, node.dim... 
         d = self.get_data()
         dim = self.get_dim()
+        labels = self.get_labels()
         f_kwargs = self.preprocess_filter_kwargs(kwargs)
         #filter_class = filter_manager.filters[name](*f_args, **f_kwargs)
         filter_class = filter_manager.filters[name](**f_kwargs)

@@ -225,7 +225,7 @@ class MaxOf(Array1DimNumericBaseFilter):
             node.data[node.data<_value] = _value
         else:
             node.data =  np.max([node.data, _value])
-        node.labels = ('max_of(%s, %s)' %(node.labels[0], self.kwargs["values"]),)
+        node.labels = ('max_of(%s, %s)' %(node.labels[0], self.kwargs["values"]), node.labels[1])
 
 class DimOfMaxVal(Array1DimNumericBaseFilter):
     """Returns dim at signal peak.
