@@ -1357,6 +1357,15 @@ form.inline-form {
 }
 .h1ds-meta-value {
 }
+
+/* plot container control panel */
+.pc-control-panel {
+    display:inline-block;
+    width:100%;
+    height:20px;
+    background:#eee;
+}
+
 /* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 
    ============================================================ */

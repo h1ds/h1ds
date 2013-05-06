@@ -352,6 +352,19 @@ H1DSUri.prototype.getNextFilterID = function() {
     return largest_fid + 1;
 };
 
+H1DSUri.prototype.getFilterIDsForFilterName = function(filter_name) {
+    var fids = [];
+    for (var key in this.h1ds_filters) {
+	if (this.h1ds_filters.hasOwnProperty(key)) {
+	    //if (Number(key) > largest_fid) largest_fid=Number(key);
+	    if (h1ds_filters[key].name == filter_name) {
+		fids[fids.length] = key;
+	    }
+	}
+    }
+    return fids;
+}
+
 H1DSUri.prototype.appendFilter = function(filter_name, filter_kwargs) {
     var new_id = this.getNextFilterID();
     this.h1ds_filters[String(new_id)] = {'name':filter_name,'kwargs':filter_kwargs};
@@ -462,8 +475,13 @@ function PlotContainer(id, rows, columns) {
     // TODO: allow more flexibiity with height - e.g. user resize portlet
     var _h = w/1.618;
     // but don't make it more than 90% of browser height..
-    var h = d3.min([_h, 0.9*$(window).height()])
+    var h = d3.min([_h, 0.9*$(window).height()]);
     
+    this.control_panel = d3.select(id)
+	.append("div")
+	.classed("pc-control-panel", true)
+	.append("ul");
+
     this.svg = d3.select(id)
 	.append("svg:svg")
 	.attr("width", w)
@@ -500,7 +518,7 @@ PlotContainer.prototype.plotLine = function(selection) {
     selection.append("path")
 	.classed("path-filled", function(d) { return d.data.is_minmax })
 	.style("stroke", function(d,i) { return d.data.colour; })
-	.style("fill", function(d,i) { return d.data.colour; })
+	.style("fill", function(d,i) { return d.data.is_minmax ? d.data.colour : "none" })
 	.attr("d", function(d,i) {
 	    if (d.data.is_minmax) {
 		var fill_data = fillPlot(d.data);
@@ -516,6 +534,86 @@ PlotContainer.prototype.plotLine = function(selection) {
 	    }
 	});
 };
+
+d3.select(window)
+    .on("mousemove", mousemove)
+    .on("mouseup", mouseup);
+
+var rect, x0, x1, count, par_rect;
+
+function mousedown() {
+    x0 = d3.mouse(this);
+    count = 0;
+    par_rect = d3.select(this);
+    rect = d3.select(this.parentNode)
+	.append("svg:rect")
+	.attr("y", par_rect.attr("y"))
+	.attr("height", par_rect.attr("height"))
+        .style("fill", "#999")
+        .style("fill-opacity", .5);
+    
+    d3.event.preventDefault();
+}
+
+function mousemove() {
+    if (!rect) return;
+    //x1 = d3.svg.mouse(rect.node());
+    x1 = d3.mouse(rect.node());
+    // TODO: put elsewhere
+    var size = 150, padding = 20;
+
+    //x1[0] = Math.max(padding / 2, Math.min(size - padding / 2, x1[0]));
+    //x1[1] = Math.max(padding / 2, Math.min(size - padding / 2, x1[1]));
+
+    var minx = Math.min(x0[0], x1[0]),
+        maxx = Math.max(x0[0], x1[0]),
+        miny = Math.min(x0[1], x1[1]),
+        maxy = Math.max(x0[1], x1[1]);
+
+    rect
+        .attr("x", minx - .5)
+        //.attr("y", miny - .5)
+        .attr("width", maxx - minx + 1)
+        //.attr("height", maxy - miny + 1);
+
+
+}
+
+function mouseup() {
+    if (!rect) return;
+    var tmp = rect;
+    rect.each(function(d){
+	// this probably shouldn't be within a .each()
+	var new_minx = d.xAxis.scale().invert(d3.select(this).attr("x"));
+	var new_maxx = d.xAxis.scale().invert(+d3.select(this).attr("x") + +d3.select(this).attr("width"));
+	var thisURI = new H1DSUri(window.location.href);
+	var next_index = Number(thisURI.getNextFilterID());
+	if (next_index == 0) {	    
+	    thisURI.appendFilter("dim_range", {'min':new_minx, 'max':new_maxx});
+	} else {
+	    var last_index = next_index - 1;
+	    if (thisURI.h1ds_filters[String(last_index)].name === "dim_range") {
+		thisURI.h1ds_filters[String(last_index)].kwargs = {"min":new_minx, "max":new_maxx};
+	    } else {
+		thisURI.appendFilter("dim_range", {'min':new_minx, 'max':new_maxx});
+	    }
+	}
+	$(".h1ds-pagelet").each(function() {
+	    d3.select(this).html(''); // clear out the old (hack - not very d3ish to delete and readd)
+	    populatePagelet($(this), thisURI.renderUri()); // and bring in the new
+	});
+	if (Modernizr.history) {
+	    history.pushState(null, null, thisURI.renderUri());
+	}
+
+    })
+    rect.remove();
+    rect = null;
+}
+
+
+tmpdebug = function(selection) {
+}
 
 PlotContainer.prototype.plotRaw2D = function(selection) {
 
@@ -598,15 +696,15 @@ PlotContainer.prototype.setPlotGrid = function(rows, columns) {
     var row_sum = d3.sum(rows);
     var column_pixels = [];
     var row_pixels = [];
-    var svg_width = this.svg.attr("width");
-    var svg_height = this.svg.attr("height");
+    var width = this.svg.attr("width");
+    var height = this.svg.attr("height");
 
     for (var i=0; i<columns.length; i++) {
-	column_pixels[i] = svg_width*columns[i]/column_sum;
+	column_pixels[i] = width*columns[i]/column_sum;
     }
 
     for (var i=0; i<rows.length; i++) {
-	row_pixels[i] = svg_height*rows[i]/row_sum;
+	row_pixels[i] = height*rows[i]/row_sum;
     }
 
     var plot_grid = [];
@@ -870,6 +968,17 @@ PlotContainer.prototype.updateDisplay = function() {
 	.attr("y", function(d) { return -0.8*that.yAxisPadding; })
 	.text(function(d) { return "["+d.data[0].units[0]+"]"; }); // TODO: uses data[0], rather than data for this plot.
 
+    plots.append("svg:rect")
+	.attr("class", "selectrect")
+	.attr("x", that.yAxisPadding)
+	.attr("y", function(d) { return -that.xAxisPadding})
+	.attr("width", function(d) {return d.width})
+	.attr("height", function(d) {return d.height})
+	.style("fill", "#fff")
+	.style("fill-opacity", 0.0)
+	.on("mousedown", mousedown);
+	//.on("mousemove", mousemove)
+	//.on("mouseup", mouseup);
 
     var plotitems = plots
 	.selectAll("g.data")
@@ -878,7 +987,7 @@ PlotContainer.prototype.updateDisplay = function() {
 	    for (var i=0; i<d.data.length; i++) plot_data[i] = {'data':d.data[i], 'plot':d, 'plotid':j};
 	    return plot_data;});
     
-    plotitems.enter().append("g")
+    plotitems.enter().insert("g", ".selectrect")
 	.attr("class", "data")
 	.attr("clip-path", function(d,i) { return "url(#plot-"+i+"-clippath)"})
 	.each(function(d,i) {d3.select(this).call(that.plotTypes[d.plot.plotType]);});
@@ -1149,18 +1258,20 @@ function autoPollSummaryDB() {
 
 var shot_stream_client = new XMLHttpRequest();
 
+// TODO: rather not have big chunks of html here - use js instead, eg http://stackoverflow.com/questions/3365325/form-action-javascriptblock-redirects-to-javascriptblock-url-in-firefo
 function turnOffShotTracker() {
     $("#h1ds-track-latest-shot").hide();
     $("#h1ds-shot-controller").show();
-    $("#h1ds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="track latest shot"></FORM>');
+    $("#h1ds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="." onsubmit="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="track latest shot"></FORM>');
     $.cookie("shotTracking", 'false', {path:'/'});
     shot_stream_client.abort();
 }
 
+// TODO: rather not have big chunks of html here - use js instead, eg http://stackoverflow.com/questions/3365325/form-action-javascriptblock-redirects-to-javascriptblock-url-in-firefo
 function turnOnShotTracker() {
     $("#h1ds-shot-controller").hide();
     $("#h1ds-track-latest-shot").show();
-    $("#h1ds-toggletrack-latest-shot").html('<FORM class="inline-form right" action="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="stop tracking latest shot"></FORM>');
+    $("#h1ds-toggletrack-latest-shot").html('<FORM class="inline-form right" action="." onsubmit="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="stop tracking latest shot"></FORM>');
     $.cookie("shotTracking", 'true', {path:'/'});
 
     shot_stream_client.open('get', '/_/shot_stream/');
@@ -1239,12 +1350,12 @@ function getPlotFunction(dtype, ndim) {
     }
 }
 
-function populatePagelet(d) {
+function populatePagelet(d, pagelet_url) {
     // get URL for pagelet data
-    var pagelet_url = d.attr("data-pagelet-url");
-    if (typeof pagelet_url === 'undefined') {
-	pagelet_url = window.location.toString();
-    }
+    //var pagelet_url = d.attr("data-pagelet-url");
+    //if (typeof pagelet_url === 'undefined') {
+    //pagelet_url = window.location.toString();
+    //}
     var _json_url = new H1DSUri(pagelet_url);
     _json_url.non_h1ds_query['format'] = 'json';
     var json_url = _json_url.renderUri();
@@ -1287,7 +1398,7 @@ $(document).ready(function() {
     // autoUpdateEvents();
     loadCookie();
     $(".h1ds-pagelet").each(function() {
-	populatePagelet($(this));
+	populatePagelet($(this), window.location.toString());
     });
     //$(".h1ds-tree-nav").each(function() {
 //	populateTreeNav($(this));
