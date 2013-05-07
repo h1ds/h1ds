@@ -1,3 +1,8 @@
+"""
+
+TODO: most of the  response mixins do a check for  ndim etc, we should
+be able to refactor code to remove duplication..
+"""
 import csv
 import inspect
 import re
@@ -402,14 +407,42 @@ class CSVNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        data = self.node.get_format('csv')
+        #data = self.node.get_format('csv')
         
         response = HttpResponse(mimetype='text/csv')
         response['Content-Disposition'] = 'attachment; filename=data.csv'
 
         writer = csv.writer(response)
-        for i in data:
-            writer.writerow(map(str, i))
+        writer.writerow(["# [begin metadata]"])
+        writer.writerow(["# {}: {}".format('shot', self.node.url_processor.shot)])
+        writer.writerow(["# {}: {}".format('tree', self.node.url_processor.tree)])
+        writer.writerow(["# {}: {}".format('path', unicode(self.node.url_processor.path))])
+        for k,v in self.node.get_metadata().items():
+            writer.writerow(["# {}: {}".format(str(k), unicode(v))])
+        writer.writerow(["# [end metadata]"])
+        writer.writerow(["# [start data]"])
+        
+        if self.node.get_data() == None:
+            writer.writerow(["null"])
+        elif np.isscalar(self.node.get_data()):
+            writer.writerow([str(np.asscalar(self.node.get_data()))])
+        elif len(self.node.get_data().shape) == 1:
+            writer.writerow(["# dim", "data"])
+            for i,j in zip(self.node.get_dim().tolist(), self.node.get_data().tolist()):
+                writer.writerow([str(i), str(j)])
+        elif 1 < len(self.node.get_data().shape):
+            dim = self.node.get_dim().tolist()
+            data = self.node.get_data().tolist()
+            header = ["dim{}".format(i) for i in range(len(dim))]
+            header.extend(["data{}".format(i) for i in range(len(data))])
+            header[0] = "# "+header[0]
+            writer.writerow(header)
+            all_cols = dim
+            all_cols.extend(data)
+            # TODO: too much hacking of dim and shape etc..
+            for i in zip(*all_cols):
+                writer.writerow(map(str, i))
+                
         return response
 
 
