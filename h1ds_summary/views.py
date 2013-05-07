@@ -30,7 +30,7 @@ get_latest_shot = get_latest_shot_function()
 data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
 
-DEFAULT_SHOT_REGEX = "last10"
+DEFAULT_SHOT_REGEX = "last30"
 DEFAULT_ATTR_STR = "default"
 DEFAULT_FILTER = None
 
