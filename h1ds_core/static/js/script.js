@@ -399,7 +399,27 @@ H1DSUri.prototype.isBinary = function() {
     return (this.non_h1ds_query['format'] === 'bin') 
 }
 
+H1DSUri.prototype.getShot = function() {
+    var path = this.uri_components.path;
+    if (path[path.length-1] !== "/") {
+	path = path+"/";
+    }
+    var tmp = path.match(/\/\d+\//);
+    if (tmp===null) {
+	return 0;
+    } else {
+	return Number(tmp[0].substring(1, tmp[0].length-1));
+    }
+}
 
+H1DSUri.prototype.setShot = function(new_shot) {
+    var path = this.uri_components.path;
+    if (path[path.length-1] !== "/") {
+	path = path+"/";
+    }
+    var new_path = path.replace(/\/\d+\//, "/"+new_shot+"/");
+    this.uri_components.path = new_path;
+}
 
 // Functions to modify a URL to return data suitable for a given plot type
 
@@ -1392,7 +1412,36 @@ $.fn.scrollView = function () {
 }
 
 
+
+updateShotNav = function() {
+    var current_url = new H1DSUri(window.location.toString());
+    var current_shot = current_url.getShot();
+    if (current_shot === 0) {
+
+	current_url.uri_components.path = $("#debug-node-path").html();
+	current_shot = current_url.getShot();
+	//current_shot = Number($("#h1ds-shot-current").html());
+	//console.log($("#h1ds-shot-current").html());
+	//var tmp_path = current_url.uri_components.path;
+	//if (tmp_path[tmp_path.length-1] === "/"){
+	//    
+	//} else {
+	//    current_url.uri_components.path = current_url.uri_components.path+"/"+current_shot;
+//	}
+    }
+    current_url.setShot(current_shot+1);
+    var next_url = current_url.renderUri();
+    current_url.setShot(current_shot-1);
+    var previous_url = current_url.renderUri();
+    $("#h1ds-shot-previous").html("<a class='shotnav' href='"+previous_url+"'>&larr;</a>");
+    $("#h1ds-shot-next").html("<a class='shotnav' href='"+next_url+"'>&rarr;</a>");
+	//.attr("method", "get")
+	//.attr("action", previous_url);
+    //$("#h1ds-shot-previous form input[type=hidden]").remove();
+}
+
 $(document).ready(function() {
+    updateShotNav();
     $('#main').scrollView();
     autoPollSummaryDB();
     // autoUpdateEvents();

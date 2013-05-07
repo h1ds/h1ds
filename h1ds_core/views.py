@@ -38,6 +38,9 @@ data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
 Node = getattr(data_module, 'Node')
 get_trees = getattr(data_module, 'get_trees')
+data_prefix = ""
+if hasattr(settings, "H1DS_DATA_PREFIX"):
+    data_prefix = r'^{}'.format(settings.H1DS_DATA_PREFIX)
 
 
 get_latest_shot = get_latest_shot_function()
@@ -650,7 +653,8 @@ class HTMLNodeResponseMixin(object):
             user_signal_form = None            
         html_metadata = {
             'tree':self.node.url_processor.tree,
-            'shot':self.node.url_processor.shot, 
+            'shot':self.node.url_processor.shot,
+            'data_prefix':data_prefix.strip("^"), # TODO: hack: we shouldn't need to explicitly strip chars?
             #'user_signals':user_signals,
             #'node_display_info':self.node.get_display_info(),
             }
@@ -680,6 +684,13 @@ class HTMLNodeResponseMixin(object):
                                    'alt_formats':alt_formats,
                                    'is_debug':str(settings.DEBUG),
                                    'node_meta': self.node.get_metadata(),
+                                   # put  node_url_path into  template
+                                   # because we can't  always get shot
+                                   # number,  tree   from  window  url
+                                   # because  of  defaults to  default
+                                   # tree and shot  0. This is awkward
+                                   # behaviour which should be fixed.
+                                   'node_url_path': self.node.url_processor.get_url(),
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 

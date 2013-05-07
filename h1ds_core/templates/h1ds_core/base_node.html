@@ -10,7 +10,8 @@ HTML tables. -->
 
 {% block extrahead %}
 {% for name, content in html_metadata.items %}
-<meta name="{{name}}" content="{{content}}" />{% endfor%}{% endblock%}
+<meta name="{{name}}" content="{{content}}" />{% endfor%}
+{% endblock%}
 <div class="fixed-centre">
 {% block content %}
 
@@ -50,7 +51,7 @@ HTML tables. -->
     <div class="portlet-content"> 
       <div id="h1ds-shot-controller">
 	<div class="sidebarcontent">
-	  <FORM class="inline-form" action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
+	  <FORM id="h1ds-go-to-shot" class="inline-form" action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	    <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
 	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="shot #" size="8">
 	  </FORM>
@@ -62,7 +63,7 @@ HTML tables. -->
 	      <INPUT title="go to shot" type="submit" value="<">
 	    </FORM>
 	  </div>  <!-- end h1ds-shot-previous -->
-	  <div id="h1ds-shot-current"><strong> {{node.url_processor.shot}} </strong></div>
+	  <div id="h1ds-shot-current">{{node.url_processor.shot}}</div>
 	  <div id="h1ds-shot-next">	
 	    <FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">

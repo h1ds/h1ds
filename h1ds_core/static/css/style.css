@@ -1201,13 +1201,15 @@ span.right {
 }
 
 #h1ds-shot-current {
-    width:33%;
+    width:30%;
     float:left;
     text-align:center;
+    
 }
 #h1ds-shot-next {
     width:32%;
     float:right;
+    text-align:right;
 }
 
 #h1ds-shot-next form {
@@ -1364,6 +1366,10 @@ form.inline-form {
     width:100%;
     height:20px;
     background:#eee;
+}
+
+.shotnav {
+    font-size:xx-large;
 }
 
 /* ============================================================

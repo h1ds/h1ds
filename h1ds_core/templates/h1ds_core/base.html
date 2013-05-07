@@ -11,13 +11,14 @@
   <meta name="description" content="">
   <meta name="author" content="">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+
   <link rel="stylesheet" href="{{ STATIC_URL }}css/style.css">
   <script src="{{ STATIC_URL }}js/libs/modernizr-2.0.6.min.js"></script>
     {% block extrahead %}{% endblock %}
 </head>
 
 <body>
-
+<div style="display:none;" id="debug-node-path">{{node_url_path}}</div>
   <div id="container">
     <header class="clearfix">
       <div class="fixed-centre">
