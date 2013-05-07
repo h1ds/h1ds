@@ -430,7 +430,8 @@ class XMLNodeResponseMixin(object):
                                  attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
 
         # add shot info
-        shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
+        #shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
+        shot_number = etree.SubElement(data_xml, 'shot', attrib={})
         shot_number.text = str(self.node.url_processor.shot)
         ## TODO: add metadata (for mds, shot time can go into metadata)
         #shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
@@ -443,6 +444,76 @@ class XMLNodeResponseMixin(object):
         path = etree.SubElement(data_xml, 'path', attrib={})
         path.text = self.node.url_processor.path
 
+        # add node
+        #data = etree.SubElement(data_xml, 'data', attrib={})
+        if self.node.get_data() == None:
+            data = etree.SubElement(data_xml, 'data', attrib={'ndim':"0"})
+            data.text = "null"
+            dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"0"})
+            dim.text = "null"
+
+        elif np.isscalar(self.node.get_data()):
+            data = etree.SubElement(data_xml, 'data', attrib={'ndim':"0"})
+            data.text = str(np.asscalar(self.node.get_data()))
+            dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"0"})
+            dim.text = "null"
+
+        elif len(self.node.get_data().shape) == 1:
+            data = etree.SubElement(data_xml, 'data', attrib={'ndim':"1"})
+            d = self.node.get_data().tolist()
+            for i,j in enumerate(d):
+                el = etree.SubElement(data, 'element', attrib={})
+                el.text = str(j)
+            dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"1"})
+            _dim = self.node.get_dim().tolist()
+            for i,j in enumerate(_dim):
+                el = etree.SubElement(dim, 'element', attrib={})
+                el.text = str(j)
+
+        elif 1 < len(self.node.get_data().shape) <= 3:
+            ndim = len(self.node.get_data().shape)
+            data_node = etree.SubElement(data_xml, 'data', attrib={'ndim':str(ndim)})
+            dim_node = etree.SubElement(data_xml, 'dim', attrib={'ndim':str(ndim)})
+            data, dim = [],[]
+            for i in self.node.get_data():
+                if hasattr(i, "tolist"):
+                    data.append(i.tolist())
+                else:
+                    data.append(i)
+            for i in self.node.get_dim():
+                if hasattr(i, "tolist"):
+                    dim.append(i.tolist())
+                else:
+                    dim.append(i)
+            for data_dim_i,data_dim in enumerate(data):
+                d_ch = etree.SubElement(data_node, 'channel', attrib={"number":str(data_dim_i)})
+                for data_el_i, data_el in enumerate(data_dim):
+                    el = etree.SubElement(d_ch, 'element', attrib={})
+                    el.text = str(data_el)
+            for dim_i,_dim in enumerate(dim):
+                d_ch = etree.SubElement(dim_node, 'channel', attrib={"number":str(dim_i)})
+                for el_i, _el in enumerate(_dim):
+                    el = etree.SubElement(d_ch, 'element', attrib={})
+                    el.text = str(_el)
+            #dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"1"})
+            #_dim = self.node.get_dim().tolist()
+            #for i,j in enumerate(_dim):
+            #    el = etree.SubElement(dim, 'element', attrib={})
+            #    el.text = str(j)
+
+        #else:
+        #    response_data['data'] = "unknown data"
+        #    response_data['dim'] = None
+        #metadata = {
+        #    'path':unicode(self.node.url_processor.path),
+        #    'tree':self.node.url_processor.tree,
+        #    'shot':self.node.url_processor.shot,
+        #    'summary_dtype':self.node.get_summary_dtype(),
+        #    }
+        # add metadata...
+        #response_data.update({'meta':metadata})
+
+        """
         signal = etree.SubElement(data_xml, 'data', attrib={'type':'signal'})
 
         ## make xlink ? to signal binary 
@@ -454,7 +525,7 @@ class XMLNodeResponseMixin(object):
             signal.text += '&format=bin' 
         else:
             signal.text += '?format=bin'
-
+        """
         return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
 
 class PNGNodeResponseMixin(object):
@@ -560,7 +631,9 @@ class HTMLNodeResponseMixin(object):
         trees = {'current':self.node.url_processor.tree}
         trees['other'] = [t for t in get_trees() if t.lower() != trees['current'].lower()]
         trees['all'] = sorted(get_trees())
-        alt_formats = ['json', 'png', 'xml', 'csv', 'bin']
+        #alt_formats = ['json', 'png', 'xml', 'csv', 'bin']
+        # TODO: get this list programaticcally
+        alt_formats = ['json', 'xml', 'csv']
         return render_to_response('h1ds_core/{}'.format(template), 
                                   {#'node_content':self.node.get_format('html'),
                                    #'html_metadata':html_metadata,
