@@ -500,7 +500,10 @@ class XMLNodeResponseMixin(object):
             #for i,j in enumerate(_dim):
             #    el = etree.SubElement(dim, 'element', attrib={})
             #    el.text = str(j)
-
+        metadata_node = etree.SubElement(data_xml, 'metadata', attrib={})
+        for key, value in self.node.get_metadata().items():
+            item = etree.SubElement(metadata_node, "item", attrib={"key":str(key), "value":str(value)})
+            #item.text = str(value)
         #else:
         #    response_data['data'] = "unknown data"
         #    response_data['dim'] = None
