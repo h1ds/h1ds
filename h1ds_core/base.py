@@ -59,19 +59,23 @@ class FilterManager(object):
             self.cache[data_type] = data_filters
         return self.cache[data_type]
 
-filter_manager = FilterManager()    
+filter_manager = FilterManager()
+
 
 def get_latest_shot_function():
     i = settings.LATEST_SHOT_FUNCTION.rfind('.')
-    module, attr = settings.LATEST_SHOT_FUNCTION[:i], settings.LATEST_SHOT_FUNCTION[i+1:]
+    module = settings.LATEST_SHOT_FUNCTION[:i]
+    attr = settings.LATEST_SHOT_FUNCTION[i+1:]
     try:
         mod = import_module(module)
     except ImportError as e:
-        raise ImproperlyConfigured('Error importing request processor module %s: "%s"' % (module, e))
+        msg = 'Error importing module {}: "{}"'.format(module, e)
+        raise ImproperlyConfigured(msg)
     try:
         func  = getattr(mod, attr)
     except AttributeError:
-        raise ImproperlyConfigured('Module "%s" does not define a "%s" callable request processor' % (module, attr))
+        msg = 'Module "{}" has no attribute "{}"'.format(module, attr)
+        raise ImproperlyConfigured(msg)
     return func
 
 class BaseURLProcessor(object):
@@ -195,14 +199,9 @@ class BaseNode(object):
 
     def preprocess_filter_kwargs(self, kwargs):
         # TODO: should filters.http_arg be put here instead?
-        #for i,a in enumerate(args):
-        #    if isinstance(a, str):
-        #        if "__shot__" in a:
-        #            args[i] = a.replace("__shot__", str(self.url_processor.shot))
         for k,v in kwargs.iteritems():
-            if isinstance(v, str):
-                if "__shot__" in v:
-                    kwargs[k] = v.replace("__shot__", str(self.url_processor.shot))
+            if isinstance(v, str) and "__shot__" in v:
+                kwargs[k] = v.replace("__shot__", str(self.url_processor.shot))
         return kwargs
         
     def get_data(self):
@@ -214,7 +213,8 @@ class BaseNode(object):
         return None
     
     def get_dim(self):
-        # TODO - scalars etc will have dim None (or should they have dim 0), shouldn't re-read from node for these cases...
+        # TODO - scalars etc will have dim None (or should they have
+        # dim 0), shouldn't re-read from node for these cases...
         if type(self.dim) == type(None):
             self.dim = self.get_raw_dim()
         return self.dim
@@ -305,7 +305,8 @@ class BaseNode(object):
                 darr = np.array(dim[di])
                 pdim[di]['first'] = darr[0]
                 pdim[di]['delta'] = np.mean(np.diff(darr))
-                reconst_dim = pdim[di]['delta']*np.arange(pdim[di]['length'])+pdim[di]['first']
+                delta_arr = pdim[di]['delta']*np.arange(pdim[di]['length'])
+                reconst_dim = delta_arr + pdim[di]['first']
                 pdim[di]['rms_err'] = np.sqrt(np.mean((darr - reconst_dim)**2))
         return pdim
 
@@ -324,8 +325,8 @@ class BaseNode(object):
         data_min, data_max = np.min(data), np.max(data)
         dtype_info = np.iinfo(assert_dtype)
         dtype_min, dtype_max = dtype_info.min, dtype_info.max
-
-        rescaled_data = ((data-data_min)/(data_max-data_min))*(dtype_max-dtype_min) + dtype_min
+        normalised_data = (data-data_min)/(data_max-data_min)
+        rescaled_data = normalised_data*(dtype_max-dtype_min) + dtype_min
         recast_data = assert_dtype(rescaled_data)
 
         ret_val = {'data':recast_data,
@@ -403,24 +404,11 @@ def get_filter_list(request):
     # because we cannot assume GET query will be ordered.
     filter_dict = {}
     for key, value in request.GET.iteritems():
-        
-        """
-        # deprecated - use only kwargs
-        arg_match = filter_arg_regex.match(key)
-        if arg_match != None:
-            fid = int(arg_match.groups()[0])
-            argn = int(arg_match.groups()[1])
-            if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
-            filter_dict[fid]['args'][argn] = value
-            continue
-        """
         kwarg_match = filter_kwarg_regex.match(key)
         if kwarg_match != None:
             fid = int(kwarg_match.groups()[0])
             kwarg = kwarg_match.groups()[1]
             if not filter_dict.has_key(fid):
-                #filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
                 filter_dict[fid] = {'name':"", 'kwargs':{}}
             filter_dict[fid]['kwargs'][kwarg] = value
             continue
@@ -429,14 +417,11 @@ def get_filter_list(request):
         if name_match != None:
             fid = int(name_match.groups()[0])
             if not filter_dict.has_key(fid):
-                #filter_dict[fid] = {'name':"", 'args':{}, 'kwargs':{}}
                 filter_dict[fid] = {'name':"", 'kwargs':{}}
             filter_dict[fid]['name'] = value
             continue
     
     for fid, filter_data in sorted(filter_dict.items()):
-        #arg_list = [i[1] for i in sorted(filter_data['args'].items())]
-        #filter_list.append([fid, filter_data['name'], arg_list, filter_data['kwargs']])
         filter_list.append([fid, filter_data['name'], filter_data['kwargs']])
                            
     return filter_list
