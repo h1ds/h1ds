@@ -4,8 +4,6 @@ TODO: most of the  response mixins do a check for  ndim etc, we should
 be able to refactor code to remove duplication..
 """
 import csv
-import inspect
-import re
 import xml.etree.ElementTree as etree
 import json
 import time
@@ -16,7 +14,6 @@ import pylab
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
-from django.core import serializers
 from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -28,10 +25,8 @@ from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.conf import settings
 from django.utils.importlib import import_module
-from django.core.exceptions import ImproperlyConfigured
 
-from h1ds_core.models import H1DSSignalInstance, Worksheet
-from h1ds_core.models import UserSignal, UserSignalForm
+from h1ds_core.models import UserSignal, UserSignalForm, Worksheet
 from h1ds_core.base import get_filter_list, get_latest_shot_function
 
 data_module = import_module(settings.H1DS_DATA_MODULE)
@@ -88,7 +83,9 @@ def logout_view(request):
             
 
 class ChangeProfileForm(forms.Form):
-    username = forms.CharField(max_length=30, help_text="Please use CamelCase, with each word capitalised. For example: MarkOliphant or LymanSpitzer")
+    help_text = ("Please use CamelCase, with each word capitalised. "
+                 "For example: MarkOliphant or LymanSpitzer")
+    username = forms.CharField(max_length=30, help_text=help_text)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
     email = forms.EmailField()
@@ -106,7 +103,9 @@ class UserMainView(ListView):
 class WorksheetView(DetailView):
 
     def get_object(self):
-        w = get_object_or_404(Worksheet, user__username=self.kwargs['username'], slug=self.kwargs['worksheet'])
+        w = get_object_or_404(Worksheet,
+                              user__username=self.kwargs['username'],
+                              slug=self.kwargs['worksheet'])
         if w.is_public or w.user == self.request.user:
             return w
         else:
@@ -133,9 +132,11 @@ def edit_profile(request, username=''):
                         'last_name':request.user.last_name,
                         'email':request.user.email}
                 user_form = ChangeProfileForm(data)
+                response_dict = {'form':user_form,
+                                 'return_url':'/user/profile/%s/' %username}
                 return render_to_response('h1ds_core/userprofile.html', 
-                                          {'form':user_form, 'return_url':'/user/profile/%s/' %username},
-                                          context_instance=RequestContext(request))
+                                response_dict,
+                                context_instance=RequestContext(request))
         else:
             data = {'username':username, 
                     'first_name':request.user.first_name,
@@ -199,15 +200,12 @@ class FilterBaseView(RedirectView):
             # Find the maximum fid in the existing query and +1
             fid = get_max_fid(self.request)+1
 
-        # We expect the filter arguments to be passed as key&value in the HTTP query.
-        #filter_arg_names = inspect.getargspec(filter_function).args[1:]
-        #filter_arg_values = [qdict.pop(a)[-1] for a in filter_arg_names]
+        # We expect the filter arguments  to be passed as key&value in
+        # the HTTP query.
         filter_arg_values = [qdict.pop(a)[-1] for a in filter_class.kwarg_names]
 
         # add new filter to query dict
         qdict.update({'f%d' %(fid):filter_name})
-        #for argn, arg_val in enumerate(filter_arg_values):
-        #    qdict.update({'f%d_arg%d' %(fid,argn):arg_val})
         for name, val in zip(filter_class.kwarg_names, filter_arg_values):
             qdict.update({'f%d_%s' %(fid,name):val})
 
@@ -302,24 +300,28 @@ class AJAXShotRequestURL(View):
         input_path = request.GET.get('input_path')
         shot = int(request.GET.get('shot'))
         url_processor = URLProcessor(url=input_path)
-        #input_shot = shot_regex.findall(input_path)[0]
         url_processor.shot = shot
-        #new_url = input_path.replace("/"+str(input_shot)+"/", "/"+str(shot)+"/")
         new_url = url_processor.get_url()
         output_json = '{"new_url":"%s"}' %new_url
         return HttpResponse(output_json, 'application/javascript')
 
 def xml_latest_shot(request):
-    """Hack to get IDL client working again - this should be merged with other latest shot view"""
+    """Hack...
+
+    TODO: Hack to get IDL client working again - this should be merged
+    with other latest shot view
+
+    """
     
     shot = str(get_latest_shot())
     # TODO - get URI from settings, don't hardwire h1svr
     response_xml = etree.Element('{http://h1svr.anu.edu.au/data}dataurlmap',
-                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+                    attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
     
     shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
     shot_number.text = shot
-    return HttpResponse(etree.tostring(response_xml), mimetype='text/xml; charset=utf-8')
+    return HttpResponse(etree.tostring(response_xml),
+                        mimetype='text/xml; charset=utf-8')
 
 class AJAXLatestShotView(View):
     """Return latest shot."""
@@ -331,7 +333,8 @@ class AJAXLatestShotView(View):
         if format_.lower() == 'xml':
             return xml_latest_shot(request)
         latest_shot = get_latest_shot()
-        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
+        return HttpResponse('{"latest_shot":"%s"}' %latest_shot,
+                            'application/javascript')
 
 def request_url(request):
     """Return the URL for the requested parameters."""
@@ -340,9 +343,9 @@ def request_url(request):
     path = request.GET['path']
     tree = request.GET['tree']
 
-    
-    url_xml = etree.Element('{http://h1svr.anu.edu.au/}dataurlmap',
-                             attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+    xml_elmt = '{http://h1svr.anu.edu.au/}dataurlmap'
+    lang_attr = {'{http://www.w3.org/XML/1998/namespace}lang': 'en'}
+    url_xml = etree.Element(xml_elmt, attrib=lang_attr)
     
     shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
     shot_number.text = shot
@@ -356,7 +359,8 @@ def request_url(request):
     url_el = etree.SubElement(url_xml, 'url', attrib={})
     url_el.text = url
 
-    return HttpResponse(etree.tostring(url_xml), mimetype='text/xml; charset=utf-8')
+    return HttpResponse(etree.tostring(url_xml),
+                        mimetype='text/xml; charset=utf-8')
 
 
 ####
@@ -403,7 +407,8 @@ class JSONNodeResponseMixin(object):
             }
         # add metadata...
         response_data.update({'meta':metadata})
-        return HttpResponse(json.dumps(response_data), mimetype='application/json')
+        return HttpResponse(json.dumps(response_data),
+                            mimetype='application/json')
 
 class CSVNodeResponseMixin(object):
 
@@ -417,9 +422,12 @@ class CSVNodeResponseMixin(object):
 
         writer = csv.writer(response)
         writer.writerow(["# [begin metadata]"])
-        writer.writerow(["# {}: {}".format('shot', self.node.url_processor.shot)])
-        writer.writerow(["# {}: {}".format('tree', self.node.url_processor.tree)])
-        writer.writerow(["# {}: {}".format('path', unicode(self.node.url_processor.path))])
+        writer.writerow(["# {}: {}".format('shot',
+                                           self.node.url_processor.shot)])
+        writer.writerow(["# {}: {}".format('tree',
+                                           self.node.url_processor.tree)])
+        path = unicode(self.node.url_processor.path)
+        writer.writerow(["# {}: {}".format('path', path)])
         for k,v in self.node.get_metadata().items():
             writer.writerow(["# {}: {}".format(str(k), unicode(v))])
         writer.writerow(["# [end metadata]"])
@@ -431,7 +439,8 @@ class CSVNodeResponseMixin(object):
             writer.writerow([str(np.asscalar(self.node.get_data()))])
         elif len(self.node.get_data().shape) == 1:
             writer.writerow(["# dim", "data"])
-            for i,j in zip(self.node.get_dim().tolist(), self.node.get_data().tolist()):
+            for i,j in zip(self.node.get_dim().tolist(),
+                           self.node.get_data().tolist()):
                 writer.writerow([str(i), str(j)])
         elif 1 < len(self.node.get_data().shape):
             dim = self.node.get_dim().tolist()
@@ -455,23 +464,20 @@ class XMLNodeResponseMixin(object):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        # TODO (depecated - much code change): this should be handled by wrappers
-        # however, at present self.node.get_view
-        # calls get_view on the data object which
-        # doesn't ?? know about shot info, etc
-        # the proper fix might be to have wrappers
-        # take as args wrappers rather than data objects?
+        # TODO (depecated - much code  change): this should be handled
+        # by  wrappers however,  at  present self.node.get_view  calls
+        # get_view on the data object which doesn't ?? know about shot
+        # info, etc the  proper fix might be to have  wrappers take as
+        # args wrappers rather than data objects?
         
-        data_xml = etree.Element('{http://h1svr.anu.edu.au/data}data',
-                                 attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+        xml_elmt = '{http://h1svr.anu.edu.au/data}data'
+        xml_attr = {'{http://www.w3.org/XML/1998/namespace}lang': 'en'}
+        data_xml = etree.Element(xml_elmt, attrib = xml_attr)
 
         # add shot info
-        #shot_number = etree.SubElement(data_xml, 'shot_number', attrib={})
         shot_number = etree.SubElement(data_xml, 'shot', attrib={})
         shot_number.text = str(self.node.url_processor.shot)
         ## TODO: add metadata (for mds, shot time can go into metadata)
-        #shot_time = etree.SubElement(data_xml, 'shot_time', attrib={})
-        #shot_time.text = str(self.node.get_data_time())
         
 
         # add data info
@@ -508,8 +514,10 @@ class XMLNodeResponseMixin(object):
 
         elif 1 < len(self.node.get_data().shape) <= 3:
             ndim = len(self.node.get_data().shape)
-            data_node = etree.SubElement(data_xml, 'data', attrib={'ndim':str(ndim)})
-            dim_node = etree.SubElement(data_xml, 'dim', attrib={'ndim':str(ndim)})
+            data_node = etree.SubElement(data_xml, 'data',
+                                         attrib={'ndim':str(ndim)})
+            dim_node = etree.SubElement(data_xml, 'dim',
+                                        attrib={'ndim':str(ndim)})
             data, dim = [],[]
             for i in self.node.get_data():
                 if hasattr(i, "tolist"):
@@ -522,12 +530,14 @@ class XMLNodeResponseMixin(object):
                 else:
                     dim.append(i)
             for data_dim_i,data_dim in enumerate(data):
-                d_ch = etree.SubElement(data_node, 'channel', attrib={"number":str(data_dim_i)})
+                d_ch = etree.SubElement(data_node, 'channel',
+                                        attrib={"number":str(data_dim_i)})
                 for data_el_i, data_el in enumerate(data_dim):
                     el = etree.SubElement(d_ch, 'element', attrib={})
                     el.text = str(data_el)
             for dim_i,_dim in enumerate(dim):
-                d_ch = etree.SubElement(dim_node, 'channel', attrib={"number":str(dim_i)})
+                d_ch = etree.SubElement(dim_node,
+                                        'channel', attrib={"number":str(dim_i)})
                 for el_i, _el in enumerate(_dim):
                     el = etree.SubElement(d_ch, 'element', attrib={})
                     el.text = str(_el)
@@ -538,7 +548,8 @@ class XMLNodeResponseMixin(object):
             #    el.text = str(j)
         metadata_node = etree.SubElement(data_xml, 'metadata', attrib={})
         for key, value in self.node.get_metadata().items():
-            item = etree.SubElement(metadata_node, "item", attrib={"key":str(key), "value":str(value)})
+            item = etree.SubElement(metadata_node, "item",
+                                    attrib={"key":str(key), "value":str(value)})
             #item.text = str(value)
         #else:
         #    response_data['data'] = "unknown data"
@@ -565,7 +576,8 @@ class XMLNodeResponseMixin(object):
         else:
             signal.text += '?format=bin'
         """
-        return HttpResponse(etree.tostring(data_xml), mimetype='text/xml; charset=utf-8')
+        return HttpResponse(etree.tostring(data_xml),
+                            mimetype='text/xml; charset=utf-8')
 
 class PNGNodeResponseMixin(object):
 
@@ -611,31 +623,17 @@ class BinaryNodeResponseMixin(object):
             except AttributeError:
                 requested_dtype = None
                 
-        discretised_data = self.node.discretised_data(assert_dtype=requested_dtype)
-        response.write(discretised_data['data'].tostring())
-        response['X-H1DS-data-min'] = discretised_data['min']
-        response['X-H1DS-data-delta'] = discretised_data['delta']
-        response['X-H1DS-data-rmserr'] = discretised_data['rms_err']
-        response['X-H1DS-data-dtype'] = discretised_data['data'].dtype.name
-        response['X-H1DS-data-shape'] = ",".join(str(i) for i in discretised_data['data'].shape)
+        discrete_data = self.node.discretised_data(assert_dtype=requested_dtype)
+        response.write(discrete_data['data'].tostring())
+        response['X-H1DS-data-min'] = discrete_data['min']
+        response['X-H1DS-data-delta'] = discrete_data['delta']
+        response['X-H1DS-data-rmserr'] = discrete_data['rms_err']
+        response['X-H1DS-data-dtype'] = discrete_data['data'].dtype.name
+        disc_data_shape = discrete_data['data'].shape
+        response['X-H1DS-data-shape'] = ",".join(map(str,disc_data_shape))
         response['X-H1DS-data-units'] = units[0]
         response['X-H1DS-data-label'] = labels[0]
         
-    
-        # For data, if requested, quantize with requested bitlength
-        # X-H1DS-data-quantised: True or False
-        ## if quantised, give error value.
-        
-        #disc_data = self.node.get_format('bin')
-        #response = HttpResponse(disc_data['iarr'].tostring(), mimetype='application/octet-stream') ## use response.write()
-        #response['X-H1DS-signal-min'] = disc_data['minarr']
-        #response['X-H1DS-signal-delta'] = disc_data['deltar']
-        #response['X-H1DS-dim-t0'] = self.node.data.dim[0]
-        #response['X-H1DS-dim-delta'] = self.node.data.dim[1]-self.node.data.dim[0]
-        #response['X-H1DS-dim-length'] = len(self.node.data.dim)
-        #response['X-H1DS-signal-units'] = self.node.data.units
-        #response['X-H1DS-signal-dtype'] = str(disc_data['iarr'].dtype)
-        #response['X-H1DS-dim-units'] = self.node.data.dim_units
         return response
 
     
@@ -654,7 +652,8 @@ class HTMLNodeResponseMixin(object):
         html_metadata = {
             'tree':self.node.url_processor.tree,
             'shot':self.node.url_processor.shot,
-            'data_prefix':data_prefix.strip("^"), # TODO: hack: we shouldn't need to explicitly strip chars?
+            # TODO: hack: we shouldn't need to explicitly strip chars?
+            'data_prefix':data_prefix.strip("^"),
             #'user_signals':user_signals,
             #'node_display_info':self.node.get_display_info(),
             }
@@ -669,11 +668,13 @@ class HTMLNodeResponseMixin(object):
             template = "node_unknown_data.html"
         x = get_trees()
         trees = {'current':self.node.url_processor.tree}
-        trees['other'] = [t for t in get_trees() if t.lower() != trees['current'].lower()]
+        curr_tree = trees['current'].lower()
+        trees['other'] = [t for t in get_trees() if t.lower() != curr_tree]
         trees['all'] = sorted(get_trees())
         #alt_formats = ['json', 'png', 'xml', 'csv', 'bin']
         # TODO: get this list programaticcally
         alt_formats = ['json', 'xml', 'csv']
+        node_url_path = self.node.url_processor.get_url()
         return render_to_response('h1ds_core/{}'.format(template), 
                                   {#'node_content':self.node.get_format('html'),
                                    #'html_metadata':html_metadata,
@@ -690,7 +691,7 @@ class HTMLNodeResponseMixin(object):
                                    # because  of  defaults to  default
                                    # tree and shot  0. This is awkward
                                    # behaviour which should be fixed.
-                                   'node_url_path': self.node.url_processor.get_url(),
+                                   'node_url_path': node_url_path,
                                    'request_fullpath':request.get_full_path()},
                                   context_instance=RequestContext(request))
 
@@ -728,7 +729,7 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
         if request.method == 'GET':
             requested_representation = get_format(request).lower()
         elif request.method == 'POST':
-            requested_representation = gte_format(request)
+            requested_representation = get_format(request)
         else:
             # until we figure out how to determine appropriate content type
             return self.http_method_not_allowed(request, *args, **kwargs)
@@ -746,7 +747,9 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
         rep_class = self.representations[requested_representation]
 
         if request.method.lower() in rep_class.http_method_names:
-            handler = getattr(rep_class, request.method.lower(), self.http_method_not_allowed)
+            handler = getattr(rep_class,
+                              request.method.lower(),
+                              self.http_method_not_allowed)
         else:
             handler = self.http_method_not_allowed
         self.request = request

@@ -20,8 +20,11 @@ else:
 
 class H1DSSignal(models.Model):
     """Identifier for signals passed though the H1DS system."""
-    name = models.CharField(max_length=50, unique=True, help_text="Name of signal")
-    description = models.CharField(max_length=500, help_text="Description of signal")
+    name = models.CharField(max_length=50,
+                            unique=True,
+                            help_text="Name of signal")
+    description = models.CharField(max_length=500,
+                                   help_text="Description of signal")
 
     def natural_key(self):
         return (self.name,)

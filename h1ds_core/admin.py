@@ -1,5 +1,5 @@
 from django.contrib import admin
-from h1ds_core.models import H1DSSignal, H1DSSignalInstance, Worksheet, Pagelet
+from h1ds_core.models import H1DSSignal, H1DSSignalInstance, Worksheet
 from h1ds_core.models import UserSignal
 
 class H1DSSignalAdmin(admin.ModelAdmin):

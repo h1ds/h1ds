@@ -19,6 +19,7 @@ been usable before)
 Original Author: Boyd Blackwell.
 
 """
+import numpy as np
 def discretise_array(arr, eps=0, bits=0, maxcount=0, delta_encode=False):
     """
     Return  an integer  array  and  scales etc  in  a  dictionary -  the

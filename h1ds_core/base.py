@@ -1,5 +1,11 @@
+"""Base classes for interaction with database.
+
+TODO: to  keep code  clean, let's  only have classess  which need  to be
+subclassed to  access databases. At  present, this is only  BaseNode and
+BaseURLProcessor
+
+"""
 import re
-import datetime
 import inspect
 import numpy as np
 
@@ -7,7 +13,6 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
 
-import h1ds_core.filters
 from h1ds_core.filters import BaseFilter, excluded_filters
 
 data_module = import_module(settings.H1DS_DATA_MODULE)
@@ -15,11 +20,7 @@ data_module = import_module(settings.H1DS_DATA_MODULE)
 # Match strings "f(fid)_name", where fid is the filter ID
 filter_name_regex = re.compile('^f(?P<fid>\d+?)')
 
-# Match strings "f(fid)_arg(arg number)", where fid is the filter ID
-#filter_arg_regex = re.compile('^f(?P<fid>\d+?)_arg(?P<argn>\d+)')
-
 # Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
-#filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_kwarg_(?P<kwarg>.+)')
 filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_(?P<kwarg>.+)')
 
 sql_type_mapping = {
@@ -30,32 +31,39 @@ sql_type_mapping = {
     }
 
 def get_all_filters():
+    """Get all filters from modules listed in settings.DATA_FILTER_MODULES."""
     filters = {}
     for filter_module_name in settings.DATA_FILTER_MODULES:
         mod = import_module(filter_module_name)
-        mod_filters = [cl for name,cl in inspect.getmembers(mod) if
-                       inspect.isclass(cl) and issubclass(cl,BaseFilter) and
+        mod_filters = [cl for name, cl in inspect.getmembers(mod) if
+                       inspect.isclass(cl) and issubclass(cl, BaseFilter) and
                        not cl in excluded_filters]
         filters.update((f.get_slug(), f) for f in mod_filters)
     return filters
         
 class FilterManager(object):
+    """Get available filters for given data.
+
+    FilterManager caches lookups to avoid repeated checks of filters for
+    available datatypes.
+    """
     def __init__(self):
         self.filters = get_all_filters()
         self.cache = {}
 
     def get_filters(self, data):
+        """Get available processing filters for data object provided."""
         ndim = data.ndim if hasattr(data, "ndim") else 0
         if ndim == 0:
-            t = type(data)
+            _dt = type(data)
         else:
-            t = data.dtype
-        data_type = (ndim, t)
+            _dt = data.dtype
+        data_type = (ndim, _dt)
         if not self.cache.has_key(data_type):
             data_filters = {}
-            for fname,f in self.filters.iteritems():
-                if f.is_filterable(data):
-                    data_filters[fname] = f
+            for fname, filter_ in self.filters.iteritems():
+                if filter_.is_filterable(data):
+                    data_filters[fname] = filter_
             self.cache[data_type] = data_filters
         return self.cache[data_type]
 
@@ -63,13 +71,14 @@ filter_manager = FilterManager()
 
 
 def get_latest_shot_function():
+    """Get the module specified in settings.LATEST_SHOT_FUNCTION."""
     i = settings.LATEST_SHOT_FUNCTION.rfind('.')
     module = settings.LATEST_SHOT_FUNCTION[:i]
     attr = settings.LATEST_SHOT_FUNCTION[i+1:]
     try:
         mod = import_module(module)
-    except ImportError as e:
-        msg = 'Error importing module {}: "{}"'.format(module, e)
+    except ImportError as error:
+        msg = 'Error importing module {}: "{}"'.format(module, error)
         raise ImproperlyConfigured(msg)
     try:
         func  = getattr(mod, attr)
@@ -199,9 +208,10 @@ class BaseNode(object):
 
     def preprocess_filter_kwargs(self, kwargs):
         # TODO: should filters.http_arg be put here instead?
-        for k,v in kwargs.iteritems():
-            if isinstance(v, str) and "__shot__" in v:
-                kwargs[k] = v.replace("__shot__", str(self.url_processor.shot))
+        for key, val in kwargs.iteritems():
+            if isinstance(val, str) and "__shot__" in val:
+                shot_str = str(self.url_processor.shot)
+                kwargs[key] = val.replace("__shot__", shot_str)
         return kwargs
         
     def get_data(self):
@@ -248,9 +258,6 @@ class BaseNode(object):
     def __repr__(self):
         return self.get_long_name()
 
-    #def get_data_time(self):
-    #    return datetime.datetime.fromordinal(1)
-    
     def get_summary_dtype(self):
         d = self.get_data()
         return sql_type_mapping.get(type(d), None)
@@ -366,23 +373,8 @@ class BaseNode(object):
             'labels': self.get_labels(),
             'units': self.get_units(),
             }
+        return node_info
 
-
-"""
-class BaseDataInterface(object):
-
-    node_class = Node
-    
-    def __init__(self, url_processor):
-        self.url_processor = url_processor
-
-    def get_data(self):
-        return np.arange(0)
-        
-    def get_node(self):
-        node = node_class(data=self.get_data(), url_processor=self.url_processor)
-        return node
-"""
 
         
 def get_filter_list(request):

@@ -1,4 +1,5 @@
-from django.template import NodeList,Template,Context,Variable,Library,Node,Variable,loader
+from django.template import NodeList,Template,Context,Variable
+from django.template import Library,Node,Variable,loader
 from django.template import TemplateSyntaxError,VariableDoesNotExist
 import math
 register=Library()
@@ -74,8 +75,10 @@ class TableNode(Node):
                 loopctx["endrow"]=True
                 rowcount+=1
             context['table']=loopctx
-            for node in self.cellnodes: innernodelist.append(node.render(context))
-        if innernodelist and len(innernodelist)>0: nodelist.append(innernodelist.render(context))
+            for node in self.cellnodes:
+                innernodelist.append(node.render(context))
+        if innernodelist and len(innernodelist)>0:
+                nodelist.append(innernodelist.render(context))
         context.pop()
         return nodelist.render(context)
 

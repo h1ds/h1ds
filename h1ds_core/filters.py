@@ -2,7 +2,6 @@
 """
 from urlparse import urlparse, urlunparse
 import urllib2, json
-from django.core.urlresolvers import reverse
 import numpy as np
 
 excluded_filters = set()
@@ -29,14 +28,17 @@ is_string = lambda cls, d: isinstance(d, basestring)
     
 def http_arg(arg):
     if arg.startswith("http://"):
-        # make sure we get the JSON format, in case the user didn't add format=json
+        # make sure we get the JSON  format, in case the user didn't add
+        # format=json
         # Split URL into [scheme, netloc, path, params, query, fragments]
         parsed_url = urlparse(arg)
 
-        # parsed_url is an immutable ParseResult instance, copy it to a (mutable) list
+        # parsed_url is an immutable ParseResult  instance, copy it to a
+        # (mutable) list
         parsed_url_list = [i for i in parsed_url]
 
-        # Now we can update the URL query string to enforce the JSON format.
+        # Now we  can update the  URL query  string to enforce  the JSON
+        # format.
         parsed_url_list[4] = '&'.join([parsed_url[4], 'format=json'])
 
         # And here is our original URL with format=json query added
@@ -108,7 +110,7 @@ class Array2DimNumericBaseFilter(BaseFilter):
     
 
 def float_or_array(data):
-    """Data will probably be a string or a list, convert it to a float or np array."""
+    """Cast data to float if string, or array if list."""
     if isinstance(data, list):
         return np.array(data)
     else:
@@ -122,7 +124,7 @@ binary_powers = 2**np.arange(30)
 ########################################################################
 
 class FirstPulse(Array1DimNumericBaseFilter):
-    """Return first dimension (i.e. time) when the signal is greater than threshold.
+    """Return value of dim when the signal is greater than threshold.
 
     threshold can be a number or 'mid'.
     threshold = 'mid' will use (max(signal)+min(signal))/2
@@ -142,7 +144,8 @@ class FirstPulse(Array1DimNumericBaseFilter):
         first_element = np.where(node.data>_threshold)[0][0]
         node.data = node.dim[first_element]
         node.dim = None
-        node.labels = ('first_pulse(%s, %s)' %(node.labels[0], self.kwargs["threshold"]), )
+        node.labels = ('first_pulse(%s, %s)' %(node.labels[0],
+                                               self.kwargs["threshold"]), )
         
 
 class PulseWidth(Array1DimNumericBaseFilter):
@@ -167,7 +170,8 @@ class PulseWidth(Array1DimNumericBaseFilter):
 
         node.data = np.min(end1[:use_size]-t[:use_size])
         node.dim = None
-        node.labels = ('pulse_width(%s, %s)' %(node.labels[0], self.kwargs["threshold"]), )
+        node.labels = ('pulse_width(%s, %s)' %(node.labels[0],
+                                               self.kwargs["threshold"]), )
     
 
 class PulseNumber(Array1DimNumericBaseFilter):
@@ -189,12 +193,15 @@ class PulseNumber(Array1DimNumericBaseFilter):
         t = node.dim[node.data>_threshold]
         end1 = node.dim[(node.data[:-1]-node.data[1:])>_threshold]
 
-        # TODO: should no need to cast this as int32, but there is some bizarre problem
-        # with dtype_mapping key... without casting the result of np.min, type(node.data)
-        # says it is numpy.int32, but it is somehow different to the numpy.int32 in the dtype_mapping key.
+        # TODO: should no need to cast  this as int32, but there is some
+        # bizarre problem with dtype_mapping  key... without casting the
+        # result of np.min, type(node.data)  says it is numpy.int32, but
+        # it   is  somehow   different   to  the   numpy.int32  in   the
+        # dtype_mapping key.
         node.data = np.int32(np.min([t.shape[0], end1.shape[0]]))
         node.dim = None
-        node.labels = ('pulse_number(%s, %s)' %(node.labels[0], self.kwargs["threshold"]), )
+        node.labels = ('pulse_number(%s, %s)' %(node.labels[0],
+                                                self.kwargs["threshold"]), )
 
 
 class Max(Array1DimNumericBaseFilter):
@@ -216,8 +223,8 @@ class MaxOf(Array1DimNumericBaseFilter):
     def apply(self, node):
         """Returns max(data, value).
 
-        if the data is an array, an array is returned with each element having max(data[element], value)
-        value should be a float
+        if the data is an array,  an array is returned with each element
+        having max(data[element], value) value should be a float
 
         """
         _value = float(self.kwargs["value"])
@@ -225,7 +232,9 @@ class MaxOf(Array1DimNumericBaseFilter):
             node.data[node.data<_value] = _value
         else:
             node.data =  np.max([node.data, _value])
-        node.labels = ('max_of(%s, %s)' %(node.labels[0], self.kwargs["values"]), node.labels[1])
+        node.labels = ('max_of(%s, %s)' %(node.labels[0],
+                                          self.kwargs["values"]),
+                        node.labels[1])
 
 class DimOfMaxVal(Array1DimNumericBaseFilter):
     """Returns dim at signal peak.
@@ -316,9 +325,12 @@ class SlantedBaseline(Array1DimNumericBaseFilter):
         start = np.mean(node.data[:_window])
         end = np.mean(node.data[-_window:])
 
-        baseline = start + (end-start)*np.arange(node.data.shape[0], dtype=float)/(node.data.shape[0]-1)
+        dim_len = node.data.shape[0]
+        norm_dim = np.arange(dim_len, dtype=float)/(dim_len-1)
+        baseline = start + (end-start)*norm_dim
         node.data -= baseline
-        node.labels = ('slanted_baseline(%(lab)s, %(win)s)' %{'lab':node.labels[0], 'win':self.kwargs["window"]},)
+        node.labels = ('slanted_baseline({}, {})'.format(
+            node.labels[0], self.kwargs["window"]))
 
 class PrlLpn(Array1DimNumericBaseFilter):
     """prl_lpn
@@ -337,7 +349,8 @@ class PrlLpn(Array1DimNumericBaseFilter):
         N = int(0.5 + 0.5/(dim[1]-dim[0])/f0)
         a = np.cumsum(signal)
         if order > 1:
-            return self._do_prl_lpn(self._do_prl_lpn(signal, dim, f0, order-1), dim, f0, 1)
+            return self._do_prl_lpn(
+                self._do_prl_lpn(signal, dim, f0, order-1), dim, f0, 1)
         else:
             return (a[N:]-a[:-N])/float(N)
     
@@ -345,7 +358,9 @@ class PrlLpn(Array1DimNumericBaseFilter):
         _f0 = float(self.kwargs["f0"])
         _order = int(self.kwargs["order"])
         node.data = self._do_prl_lpn(node.data, node.dim, _f0, _order)
-        node.labels = ('prl_lpn(%s, %s, %s)' %(node.labels[0], self.kwargs["f0"], self.kwargs["order"]),)
+        node.labels = ('prl_lpn(%s, %s, %s)' %(node.labels[0],
+                                               self.kwargs["f0"],
+                                               self.kwargs["order"]),)
 
 class Resample(Array1DimNumericBaseFilter):
     slug = "resample"
@@ -359,7 +374,8 @@ class Resample(Array1DimNumericBaseFilter):
         # put trailing [:max_samples] in case we get an extra one at the end
         node.data = node.data[::delta_sample][:_max_samples]
         node.dim = node.dim[::delta_sample][:_max_samples]
-        node.labels = ('resample(%s, %s)' %(node.labels[0], self.kwargs["max_samples"]),)
+        node.labels = ('resample(%s, %s)' %(node.labels[0],
+                                            self.kwargs["max_samples"]),)
 
 class ResampleMinMax(Array1DimNumericBaseFilter):
     """TODO: only works for 1D array..."""
@@ -397,7 +413,9 @@ class NormDimRange(Array1DimNumericBaseFilter):
         min_e, max_e = int(_min*len(node.dim)), int(_max*len(node.dim))
         node.data = node.data[min_e:max_e]
         node.dim = node.dim[min_e:max_e]
-        node.labels = ('normdim_range(%s, %s, %s)' %(node.labels[0], self.kwargs["min"], self.kwargs["max"]),)
+        node.labels = ('normdim_range(%s, %s, %s)' %(node.labels[0],
+                                                     self.kwargs["min"],
+                                                     self.kwargs["max"]),)
 
 class DimRange(Array1DimNumericBaseFilter):
     """Reduce range of signal."""
@@ -411,7 +429,9 @@ class DimRange(Array1DimNumericBaseFilter):
         min_e, max_e = np.searchsorted(node.dim, [_min, _max])
         node.data = node.data[min_e:max_e]
         node.dim = node.dim[min_e:max_e]
-        node.labels = ('dim_range(%s, %s, %s)' %(node.labels[0], self.kwargs["min"], self.kwargs["max"]),)
+        node.labels = ('dim_range(%s, %s, %s)' %(node.labels[0],
+                                                 self.kwargs["min"],
+                                                 self.kwargs["max"]),)
 
 class PowerSpectrum(Array1DimNumericBaseFilter):
     """power spectrum of signal."""
@@ -552,24 +572,27 @@ class Spectrogram(Array1DimNumericBaseFilter):
         sample_rate = np.mean(node.dim[1:] - node.dim[:-1])
 
         new_x_dim = node.dim[::_bin_size]
-        new_y_dim = (1./sample_rate)*np.arange(_bin_size,dtype=float)/(_bin_size-1)
+        norm_dim = np.arange(_bin_size, dtype=float)/(_bin_size-1)
+        new_y_dim = (1./sample_rate)*norm_dim
 
         #new_y_dim = new_y_dim[:_bin_size/2]
 
         new_data = []
         for t_el in np.arange(len(node.data))[::_bin_size]:
-            #new_data.append(np.abs(np.fft.fft(node.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size/2]).tolist())
-            new_data.append(np.abs(np.fft.fft(node.data[t_el:t_el+_bin_size],n=_bin_size)[:_bin_size]).tolist())
+            fft_ = np.fft.fft(node.data[t_el:t_el+_bin_size], n=_bin_size)
+            new_data.append(np.abs(fft_[:_bin_size]).tolist())
 
         node.data = np.array(new_data)
 
-        # TODO: this is a hack because I don't properly understand how numpy
-        # determines dtypes - if new x and y dims are the same then it will have
-        # dtype of float, etc. if different length it will be object dtype
-        # object dtype is what we are using, as we can get different lengths for
-        # different dimensions. (Should we even use a numpy array? How does MDSplus
-        # perfer to deal with higher dim signals? - we should use the same format as
-        # MDSplus). Anyway - it seems that even if we assert dtype to be object
+        # TODO: this is  a hack because I don't  properly understand how
+        # numpy determines  dtypes - if  new x and  y dims are  the same
+        # then it will have dtype of  float, etc. if different length it
+        # will be object dtype object dtype  is what we are using, as we
+        # can get different lengths for different dimensions. (Should we
+        # even use a  numpy array? How does MDSplus perfer  to deal with
+        # higher  dim  signals? -  we  should  use  the same  format  as
+        # MDSplus). Anyway - it seems that even if we assert dtype to be
+        # object
         # >>> q=np.array([[1,2,3],[2,3,4]], dtype=np.object)
         # >>> q[1] = q[1][:2] ** fails
         # it fails when we later try and have different shaped elements.
@@ -648,13 +671,18 @@ class NormDimRange2D(Array2DimNumericBaseFilter):
         _min_y_val = float(self.kwargs["y_min"])
         _max_y_val = float(self.kwargs["y_max"])
 
-        min_xe, max_xe = int(_min_x_val*len(node.dim[0])), int(_max_x_val*len(node.dim[0]))
-        min_ye, max_ye = int(_min_y_val*len(node.dim[1])), int(_max_y_val*len(node.dim[1]))
+        min_xe = int(_min_x_val*len(node.dim[0]))
+        max_xe = int(_max_x_val*len(node.dim[0]))
+        min_ye = int(_min_y_val*len(node.dim[1]))
+        max_ye = int(_max_y_val*len(node.dim[1]))
 
         node.data = node.data[min_xe:max_xe,min_ye:max_ye]
         node.dim[0] = node.dim[0][min_xe:max_xe]
         node.dim[1] = node.dim[1][min_ye:max_ye]
-        node.labels = ('2d_normdim_range(%s, %s, %s, %s, %s)' %(node.labels[0], self.kwargs["x_min"], self.kwargs["x_max"], self.kwargs["y_min"], self.kwargs["y_max"]),)
+        node.labels = ('2d_normdim_range(%s, %s, %s, %s, %s)' %(
+            node.labels[0], self.kwargs["x_min"],
+            self.kwargs["x_max"], self.kwargs["y_min"],
+            self.kwargs["y_max"]),)
 
 class YAxisEnergyLimit(Array2DimNumericBaseFilter):
     "2D reduce y-axis range to threshold*100% of total signal energy"
@@ -670,7 +698,8 @@ class YAxisEnergyLimit(Array2DimNumericBaseFilter):
 
         total_power = np.sum(node.data.ravel()**2)
 
-        # if the result is going to be less than min_y_resolution then don't do it.
+        # if the result  is going to be less  than min_y_resolution then
+        # don't do it.
         min_y_resolution = 10
 
         low_counter = 0
