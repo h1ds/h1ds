@@ -15,7 +15,9 @@ class H1DSDataTemplateNode(template.Node):
     def render(self, context):
         try:
             node = self.node_var.resolve(context)
-            return '<div class="centrecontent"><div class="data">%s</div></div>' %(node.get_format('html'))
+            return ('<div class="centrecontent">'
+                    '<div class="data">%s</div>'
+                    '</div>' %(node.get_format('html')))
         except template.VariableDoesNotExist:
             return ''
 
@@ -24,7 +26,8 @@ def display_data(parser, token):
         # split_contents() knows not to split quoted strings.
         tag_name, data_name = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
+        msg = "%r tag requires a single argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError, msg
     return H1DSDataTemplateNode(data_name)
 
 
@@ -62,28 +65,34 @@ active_filter_html ="""\
 </div>
 """
 
-def get_filter(context, filter_class, is_active=False, fid=None, filter_data=None):
+def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
     try:
         request = context['request']
-        existing_query_string = ''.join(['<input type="hidden" name="%s" value="%s" />' %(k,v) for k,v in request.GET.items()])
-        #arg_list = inspect.getargspec(filter_class).args[1:]
-        arg_list = filter_class.kwarg_names
-        docstring = inspect.getdoc(filter_class)
+        hidden_input = '<input type="hidden" name="{}" value="{}" />'
+        existing_query_string = ""
+        for k, v in request.GET.items():
+            existing_query_string += hidden_input.format(k,v)
+        arg_list = f_class.kwarg_names
+        docstring = inspect.getdoc(f_class)
         if is_active:
-            if filter_data == None:
-                filter_data = []
+            arg_input = ('<input title="%(name)s" type="text" '
+                         'size=5 name="%(name)s" value="%(value)s">')
+            if f_data == None:
+                f_data = []
             update_url = reverse("update-filter")
             remove_url = reverse("remove-filter")
-            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" value="%(value)s">' %{'name':j,'value':filter_data[j]} for i,j in enumerate(arg_list)])
+            input_str = ''
+            for i, j in enumerate(arg_list):
+                input_str += arg_str %{'name':j,'value':f_data[j]}
 
             return_string = active_filter_html %{
                 'update_url':update_url,
                 'text':docstring,
                 'input_str':input_str,
-                'clsname':filter_class.slug,
+                'clsname':f_class.slug,
                 'path':request.path,
                 'input_query':existing_query_string,
-                'fid':fid,
+                'fid':f_id,
                 'remove_url':remove_url,
                 'existing_query':existing_query_string,
                 }
@@ -91,10 +100,14 @@ def get_filter(context, filter_class, is_active=False, fid=None, filter_data=Non
 
         else:
             submit_url = reverse("apply-filter")
-            input_str = ''.join(['<input title="%(name)s" type="text" size=5 name="%(name)s" placeholder="%(name)s">' %{'name':j} for j in arg_list])
+            arg_input = ('<input title="%(name)s" type="text" size=5 '
+                         'name="%(name)s" placeholder="%(name)s">')
+            input_str = ""
+            for j in arg_list:
+                input_str += arg_input %{'name':j}
             return_string =  filter_html %{'text':docstring,
                                            'input_str':input_str,
-                                           'clsname':filter_class.slug,
+                                           'clsname':f_class.slug,
                                            'submit_url':submit_url,
                                            'path':request.path,
                                            'input_query':existing_query_string}
@@ -106,13 +119,18 @@ def get_filter(context, filter_class, is_active=False, fid=None, filter_data=Non
 @register.simple_tag(takes_context=True)
 def show_filters(context, data_node):
     # TODO: HACK
-    return "".join([get_filter(context, f) for n,f in data_node.get_available_filters().iteritems()])
-
+    filters = ""
+    for n, f in data_node.get_available_filters().iteritems():
+        filters += get_filter(context, f)
+    return filters
 
 @register.simple_tag(takes_context=True)
 def show_active_filters(context, data_node):
-    print "xxx ", data_node.filter_history 
-    return "".join([get_filter(context, f, is_active=True, fid=fid, filter_data=fdata) for fid, f, fdata in data_node.filter_history])
+    active_filters = ""
+    for fid, f, fdata in data_node.filter_history:
+        active_filters += get_filter(context, f, is_active=True,
+                                     fid=fid, filter_data=fdata)
+    return active_filters
 
 @register.simple_tag(takes_context=True)
 def show_info(context, data_node):
@@ -146,7 +164,8 @@ def show_format(parser, token):
         # split_contents() knows not to split quoted strings.
         tag_name, format_name = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
+        msg = "%r tag requires a single argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError, msg
     return H1DSFormatNode(format_name)
 
 register.tag('show_format', show_format)
@@ -187,7 +206,8 @@ def get_tree_url(parser, token):
     try:
         tag_name, url_processor, tree = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires three arguments" % token.contents.split()[0]
+        msg = "%r tag requires three arguments" % token.contents.split()[0]
+        raise template.TemplateSyntaxError, msg
     return GetTreeURLNode(url_processor, tree)
 
 register.tag('get_tree_url', get_tree_url)
