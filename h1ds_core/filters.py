@@ -69,7 +69,7 @@ class BaseFilter:
     ndim = 0
     
     def __init__(self, **kwargs):
-        self.kwargs = dict((k, http_arg(v)) for k,v in kwargs.iteritems())
+        self.kwargs = dict((k, http_arg(v)) for k, v in kwargs.iteritems())
 
     @classmethod
     def valid_ndim(cls, data):
@@ -549,7 +549,7 @@ class Exponent(BaseFilter):
     kwarg_names = ["value"]
 
     def apply(self, node):
-        _value =float(self.kwargs["value"])
+        _value = float(self.kwargs["value"])
         node.data = node.data**_value
         node.labels = ('%s^%s' %(node.labels[0], self.kwargs["value"]),)
 
@@ -564,7 +564,7 @@ class Spectrogram(Array1DimNumericBaseFilter):
     kwarg_names = ["bin_size"]
     
     def apply(self, node):
-        _bin_size =int(self.kwargs["bin_size"])
+        _bin_size = int(self.kwargs["bin_size"])
         if _bin_size < 0:
             # have a guess...
             approx_bin_size = np.sqrt(len(node.dim))
@@ -597,11 +597,11 @@ class Spectrogram(Array1DimNumericBaseFilter):
         # >>> q[1] = q[1][:2] ** fails
         # it fails when we later try and have different shaped elements.
         # So, let's create node.dim as something we know we can resizt
-        node.dim = np.array([[None],[None, None]])
+        node.dim = np.array([[None], [None, None]])
         node.dim[0] = new_x_dim.tolist()
         node.dim[1] = new_y_dim.tolist()
 
-        node.labels = ('spectrogram(%s,%d)' %(node.labels[0],_bin_size),)
+        node.labels = ('spectrogram(%s,%d)' %(node.labels[0], _bin_size), )
 
 
 
@@ -641,8 +641,8 @@ class FlipVertical(Array2DimNumericBaseFilter):
     def apply(self, node):
         tmp_data = node.data.copy()
         for r in xrange(tmp_data.shape[0]/2):
-            node.data[r,:] = tmp_data[-(r+1),:]
-            node.data[-(r+1),:] = tmp_data[r,:]
+            node.data[r, :] = tmp_data[-(r+1), :]
+            node.data[-(r+1), :] = tmp_data[r, :]
         #TODO: how to treat dim?
         node.labels = ('vertical_flip(%s)' %(node.labels[0]),)
 
@@ -655,8 +655,8 @@ class FlipHorizontal(Array2DimNumericBaseFilter):
     def apply(self, node):
         tmp_data = node.data.copy()
         for c in xrange(tmp_data.shape[1]/2):
-            node.data[:,c] = tmp_data[:,-(c+1)]
-            node.data[:,-(c+1)] = tmp_data[:,c]
+            node.data[:, c] = tmp_data[:, -(c+1)]
+            node.data[:, -(c+1)] = tmp_data[:, c]
         #TODO: how to treat dim?
         node.labels = ('horizontal_flip(%s)' %(node.labels[0]),)
 
@@ -676,7 +676,7 @@ class NormDimRange2D(Array2DimNumericBaseFilter):
         min_ye = int(_min_y_val*len(node.dim[1]))
         max_ye = int(_max_y_val*len(node.dim[1]))
 
-        node.data = node.data[min_xe:max_xe,min_ye:max_ye]
+        node.data = node.data[min_xe:max_xe, min_ye:max_ye]
         node.dim[0] = node.dim[0][min_xe:max_xe]
         node.dim[1] = node.dim[1][min_ye:max_ye]
         node.labels = ('2d_normdim_range(%s, %s, %s, %s, %s)' %(
@@ -706,8 +706,8 @@ class YAxisEnergyLimit(Array2DimNumericBaseFilter):
         high_counter = -1
         removed_power = 0
         while removed_power < (1-_threshold)*total_power:
-            lower = np.sum(node.data[:,low_counter]**2)
-            upper = np.sum(node.data[:,high_counter]**2)
+            lower = np.sum(node.data[:, low_counter]**2)
+            upper = np.sum(node.data[:, high_counter]**2)
             if (min(lower, upper) + removed_power) > _threshold*total_power:
                 break
             if lower < upper:
@@ -717,7 +717,7 @@ class YAxisEnergyLimit(Array2DimNumericBaseFilter):
                 removed_power += upper
                 high_counter -= 1
         if len(node.dim[1][low_counter:high_counter]) > min_y_resolution:
-            node.data = node.data[:,low_counter:high_counter]
+            node.data = node.data[:, low_counter:high_counter]
             node.dim[1] = node.dim[1][low_counter:high_counter]
 
 ########################################################################

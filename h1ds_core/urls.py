@@ -7,17 +7,9 @@ from django.conf import settings
 
 from h1ds_core.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
 from h1ds_core.views import UserSignalCreateView, UserSignalDeleteView
-from h1ds_core.views import UserSignalUpdateView, ShotStreamView,RequestShotView
+from h1ds_core.views import UserSignalUpdateView, ShotStreamView
 from h1ds_core.views import AJAXShotRequestURL, AJAXLatestShotView, NodeView
-from h1ds_core.views import request_url
-
-def module_urlpattern(mod_name):
-    mod = __import__(mod_name)
-    #mod_url_re = r'^{}/'.format(mod.MODULE_ROOT_URL)
-    mod_url_re = r''
-    mod_url_target = include('{}.urls'.format(mod_name))
-    return patterns('', (mod_url_re, mod_url_target))
-
+from h1ds_core.views import RequestShotView, request_url
 
 urlpatterns = patterns('',
                        url(r'^$',
@@ -81,7 +73,6 @@ urlpatterns += patterns('',
     )
 
 # Data modules
-#data_patterns = module_urlpattern(settings.H1DS_DATA_MODULE)
 data_prefix = r"^"
 if hasattr(settings, "H1DS_DATA_PREFIX"):
     data_prefix = r'^{}'.format(settings.H1DS_DATA_PREFIX)

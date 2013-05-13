@@ -44,7 +44,7 @@ filter_html = """\
 </div>"""
 
 
-active_filter_html ="""\
+active_filter_html = """\
 <div class="sidebarcontent">
  <form action="%(update_url)s">
   <span class="left" title="%(text)s">%(clsname)s</span>
@@ -71,7 +71,7 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
         hidden_input = '<input type="hidden" name="{}" value="{}" />'
         existing_query_string = ""
         for k, v in request.GET.items():
-            existing_query_string += hidden_input.format(k,v)
+            existing_query_string += hidden_input.format(k, v)
         arg_list = f_class.kwarg_names
         docstring = inspect.getdoc(f_class)
         if is_active:
@@ -83,18 +83,18 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
             remove_url = reverse("remove-filter")
             input_str = ''
             for i, j in enumerate(arg_list):
-                input_str += arg_str %{'name':j,'value':f_data[j]}
+                input_str += arg_input % {'name': j, 'value': f_data[j]}
 
-            return_string = active_filter_html %{
-                'update_url':update_url,
-                'text':docstring,
-                'input_str':input_str,
-                'clsname':f_class.slug,
-                'path':request.path,
-                'input_query':existing_query_string,
-                'fid':f_id,
-                'remove_url':remove_url,
-                'existing_query':existing_query_string,
+            return_string = active_filter_html % {
+                'update_url': update_url,
+                'text': docstring,
+                'input_str': input_str,
+                'clsname': f_class.slug,
+                'path': request.path,
+                'input_query': existing_query_string,
+                'fid': f_id,
+                'remove_url': remove_url,
+                'existing_query': existing_query_string,
                 }
             return return_string
 
@@ -104,13 +104,13 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
                          'name="%(name)s" placeholder="%(name)s">')
             input_str = ""
             for j in arg_list:
-                input_str += arg_input %{'name':j}
-            return_string =  filter_html %{'text':docstring,
-                                           'input_str':input_str,
-                                           'clsname':f_class.slug,
-                                           'submit_url':submit_url,
-                                           'path':request.path,
-                                           'input_query':existing_query_string}
+                input_str += arg_input % {'name': j}
+            return_string =  filter_html % {'text': docstring,
+                                           'input_str': input_str,
+                                           'clsname': f_class.slug,
+                                           'submit_url': submit_url,
+                                           'path': request.path,
+                                           'input_query': existing_query_string}
             return return_string
     except template.VariableDoesNotExist:
         #return ''

@@ -61,40 +61,40 @@ def get_version(form='short'):
     versions['branch'] = branch
 
     # Short
-    v = branch
+    version = branch
     if (tertiary or final):
-        v += "." + str(tertiary)
+        version += "." + str(tertiary)
     if not final:
-        v += firsts
+        version += firsts
         if type_num:
-            v += str(type_num)
+            version += str(type_num)
         else:
-            v += sha1
-    versions['short'] = v
+            version += sha1
+    versions['short'] = version
 
     # Normal
-    v = branch
+    version = branch
     if tertiary:
-        v += "." + str(tertiary)
+        version += "." + str(tertiary)
     if not final:
         if type_num:
-            v += " " + type_ + " " + str(type_num)
+            version += " " + type_ + " " + str(type_num)
         else:
-            v += " pre-" + type_ + sha1
-    versions['normal'] = v
+            version += " pre-" + type_ + sha1
+    versions['normal'] = version
 
     # Verbose
-    v = branch
+    version = branch
     if tertiary:
-        v += "." + str(tertiary)
+        version += "." + str(tertiary)
     if not final:
         if type_num:
-            v += " " + type_ + " " + str(type_num)
+            version += " " + type_ + " " + str(type_num)
         else:
-            v += " pre-" + type_ + sha1
+            version += " pre-" + type_ + sha1
     else:
-        v += " final"
-    versions['verbose'] = v
+        version += " final"
+    versions['verbose'] = version
 
     try:
         return versions[form]

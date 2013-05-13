@@ -132,8 +132,8 @@ def edit_profile(request, username=''):
                         'last_name':request.user.last_name,
                         'email':request.user.email}
                 user_form = ChangeProfileForm(data)
-                response_dict = {'form':user_form,
-                                 'return_url':'/user/profile/%s/' %username}
+                response_dict = {'form': user_form, 
+                                 'return_url': '/user/profile/%s/' % username}
                 return render_to_response('h1ds_core/userprofile.html', 
                                 response_dict,
                                 context_instance=RequestContext(request))
@@ -193,7 +193,7 @@ class FilterBaseView(RedirectView):
 
         if overwrite_fid:
             fid = int(qdict.pop('fid')[-1])
-            for k,v in qdict.items():
+            for k, v in qdict.items():
                 if k.startswith('f%d' %fid):
                     qdict.pop(k)
         else:
@@ -207,7 +207,7 @@ class FilterBaseView(RedirectView):
         # add new filter to query dict
         qdict.update({'f%d' %(fid):filter_name})
         for name, val in zip(filter_class.kwarg_names, filter_arg_values):
-            qdict.update({'f%d_%s' %(fid,name):val})
+            qdict.update({'f%d_%s' %(fid, name): val})
 
         return '?'.join([return_path, qdict.urlencode()])
 
@@ -228,7 +228,7 @@ class RemoveFilterView(RedirectView):
         filter_id = int(qdict.pop('fid')[-1])
         return_path = qdict.pop('path')[-1]
         new_filter_values = []
-        for k,v in qdict.items():
+        for k, v in qdict.items():
             if k.startswith('f%d' %filter_id):
                 qdict.pop(k)
         return '?'.join([return_path, qdict.urlencode()])
@@ -302,7 +302,7 @@ class AJAXShotRequestURL(View):
         url_processor = URLProcessor(url=input_path)
         url_processor.shot = shot
         new_url = url_processor.get_url()
-        output_json = '{"new_url":"%s"}' %new_url
+        output_json = '{"new_url": "%s"}' % new_url
         return HttpResponse(output_json, 'application/javascript')
 
 def xml_latest_shot(request):
@@ -371,8 +371,8 @@ class JSONNodeResponseMixin(object):
 
     def get(self, request, *args, **kwargs):
         
-        response_data = {'labels':map(str,self.node.get_labels()),
-                         'units':map(str,self.node.get_units())}
+        response_data = {'labels': map(str, self.node.get_labels()),
+                         'units': map(str, self.node.get_units())}
         if self.node.get_data() == None:
             response_data['data'] = None
             response_data['dim'] = None
@@ -383,7 +383,7 @@ class JSONNodeResponseMixin(object):
             response_data['data'] = self.node.get_data().tolist()
             response_data['dim'] = self.node.get_dim().tolist()
         elif 1 < len(self.node.get_data().shape) <= 3:
-            data, dim = [],[]
+            data, dim = [], []
             for i in self.node.get_data():
                 if hasattr(i, "tolist"):
                     data.append(i.tolist())
@@ -428,7 +428,7 @@ class CSVNodeResponseMixin(object):
                                            self.node.url_processor.tree)])
         path = unicode(self.node.url_processor.path)
         writer.writerow(["# {}: {}".format('path', path)])
-        for k,v in self.node.get_metadata().items():
+        for k, v in self.node.get_metadata().items():
             writer.writerow(["# {}: {}".format(str(k), unicode(v))])
         writer.writerow(["# [end metadata]"])
         writer.writerow(["# [start data]"])
@@ -439,7 +439,7 @@ class CSVNodeResponseMixin(object):
             writer.writerow([str(np.asscalar(self.node.get_data()))])
         elif len(self.node.get_data().shape) == 1:
             writer.writerow(["# dim", "data"])
-            for i,j in zip(self.node.get_dim().tolist(),
+            for i, j in zip(self.node.get_dim().tolist(),
                            self.node.get_data().tolist()):
                 writer.writerow([str(i), str(j)])
         elif 1 < len(self.node.get_data().shape):
@@ -503,12 +503,12 @@ class XMLNodeResponseMixin(object):
         elif len(self.node.get_data().shape) == 1:
             data = etree.SubElement(data_xml, 'data', attrib={'ndim':"1"})
             d = self.node.get_data().tolist()
-            for i,j in enumerate(d):
+            for i, j in enumerate(d):
                 el = etree.SubElement(data, 'element', attrib={})
                 el.text = str(j)
             dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"1"})
             _dim = self.node.get_dim().tolist()
-            for i,j in enumerate(_dim):
+            for i, j in enumerate(_dim):
                 el = etree.SubElement(dim, 'element', attrib={})
                 el.text = str(j)
 
@@ -518,7 +518,7 @@ class XMLNodeResponseMixin(object):
                                          attrib={'ndim':str(ndim)})
             dim_node = etree.SubElement(data_xml, 'dim',
                                         attrib={'ndim':str(ndim)})
-            data, dim = [],[]
+            data, dim = [], []
             for i in self.node.get_data():
                 if hasattr(i, "tolist"):
                     data.append(i.tolist())
@@ -529,13 +529,13 @@ class XMLNodeResponseMixin(object):
                     dim.append(i.tolist())
                 else:
                     dim.append(i)
-            for data_dim_i,data_dim in enumerate(data):
+            for data_dim_i, data_dim in enumerate(data):
                 d_ch = etree.SubElement(data_node, 'channel',
                                         attrib={"number":str(data_dim_i)})
                 for data_el_i, data_el in enumerate(data_dim):
                     el = etree.SubElement(d_ch, 'element', attrib={})
                     el.text = str(data_el)
-            for dim_i,_dim in enumerate(dim):
+            for dim_i, _dim in enumerate(dim):
                 d_ch = etree.SubElement(dim_node,
                                         'channel', attrib={"number":str(dim_i)})
                 for el_i, _el in enumerate(_dim):
@@ -613,8 +613,8 @@ class BinaryNodeResponseMixin(object):
         for d in xrange(param_dim['ndim']):
             response['X-H1DS-dim-{}-units'.format(d)] = units[d+1]
             response['X-H1DS-dim-{}-label'.format(d)] = labels[d+1]
-            for k,v in param_dim[d].iteritems():
-                response['X-H1DS-dim-{}-{}'.format(d,k)] = v
+            for k, v in param_dim[d].iteritems():
+                response['X-H1DS-dim-{}-{}'.format(d, k)] = v
 
         requested_dtype = request.GET.get('bin_assert_dtype', None)
         if requested_dtype != None:
@@ -630,7 +630,7 @@ class BinaryNodeResponseMixin(object):
         response['X-H1DS-data-rmserr'] = discrete_data['rms_err']
         response['X-H1DS-data-dtype'] = discrete_data['data'].dtype.name
         disc_data_shape = discrete_data['data'].shape
-        response['X-H1DS-data-shape'] = ",".join(map(str,disc_data_shape))
+        response['X-H1DS-data-shape'] = ",".join(map(str, disc_data_shape))
         response['X-H1DS-data-units'] = units[0]
         response['X-H1DS-data-label'] = labels[0]
         
@@ -666,7 +666,6 @@ class HTMLNodeResponseMixin(object):
             template = "node_{}d.html".format(len(self.node.get_data().shape))
         else:
             template = "node_unknown_data.html"
-        x = get_trees()
         trees = {'current':self.node.url_processor.tree}
         curr_tree = trees['current'].lower()
         trees['other'] = [t for t in get_trees() if t.lower() != curr_tree]

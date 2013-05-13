@@ -42,7 +42,7 @@ class H1DSHeaderNode(template.Node):
                 app_doc_name = app_module.MODULE_DOC_NAME
                 homepage_url_name = app.replace('_', '-')+'-homepage'
                 homepage_url = reverse(homepage_url_name)
-                html_str = '<a href="%s">%s</a>' %(homepage_url, app_doc_name)
+                html_str = '<a href="%s">%s</a>' % (homepage_url, app_doc_name)
                 subtitle_string_list.append(html_str)
         if hasattr(settings, 'H1DS_EXTRA_SUBLINKS'):
             sublinks = []
@@ -54,7 +54,7 @@ class H1DSHeaderNode(template.Node):
             title = settings.H1DS_TITLE
         else:
             title = "H1 Data Server"            
-        return_string = '<div id="title"><h1><a href="/">%s</a></h1>' %(title)
+        return_string = '<div id="title"><h1><a href="/">%s</a></h1>' % (title)
         return_string += '<div id="subtitle">'+subtitle_strings+'</div></div>'
         return return_string
 

@@ -1,6 +1,6 @@
-from django.template import NodeList,Template,Context,Variable
-from django.template import Library,Node,Variable,loader
-from django.template import TemplateSyntaxError,VariableDoesNotExist
+from django.template import NodeList, Template, Context, Variable
+from django.template import Library, Node, Variable, loader
+from django.template import TemplateSyntaxError, VariableDoesNotExist
 import math
 register=Library()
 
@@ -14,9 +14,9 @@ class TableNode(Node):
     def __iter__(self):
         for node in self.cellnodes: yield node
 
-    def get_nodes_by_type(self,nodetype):
+    def get_nodes_by_type(self, nodetype):
         nodes=[]
-        if isinstance(self,nodetype): nodes.append(self)
+        if isinstance(self, nodetype): nodes.append(self)
         nodes.extend(self.cellnodes.get_nodes_by_type(nodetype))
         return nodes
 
@@ -27,7 +27,7 @@ class TableNode(Node):
         if not hasattr(values,'__len__'):values=list(values)
         return values
 
-    def render(self,context):
+    def render(self, context):
         nodelist=NodeList()
         if context.has_key('parenttable'): parenttable=context['parenttable']
         else: parenttable={}
@@ -104,7 +104,7 @@ class ColumnSortedTableNode(TableNode):
 
 
 @register.tag(name="table")
-def do_table(parser,token):
+def do_table(parser, token):
     """Tag to help rendering tables. 
 
     Replicates the django for tag,  but add's in more helpers specific
@@ -161,14 +161,14 @@ def do_table(parser,token):
     cols=int(bits[3])
     cellnodes=parser.parse(('endtable',))
     parser.delete_first_token()
-    return TableNode(cellvar,sequence,cols,cellnodes)
+    return TableNode(cellvar, sequence, cols, cellnodes)
 
 @register.tag(name="colsorttable")
-def do_colsorttable(parser,token):
+def do_colsorttable(parser, token):
     bits=token.contents.split()
     cellvar=bits[1]
     sequence=parser.compile_filter(bits[2])
     cols=int(bits[3])
     cellnodes=parser.parse(('endtable',))
     parser.delete_first_token()
-    return ColumnSortedTableNode(cellvar,sequence,cols,cellnodes)
+    return ColumnSortedTableNode(cellvar, sequence, cols, cellnodes)

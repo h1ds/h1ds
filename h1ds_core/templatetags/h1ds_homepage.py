@@ -22,7 +22,7 @@ class H1DSHomepageNode(template.Node):
                 h1ds_installed_apps.append(app)
         
         # TODO: don't hardcode this stuff
-        tag_string = item_template %{"url":"/data",
+        tag_string = item_template % {"url":"/data",
                                      "name":"Data",
                                      "description":"Data viewer"}
         

@@ -67,7 +67,7 @@ class Worksheet(models.Model):
         return unicode("[%s] %s" %(self.user, self.name))
 
     def get_absolute_url(self):
-        return reverse("h1ds-user-worksheet",kwargs={
+        return reverse("h1ds-user-worksheet", kwargs={
             "username":self.user.username,
             "worksheet":self.slug})
 
@@ -98,4 +98,4 @@ class UserSignal(models.Model):
 class UserSignalForm(ModelForm):
     class Meta:
         model = UserSignal
-        fields = ('name','is_fixed_to_shot',)
+        fields = ('name', 'is_fixed_to_shot',)
