@@ -163,7 +163,7 @@ class PulseWidth(Array1DimNumericBaseFilter):
         else:
             _threshold = float(_threshold)
 
-        t = node.dim[node.data>_threshold]
+        t = node.dim[node.data > _threshold]
         end1 = node.dim[(node.data[:-1]-node.data[1:])>_threshold]
 
         use_size = min([len(t), len(end1)])
@@ -190,7 +190,7 @@ class PulseNumber(Array1DimNumericBaseFilter):
         else:
             _threshold = float(_threshold)
 
-        t = node.dim[node.data>_threshold]
+        t = node.dim[node.data > _threshold]
         end1 = node.dim[(node.data[:-1]-node.data[1:])>_threshold]
 
         # TODO: should no need to cast  this as int32, but there is some
@@ -229,7 +229,7 @@ class MaxOf(Array1DimNumericBaseFilter):
         """
         _value = float(self.kwargs["value"])
         if isinstance(node.data, np.ndarray):
-            node.data[node.data<_value] = _value
+            node.data[node.data < _value] = _value
         else:
             node.data =  np.max([node.data, _value])
         node.labels = ('max_of(%s, %s)' %(node.labels[0],
@@ -568,7 +568,7 @@ class Spectrogram(Array1DimNumericBaseFilter):
         if _bin_size < 0:
             # have a guess...
             approx_bin_size = np.sqrt(len(node.dim))
-            _bin_size=2**np.searchsorted(binary_powers, approx_bin_size)
+            _bin_size = 2**np.searchsorted(binary_powers, approx_bin_size)
         sample_rate = np.mean(node.dim[1:] - node.dim[:-1])
 
         new_x_dim = node.dim[::_bin_size]

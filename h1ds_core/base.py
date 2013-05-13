@@ -30,6 +30,25 @@ sql_type_mapping = {
     np.int64:"INT",
     }
 
+def remove_prefix(url):
+    """Strip any prefix in the URL path."""
+    if url.startswith("/"):
+        url = url[1:]
+    if hasattr(settings, "H1DS_DATA_PREFIX"):
+        pref = settings.H1DS_DATA_PREFIX + "/"
+        if url.startswith(pref):
+            url = url[len(pref):]        
+    return url
+
+def apply_prefix(url):
+    """Apply any prefix to the URL path."""
+    if not url.startswith("/"):
+        url = "/"+url
+    if hasattr(settings, "H1DS_DATA_PREFIX"):
+        if not url.startswith("/"+settings.H1DS_DATA_PREFIX+"/"):
+            url = "/"+settings.H1DS_DATA_PREFIX+ url
+    return url
+
 def get_all_filters():
     """Get all filters from modules listed in settings.DATA_FILTER_MODULES."""
     filters = {}
@@ -88,6 +107,7 @@ def get_latest_shot_function():
     return func
 
 class BaseURLProcessor(object):
+    """Base class for mapping between URLs and data paths."""
     def __init__(self, **kwargs):
         """takes url or components.
 
@@ -100,7 +120,7 @@ class BaseURLProcessor(object):
         shot = kwargs.get('shot', None)
         path = kwargs.get('path', None)
         if url != None:
-            url = self.remove_prefix(url)
+            url = remove_prefix(url)
             self.tree, self.shot, self.path = self.get_components_from_url(url)
             if tree != None and tree != self.tree:
                 raise AttributeError
@@ -110,23 +130,6 @@ class BaseURLProcessor(object):
                 raise AttributeError
         else:
             self.tree, self.shot, self.path = tree, shot, path
-
-    def remove_prefix(self, url):
-        if url.startswith("/"):
-            url = url[1:]
-        if hasattr(settings, "H1DS_DATA_PREFIX"):
-            pref = settings.H1DS_DATA_PREFIX + "/"
-            if url.startswith(pref):
-                url = url[len(pref):]        
-        return url
-
-    def apply_prefix(self, url):
-        if not url.startswith("/"):
-            url = "/"+url
-        if hasattr(settings, "H1DS_DATA_PREFIX"):
-            if not url.startswith("/"+settings.H1DS_DATA_PREFIX+"/"):
-                url = "/"+settings.H1DS_DATA_PREFIX+ url
-        return url
     
     def get_components_from_url(self, url):
         stripped_url = url.strip("/")
@@ -148,13 +151,13 @@ class BaseURLProcessor(object):
         return tree, shot, path
         
     def get_url(self):
-        return self.apply_prefix("/".join([self.urlized_tree(),
-                                           self.urlized_shot(),
-                                           self.urlized_path()]))
+        return apply_prefix("/".join([self.urlized_tree(),
+                                      self.urlized_shot(),
+                                      self.urlized_path()]))
         
     def get_url_for_tree(self, tree):
         """TODO: apply urlized_tree to tree arg"""
-        return self.apply_prefix("/".join([tree, self.urlized_shot()]))
+        return apply_prefix("/".join([tree, self.urlized_shot()]))
     
     def urlized_tree(self):
         return str(self.tree)
