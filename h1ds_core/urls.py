@@ -72,12 +72,17 @@ urlpatterns += patterns('',
                            name="h1ds-request-url"),
     )
 
-# Data modules
+## Data modules
 data_prefix = r"^"
 if hasattr(settings, "H1DS_DATA_PREFIX"):
     data_prefix = r'^{}'.format(settings.H1DS_DATA_PREFIX)
 
+#urlpatterns += patterns('',
+#                        url(data_prefix+"(?P<url>.+)$",
+#                             cache_page(60*30)(NodeView.as_view()),
+#                             name="h1ds-node"))
 urlpatterns += patterns('',
-                         url(data_prefix+"(?P<url>.+)$",
-                             cache_page(60*30)(NodeView.as_view()),
-                             name="h1ds-node"))
+                        url(data_prefix+"/(?P<nodepath>.+)/$",
+                             NodeView.as_view(),
+                             name="node-detail"))
+

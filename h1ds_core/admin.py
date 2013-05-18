@@ -1,6 +1,6 @@
 from django.contrib import admin
 from h1ds_core.models import H1DSSignal, H1DSSignalInstance, Worksheet
-from h1ds_core.models import UserSignal, Tree, Filter
+from h1ds_core.models import UserSignal, Node, Filter
 
 class H1DSSignalAdmin(admin.ModelAdmin):
     pass
@@ -23,10 +23,10 @@ class UserSignalAdmin(admin.ModelAdmin):
 
 admin.site.register(UserSignal, UserSignalAdmin)
 
-class TreeAdmin(admin.ModelAdmin):
-    prepopulated_fields = {"slug": ("name",)}
+class NodeAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("path",)}
 
-admin.site.register(Tree, TreeAdmin)
+admin.site.register(Node, NodeAdmin)
 
 class FilterAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}

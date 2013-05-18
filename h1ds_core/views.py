@@ -14,7 +14,7 @@ import pylab
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse, Http404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -26,12 +26,12 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.conf import settings
 from django.utils.importlib import import_module
 
-from h1ds_core.models import UserSignal, UserSignalForm, Worksheet
+from h1ds_core.models import UserSignal, UserSignalForm, Worksheet, Node
 from h1ds_core.base import get_filter_list, get_latest_shot_function
 
 data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
-Node = getattr(data_module, 'Node')
+#Node = getattr(data_module, 'Node')
 get_trees = getattr(data_module, 'get_trees')
 data_prefix = ""
 if hasattr(settings, "H1DS_DATA_PREFIX"):
@@ -765,8 +765,41 @@ class _NodeView(MultiNodeResponseMixin, View):
 ######
 
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from h1ds_core.serializers import NodeSerializer
 
 class NodeView(APIView):
-    pass
-    #def get_object(self, )
+    
+    def get_object(self, nodepath):
+        """Get node object for request.
+
+        TODO:  this  method  does  a   lookup  for  each  level  of  the
+        tree. There  are probably more efficient  ways...
+        Options (need to evaluate performace of each):
+        1. We  could store the full  path in the Node  table (maybe ugly
+        but faster?)
+        2. Could use filter by tree  level and slug, and while there are
+        more than 1 candidate nodes, track  back up the tree and compare
+        parent nodes.
+        
+        """
+        node_ancestry = nodepath.split("/")
+        try:
+            shot = int(node_ancestry[0])
+        except ValueError:
+            raise Http404
+        if len(node_ancestry) == 1:
+            return Node.objects.root_node(shot)
+        # get top of tree
+        node = Node.objects.get(shot=shot, slug=node_ancestry[1])
+        for child in node_ancestry[2:]:
+            node = Node.objects.get(parent=node, slug=child)
+        return node
+        
+    def get(self, request, nodepath, format=None):
+        node = self.get_object(nodepath)
+        # apply filters here!?
+        serializer = NodeSerializer(node)
+        return Response(serializer.data)
+            
     

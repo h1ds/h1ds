@@ -9,6 +9,8 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import ModelForm
+from django.utils.importlib import import_module
+
 
 from python_field.fields import PythonCodeField
 from mptt.models import MPTTModel, TreeForeignKey
@@ -29,10 +31,14 @@ class Node(MPTTModel, backend_module.NodeData):
     shot = models.PositiveIntegerField()
     path = models.CharField(max_length=256)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    slug = models.SlugField()
+
     
     class MPTTMeta:
         tree_id_attr = "shot"
-        
+
+    def __unicode__(self):
+        return u"|".join([str(self.shot),str(self.level),self.path])
 
 class Filter(models.Model):
     name = models.CharField(max_length=128)
