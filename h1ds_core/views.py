@@ -757,5 +757,16 @@ class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
         return handler(self, request, *args, **kwargs)
 
 
-class NodeView(MultiNodeResponseMixin, View):
+class _NodeView(MultiNodeResponseMixin, View):
     pass
+
+######
+# New django rest framework classes
+######
+
+from rest_framework.views import APIView
+
+class NodeView(APIView):
+    pass
+    #def get_object(self, )
+    

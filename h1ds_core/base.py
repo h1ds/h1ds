@@ -59,7 +59,27 @@ def get_all_filters():
                        not cl in excluded_filters]
         filters.update((f.get_slug(), f) for f in mod_filters)
     return filters
-        
+
+
+class BaseNodeData(object):
+
+    def read_raw_data(self):
+        pass
+
+    def write_raw_data(self):
+        pass
+    
+    def apply_filters(self, data):
+        return data
+    
+    def read_data(self):
+        raw_data = self.read_raw_data()
+        data = self.apply_filters(raw_data)
+        return data
+
+    def write_data(self):
+        pass
+
 class FilterManager(object):
     """Get available filters for given data.
 

@@ -10,13 +10,35 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import ModelForm
 
+from python_field.fields import PythonCodeField
+from mptt.models import MPTTModel, TreeForeignKey
+
 
 if hasattr(settings, "WORKSHEETS_PUBLIC_BY_DEFAULT"):
     public_worksheets_default = settings.WORKSHEETS_PUBLIC_BY_DEFAULT
 else:
     public_worksheets_default = False
 
+backend_module = import_module(settings.H1DS_BACKEND)
 
+class Node(MPTTModel, backend_module.NodeData):
+    """Node of a data tree.
+
+    A single data tree represents one shot.
+    """
+    shot = models.PositiveIntegerField()
+    path = models.CharField(max_length=256)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    
+    class MPTTMeta:
+        tree_id_attr = "shot"
+        
+
+class Filter(models.Model):
+    name = models.CharField(max_length=128)
+    slug = models.SlugField()
+    code = PythonCodeField()
+        
 
 class H1DSSignal(models.Model):
     """Identifier for signals passed though the H1DS system."""
