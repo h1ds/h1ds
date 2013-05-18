@@ -163,7 +163,7 @@ INSTALLED_APPS = (
 )
 
 H1DS_DATA_MODULE = 'h1ds_mdsplus'
-H1DS_DATA_PREFIX = "data"
+H1DS_DATA_PREFIX = r"data"
 LATEST_SHOT_FUNCTION = 'h1ds_mdsplus.utils.get_latest_shot'
 
 DATA_FILTER_MODULES = (
