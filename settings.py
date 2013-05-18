@@ -148,6 +148,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'mptt',
     'h1ds_core',
     'djcelery',
     'kombu.transport.django',
@@ -156,6 +157,7 @@ INSTALLED_APPS = (
     'h1ds_mdsplus',
     'h1ds_summary',
     'h1ds_configdb',
+    'python_field',
     #'haystack',
     #'sphinxdoc',
 )
