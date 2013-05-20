@@ -27,19 +27,47 @@ class Node(MPTTModel, backend_module.NodeData):
     """Node of a data tree.
 
     A single data tree represents one shot.
+    The root node has path = str(shot_number).
     """
-    shot = models.PositiveIntegerField()
+    #shot = models.PositiveIntegerField()
     path = models.CharField(max_length=256)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
     slug = models.SlugField()
+    has_data = models.BooleanField(default=True)
+    dimension = models.PositiveSmallIntegerField(blank=True, null=True)
+    dtype = models.CharField(max_length=16)
 
+    datatree = backend_module.DataTreeManager()
     
-    class MPTTMeta:
-        tree_id_attr = "shot"
-
     def __unicode__(self):
-        return u"|".join([str(self.shot),str(self.level),self.path])
+        ancestry = self.get_ancestors(include_self=True)
+        unicode_val = unicode(ancestry[0].path)
+        if len(ancestry)>1:
+            unicode_val += unicode(":")
+            unicode_val += u'\u2192'.join(
+                [unicode(n.path) for n in ancestry[1:]])
+        return unicode_val
 
+    def get_shot(self):
+        if self.level==0:
+            shot = int(self.path)
+        else:
+            root_node = self.get_root()
+            shot = int(root_node.path)
+        return shot
+    
+    def populate_child_nodes(self):
+        """Use primary data source to populate child nodes."""
+
+        child_names = self.get_child_names_from_primary_source()
+        for child in child_names:
+            node = Node(path=child, parent=self)
+            node.save()
+            node.populate_child_nodes()
+
+
+
+            
 class Filter(models.Model):
     name = models.CharField(max_length=128)
     slug = models.SlugField()

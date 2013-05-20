@@ -9,13 +9,14 @@ import re
 import inspect
 import numpy as np
 
+from django.db import models
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
 
 from h1ds_core.filters import BaseFilter, excluded_filters
 
-data_module = import_module(settings.H1DS_DATA_MODULE)
+#data_module = import_module(settings.H1DS_DATA_MODULE)
 
 # Match strings "f(fid)_name", where fid is the filter ID
 filter_name_regex = re.compile('^f(?P<fid>\d+?)')
@@ -80,6 +81,55 @@ class BaseNodeData(object):
     def write_data(self):
         pass
 
+    def get_child_names_from_primary_source(self):
+        """Override this"""
+        pass
+
+class BaseDataTreeManager(models.Manager):
+
+    def get_shot_root_node(self, shot):
+        """Get root node of shot tree.
+
+        Returns None if node doesn't exist.
+        """
+        try:
+            shot_root_node = self.model.objects.get(path=str(shot), level=0)
+        except self.model.DoesNotExist:
+            shot_root_node = None
+        return shot_root_node
+
+    def get_trees(self):
+        """Get a list of available data trees.
+
+        Override this with backend subclass.
+
+        """
+        pass
+    
+    def add_shot(self, shot, overwrite=False):
+
+        shot_root_node = self.get_shot_root_node(shot)
+
+        if shot_root_node:
+            if overwrite == True:
+                # delete existing
+                shot_nodes = self.model.objects.filter(tree_id=shot_root_node.tree_id)
+                shot_nodes.delete()
+            else:
+                # We have  an exisiting shot  root node, and  we don't
+                # want to overwrite, so we're done.
+                return None
+            
+        # Now we have nothing for the shot, let's build it again.
+
+        shot_root_node = self.model(path=str(shot), level=0)
+        shot_root_node.save()
+
+        self.populate_shot(shot_root_node)
+
+    def populate_shot(self, shot_root_node):
+        pass
+    
 class FilterManager(object):
     """Get available filters for given data.
 

@@ -788,10 +788,11 @@ class NodeView(APIView):
             shot = int(node_ancestry[0])
         except ValueError:
             raise Http404
+        shot_node = Node.objects.get(path=str(shot), level=0)
         if len(node_ancestry) == 1:
-            return Node.objects.root_node(shot)
-        # get top of tree
-        node = Node.objects.get(shot=shot, slug=node_ancestry[1])
+            return shot_node
+        # get top of tree        
+        node = Node.objects.get(parent=shot_node, slug=node_ancestry[1])
         for child in node_ancestry[2:]:
             node = Node.objects.get(parent=node, slug=child)
         return node
