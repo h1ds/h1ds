@@ -766,9 +766,15 @@ class _NodeView(MultiNodeResponseMixin, View):
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.renderers import JSONRenderer
+from rest_framework.renderers import YAMLRenderer
+from rest_framework.renderers import XMLRenderer
 from h1ds_core.serializers import NodeSerializer
 
 class NodeView(APIView):
+
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
     
     def get_object(self, nodepath):
         """Get node object for request.
@@ -795,11 +801,24 @@ class NodeView(APIView):
         node = Node.objects.get(parent=shot_node, slug=node_ancestry[1])
         for child in node_ancestry[2:]:
             node = Node.objects.get(parent=node, slug=child)
+        #node.apply_filters(self.request.QUERY_PARAMS)
+        node.apply_filters(self.request)
         return node
         
     def get(self, request, nodepath, format=None):
         node = self.get_object(nodepath)
         # apply filters here!?
+        if request.accepted_renderer.format == 'html':
+            if node.data == None:
+                template = "node_nodata.html"
+            elif np.isscalar(node.data):
+                template = "node_scalar.html"
+            elif 1 <= len(node.data.shape) <= 3:
+                template = "node_{}d.html".format(len(node.data.shape))
+            else:
+                template = "node_unknown_data.html"
+
+            return Response({'node':node}, template_name='h1ds_core/'+template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)
             

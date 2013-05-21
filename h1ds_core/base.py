@@ -64,22 +64,39 @@ def get_all_filters():
 
 class BaseNodeData(object):
 
-    def read_raw_data(self):
+    def read_primary_data(self):
         pass
 
-    def write_raw_data(self):
+    def write_primary_data(self):
         pass
-    
-    def apply_filters(self, data):
-        return data
-    
-    def read_data(self):
-        raw_data = self.read_raw_data()
-        data = self.apply_filters(raw_data)
-        return data
 
-    def write_data(self):
+    def read_primary_dim(self):
         pass
+
+    def write_primary_dim(self):
+        pass
+
+    def get_primary_ndim(self):
+        if self.primary_dim == None:
+            self.primary_dim = self.read_primary_dim()
+        return len(self.primary_dim)
+    
+    def read_primary_labels(self):
+        # [data label, dim0 label, dim1 label, etc]
+        ndim = self.get_primary_ndim()
+        labels = ["data"]
+        labels.extend(["d%d" %i for i in xrange(ndim)])
+        return labels
+    #def apply_filters(self, data):
+    #    return data
+    
+    #def read_data(self):
+    #    primary_data = self.read_primary_data()
+    #    data = self.apply_filters(primary_data)
+    #    return data
+
+    #def write_data(self):
+    #    pass
 
     def get_child_names_from_primary_source(self):
         """Override this"""

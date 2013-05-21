@@ -1,6 +1,7 @@
 """Module for communicating with MDSplus backend."""
 
 import os
+import numpy as np
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -51,14 +52,30 @@ class NodeData(BaseNodeData):
                 self._mds_node = mds_tree.getNode(path)
         return self._mds_node
 
-    def read_raw_data(self):
+    def read_primary_data(self):
         mds_node = self._get_mds_node()
         try:
-            raw_data = mds_node.getData().data()
+            primary_data = mds_node.getData().data()
         except (TreeNoDataException, TdiException, AttributeError):
-            raw_data = None
-        return raw_data
+            primary_data = None
+        return primary_data
 
+    def read_primary_dim(self):
+        """Get dimension of raw data (i.e. no filters)."""
+        mds_node = self._get_mds_node()
+        try:
+            shape = mds_node.getShape()
+            if len(shape) == 1:
+                raw_dim = np.array([mds_node.getDimensionAt().data()])
+            else:
+                dim_list = []
+                for i in range(len(shape)):
+                    dim_list.append(mds_node.getDimensionAt(i).data())
+                raw_dim = np.array(dim_list)
+        except TdiException:
+            raw_dim = np.array([])
+        return raw_dim
+    
     def get_child_names_from_primary_source(self):
         try:
             mds_node = self._get_mds_node()
