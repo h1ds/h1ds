@@ -568,6 +568,20 @@ div.mbox {
     border: 1px solid #eee;
 }
 
+.shot-list ul {
+    margin: 0;
+    padding: 0;
+
+}
+.shot-list ul li {
+    margin: 1em;
+    padding: 0;
+    width:100%;
+    border: 1px solid #eee;
+    display: inline-block;
+    vertical-align: top;
+}
+
 div#main {
     padding: 1em;
 }
@@ -1521,6 +1535,11 @@ div.mbox {
     padding:8px;
     margin: 2px;
 }
+
+.shot-list ul li {
+    width: 10em;
+}
+
 #h1ds-column-sidebar {
     width:20%;
 }

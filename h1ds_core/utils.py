@@ -161,3 +161,14 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, delta_encode=False):
     ret_value = {'iarr':iarr, 'maxerror':maxerr, 'deltar':deltar,
                'minarr':np.min(arr), 'intmax':np.max(iarr)}
     return ret_value
+
+
+from h1ds_core.models import Node
+def add_shot(shot_number):
+    new_shot = Node(path=str(shot_number),
+                    parent=None,
+                    has_data=False,
+                    dimension=None,
+                    dtype="")
+    new_shot.save()
+    Node.datatree.populate_shot(new_shot)

@@ -1,0 +1,11 @@
+{% extends "h1ds_core/base.html" %}
+{% block content %}
+<div class="shot-list">
+<ul>
+{% for shot in shots %}
+<li class="center"><h2><a href="{{shot.get_absolute_url}}">{{shot.path}}</a></h2>
+{% endfor %}
+</ul>
+</div>
+{% endblock content %}
+

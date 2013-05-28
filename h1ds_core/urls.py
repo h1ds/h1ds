@@ -9,7 +9,7 @@ from h1ds_core.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
 from h1ds_core.views import UserSignalCreateView, UserSignalDeleteView
 from h1ds_core.views import UserSignalUpdateView, ShotStreamView
 from h1ds_core.views import AJAXShotRequestURL, AJAXLatestShotView, NodeView
-from h1ds_core.views import RequestShotView, request_url
+from h1ds_core.views import RequestShotView, request_url, ShotListView
 
 urlpatterns = patterns('',
                        url(r'^$',
@@ -82,6 +82,9 @@ if hasattr(settings, "H1DS_DATA_PREFIX"):
 #                             cache_page(60*30)(NodeView.as_view()),
 #                             name="h1ds-node"))
 urlpatterns += patterns('',
+                        url(data_prefix+"/$",
+                            ShotListView.as_view(),
+                            name="tree-list"),
                         url(data_prefix+"/(?P<nodepath>.+)/$",
                              NodeView.as_view(),
                              name="node-detail"))

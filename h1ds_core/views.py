@@ -770,6 +770,7 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.renderers import YAMLRenderer
 from rest_framework.renderers import XMLRenderer
+from rest_framework.generics import ListAPIView
 from h1ds_core.serializers import NodeSerializer
 
 class NodeView(APIView):
@@ -823,3 +824,14 @@ class NodeView(APIView):
         return Response(serializer.data)
             
     
+class ShotListView(ListAPIView):
+
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+
+    def get(self, request, format=None):
+        queryset = Node.objects.root_nodes().extra(
+            select={'int_name': 'CAST(h1ds_core_node.path AS INTEGER)'}).order_by('int_name').reverse()
+        if request.accepted_renderer.format == 'html':
+            return Response({'shots':queryset}, template_name="h1ds_core/shot_list.html")
+        serializer = NodeSerializer(node)
+        return Response(serializer.data)

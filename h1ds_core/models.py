@@ -16,6 +16,7 @@ from django.template.defaultfilters import slugify
 
 from python_field.fields import PythonCodeField
 from mptt.models import MPTTModel, TreeForeignKey
+from mptt.managers import TreeManager
 
 from h1ds_core.filters import BaseFilter, excluded_filters
 
@@ -141,9 +142,15 @@ class Node(MPTTModel, backend_module.NodeData):
         return "/".join([n.path for n in ancestry])
         
     nodepath = property(_get_node_path)
-    
+
+    # I'm not sure  why we need to  do this explicitly, but  if we don't
+    # then .objects becomes DataTreeManager()
+    objects = TreeManager()
     datatree = backend_module.DataTreeManager()
 
+    def get_absolute_url(self):
+        return reverse('node-detail', kwargs={'nodepath':self.nodepath})
+    
     def get_available_filters(self):
         return filter_manager.get_filters(self.data)
 
