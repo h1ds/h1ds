@@ -127,6 +127,7 @@ class Node(MPTTModel, backend_module.NodeData):
     dimension = models.PositiveSmallIntegerField(blank=True, null=True)
     dtype = models.CharField(max_length=16)
 
+    
     data = None
     dim = None
     labels = None
@@ -134,7 +135,6 @@ class Node(MPTTModel, backend_module.NodeData):
     primary_dim = None
     primary_labels = None
     filter_history = []
-
     
     # TODO: rename so that path, nodepath are intuitive
     def _get_node_path(self):

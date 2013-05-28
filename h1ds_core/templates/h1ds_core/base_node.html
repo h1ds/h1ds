@@ -63,7 +63,7 @@ HTML tables. -->
 	      <INPUT title="go to shot" type="submit" value="<">
 	    </FORM>
 	  </div>  <!-- end h1ds-shot-previous -->
-	  <div id="h1ds-shot-current">{{node.url_processor.shot}}</div>
+	  <div id="h1ds-shot-current">{{node.get_shot}}</div>
 	  <div id="h1ds-shot-next">	
 	    <FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
 	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
