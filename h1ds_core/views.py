@@ -791,18 +791,7 @@ class NodeView(APIView):
         
         """
         node_ancestry = nodepath.split("/")
-        try:
-            shot = int(node_ancestry[0])
-        except ValueError:
-            raise Http404
-        shot_node = Node.objects.get(path=str(shot), level=0)
-        if len(node_ancestry) == 1:
-            return shot_node
-        # get top of tree        
-        node = Node.objects.get(parent=shot_node, slug=node_ancestry[1])
-        for child in node_ancestry[2:]:
-            node = Node.objects.get(parent=node, slug=child)
-        #node.apply_filters(self.request.QUERY_PARAMS)
+        node = Node.datatree.get_node_from_ancestry(node_ancestry)
         node.apply_filters(self.request)
         return node
         

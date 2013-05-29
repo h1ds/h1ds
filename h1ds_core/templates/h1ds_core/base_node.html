@@ -56,21 +56,26 @@ HTML tables. -->
 	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="shot #" size="8">
 	  </FORM>
 	</div> <!-- end sidebarcontent -->
-	<div class="sidebarcontent">
-	  <div id="h1ds-shot-previous">	<FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
-	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	      <INPUT type="hidden" name="go_to_shot" value="{{node.url_processor.shot|add:'-1'}}">
-	      <INPUT title="go to shot" type="submit" value="<">
-	    </FORM>
-	  </div>  <!-- end h1ds-shot-previous -->
+	<div class="sidebarcontent"> 
+<div id="h1ds-shot-previous">
+{% with previous_shot_node=node.get_node_for_previous_shot %}
+	  {% if previous_shot_node %}
+	  <a href="{{previous_shot_node.get_absolute_url}}"> previous </a>
+	  {% else%}
+	  no previous shot
+	  {% endif %}
+	  {% endwith%}
+	  </div>
 	  <div id="h1ds-shot-current">{{node.get_shot}}</div>
-	  <div id="h1ds-shot-next">	
-	    <FORM action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
-	      <INPUT type="hidden" name="reqpath" value="{{request_fullpath|safe}}">
-	      <INPUT type="hidden" name="go_to_shot" value="{{node.url_processor.shot|add:'1'}}">
-	      <INPUT title="go to shot" type="submit" value=">">
-	    </FORM>
-	  </div>  <!-- end h1ds-shot-next -->
+	  <div id="h1ds-shot-next">
+	    {% with next_shot_node=node.get_node_for_next_shot %}
+	  {% if next_shot_node %}
+	  <a href="{{next_shot_node.get_absolute_url}}"> next </a>
+	  {% else%}
+	  no next shot
+	  {% endif %}
+	  {% endwith%}
+	  </div>
 	</div>  <!-- end sidebarcontent -->
       </div> <!-- end h1ds-shot-controller -->
       <div id="h1ds-track-latest-shot"></div>
@@ -81,26 +86,19 @@ HTML tables. -->
   <div class="portlet" id="h1ds-portlet-trees">
     <div class="portlet-header">navigation</div>
     <div class="portlet-content">
+      {% for a in node.get_ancestors %}
       <ul>
-	{% for t in trees.all %}
-	{% ifequal t|lower trees.current|lower %}
-	<!-- current tree -->
-	{% for a in node.get_ancestors %}
-	<li class="treenode"><a href="{{a.url_processor.get_url}}">{% if forloop.first %}{{ trees.current }}: {% endif %}{{ a.get_short_name }}</a><ul>
-	{% endfor %}
-	<li class="treenode"><span class="current">{% if node.get_ancestors|length == 0 %}{{ trees.current }}: {% endif %}{{ node.get_short_name }}</span>
+	<li><a href="{{a.get_absolute_url}}">{{a.path|lower}}</a>
+	  {% endfor%}
 	  <ul>
-	  {% for c in node.get_children %}
-	  <li> <a href="{{c.url_processor.get_url}}">{{ c.get_short_name }}</a> </li>
-	  {% endfor %}
+	    <li><span class="current"><a href="{{node.get_absolute_url}}">{{node.path|lower}}</a></span>
+	      <ul>
+		{% for c in node.get_children|dictsort:"path" %}
+		<li><a href="{{c.get_absolute_url}}">{{c.path|lower}}</a>
+		  {% endfor %}
+	      </ul>
 	  </ul>
-	  {% for i in node.get_ancestors %}</ul>{% endfor %}
-	</li>
-	{% else %}
-	<li class="treenode"><a href="{% get_tree_url node.url_processor t %}">{{ t }}</a></li>
-	{% endifequal %}
-	{% endfor%}
-      </ul>
+	  {% for a in node.get_ancestors reversed %}</li>{% endfor %}
     </div> <!-- end portlet-content -->
   </div> <!-- end portlet -->
 

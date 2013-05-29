@@ -174,6 +174,22 @@ class Node(MPTTModel, backend_module.NodeData):
             root_node = self.get_root()
             shot = int(root_node.path)
         return shot
+
+    def get_node_for_shot(self,shot_number):
+        """Get same node in different shot tree, if it exists."""
+
+        node_ancestry = [i.slug for i in self.get_ancestors(include_self=True)]
+        node_ancestry[0] = str(shot_number)
+        return Node.datatree.get_node_from_ancestry(node_ancestry)
+
+    def get_node_for_previous_shot(self):
+        previous_shot = self.get_shot()-1
+        return self.get_node_for_shot(previous_shot)
+
+    def get_node_for_next_shot(self):
+        next_shot = self.get_shot()+1
+        return self.get_node_for_shot(next_shot)
+
     
     def populate_child_nodes(self):
         """Use primary data source to populate child nodes."""

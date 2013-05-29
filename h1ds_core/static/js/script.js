@@ -1412,7 +1412,7 @@ $.fn.scrollView = function () {
 }
 
 
-
+// HACK
 updateShotNav = function() {
     var current_url = new H1DSUri(window.location.toString());
     var current_shot = current_url.getShot();
@@ -1441,7 +1441,7 @@ updateShotNav = function() {
 }
 
 $(document).ready(function() {
-    updateShotNav();
+    // updateShotNav();
     $('#main').scrollView();
     autoPollSummaryDB();
     // autoUpdateEvents();

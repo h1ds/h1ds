@@ -26,6 +26,8 @@ class NodeData(BaseNodeData):
         """
         node_ancestors = list(self.get_ancestors(include_self=True))
         mds_shot = int(node_ancestors[0].path)
+        if len(node_ancestors) == 1:
+            return mds_shot, None, None
         # force str rather than unicode. unicode hits mds bug?
         # not tested since refactor, so casting to str may not be required.
         mds_tree = str(node_ancestors[1].path)
@@ -53,6 +55,8 @@ class NodeData(BaseNodeData):
         return self._mds_node
 
     def read_primary_data(self):
+        if self.level == 0:
+            return None
         mds_node = self._get_mds_node()
         try:
             primary_data = mds_node.getData().data()
@@ -62,6 +66,8 @@ class NodeData(BaseNodeData):
 
     def read_primary_dim(self):
         """Get dimension of raw data (i.e. no filters)."""
+        if self.level == 0:
+            return np.array([])
         mds_node = self._get_mds_node()
         try:
             shape = mds_node.getShape()

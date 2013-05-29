@@ -146,6 +146,16 @@ class BaseDataTreeManager(models.Manager):
 
     def populate_shot(self, shot_root_node):
         pass
+
+    def get_node_from_ancestry(self, ancestry):
+        shot_node = self.model.objects.get(path=ancestry[0], level=0)
+        if len(ancestry) == 1:
+            return shot_node
+        # get top of tree        
+        node = self.model.objects.get(parent=shot_node, slug=ancestry[1])
+        for child in ancestry[2:]:
+            node = self.model.objects.get(parent=node, slug__iexact=child)
+        return node
     
 class FilterManager(object):
     """Get available filters for given data.
