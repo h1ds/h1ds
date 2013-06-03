@@ -574,14 +574,20 @@ div.mbox {
 
 }
 .shot-list ul li {
-    margin: 1em;
+    margin: 0.5em;
     padding: 0;
-    width:100%;
+    /*width:100%;*/
     border: 1px solid #eee;
     display: inline-block;
     vertical-align: top;
+    font-size:200%;
 }
 
+.shot-list ul li a {
+    display:inline-block;
+    padding: 0.6em;
+    
+}
 div#main {
     padding: 1em;
 }
@@ -1382,6 +1388,66 @@ form.inline-form {
     background:#eee;
 }
 
+#controlbarwrapper {
+    width:100%;
+    background:#eee;
+    padding-top:0.2em;
+    padding-bottom:0.2em;
+}
+
+#controlbar {
+    width:320px;
+    margin:auto;
+}
+
+#controlbar ul {
+    padding:0;
+    margin:0;
+}
+
+#controlbar ul li {
+    color:#777;
+    display:inline-block;
+    margin-left:0.5em;
+    margin-right:0.5em;
+    background:#fff;
+    border-style:solid;
+    border-width:1px;
+    border-color:#ccc;
+}
+
+#controlbar ul li.inactive {
+    padding: 0.3em;
+    background:#eee;
+}
+
+#controlbar ul li a {
+    display:inline-block;
+    padding: 0.3em;
+}
+
+#controlbar ul li form {
+    display:inline-block;
+    padding: 0.3em;
+}
+#controlbar ul li form input {
+    border:none;
+}
+
+
+
+#controlbar ul li.first {
+    margin-left:0;
+}
+
+#controlbar ul li.last {
+    margin-right:0;
+}
+
+
+
+
+
 .shotnav {
     font-size:xx-large;
 }
@@ -1512,6 +1578,11 @@ g.button.active rect {
     margin:auto;
 }
 
+#controlbar {
+    width:90%;
+    margin:auto;
+}
+
 #h1ds-column-sidebar {
     width:100%;
 }
@@ -1536,10 +1607,11 @@ div.mbox {
     margin: 2px;
 }
 
+/*
 .shot-list ul li {
     width: 10em;
 }
-
+*/
 #h1ds-column-sidebar {
     width:20%;
 }
@@ -1557,6 +1629,11 @@ div.mbox {
 .fixed-centre {
     width:960px;
 }
+
+#controlbar {
+    width:960px;
+}
+
 }
 
 

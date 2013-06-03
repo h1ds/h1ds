@@ -29,7 +29,10 @@
 	</div>
 	{% h1ds_header %}
       </div>
-    </header>
+    </header>	
+    <div id="controlbarwrapper">
+    <div id="controlbar">{% block controlbar %}{% endblock controlbar %}</div>
+    </div>
     <div id="main" role="main" class="clearfix fixed-centre">
       {% if messages %}
       <div id="message"><ul>

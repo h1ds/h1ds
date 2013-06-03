@@ -3,7 +3,8 @@ import numpy as np
 from rest_framework import serializers
 from h1ds_core.models import Node, Filter
 
-class NodeSerializer(serializers.ModelSerializer):
+#class NodeSerializer(serializers.ModelSerializer):
+class NodeSerializer(serializers.HyperlinkedModelSerializer):
     # parent
     # children
     # slug ?
@@ -12,9 +13,10 @@ class NodeSerializer(serializers.ModelSerializer):
     parent = serializers.HyperlinkedRelatedField(view_name='node-detail', lookup_field='nodepath')
     children = serializers.HyperlinkedRelatedField(view_name='node-detail', lookup_field='nodepath', many=True)
     data = serializers.Field()
+    url = serializers.HyperlinkedIdentityField(view_name="node-detail", slug_field="nodepath")
     class Meta:
         model = Node
-        fields = ('path', 'parent', 'children', 'data')
+        fields = ('path', 'parent', 'children', 'data', 'url')
 
     #data = serializers.SerializerMethodField('get_node_data')
 
@@ -24,7 +26,7 @@ class NodeSerializer(serializers.ModelSerializer):
             return d
         else:
             return d.tolist()
-    
+        
     """
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
     slug = models.SlugField()

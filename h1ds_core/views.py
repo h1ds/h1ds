@@ -33,7 +33,7 @@ data_module = import_module(settings.H1DS_DATA_MODULE)
 URLProcessor = getattr(data_module, 'URLProcessor')
 #Node = getattr(data_module, 'Node')
 get_trees = getattr(data_module, 'get_trees')
-data_prefix = ""
+data_prefix = "data"
 if hasattr(settings, "H1DS_DATA_PREFIX"):
     data_prefix = r'^{}'.format(settings.H1DS_DATA_PREFIX)
 
@@ -287,9 +287,10 @@ class RequestShotView(RedirectView):
     def get_redirect_url(self, **kwargs):
         shot = self.request.POST['go_to_shot']
         input_path = self.request.POST['reqpath']
-        url = URLProcessor(url=input_path)
-        url.shot = int(shot)
-        return url.get_url()
+        split_path = input_path.split("/")
+        split_path[2] = str(shot)
+        new_path = "/".join(split_path)
+        return new_path
 
 class AJAXShotRequestURL(View):
     """Return URL modified for requested shot"""
@@ -812,15 +813,17 @@ class NodeView(APIView):
         serializer = NodeSerializer(node)
         return Response(serializer.data)
             
+
+from h1ds_core.models import Node
     
 class ShotListView(ListAPIView):
 
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+    # TODO: make this customisable.
+    paginate_by = 25
+    queryset = Node.objects.root_nodes().extra(
+        select={'int_name': 'CAST(h1ds_core_node.path AS INTEGER)'}).order_by('int_name').reverse()
+    serializer_class = NodeSerializer
 
-    def get(self, request, format=None):
-        queryset = Node.objects.root_nodes().extra(
-            select={'int_name': 'CAST(h1ds_core_node.path AS INTEGER)'}).order_by('int_name').reverse()
-        if request.accepted_renderer.format == 'html':
-            return Response({'shots':queryset}, template_name="h1ds_core/shot_list.html")
-        serializer = NodeSerializer(node)
-        return Response(serializer.data)
+    def get_template_names(self):
+        return ("h1ds_core/shot_list.html",)
