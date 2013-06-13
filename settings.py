@@ -154,7 +154,6 @@ INSTALLED_APPS = (
     'kombu.transport.django',
     'south',
     'django_openid_auth',
-    'h1ds_mdsplus',
     'h1ds_summary',
     'h1ds_configdb',
     'python_field',
