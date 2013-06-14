@@ -25,7 +25,8 @@ class Migration(SchemaMigration):
         db.delete_column('h1ds_configdb_configdbintproperty', 'configdbbaseproperty_ptr_id')
 
         # Adding field 'ConfigDBIntProperty.id'
-        db.add_column('h1ds_configdb_configdbintproperty', 'id', self.gf('django.db.models.fields.AutoField')(default=1, primary_key=True), keep_default=False)
+        #db.add_column('h1ds_configdb_configdbintproperty', 'id', self.gf('django.db.models.fields.AutoField')(default=1, primary_key=True), keep_default=False)
+        db.add_column('h1ds_configdb_configdbintproperty', 'id', self.gf('django.db.models.fields.AutoField')(primary_key=True), keep_default=False)
 
         # Changing field 'ConfigDBIntProperty.value'
         db.alter_column('h1ds_configdb_configdbintproperty', 'value', self.gf('django.db.models.fields.IntegerField')())
@@ -34,13 +35,15 @@ class Migration(SchemaMigration):
         db.delete_column('h1ds_configdb_configdbstringproperty', 'configdbbaseproperty_ptr_id')
 
         # Adding field 'ConfigDBStringProperty.id'
-        db.add_column('h1ds_configdb_configdbstringproperty', 'id', self.gf('django.db.models.fields.AutoField')(default=1, primary_key=True), keep_default=False)
+        #db.add_column('h1ds_configdb_configdbstringproperty', 'id', self.gf('django.db.models.fields.AutoField')(default=1, primary_key=True), keep_default=False)
+        db.add_column('h1ds_configdb_configdbstringproperty', 'id', self.gf('django.db.models.fields.AutoField')(primary_key=True), keep_default=False)
 
         # Deleting field 'ConfigDBFloatProperty.configdbbaseproperty_ptr'
         db.delete_column('h1ds_configdb_configdbfloatproperty', 'configdbbaseproperty_ptr_id')
 
         # Adding field 'ConfigDBFloatProperty.id'
-        db.add_column('h1ds_configdb_configdbfloatproperty', 'id', self.gf('django.db.models.fields.AutoField')(default=1, primary_key=True), keep_default=False)
+        #db.add_column('h1ds_configdb_configdbfloatproperty', 'id', self.gf('django.db.models.fields.AutoField')(default=1, primary_key=True), keep_default=False)
+        db.add_column('h1ds_configdb_configdbfloatproperty', 'id', self.gf('django.db.models.fields.AutoField')(primary_key=True), keep_default=False)
 
 
     def backwards(self, orm):
