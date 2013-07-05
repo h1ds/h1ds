@@ -48,8 +48,8 @@ usersignal_patterns = patterns('',
     )
 
 internal_patterns =  patterns('',
-    url(r'^filter/$', include(filter_patterns)),
-    url(r'^usersignal/$', include(usersignal_patterns)),
+    url(r'^filter/', include(filter_patterns)),
+    url(r'^usersignal/', include(usersignal_patterns)),
     url(r'^shot_stream/$', ShotStreamView.as_view(), name="h1ds-shot-stream"),
     url(r'^request_shot/$', RequestShotView.as_view(), name="h1ds-request-shot"),
     url(r'^url_for_shot/$', AJAXShotRequestURL.as_view(), name="h1ds-shot-request-url"),
