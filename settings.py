@@ -161,9 +161,8 @@ INSTALLED_APPS = (
     #'sphinxdoc',
 )
 
-H1DS_DATA_MODULE = 'h1ds_mdsplus'
+H1DS_DATA_BACKEND = "h1ds_core.backends.h1"
 H1DS_DATA_PREFIX = r"data"
-LATEST_SHOT_FUNCTION = 'h1ds_mdsplus.utils.get_latest_shot'
 
 DATA_FILTER_MODULES = (
     'h1ds_core.filters',
@@ -252,6 +251,7 @@ DEFAULT_TREE = "test"
 # each entry should be a (name, path), for example
 # EXTRA_MDS_TREES = [('extratree1', 'mdsserver::'), ('anothertree', '/data/tree'),]
 EXTRA_MDS_TREES = [('test', os.path.join(VENV_DIR, 'test_mds_data'))]
+
 
 # celery settings
 #BROKER_BACKEND = "djkombu.transport.DatabaseTransport"
