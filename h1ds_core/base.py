@@ -8,6 +8,7 @@ BaseURLProcessor
 import re
 import inspect
 import numpy as np
+import datetime
 
 from django.db import models
 from django.conf import settings
@@ -146,7 +147,7 @@ class BaseDataTreeManager(models.Manager):
 
     def populate_shot(self, shot_root_node):
         pass
-
+    
     def get_node_from_ancestry(self, ancestry):
         shot_node = self.model.objects.get(path=ancestry[0], level=0)
         if len(ancestry) == 1:
@@ -156,7 +157,8 @@ class BaseDataTreeManager(models.Manager):
         for child in ancestry[2:]:
             node = self.model.objects.get(parent=node, slug__iexact=child)
         return node
-    
+
+        
 class FilterManager(object):
     """Get available filters for given data.
 
@@ -184,24 +186,6 @@ class FilterManager(object):
         return self.cache[data_type]
 
 filter_manager = FilterManager()
-
-
-def get_latest_shot_function():
-    """Get the module specified in settings.LATEST_SHOT_FUNCTION."""
-    i = settings.LATEST_SHOT_FUNCTION.rfind('.')
-    module = settings.LATEST_SHOT_FUNCTION[:i]
-    attr = settings.LATEST_SHOT_FUNCTION[i+1:]
-    try:
-        mod = import_module(module)
-    except ImportError as error:
-        msg = 'Error importing module {}: "{}"'.format(module, error)
-        raise ImproperlyConfigured(msg)
-    try:
-        func  = getattr(mod, attr)
-    except AttributeError:
-        msg = 'Module "{}" has no attribute "{}"'.format(module, attr)
-        raise ImproperlyConfigured(msg)
-    return func
 
 class BaseURLProcessor(object):
     """Base class for mapping between URLs and data paths."""
@@ -517,3 +501,37 @@ def get_filter_list(request):
         filter_list.append([fid, filter_data['name'], filter_data['kwargs']])
                            
     return filter_list
+
+class BaseBackendShotManager(models.Manager):
+    """Base class for interactiing with backend shots."""
+
+    def get_latest_shot(self):
+        pass
+    
+    def get_timestamp_for_shot(self, shot):
+        return datetime.datetime.now()
+
+    def get_min_shot_number(self):
+        return self.model.objects.all().aggregate(models.Min('number'))['number__min']
+
+    def get_max_shot_number(self):
+        return self.model.objects.all().aggregate(models.Max('number'))['number__max']
+
+    def get_next_shot_number(self, shot_number):
+        """Get value of next shot.
+
+        Usually, this will be shot_number+1...
+
+        """
+        next_shot = self.model.objects.filter(number__gt=shot_number).aggregate(models.Min('number'))['number__min']
+        return next_shot
+
+    def get_previous_shot_number(self, shot_number):
+        """Get value of previous shot.
+
+        Usually, this will be shot_number-1...
+
+        """
+        previous_shot = self.model.objects.filter(number__lt=shot_number).aggregate(models.Max('number'))['number__max']
+        return previous_shot
+
