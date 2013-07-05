@@ -26,26 +26,19 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.conf import settings
 from django.utils.importlib import import_module
 
-from h1ds_core.models import UserSignal, UserSignalForm, Worksheet, Node
-from h1ds_core.base import get_filter_list, get_latest_shot_function
+from h1ds_core.models import UserSignal, UserSignalForm, Worksheet, Node, Shot
+from h1ds_core.utils import get_backend_shot_manager
+from h1ds_core.base import get_filter_list
 
-data_module = import_module(settings.H1DS_DATA_MODULE)
-URLProcessor = getattr(data_module, 'URLProcessor')
-#Node = getattr(data_module, 'Node')
-get_trees = getattr(data_module, 'get_trees')
-data_prefix = "data"
-if hasattr(settings, "H1DS_DATA_PREFIX"):
-    data_prefix = r'^{}'.format(settings.H1DS_DATA_PREFIX)
-
-
-get_latest_shot = get_latest_shot_function()
+backend_shot_manager = get_backend_shot_manager()
 
 def get_shot_stream_generator():
+    shotman = backend_shot_manager()
     def new_shot_generator():
-        latest_shot = get_latest_shot()
+        latest_shot = shotman.get_latest_shot()
         while True:
             time.sleep(1)
-            tmp = get_latest_shot()
+            tmp = shotman.get_latest_shot()
             if tmp != latest_shot:
                 latest_shot = tmp
                 yield "{}\n".format(latest_shot)
@@ -364,406 +357,6 @@ def request_url(request):
                         mimetype='text/xml; charset=utf-8')
 
 
-####
-
-class JSONNodeResponseMixin(object):
-
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        
-        response_data = {'labels': map(str, self.node.get_labels()),
-                         'units': map(str, self.node.get_units())}
-        if self.node.get_data() == None:
-            response_data['data'] = None
-            response_data['dim'] = None
-        elif np.isscalar(self.node.get_data()):
-            response_data['data'] = np.asscalar(self.node.get_data())
-            response_data['dim'] = None
-        elif len(self.node.get_data().shape) == 1:
-            response_data['data'] = self.node.get_data().tolist()
-            response_data['dim'] = self.node.get_dim().tolist()
-        elif 1 < len(self.node.get_data().shape) <= 3:
-            data, dim = [], []
-            for i in self.node.get_data():
-                if hasattr(i, "tolist"):
-                    data.append(i.tolist())
-                else:
-                    data.append(i)
-            for i in self.node.get_dim():
-                if hasattr(i, "tolist"):
-                    dim.append(i.tolist())
-                else:
-                    dim.append(i)
-            response_data['data'] =  data
-            response_data['dim'] = dim
-        else:
-            response_data['data'] = "unknown data"
-            response_data['dim'] = None
-        metadata = {
-            'path':unicode(self.node.url_processor.path),
-            'tree':self.node.url_processor.tree,
-            'shot':self.node.url_processor.shot,
-            'summary_dtype':self.node.get_summary_dtype(),
-            }
-        # add metadata...
-        response_data.update({'meta':metadata})
-        return HttpResponse(json.dumps(response_data),
-                            mimetype='application/json')
-
-class CSVNodeResponseMixin(object):
-
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        #data = self.node.get_format('csv')
-        
-        response = HttpResponse(mimetype='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=data.csv'
-
-        writer = csv.writer(response)
-        writer.writerow(["# [begin metadata]"])
-        writer.writerow(["# {}: {}".format('shot',
-                                           self.node.url_processor.shot)])
-        writer.writerow(["# {}: {}".format('tree',
-                                           self.node.url_processor.tree)])
-        path = unicode(self.node.url_processor.path)
-        writer.writerow(["# {}: {}".format('path', path)])
-        for k, v in self.node.get_metadata().items():
-            writer.writerow(["# {}: {}".format(str(k), unicode(v))])
-        writer.writerow(["# [end metadata]"])
-        writer.writerow(["# [start data]"])
-        
-        if self.node.get_data() == None:
-            writer.writerow(["null"])
-        elif np.isscalar(self.node.get_data()):
-            writer.writerow([str(np.asscalar(self.node.get_data()))])
-        elif len(self.node.get_data().shape) == 1:
-            writer.writerow(["# dim", "data"])
-            for i, j in zip(self.node.get_dim().tolist(),
-                           self.node.get_data().tolist()):
-                writer.writerow([str(i), str(j)])
-        elif 1 < len(self.node.get_data().shape):
-            dim = self.node.get_dim().tolist()
-            data = self.node.get_data().tolist()
-            header = ["dim{}".format(i) for i in range(len(dim))]
-            header.extend(["data{}".format(i) for i in range(len(data))])
-            header[0] = "# "+header[0]
-            writer.writerow(header)
-            all_cols = dim
-            all_cols.extend(data)
-            # TODO: too much hacking of dim and shape etc..
-            for i in zip(*all_cols):
-                writer.writerow(map(str, i))
-                
-        return response
-
-
-class XMLNodeResponseMixin(object):
-    """TODO: Generalise this for all datatypes"""
-
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        # TODO (depecated - much code  change): this should be handled
-        # by  wrappers however,  at  present self.node.get_view  calls
-        # get_view on the data object which doesn't ?? know about shot
-        # info, etc the  proper fix might be to have  wrappers take as
-        # args wrappers rather than data objects?
-        
-        xml_elmt = '{http://h1svr.anu.edu.au/data}data'
-        xml_attr = {'{http://www.w3.org/XML/1998/namespace}lang': 'en'}
-        data_xml = etree.Element(xml_elmt, attrib = xml_attr)
-
-        # add shot info
-        shot_number = etree.SubElement(data_xml, 'shot', attrib={})
-        shot_number.text = str(self.node.url_processor.shot)
-        ## TODO: add metadata (for mds, shot time can go into metadata)
-        
-
-        # add data info
-        tree = etree.SubElement(data_xml, 'tree', attrib={})
-        tree.text = self.node.url_processor.tree
-        path = etree.SubElement(data_xml, 'path', attrib={})
-        path.text = self.node.url_processor.path
-
-        # add node
-        #data = etree.SubElement(data_xml, 'data', attrib={})
-        if self.node.get_data() == None:
-            data = etree.SubElement(data_xml, 'data', attrib={'ndim':"0"})
-            data.text = "null"
-            dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"0"})
-            dim.text = "null"
-
-        elif np.isscalar(self.node.get_data()):
-            data = etree.SubElement(data_xml, 'data', attrib={'ndim':"0"})
-            data.text = str(np.asscalar(self.node.get_data()))
-            dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"0"})
-            dim.text = "null"
-
-        elif len(self.node.get_data().shape) == 1:
-            data = etree.SubElement(data_xml, 'data', attrib={'ndim':"1"})
-            d = self.node.get_data().tolist()
-            for i, j in enumerate(d):
-                el = etree.SubElement(data, 'element', attrib={})
-                el.text = str(j)
-            dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"1"})
-            _dim = self.node.get_dim().tolist()
-            for i, j in enumerate(_dim):
-                el = etree.SubElement(dim, 'element', attrib={})
-                el.text = str(j)
-
-        elif 1 < len(self.node.get_data().shape) <= 3:
-            ndim = len(self.node.get_data().shape)
-            data_node = etree.SubElement(data_xml, 'data',
-                                         attrib={'ndim':str(ndim)})
-            dim_node = etree.SubElement(data_xml, 'dim',
-                                        attrib={'ndim':str(ndim)})
-            data, dim = [], []
-            for i in self.node.get_data():
-                if hasattr(i, "tolist"):
-                    data.append(i.tolist())
-                else:
-                    data.append(i)
-            for i in self.node.get_dim():
-                if hasattr(i, "tolist"):
-                    dim.append(i.tolist())
-                else:
-                    dim.append(i)
-            for data_dim_i, data_dim in enumerate(data):
-                d_ch = etree.SubElement(data_node, 'channel',
-                                        attrib={"number":str(data_dim_i)})
-                for data_el_i, data_el in enumerate(data_dim):
-                    el = etree.SubElement(d_ch, 'element', attrib={})
-                    el.text = str(data_el)
-            for dim_i, _dim in enumerate(dim):
-                d_ch = etree.SubElement(dim_node,
-                                        'channel', attrib={"number":str(dim_i)})
-                for el_i, _el in enumerate(_dim):
-                    el = etree.SubElement(d_ch, 'element', attrib={})
-                    el.text = str(_el)
-            #dim = etree.SubElement(data_xml, 'dim', attrib={'ndim':"1"})
-            #_dim = self.node.get_dim().tolist()
-            #for i,j in enumerate(_dim):
-            #    el = etree.SubElement(dim, 'element', attrib={})
-            #    el.text = str(j)
-        metadata_node = etree.SubElement(data_xml, 'metadata', attrib={})
-        for key, value in self.node.get_metadata().items():
-            item = etree.SubElement(metadata_node, "item",
-                                    attrib={"key":str(key), "value":str(value)})
-            #item.text = str(value)
-        #else:
-        #    response_data['data'] = "unknown data"
-        #    response_data['dim'] = None
-        #metadata = {
-        #    'path':unicode(self.node.url_processor.path),
-        #    'tree':self.node.url_processor.tree,
-        #    'shot':self.node.url_processor.shot,
-        #    'summary_dtype':self.node.get_summary_dtype(),
-        #    }
-        # add metadata...
-        #response_data.update({'meta':metadata})
-
-        """
-        signal = etree.SubElement(data_xml, 'data', attrib={'type':'signal'})
-
-        ## make xlink ? to signal binary 
-        ## for now, just text link
-        #### should use proper url joining rather than string hacking...
-        signal.text = request.build_absolute_uri()
-        if '?' in signal.text:
-            # it doesn't matter if we have multiple 'format' get queries - only the last one is used
-            signal.text += '&format=bin' 
-        else:
-            signal.text += '?format=bin'
-        """
-        return HttpResponse(etree.tostring(data_xml),
-                            mimetype='text/xml; charset=utf-8')
-
-class PNGNodeResponseMixin(object):
-
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        data = self.node.get_format('png')
-        img_buffer = StringIO.StringIO()
-        pylab.imsave(img_buffer, data.data, format='png')
-        return HttpResponse(img_buffer.getvalue(), mimetype='image/png')
-
-class BinaryNodeResponseMixin(object):
-
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        #response = HttpResponse(mimetype='application/octet-stream')
-        response = HttpResponse(mimetype="text/plain; charset=x-user-defined")
-        # TODO: make this available through HTTP query or settings.
-        # error_threshold = 1.e-3
-
-        # TODO: do  we want a  consistency check that checks  the node
-        # dimension info matches the dimensionality of the data?
-        
-        # TODO: we  assume dim  can be  parameterised, this  should be
-        # generalised (e.g. if cannot  be paramterised, put in message
-        # body)
-
-        param_dim = self.node.parameterised_dim()
-        labels = self.node.get_labels()
-        units = self.node.get_units()
-        response['X-H1DS-ndim'] = param_dim['ndim']
-        for d in xrange(param_dim['ndim']):
-            response['X-H1DS-dim-{}-units'.format(d)] = units[d+1]
-            response['X-H1DS-dim-{}-label'.format(d)] = labels[d+1]
-            for k, v in param_dim[d].iteritems():
-                response['X-H1DS-dim-{}-{}'.format(d, k)] = v
-
-        requested_dtype = request.GET.get('bin_assert_dtype', None)
-        if requested_dtype != None:
-            try:
-                requested_dtype = getattr(np, requested_dtype)
-            except AttributeError:
-                requested_dtype = None
-                
-        discrete_data = self.node.discretised_data(assert_dtype=requested_dtype)
-        response.write(discrete_data['data'].tostring())
-        response['X-H1DS-data-min'] = discrete_data['min']
-        response['X-H1DS-data-delta'] = discrete_data['delta']
-        response['X-H1DS-data-rmserr'] = discrete_data['rms_err']
-        response['X-H1DS-data-dtype'] = discrete_data['data'].dtype.name
-        disc_data_shape = discrete_data['data'].shape
-        response['X-H1DS-data-shape'] = ",".join(map(str, disc_data_shape))
-        response['X-H1DS-data-units'] = units[0]
-        response['X-H1DS-data-label'] = labels[0]
-        
-        return response
-
-    
-class HTMLNodeResponseMixin(object):
-
-    http_method_names = ['get']
-
-    def get(self, request, *args, **kwargs):
-        # get any saved signals for the user
-        if request.user.is_authenticated():
-            user_signals = UserSignal.objects.filter(user=request.user)
-            user_signal_form = UserSignalForm()
-        else:
-            user_signals = []
-            user_signal_form = None            
-        html_metadata = {
-            'tree':self.node.url_processor.tree,
-            'shot':self.node.url_processor.shot,
-            # TODO: hack: we shouldn't need to explicitly strip chars?
-            'data_prefix':data_prefix.strip("^"),
-            #'user_signals':user_signals,
-            #'node_display_info':self.node.get_display_info(),
-            }
-        
-        if self.node.get_data() == None:
-            template = "node_nodata.html"
-        elif np.isscalar(self.node.get_data()):
-            template = "node_scalar.html"
-        elif 1 <= len(self.node.get_data().shape) <= 3:
-            template = "node_{}d.html".format(len(self.node.get_data().shape))
-        else:
-            template = "node_unknown_data.html"
-        trees = {'current':self.node.url_processor.tree}
-        curr_tree = trees['current'].lower()
-        trees['other'] = [t for t in get_trees() if t.lower() != curr_tree]
-        trees['all'] = sorted(get_trees())
-        #alt_formats = ['json', 'png', 'xml', 'csv', 'bin']
-        # TODO: get this list programaticcally
-        alt_formats = ['json', 'xml', 'csv']
-        node_url_path = self.node.url_processor.get_url()
-        return render_to_response('h1ds_core/{}'.format(template), 
-                                  {#'node_content':self.node.get_format('html'),
-                                   #'html_metadata':html_metadata,
-                                   'user_signals':user_signals,
-                                   'user_signal_form':user_signal_form,
-                                   'node':self.node,
-                                   'trees':trees,
-                                   'alt_formats':alt_formats,
-                                   'is_debug':str(settings.DEBUG),
-                                   'node_meta': self.node.get_metadata(),
-                                   # put  node_url_path into  template
-                                   # because we can't  always get shot
-                                   # number,  tree   from  window  url
-                                   # because  of  defaults to  default
-                                   # tree and shot  0. This is awkward
-                                   # behaviour which should be fixed.
-                                   'node_url_path': node_url_path,
-                                   'request_fullpath':request.get_full_path()},
-                                  context_instance=RequestContext(request))
-
-class MultiNodeResponseMixin(HTMLNodeResponseMixin, JSONNodeResponseMixin,
-                             PNGNodeResponseMixin, XMLNodeResponseMixin,
-                             BinaryNodeResponseMixin, CSVNodeResponseMixin):
-    """Dispatch to requested representation."""
-
-    representations = {
-        "html":HTMLNodeResponseMixin,
-        "json":JSONNodeResponseMixin,
-        "png":PNGNodeResponseMixin,
-        "xml":XMLNodeResponseMixin,
-        "bin":BinaryNodeResponseMixin,
-        "csv":CSVNodeResponseMixin,
-        }
-
-    def dispatch(self, request, *args, **kwargs):
-        # Try  to   dispatch  to   the  right  method   for  requested
-        # representation;  if a  method  doesn't exist,  defer to  the
-        # error  handler.  Also  defer  to the  error  handler if  the
-        # request method isn't on the approved list.
-        
-        # TODO: for now, we only support GET and POST, as we are using
-        # the query string to determing which representation should be
-        # used,  and  the querydict  is  only  available for  GET  and
-        # POST. Need  to bone  up on whether  query strings  even make
-        # sense  on other  HTTP verbs.  Probably, we  should use  HTTP
-        # headers to figure out which  content type should be returned
-        # - also,  we might  be able  to support  both URI  and header
-        # based content type selection.
-        # http://stackoverflow.com/questions/381568/rest-content-type-should-it-be-based-on-extension-or-accept-header
-        # http://www.xml.com/pub/a/2004/08/11/rest.html
-
-        if request.method == 'GET':
-            requested_representation = get_format(request).lower()
-        elif request.method == 'POST':
-            requested_representation = get_format(request)
-        else:
-            # until we figure out how to determine appropriate content type
-            return self.http_method_not_allowed(request, *args, **kwargs)
-
-        if not requested_representation in self.representations:
-            # TODO: should handle this and let user know? rather than ignore?
-            requested_representation = 'html'
-
-        self.url_processor = URLProcessor(url=self.kwargs['url'])
-        #data_interface = DataInterface(self.url_processor)
-        #self.node = data_interface.get_node()
-        self.node = Node(url_processor = self.url_processor)
-        self.node.apply_filters(request=request)
-        
-        rep_class = self.representations[requested_representation]
-
-        if request.method.lower() in rep_class.http_method_names:
-            handler = getattr(rep_class,
-                              request.method.lower(),
-                              self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
-        return handler(self, request, *args, **kwargs)
-
-
-class _NodeView(MultiNodeResponseMixin, View):
-    pass
-
-######
-# New django rest framework classes
-######
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -772,7 +365,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.renderers import YAMLRenderer
 from rest_framework.renderers import XMLRenderer
 from rest_framework.generics import ListAPIView
-from h1ds_core.serializers import NodeSerializer
+from h1ds_core.serializers import NodeSerializer, ShotSerializer
 
 class NodeView(APIView):
 
@@ -796,7 +389,7 @@ class NodeView(APIView):
         node.apply_filters(self.request)
         return node
         
-    def get(self, request, nodepath, format=None):
+    def get(self, request, shot, nodepath, format=None):
         node = self.get_object(nodepath)
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
@@ -814,16 +407,32 @@ class NodeView(APIView):
         return Response(serializer.data)
             
 
-from h1ds_core.models import Node
-    
 class ShotListView(ListAPIView):
 
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
     # TODO: make this customisable.
     paginate_by = 25
-    queryset = Node.objects.root_nodes().extra(
-        select={'int_name': 'CAST(h1ds_core_node.path AS INTEGER)'}).order_by('int_name').reverse()
-    serializer_class = NodeSerializer
+    queryset = Shot.objects.all()
+    serializer_class = ShotSerializer
 
     def get_template_names(self):
-        return ("h1ds_core/shot_list.html",)
+        return ("h1ds_core/shot_list.html", )
+
+class ShotDetailView(APIView):
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+    serializer_class = ShotSerializer
+    
+    def get_object(self):
+        shot = Shot.objects.get(number=self.kwargs['shot'])
+        return shot
+        #qs = Node.objects.filter(level=0, shot=shot)
+        #return qs
+
+    def get_template_names(self):
+        return ("h1ds_core/shot_detail.html", )
+
+    def get(self, request, shot, format=None):
+        shot = self.get_object()
+        serializer = self.serializer_class(shot)
+        return Response(serializer.data)
+        
