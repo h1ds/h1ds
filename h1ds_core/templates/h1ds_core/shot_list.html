@@ -17,7 +17,7 @@
 <div class="shot-list">
 <ul>
 {% for shot in results %}
-<li><a href="{{shot.url}}">{{shot.path}}</a>
+<li><a href="{% url 'shot-detail' shot=shot.number %}">{{shot.number}}</a>
 {% endfor %}
 </ul>
 </div>
