@@ -1,7 +1,7 @@
 import numpy as np
 
 from rest_framework import serializers
-from h1ds_core.models import Node, Filter
+from h1ds_core.models import Node, Filter, Shot
 
 #class NodeSerializer(serializers.ModelSerializer):
 class NodeSerializer(serializers.HyperlinkedModelSerializer):
@@ -19,7 +19,7 @@ class NodeSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('path', 'parent', 'children', 'data', 'url')
 
     #data = serializers.SerializerMethodField('get_node_data')
-
+    
     def get_node_data(self, obj):
         d = obj.read_primary_data()
         if np.isscalar(d) or d == None:
@@ -41,3 +41,14 @@ class FilterSerializer(serializers.Serializer):
 
 
 
+class ShotSerializer(serializers.HyperlinkedModelSerializer):
+    number = serializers.IntegerField()
+    timestamp = serializers.DateTimeField()
+    root_nodes = serializers.SerializerMethodField('get_root_nodes')
+
+    class Meta:
+        model = Shot
+        fields = ('number', 'timestamp', 'root_nodes', )
+
+    def get_root_nodes(self, obj):
+        return [{'path':n.path, 'url':n.get_absolute_url()}  for n in obj.root_nodes]
