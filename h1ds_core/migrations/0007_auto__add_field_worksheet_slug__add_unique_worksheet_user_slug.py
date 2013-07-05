@@ -10,16 +10,16 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Worksheet.slug'
         db.add_column(u'h1ds_core_worksheet', 'slug',
-                      self.gf('django.db.models.fields.SlugField')(default='', max_length=256),
+                      self.gf('django.db.models.fields.SlugField')(default=''),
                       keep_default=False)
 
         # Adding unique constraint on 'Worksheet', fields ['user', 'slug']
-        db.create_unique(u'h1ds_core_worksheet', ['user_id', 'slug'])
+        #db.create_unique(u'h1ds_core_worksheet', ['user_id', 'slug'])
 
 
     def backwards(self, orm):
         # Removing unique constraint on 'Worksheet', fields ['user', 'slug']
-        db.delete_unique(u'h1ds_core_worksheet', ['user_id', 'slug'])
+        #db.delete_unique(u'h1ds_core_worksheet', ['user_id', 'slug'])
 
         # Deleting field 'Worksheet.slug'
         db.delete_column(u'h1ds_core_worksheet', 'slug')
@@ -90,13 +90,13 @@ class Migration(SchemaMigration):
             'worksheet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['h1ds_core.Worksheet']"})
         },
         u'h1ds_core.worksheet': {
-            'Meta': {'unique_together': "(('user', 'slug'),)", 'object_name': 'Worksheet'},
+            #'Meta': {'unique_together': "(('user', 'slug'),)", 'object_name': 'Worksheet'},
             'description': ('django.db.models.fields.TextField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'pagelets': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['h1ds_core.Pagelet']", 'through': u"orm['h1ds_core.PageletCoordinates']", 'symmetrical': 'False'}),
-            'slug': ('django.db.models.fields.SlugField', [], {'max_length': '256'}),
+            'slug': ('django.db.models.fields.SlugField', [], {}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         }
     }

@@ -4,6 +4,7 @@ H1DS Core contains models for communicating between H1DS modules.
 
 
 """
+import hashlib
 import inspect
 import re
 from django.conf import settings
@@ -19,6 +20,7 @@ from mptt.models import MPTTModel, TreeForeignKey
 from mptt.managers import TreeManager
 
 from h1ds_core.filters import BaseFilter, excluded_filters
+from h1ds_core.utils import get_backend_shot_manager
 
 if hasattr(settings, "WORKSHEETS_PUBLIC_BY_DEFAULT"):
     public_worksheets_default = settings.WORKSHEETS_PUBLIC_BY_DEFAULT
@@ -31,7 +33,7 @@ filter_name_regex = re.compile('^f(?P<fid>\d+?)')
 # Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
 filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_(?P<kwarg>.+)')
     
-backend_module = import_module(settings.H1DS_BACKEND)
+backend_module = import_module(settings.H1DS_DATA_BACKEND)
 
 def get_filter_list(request):
     """Parse GET query sring and return sorted list of filter names.
@@ -111,6 +113,33 @@ class FilterManager(object):
             self.cache[data_type] = data_filters
         return self.cache[data_type]
 
+class Shot(models.Model):
+    number = models.PositiveIntegerField(primary_key=True)
+    timestamp = models.DateTimeField()
+    
+    objects = models.Manager()
+    backend = get_backend_shot_manager()()
+
+    def _get_root_nodes(self):
+        return Node.objects.filter(level=0, shot=self)
+
+    root_nodes = property(_get_root_nodes)
+
+    def get_absolute_url(self):
+        return reverse('shot-detail', kwargs={'shot':self.number})
+
+    def save(self, *args, **kwargs):
+        self.timestamp = self.backend.get_timestamp_for_shot(self.number)
+        super(Shot, self).save(*args, **kwargs)
+        self._populate()
+
+    def _populate(self):
+        for tree in Node.datatree.get_trees():
+            node = Node(path=tree, shot=self)
+            node.save()
+            node.populate_child_nodes()
+
+        
 filter_manager = FilterManager()
 
 class Node(MPTTModel, backend_module.NodeData):
@@ -119,13 +148,32 @@ class Node(MPTTModel, backend_module.NodeData):
     A single data tree represents one shot.
     The root node has path = str(shot_number).
     """
-    #shot = models.PositiveIntegerField()
+    # While it may be overkill to link to a shot for every node in the
+    # tree, it allows  us to more easily search  nodes irrespective of
+    # their tree  - for  example if we  want to find  all data  with a
+    # specific dtype in  a range of shots, then we  don't want to have
+    # to first  find the  tree from  the shot  number and  then search
+    # nodes...
+    # Previously, the  shot number was  stored only for the  root tree
+    # node, but the code to find the  shot for a given node was rather
+    # cumbersome.
+    shot = models.ForeignKey(Shot)
+    
     path = models.CharField(max_length=256)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
     slug = models.SlugField()
     has_data = models.BooleanField(default=True)
     dimension = models.PositiveSmallIntegerField(blank=True, null=True)
     dtype = models.CharField(max_length=16)
+
+    # This is effectively a  fixed-length string unique identifier for
+    # a  node, allowing  us  to find  the same  node  for other  shots
+    # without needing to either search  the node ancestry or store the
+    # (variable length,  possibly very long)  full tree path  for each
+    # node. The  SHA1 is simply generated  from the full tree  path of
+    # the node when the node is saved.
+    path_checksum = models.CharField(max_length=40)
+    
 
     
     data = None
@@ -139,7 +187,7 @@ class Node(MPTTModel, backend_module.NodeData):
     # TODO: rename so that path, nodepath are intuitive
     def _get_node_path(self):
         ancestry = self.get_ancestors(include_self=True)
-        return "/".join([n.path for n in ancestry])
+        return "/".join([n.slug for n in ancestry])
         
     nodepath = property(_get_node_path)
 
@@ -149,14 +197,22 @@ class Node(MPTTModel, backend_module.NodeData):
     datatree = backend_module.DataTreeManager()
 
     def get_absolute_url(self):
-        return reverse('node-detail', kwargs={'nodepath':self.nodepath})
+        return reverse('node-detail', kwargs={'nodepath':self.nodepath, 'shot':self.shot.number})
     
     def get_available_filters(self):
         return filter_manager.get_filters(self.data)
 
+    def _get_sha1(self):
+        nodepath = self._get_node_path()
+        return hashlib.sha1(nodepath).hexdigest()
+    
     def save(self, *args, **kwargs):
         self.slug = slugify(self.path)
         super(Node, self).save(*args, **kwargs)
+        self.path_checksum = self._get_sha1()
+        super(Node, self).save(update_fields=['path_checksum'])
+        # TODO: if the node name changes then we also need to regenerate
+        # sha1 keys for all descendents...
     
     def __unicode__(self):
         ancestry = self.get_ancestors(include_self=True)
@@ -167,13 +223,13 @@ class Node(MPTTModel, backend_module.NodeData):
                 [unicode(n.path) for n in ancestry[1:]])
         return unicode_val
 
-    def get_shot(self):
-        if self.level==0:
-            shot = int(self.path)
-        else:
-            root_node = self.get_root()
-            shot = int(root_node.path)
-        return shot
+    ## def get_shot(self):
+    ##     if self.level==0:
+    ##         shot = int(self.path)
+    ##     else:
+    ##         root_node = self.get_root()
+    ##         shot = int(root_node.path)
+    ##     return shot
 
     def get_node_for_shot(self,shot_number):
         """Get same node in different shot tree, if it exists."""
@@ -183,11 +239,11 @@ class Node(MPTTModel, backend_module.NodeData):
         return Node.datatree.get_node_from_ancestry(node_ancestry)
 
     def get_node_for_previous_shot(self):
-        previous_shot = self.get_shot()-1
+        previous_shot = Shot.backend.get_previous_shot_number(self.shot.number)
         return self.get_node_for_shot(previous_shot)
 
     def get_node_for_next_shot(self):
-        next_shot = self.get_shot()+1
+        next_shot = Shot.backend.get_next_shot_number(self.shot.number)
         return self.get_node_for_shot(next_shot)
 
     
@@ -196,7 +252,7 @@ class Node(MPTTModel, backend_module.NodeData):
 
         child_names = self.get_child_names_from_primary_source()
         for child in child_names:
-            node = Node(path=child, parent=self)
+            node = Node(path=child, parent=self, shot=self.shot)
             # TODO: can we delay the save and write in bulk?
             node.save()
             node.populate_child_nodes()
@@ -285,12 +341,14 @@ class Worksheet(models.Model):
     user = models.ForeignKey(User)
     name = models.CharField(max_length=256)
     description = models.TextField()
-    slug = models.SlugField(max_length=256)
+    slug = models.SlugField()
     is_public = models.BooleanField(default=public_worksheets_default)
     pagelets = models.ManyToManyField(Pagelet, through='PageletCoordinates')
 
-    class Meta:
-        unique_together = (("user", "slug"),)
+    ## This causes  problems w/ MySQL,  maybe we just append  numbers to
+    ## slugs when they're generated during save.
+    #class Meta:
+    #    unique_together = (("user", "slug"),)
 
     def __unicode__(self):
         return unicode("[%s] %s" %(self.user, self.name))

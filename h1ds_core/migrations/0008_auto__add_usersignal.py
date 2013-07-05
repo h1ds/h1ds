@@ -101,13 +101,13 @@ class Migration(SchemaMigration):
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         },
         u'h1ds_core.worksheet': {
-            'Meta': {'unique_together': "(('user', 'slug'),)", 'object_name': 'Worksheet'},
+            #'Meta': {'unique_together': "(('user', 'slug'),)", 'object_name': 'Worksheet'},
             'description': ('django.db.models.fields.TextField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'pagelets': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['h1ds_core.Pagelet']", 'through': u"orm['h1ds_core.PageletCoordinates']", 'symmetrical': 'False'}),
-            'slug': ('django.db.models.fields.SlugField', [], {'max_length': '256'}),
+            'slug': ('django.db.models.fields.SlugField', [], {}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         }
     }
