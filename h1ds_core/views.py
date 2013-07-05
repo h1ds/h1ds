@@ -9,7 +9,7 @@ import json
 import time
 import StringIO
 import numpy as np
-
+import hashlib
 import pylab
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
@@ -371,7 +371,7 @@ class NodeView(APIView):
 
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
     
-    def get_object(self, nodepath):
+    def get_object(self, shot, nodepath):
         """Get node object for request.
 
         TODO:  this  method  does  a   lookup  for  each  level  of  the
@@ -384,13 +384,15 @@ class NodeView(APIView):
         parent nodes.
         
         """
-        node_ancestry = nodepath.split("/")
-        node = Node.datatree.get_node_from_ancestry(node_ancestry)
+        #node_ancestry = nodepath.split("/")
+        checksum = hashlib.sha1(nodepath).hexdigest()
+
+        node = Node.objects.get(shot__number=shot, path_checksum=checksum)
         node.apply_filters(self.request)
         return node
         
     def get(self, request, shot, nodepath, format=None):
-        node = self.get_object(nodepath)
+        node = self.get_object(shot, nodepath)
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
             if node.data == None:
