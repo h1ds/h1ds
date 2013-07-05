@@ -12,6 +12,7 @@ from MDSplus._treeshr import TreeNoDataException, TreeException
 # TODO: base vs models - it's not intuitive what should be where...
 from h1ds_core.base import BaseNodeData
 from h1ds_core.base import BaseDataTreeManager
+from h1ds_core.base import BaseBackendShotManager
 # Load MDS trees into environment
 for config_tree in settings.EXTRA_MDS_TREES:
     os.environ[config_tree[0]+"_path"] = config_tree[1]
@@ -22,19 +23,16 @@ class NodeData(BaseNodeData):
     def _get_mds_node_info(self):
         """Get MDS path for node.
 
-        Node ancestry is [shot, tree, node0, node1, ...].
+        Node ancestry is [tree, node0, node1, ...].
         """
         node_ancestors = list(self.get_ancestors(include_self=True))
-        mds_shot = int(node_ancestors[0].path)
-        if len(node_ancestors) == 1:
-            return mds_shot, None, None
         # force str rather than unicode. unicode hits mds bug?
         # not tested since refactor, so casting to str may not be required.
-        mds_tree = str(node_ancestors[1].path)
+        mds_tree = str(node_ancestors[0].path)
         mds_path = ""
-        if len(node_ancestors) > 2:
-            mds_path = ".".join([n.path for n in node_ancestors[2:]])
-        return mds_shot, mds_tree, mds_path
+        if len(node_ancestors) > 1:
+            mds_path = ".".join([n.path for n in node_ancestors[1:]])
+        return self.shot.number, mds_tree, mds_path
     
     def _get_mds_node(self):
         """Get the corresponding MDSplus node for this H1DS tree node."""
@@ -109,3 +107,14 @@ class DataTreeManager(BaseDataTreeManager):
             node = self.model(path=tree_name, parent=shot_root_node)
             node.save()
             node.populate_child_nodes()
+
+
+class MDSPlusShotManager(BaseBackendShotManager):
+    
+    tree_manager = DataTreeManager()
+    
+    def get_latest_shot(self):
+        default_tree = self.tree_manager.get_trees()[0]
+        mds_tree = MDSplus.Tree()
+        latest_shot = mds_tree.getCurrent(default_tree)
+        return latest_shot
