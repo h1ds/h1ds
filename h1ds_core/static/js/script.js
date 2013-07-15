@@ -887,6 +887,7 @@ PlotContainer.prototype.loadURL = function(data_url, is_binary) {
 	    that.url_cache[data_url] = data;
 	});
     } else {
+	console.log(data_url);
     $.ajax({url: data_url, 
 	    dataType: "json",
 	    async:false})

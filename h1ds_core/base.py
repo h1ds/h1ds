@@ -62,15 +62,73 @@ def get_all_filters():
         filters.update((f.get_slug(), f) for f in mod_filters)
     return filters
 
+class Data(object):
+    def __init__(self, name="", value=None, dimension=None,
+                 value_units="", dimension_units="",
+                 value_dtype="", dimension_dtype="",
+                 metadata={}):
+        self.name = name
+        self.value = value
+        self.dimension = dimension
+        self.value_units = value_units
+        self.dimension_units = dimension_units
+        self.value_dtype = value_dtype
+        self.dimension_dtype = dimension_dtype
+        self.metadata = metadata
+    
+    def get_n_dimensions(self):
+        return len(self.dimension)
+        
 
 class BaseNodeData(object):
 
-    def read_primary_data(self):
+    def get_child_names_from_primary_source(self):
+        """Override this"""
         pass
 
+    def get_name(self):
+        return ""
+
+    def get_value(self):
+        return None
+
+    def get_dimension(self):
+        return None
+
+    def get_value_units(self):
+        return ""
+    
+    def get_dimension_units(self):
+        return ""
+
+    def get_value_dtype(self):
+        return ""
+
+    def get_dimension_dtype(self):
+        return ""
+       
+    def get_metadata(self):
+        return {}
+    
+    def read_primary_data(self):
+        name = self.get_name()
+        value = self.get_value()
+        dimension = self.get_dimension()
+        value_units = self.get_value_units()
+        dimension_units = self.get_dimension_units()
+        value_dtype = self.get_value_dtype()
+        dimension_dtype = self.get_dimension_dtype()
+        metadata = self.get_metadata()
+        data = Data(name=name, value=value, dimension=dimension, value_units=value_units,
+                    dimension_units=dimension_units, value_dtype=value_dtype,
+                    dimension_dtype=dimension_dtype, metadata=metadata)
+
+        return data
+    
     def write_primary_data(self):
         pass
 
+    """
     def read_primary_dim(self):
         pass
 
@@ -98,10 +156,8 @@ class BaseNodeData(object):
 
     #def write_data(self):
     #    pass
-
-    def get_child_names_from_primary_source(self):
-        """Override this"""
-        pass
+    """
+    
 
 class BaseDataTreeManager(models.Manager):
 

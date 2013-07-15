@@ -129,7 +129,7 @@ class Shot(models.Model):
         return reverse('shot-detail', kwargs={'shot':self.number})
 
     def save(self, *args, **kwargs):
-        self.timestamp = self.backend.get_timestamp_for_shot(self.number)
+        self.timestamp = Shot.backend.get_timestamp_for_shot(self.number)
         super(Shot, self).save(*args, **kwargs)
         self._populate()
 
@@ -163,8 +163,9 @@ class Node(MPTTModel, backend_module.NodeData):
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
     slug = models.SlugField()
     has_data = models.BooleanField(default=True)
-    dimension = models.PositiveSmallIntegerField(blank=True, null=True)
-    dtype = models.CharField(max_length=16)
+    n_dimensions = models.PositiveSmallIntegerField(blank=True, null=True)
+    dtype = models.CharField(max_length=16, blank=True)
+    n_channels = models.PositiveSmallIntegerField(blank=True, null=True)
 
     # This is effectively a  fixed-length string unique identifier for
     # a  node, allowing  us  to find  the same  node  for other  shots
@@ -174,14 +175,21 @@ class Node(MPTTModel, backend_module.NodeData):
     # the node when the node is saved.
     path_checksum = models.CharField(max_length=40)
     
-
+    ## TODO:
+    ## have n_channels
+    ## dtype, dimensions etc are lists with length n_channels
+    ## same with original_data
+    ## each element in n_channel original_data list has a Data instance
+    ## data has dim, labels, name, units etc.
+    ## for now, consider channels as indep, can later share info.
     
-    data = None
-    dim = None
-    labels = None
-    primary_data = None
-    primary_dim = None
-    primary_labels = None
+    primary_data = []
+    #filtered_data = []
+    #dim = None
+    #labels = None
+    #primary_data = None
+    #primary_dim = None
+    #primary_labels = None
     filter_history = []
     
     # TODO: rename so that path, nodepath are intuitive
@@ -209,8 +217,18 @@ class Node(MPTTModel, backend_module.NodeData):
     def save(self, *args, **kwargs):
         self.slug = slugify(self.path)
         super(Node, self).save(*args, **kwargs)
+        # TODO: only single channel...
+        self.primary_data = [self.read_primary_data()]
+        if self.primary_data in [None, []]:
+            self.has_data = False
+        else:
+            self.has_data = True
+            self.n_dimensions = self.primary_data[0].get_n_dimensions()
+            self.dtype = self.primary_data[0].value_dtype
+            self.n_channels = len(self.primary_data)
+            
         self.path_checksum = self._get_sha1()
-        super(Node, self).save(update_fields=['path_checksum'])
+        super(Node, self).save()#update_fields=['path_checksum'])
         # TODO: if the node name changes then we also need to regenerate
         # sha1 keys for all descendents...
     
@@ -260,15 +278,15 @@ class Node(MPTTModel, backend_module.NodeData):
     def apply_filters(self, request):
         if self.primary_data == None:
             self.primary_data = self.read_primary_data()
-        if self.primary_dim == None:
-            self.primary_dim = self.read_primary_dim()
-        if self.primary_labels == None:
-            self.primary_labels = self.read_primary_labels()
+        #if self.primary_dim == None:
+        #    self.primary_dim = self.read_primary_dim()
+        #if self.primary_labels == None:
+        #    self.primary_labels = self.read_primary_labels()
             
         # reset data as primary data
         self.data = self.primary_data
-        self.dim = self.primary_dim
-        self.labels = self.primary_labels
+        #self.dim = self.primary_dim
+        #self.labels = self.primary_labels
         for fid, name, kwargs in get_filter_list(request):
             self.apply_filter(fid, name, **kwargs)
         

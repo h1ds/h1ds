@@ -52,7 +52,11 @@ class NodeData(BaseNodeData):
                 self._mds_node = mds_tree.getNode(path)
         return self._mds_node
 
-    def read_primary_data(self):
+    def get_name(self):
+        node = self._get_mds_node()
+        return str(node)
+
+    def get_value(self):
         if self.level == 0:
             return None
         mds_node = self._get_mds_node()
@@ -62,23 +66,68 @@ class NodeData(BaseNodeData):
             primary_data = None
         return primary_data
 
-    def read_primary_dim(self):
+    def get_dimension(self):
         """Get dimension of raw data (i.e. no filters)."""
         if self.level == 0:
-            return np.array([])
+            return []#np.array([])
         mds_node = self._get_mds_node()
         try:
             shape = mds_node.getShape()
             if len(shape) == 1:
-                raw_dim = np.array([mds_node.getDimensionAt().data()])
+                raw_dim = [np.array([mds_node.getDimensionAt().data()])]
             else:
                 dim_list = []
                 for i in range(len(shape)):
                     dim_list.append(mds_node.getDimensionAt(i).data())
                 raw_dim = np.array(dim_list)
         except TdiException:
-            raw_dim = np.array([])
+            raw_dim = []#np.array([])
         return raw_dim
+
+    def get_value_units(self):
+        node = self._get_mds_node()
+        try:
+            units = node.getData().getUnits()
+        except:
+            units = ""
+        return units
+    
+    def get_dimension_units(self):
+        if self.level == 0:
+            return np.array([])
+        mds_node = self._get_mds_node()
+        try:
+            shape = mds_node.getShape()
+            if len(shape) == 1:
+                dim_units = mds_node.getDimensionAt().getUnits()
+            else:
+                units_list = []
+                for i in range(len(shape)):
+                    units_list.append(mds_node.getDimensionAt(i).getUnits())
+                dim_units = units_list
+        except TdiException:
+            dim_units = ""
+        return dim_units
+        
+    def get_value_dtype(self):
+        value = self.get_value()
+        try:
+            dtype = str(value.dtype)
+        except:
+            dtype = ""
+        return dtype
+
+
+    def get_dimension_dtype(self):
+        dim = self.get_dimension()
+        try:
+            dtype = str(dim.dtype)
+        except:
+            dtype = ""
+        return dtype        
+       
+    def get_metadata(self):
+        return {}    
     
     def get_child_names_from_primary_source(self):
         try:

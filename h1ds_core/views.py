@@ -395,12 +395,12 @@ class NodeView(APIView):
         node = self.get_object(shot, nodepath)
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
-            if node.data == None:
+            if node.has_data == False:
                 template = "node_nodata.html"
-            elif np.isscalar(node.data):
+            elif node.n_dimensions == 0:
                 template = "node_scalar.html"
-            elif 1 <= len(node.data.shape) <= 3:
-                template = "node_{}d.html".format(len(node.data.shape))
+            elif 1 <= node.n_dimensions <= 3:
+                template = "node_{}d.html".format(node.n_dimensions)
             else:
                 template = "node_unknown_data.html"
 

@@ -73,13 +73,28 @@ class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
         node = Node.objects.get(shot__number=shot, path_checksum=checksum)
         return node
 
+class DataSerializer(serializers.Serializer):
+    """Serializer for a single data object.
+
+    value
+    dim
+    name
+    value_units
+    dim_units
+    dtype
+    meta
+    """
+    
+    pass
+    
 class NodeSerializer(serializers.HyperlinkedModelSerializer):
     # slug ?
     # data (optional depending on ?show_data query string
     path = serializers.CharField()
     parent = NodeHyperlinkedField(view_name='node-detail')
     children = NodeHyperlinkedField(view_name='node-detail', many=True)
-    data = serializers.Field()
+    #data = serializers.Field()
+    data = DataSerializer(many=True)
     url = NodeHyperlinkedIdentityField(view_name="node-detail", slug_field="nodepath")
     class Meta:
         model = Node
