@@ -384,10 +384,10 @@ class NodeView(APIView):
         parent nodes.
         
         """
-        #node_ancestry = nodepath.split("/")
         checksum = hashlib.sha1(nodepath).hexdigest()
 
         node = Node.objects.get(shot__number=shot, path_checksum=checksum)
+        node.data = [node.read_primary_data()]
         node.apply_filters(self.request)
         return node
         
@@ -396,14 +396,9 @@ class NodeView(APIView):
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
             if node.has_data == False:
-                template = "node_nodata.html"
-            elif node.n_dimensions == 0:
-                template = "node_scalar.html"
-            elif 1 <= node.n_dimensions <= 3:
-                template = "node_{}d.html".format(node.n_dimensions)
+                template = "node_without_data.html"
             else:
-                template = "node_unknown_data.html"
-
+                template = "node_with_data.html"
             return Response({'node':node}, template_name='h1ds_core/'+template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)

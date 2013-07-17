@@ -73,6 +73,12 @@ class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
         node = Node.objects.get(shot__number=shot, path_checksum=checksum)
         return node
 
+class DataField(serializers.WritableField):
+    def to_native(self, obj):
+        pass
+    def from_native(self,obj):
+        pass
+    
 class DataSerializer(serializers.Serializer):
     """Serializer for a single data object.
 
@@ -85,7 +91,8 @@ class DataSerializer(serializers.Serializer):
     meta
     """
     
-    pass
+    name = serializers.CharField()
+    value = DataField()
     
 class NodeSerializer(serializers.HyperlinkedModelSerializer):
     # slug ?
@@ -94,7 +101,7 @@ class NodeSerializer(serializers.HyperlinkedModelSerializer):
     parent = NodeHyperlinkedField(view_name='node-detail')
     children = NodeHyperlinkedField(view_name='node-detail', many=True)
     #data = serializers.Field()
-    data = DataSerializer(many=True)
+    data = DataSerializer(source='get_data')
     url = NodeHyperlinkedIdentityField(view_name="node-detail", slug_field="nodepath")
     class Meta:
         model = Node

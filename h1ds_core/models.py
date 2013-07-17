@@ -204,6 +204,12 @@ class Node(MPTTModel, backend_module.NodeData):
     objects = TreeManager()
     datatree = backend_module.DataTreeManager()
 
+    def get_data(self):
+        if not hasattr(self, 'data'):
+            self.primary_data = [self.read_primary_data()]
+            self.data = self.primary_data
+        return self.data
+                
     def get_absolute_url(self):
         return reverse('node-detail', kwargs={'nodepath':self.nodepath, 'shot':self.shot.number})
     
@@ -276,15 +282,16 @@ class Node(MPTTModel, backend_module.NodeData):
             node.populate_child_nodes()
 
     def apply_filters(self, request):
-        if self.primary_data == None:
-            self.primary_data = self.read_primary_data()
+        self.get_data()
+        #if self.primary_data == None:
+        #    self.primary_data = self.read_primary_data()
         #if self.primary_dim == None:
         #    self.primary_dim = self.read_primary_dim()
         #if self.primary_labels == None:
         #    self.primary_labels = self.read_primary_labels()
             
         # reset data as primary data
-        self.data = self.primary_data
+        #self.data = self.primary_data
         #self.dim = self.primary_dim
         #self.labels = self.primary_labels
         for fid, name, kwargs in get_filter_list(request):

@@ -892,10 +892,10 @@ PlotContainer.prototype.loadURL = function(data_url, is_binary) {
 	    dataType: "json",
 	    async:false})
 	.done(function(a) {
-	    a.is_minmax = isMinMaxPlot(a);
+	    //XX a.is_minmax = isMinMaxPlot(a);
 	    // TODO: 1D signal dim might not be an element, so dim.length will be large...
 	    // TODO:   - need to make this consistent b/w signals of different dim 
-	    a.n_dim = a.dim.length === 2 ? 2 : 1
+	    //XX a.n_dim = a.dim.length === 2 ? 2 : 1
 	    that.url_cache[data_url] = a;
 	});
     }
@@ -1359,9 +1359,9 @@ function plot2DimArray(d, url) {
 function getPlotFunction(dtype, ndim) {
     // TODO: check dtype etc
     switch(ndim) {
-	case "0":
-	return plotScalar;
-	break;
+	//case "0":
+	//return plotScalar;
+	//break;
 	case "1":
 	return plot1DimArray;
 	break;
