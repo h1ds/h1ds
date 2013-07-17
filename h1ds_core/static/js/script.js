@@ -1,164 +1,34 @@
-﻿// Custom javascript code for H1 data system
+﻿////////////////////////////////////////////////////////////////////////
+// Custom javascript code for H1 data system
 // David Pretty, 2010-2013
+////////////////////////////////////////////////////////////////////////
 
-////////////
-// tree from http://bl.ocks.org/mbostock/raw/1093025/
-
-var w = $("#test-nav").width();
-
-var h = 800,
-    i = 0,
-    barHeight = 20,
-    barWidth = w * .8,
-    duration = 400,
-    root;
-
-var tree = d3.layout.tree()
-    .size([h, 100]);
-
-var diagonal = d3.svg.diagonal()
-    .projection(function(d) { return [d.y, d.x]; });
-
-//var vis = d3.select("#test-nav").append("svg:svg")
- //   .attr("width", w)
- //   .attr("height", h)
- // .append("svg:g")
- //   .attr("transform", "translate(20,30)");
-
-
-function updateNav(source) {
-
-  // Compute the flattened node list. TODO use d3.layout.hierarchy.
-  var nodes = tree.nodes(root);
-  
-  // Compute the "layout".
-  nodes.forEach(function(n, i) {
-    n.x = i * barHeight;
-  });
-  
-  // Update the nodes…
-  var node = vis.selectAll("g.node")
-      .data(nodes, function(d) { return d.id || (d.id = ++i); });
-  
-  var nodeEnter = node.enter().append("svg:g")
-      .attr("class", "node")
-      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
-      .style("opacity", 1e-6);
-
-  // Enter any new nodes at the parent's previous position.
-  nodeEnter.append("svg:rect")
-      .attr("y", -barHeight / 2)
-      .attr("height", barHeight)
-      .attr("width", barWidth)
-      .style("fill", color)
-      .on("click", click);
-  
-  nodeEnter.append("svg:text")
-      .attr("dy", 3.5)
-      .attr("dx", 5.5)
-      .text(function(d) { return d.name; });
-  
-  // Transition nodes to their new position.
-  nodeEnter.transition()
-      .duration(duration)
-      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
-      .style("opacity", 1);
-  
-  node.transition()
-      .duration(duration)
-      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
-      .style("opacity", 1)
-    .select("rect")
-      .style("fill", color);
-  
-  // Transition exiting nodes to the parent's new position.
-  node.exit().transition()
-      .duration(duration)
-      .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
-      .style("opacity", 1e-6)
-      .remove();
-  
-  // Update the links…
-  //var link = vis.selectAll("path.link")
-   //   .data(tree.links(nodes), function(d) { return d.target.id; });
-  
-  // Enter any new links at the parent's previous position.
-  //link.enter().insert("svg:path", "g")
-   //   .attr("class", "link")
-    //  .attr("d", function(d) {
-  //      var o = {x: source.x0, y: source.y0};
-  //      return diagonal({source: o, target: o});
-  //    })
-  //  .transition()
-  //    .duration(duration)
-  //    .attr("d", diagonal);
-  
-  // Transition links to their new position.
-  //link.transition()
-  //    .duration(duration)
-  //    .attr("d", diagonal);
-  
-  // Transition exiting nodes to the parent's new position.
-  //link.exit().transition()
-  //    .duration(duration)
-  //    .attr("d", function(d) {
-  //      var o = {x: source.x, y: source.y};
-  //      return diagonal({source: o, target: o});
-  //    })
-  //    .remove();
-  
-  // Stash the old positions for transition.
-  nodes.forEach(function(d) {
-    d.x0 = d.x;
-    d.y0 = d.y;
-  });
-}
-
-// Toggle children on click.
-function click(d) {
-  if (d.children) {
-    d._children = d.children;
-    d.children = null;
-  } else {
-    d.children = d._children;
-    d._children = null;
-  }
-  updateNav(d);
-}
-
-function color(d) {
-  return d._children ? "#3182bd" : d.children ? "#c6dbef" : "#fd8d3c";
-}
-
-///////////////////////////////////////////////
-
-var isOdd = function(someNumber){
-    return (someNumber%2 == 0) ? false : true;
-};
-
-function updateEvents() {
- $.getJSON('/dashboard/', function(data){
-  $.each(data, function(eventID) {
-   var topRowId=parseInt($(".event-id").eq(1).text());
-   if (parseInt(data[eventID].pk) > topRowId) {
-    $("tr").eq(0).after('<tr><td class="event-id">'+data[eventID].pk+'</td><td class="name">'+data[eventID].fields.signal+'</td><td class="time">'+data[eventID].fields.time+'</td></tr>');
-    $("tr").eq(1).effect("highlight", {color:"#ff6600"}, 300000);
-   } // end if
-  }); // end each
- }); // end getJSON
-} // end function
-
-function autoUpdateEvents() {
-    setInterval(updateEvents, 2000);
-}
+////////////////////////////////////////////////////////////////////////
+// Masonry - for  grid layout. Currently just used in  homepage, but not
+// really needed there.
+////////////////////////////////////////////////////////////////////////
 
 $('#masonry-container').masonry({
      itemSelector: '.mbox',
      columnWidth: 384
  });
 
+////////////////////////////////////////////////////////////////////////
+// scrollView - scroll to specified element
+////////////////////////////////////////////////////////////////////////
 
-// start: adapted from http://jqueryui.com/demos/sortable/#portlets
+$.fn.scrollView = function () {
+    return this.each(function () {
+        $('html, body').animate({
+            scrollTop: $(this).offset().top
+        }, 0);
+    });
+}
+
+////////////////////////////////////////////////////////////////////////
+// jQuery UI Portlets
+// Adapted from http://jqueryui.com/demos/sortable/#portlets
+////////////////////////////////////////////////////////////////////////
 
 $(function() {
 
@@ -195,8 +65,10 @@ $(function() {
 
 });
 
-// end: adapted from http://jqueryui.com/demos/sortable/#portlets
 
+////////////////////////////////////////////////////////////////////////
+// Cookie management
+////////////////////////////////////////////////////////////////////////
 
 function loadCookie() {
 
@@ -234,87 +106,251 @@ function loadCookie() {
     }
 }
 
+////////////////////////////////////////////////////////////////////////
+// Latest shot tracking
+////////////////////////////////////////////////////////////////////////
 
-function plotSignal2D() {
-    // custom image manipulation for data
-    var container  = $("#dummy");
-    var query_char = window.location.search.length ? '&' : '?';
-    var image_query = window.location.search + query_char + 'format=json';
 
-    $.getJSON(image_query, dataReady);
+var shot_stream_client = new XMLHttpRequest();
 
-    function dataReady(signal_data) {
-	var canvas = document.createElement("canvas");
-	canvas.width = signal_data.dim[0].length;
-	canvas.height = signal_data.dim[1].length;
-	container.height(canvas.height);
-	var context = canvas.getContext('2d');
-	var imageData = context.getImageData(0,0,canvas.width, canvas.height);
+// TODO: rather not have big chunks of html here - use js instead, eg http://stackoverflow.com/questions/3365325/form-action-javascriptblock-redirects-to-javascriptblock-url-in-firefo
+function turnOffShotTracker() {
+    $("#h1ds-track-latest-shot").hide();
+    $("#h1ds-shot-controller").show();
+    $("#h1ds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="." onsubmit="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="track latest shot"></FORM>');
+    $.cookie("shotTracking", 'false', {path:'/'});
+    shot_stream_client.abort();
+}
 
-	for (var x = 0; x < imageData.width; x++) {
-	    for (var y = 0; y < imageData.height; y++) {
-		var index = 4 * (y * imageData.width + x);
-		var imval = 255*(signal_data.data[x][y] - signal_data.min)/(signal_data.max-signal_data.min);
-		imageData.data[index] = imval;
-		imageData.data[index + 1] = imval;
-		imageData.data[index + 2] = imval;
-		imageData.data[index + 3] = 255;
+// TODO: rather not have big chunks of html here - use js instead, eg http://stackoverflow.com/questions/3365325/form-action-javascriptblock-redirects-to-javascriptblock-url-in-firefo
+function turnOnShotTracker() {
+    $("#h1ds-shot-controller").hide();
+    $("#h1ds-track-latest-shot").show();
+    $("#h1ds-toggletrack-latest-shot").html('<FORM class="inline-form right" action="." onsubmit="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="stop tracking latest shot"></FORM>');
+    $.cookie("shotTracking", 'true', {path:'/'});
+
+    shot_stream_client.open('get', '/_/shot_stream/');
+    shot_stream_client.send();
+    shot_stream_client.onprogress = function(){
+	var split_response = this.responseText.split("\n");
+	// -2 because each shot has a trailing \n
+	var new_shot = split_response[split_response.length-2];
+	$.getJSON("/_/url_for_shot",
+		  {'input_path':window.location.toString(), 'shot':new_shot},
+		  function(d){window.location = d.new_url;});
+    };
+}
+
+function toggleTrackLatestShot() {
+    // Keep toggle state in cookie so we can retain user preference through navigation etc.
+    var currentState = $.cookie("shotTracking");
+    if (currentState === 'true') {
+	turnOffShotTracker();
+    } else {
+	turnOnShotTracker();
+    }
+    return false;
+}  
+
+
+////////////////////////////////////////////////////////////////////////
+// Short polling for Summary database
+// TODO: use SSE instead!!
+////////////////////////////////////////////////////////////////////////
+
+function autoPollSummaryDB() {
+    var do_poll = d3.select("#poll-summarydb-server");
+    if (do_poll[0][0] !== null && do_poll.text() === 'True') {
+	var last_update = null;
+	var query_char = window.location.search.length ? '&' : '?';
+	var query_str = window.location.search + query_char + 'format=json';
+	var json_url = window.location.toString()+query_str	
+	// select table elements
+	var table = d3.select("table.main-table tbody");
+	//var rows = table.selectAll("tr")
+	//    .data([], function(d) {return d.shot;})
+	//    .enter().append("tr")
+	//    .each(function(d,i) {
+	//	d3.select(this).selectAll("td").data(d.d).enter().append("td");
+	//	// console.log(d);
+	//    });
+
+	function doSummaryUpdate(fade_duration) {
+	    $.ajax({url: json_url, 
+		    dataType: "json",
+		    async:false})
+		.done(function(a) {
+		    /*
+		    var rows = table.selectAll("tr")
+			.data(a.data, function(d) { return d.shot;});
+		    rows.enter()
+			.insert("tr", "tr")
+			.style('background-color', 'yellow')
+			.each(function(d,i) {
+			    d3.select(this).selectAll("td").data(d.d).enter()
+				.append("td")
+				.html(function(j,i){ return '<a href="/summary/_/go_to_source/'+a.attributes[i]+'/'+d.shot+'/" >'+j+'</a>'; });
+			});
+		    rows.transition()
+			.duration(fade_duration)
+			.style('background-color', 'white');
+		    
+		    rows.exit().remove();
+		    */
+		    last_update = new Date(a.timestamp);
+		    var rows = table.selectAll("tr")
+			.data(cross(a), function(d) { return d[0].shot;});
+		    rows.enter()
+			.insert("tr", "tr")
+			.style('background-color', 'yellow');
+
+		    var td = rows.selectAll("td")
+			.data(function(d) { return d; });
+		    td.enter()
+			.append("td")
+		    //.style('background-color', 'yellow')
+			.html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
+			//.text(function(d) { return d.value; });
+		    
+		    td.transition()
+			.duration(500)
+			//.styleTween('background-color', function tween(d, i, a) {console.log([d,i,a, this]); return d3.interpolate('yellow', 'white');})
+			//.each(function(d) {console.log(d3.select(this))});
+			.each(function(d) {
+			    d3.select(this).html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
+			    });
+			//.text(function(d) {return d.value;});
+			//.html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
+			//.style('background-color', 'white');
+			
+		    rows.transition()
+			.duration(fade_duration)
+			.style('background-color', 'white');
+
+		    rows.exit().remove();
+			//.insert("tr", "tr")
+			//.style('background-color', 'yellow')
+			//.each(function(d,i) {
+			//    d3.select(this).selectAll("td").data(d.d).enter()
+		//		.append("td")
+			// .html(function(j,i){ return '<a href="/summary/_/go_to_source/'+a.attributes[i]+'/'+d.shot+'/" >'+j+'</a>'; });
+		//	});
+		  //  rows.transition()
+	//		.duration(fade_duration)
+	//		.style('background-color', 'white');
+		    
+	//	    rows.exit().remove();
+		});
+	}
+	doSummaryUpdate(1000);
+	setInterval(function() {
+	    if (summaryUpdateRequired(last_update)) {
+		doSummaryUpdate(300000);
+	    }
+	}, 2000);
+	//setInterval(function() {
+	//    doSummaryUpdate(300000, last_update);
+	//}, 2000);
+    }
+}
+
+
+function getLastShotInDisplayedPage() {
+    // get latest shot in document
+    // TODO - this assumes shot is first column
+    // if we get more flexible about the table/data structure
+    // then we should get more clever about how we get this value
+    var latest_shot = -1;
+    d3.selectAll("table.main-table tr")
+	.each(function(d,i) {
+	    if (i > 0) {
+		var shot = Number(d3.select(this).select("td").text());
+		if (shot > latest_shot) {
+		    latest_shot = shot;
+		}
 	    }
 	}
-	context.putImageData(imageData, 0, 0);
-	container.append(canvas);
-    } // end: dataReady
+	     );
+    return latest_shot;
 }
 
 
-function getPlotWidth(id){
-    //
-    // args: id selector of container div
-    // returns: margins and plot width
-    //
-    var vis_width = $(id).width();
-    //var plot_width = parseInt(0.9*vis_width);
-    //var both_margins = vis_width - plot_width;
-    //if (isOdd(both_margins)) {
-	// plot_width -= 1;
-	// both_margins += 1;
-    // }
-    // var margin = both_margins/2;
-    var margin_left = 30;
-    var margin_right = 0;
-    return {'plot':vis_width-margin_left-margin_right, 'marginLeft':margin_left, 'marginRight':margin_right}
+function summaryUpdateRequired(last_update) {
+    //var latest_shot_in_doc = getLastShotInDisplayedPage();
+    //var latest_summary_shot = -1;
+    $.ajax({url: '/summary/_/get_last_update_time/', 
+	    dataType: "json",
+	    async:false})
+	.done(function(a) {
+	    //latest_summary_shot = Number(a.latest_shot);
+	    latest_summdb_update = new Date(a.last_update);
+	});
+    return latest_summdb_update > last_update;
 }
 
-function fillPlot(data) {
-    // return a line of points from data object
-    // require data.dim, data.data=[[min,,,,], [max,,,,]]
-    
-    var d = Array(2*data.dim.length);
+function updateSummaryDB() {
+    var latest_shot_in_doc = getLastShotInDisplayedPage();
+    var latest_summary_shot = -1;
+    $.ajax({url: '/summary/_/get_latest_summarydb_shot/', 
+	    dataType: "json",
+	    async:false})
+	.done(function(a) {
+	    latest_summary_shot = Number(a.latest_shot);
+	});
 
-    for( i=0; i < data.dim.length; i++){
-        d[i]=[data.dim[i],data.data[0][i]];
-        d[data.dim.length + i]=[data.dim[data.dim.length-(i+1)],data.data[1][data.dim.length-(i+1)]];
+    if (latest_summary_shot > latest_shot_in_doc) {
+	var query_char = window.location.search.length ? '&' : '?';
+	var query_str = window.location.search + query_char + 'format=json';
+	var json_url = window.location.toString()+query_str
+	// keep async = false, to make sure we don't check document for 
+	// current shot until we've updated the document.
+	$.ajax({url: json_url, 
+		dataType: "json",
+		async:false})
+	    .done(function(a) {
+		// 
+	    });
     }
-    return d;
+
 }
 
-// If we have min and max signals, then we fill the area between them.
-function isMinMaxPlot(signal_data) {
-    return  (($.inArray("min", signal_data.labels) > -1) && 
-	     ($.inArray("max", signal_data.labels) > -1) && 
-	     (signal_data.labels.length == 2)) ? true : false;
+function cross(a) {
+    var data = [], di, ai, shot_dat;
+    for (di=0;di<a.data.length;di++) {
+	data[di] = [];
+	data[di].shot
+	for (ai=0; ai<a.attributes.length; ai++) {
+	    data[di][ai] = {'shot':a.data[di].shot, 'attr':a.attributes[ai], 'value':a.data[di].d[ai]};
+	}
+    }
+    return data;
 }
 
+$("span.toggleVertical").each(function() {
+    if ($.cookie("vertical-"+$(this).text()) === "true") {
+	$(this).toggleClass("verticalText");
+	$(this).html($(this).text().replace(/(.)/g, "$1<br />"));
+    }}
+);
 
-/*
- * Interactive data plots.
- * 
- */
 
-/*********************************************************************/
-/*********************************************************************/
+$("span.toggleVertical").click(function() {
+    $(this).toggleClass("verticalText");
+    if ($(this).hasClass("verticalText")) {
+	$(this).html($(this).text().replace(/(.)/g, "$1<br />"));
+	$.cookie("vertical-"+$(this).text(),true); 
+	
+    } else {
+	$(this).html($(this).text().replace("$1<br />",""));
+	$.cookie("vertical-"+$(this).text(),false); 
+    }
+});
 
-// an object which allows easy manipulation of query string filters.
+////////////////////////////////////////////////////////////////////////
+// H1DSUri -  an object which  allows easy manipulation of  query string
+// filters.
+////////////////////////////////////////////////////////////////////////
+
 function H1DSUri(original_uri) {
     this.uri_components = parseUri(original_uri);
     this.h1ds_filters = {};
@@ -421,139 +457,10 @@ H1DSUri.prototype.setShot = function(new_shot) {
     this.uri_components.path = new_path;
 }
 
-// Functions to modify a URL to return data suitable for a given plot type
 
-function getSpectrogramUri(original_uri) {
-    // assume original_url gives a timeseries.
-    var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
-    h1ds_uri.appendFilter('spectrogram', {'bin_size':-1});
-    h1ds_uri.appendFilter('norm_dim_range_2d', {'x_min':0, 'x_max':1, 'y_min':0, 'y_max':0.5});
-    h1ds_uri.appendFilter('y_axis_energy_limit', {'threshold':0.995});
-    h1ds_uri.non_h1ds_query['format'] = 'bin';
-    h1ds_uri.non_h1ds_query['bin_assert_dtype'] = 'uint8';
-    return h1ds_uri;
-}
-
-function getPowerspectrumUri(original_uri, width) {
-    // assume original_url gives a timeseries.
-    var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
-    h1ds_uri.appendFilter('power_spectrum', {});
-    h1ds_uri.appendFilter('norm_dim_range', {'min':0,'max':0.5});
-    //h1ds_uri.appendFilter('x_axis_energy_limit',{'threshold':0.995});
-    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
-    h1ds_uri.non_h1ds_query['format'] = 'json';
-    return h1ds_uri;
-}
-
-function getRawUri(original_uri, width) {
-    // assume original_url gives a timeseries.
-    var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
-    h1ds_uri.non_h1ds_query['format'] = 'json';
-    return h1ds_uri;
-}
-
-
-/*
- * planned API:
- * var pc = new PlotContainer("#signal-1d-placeholder", [row_1, row_2,..], [col_1, col_2,..]);
- * col_1, col_2 numbers which are normalised to width of container
- * e.g. col_1 -> col_1/(coil_1+col_2) * container_width
- * row_i normalised row heights (height set min of to golden ratio and 90% browser height)
- * 
- * pc.setPlotType(plot number, plot type)
- * pc.addData(dataid, url)
- * pc.addDataToPlot(dataid, plot number)
- * pc.linkAxes([plot number, axis or selection], [plot number, axis or selection])
- *
- * pc.removeDataFromPlot(dataid, plot number)
- * pc.moveData(dataid, from plot, to plot)
- *
- */
-
-function PlotContainer(id, rows, columns) {
-    // Store element ID selector
-    this.id = id;
-
-    // "raw" should plot any unaltered data? not just line?
-    // TODO: js has first class functions - shouldn't we just pass functions around and inspect?
-    this.plotTypes = {
-	'raw':this.plotLine, 
-	'spectrogram':this.plotSpectrogram,
-	//'powerspectrum':this.plotPowerSpectrum,
-	'powerspectrum':this.plotLine,
-	//'raw2d':this.plotRaw2D,
-	// TODO - plotSpectrogram just plots 2d? - rename
-	// spectrogram stuff is really in the getSpectrogramUri
-	'raw2d':this.plotSpectrogram
-    }
-
-    // create SVG
-    var w = $(id).width();
-    // TODO: allow more flexibiity with height - e.g. user resize portlet
-    var _h = w/1.618;
-    // but don't make it more than 90% of browser height..
-    var h = d3.min([_h, 0.9*$(window).height()]);
-    
-    this.control_panel = d3.select(id)
-	.append("div")
-	.classed("pc-control-panel", true)
-	.append("ul");
-
-    this.svg = d3.select(id)
-	.append("svg:svg")
-	.attr("width", w)
-	.attr("height", h);
-
-    // TODO: replace with algorithm to generate distinct colours.
-    this.data_colours = ['#A11D20', '#662C91', '#1859A9', '#008C47', '#ED2D2E', '#010101'];
-
-    this.plotGrid = this.setPlotGrid(rows, columns);
-    //this.plotRenderOrder = [];
-    //for (var i=0; i<this.plotGrid.length;i++) this.plotRenderOrder[i]=i;
-
-    // url_cache is an object for storing url:plot_data key/value pairs
-    // This is the one place where data is stored.
-    this.url_cache = {};
-
-    // mapping of data_ids to URLs, colour, etc
-    this.data_ids = {}
-
-    // how much to extend the y-axis past the data limits.
-    this.dataPadding = 0.05
-
-    // TODO: can we base this on font size rather than magic number of pixels?
-    // padding for axes
-    this.xAxisPadding = 40;
-    this.yAxisPadding = 60;
-}
-
-
-PlotContainer.prototype.plotLine = function(selection) {
-
-    var do_flip = selection.datum().plot.flip;
-
-    selection.append("path")
-	.classed("path-filled", function(d) { return d.data.is_minmax })
-	.style("stroke", function(d,i) { return d.data.colour; })
-	.style("fill", function(d,i) { return d.data.is_minmax ? d.data.colour : "none" })
-	.attr("d", function(d,i) {
-	    if (d.data.is_minmax) {
-		var fill_data = fillPlot(d.data);
-		var line = d3.svg.line()
-		    .x(function(a) { return d.plot.x(a[do_flip?1:0]); })
-		    .y(function(a) { return d.plot.y(a[do_flip?0:1]); });
-		return line(fill_data);
-	    } else {
-		var line = d3.svg.line()
-		    .x(function(a,j) { return d.plot.x(do_flip?a:d.data.dim[j]); })
-		    .y(function(a,j) { return d.plot.y(do_flip?d.data.dim[j]:a); });
-		return line(d.data.data);
-	    }
-	});
-};
+////////////////////////////////////////////////////////////////////////
+// Mouse controls for data zooming etc.
+////////////////////////////////////////////////////////////////////////
 
 d3.select(window)
     .on("mousemove", mousemove)
@@ -631,9 +538,113 @@ function mouseup() {
     rect = null;
 }
 
+////////////////////////////////////////////////////////////////////////
+// Plot Container - the main object for viewing data
+////////////////////////////////////////////////////////////////////////
 
-tmpdebug = function(selection) {
+/*
+ * planned API:
+ * var pc = new PlotContainer("#signal-1d-placeholder", [row_1, row_2,..], [col_1, col_2,..]);
+ * col_1, col_2 numbers which are normalised to width of container
+ * e.g. col_1 -> col_1/(coil_1+col_2) * container_width
+ * row_i normalised row heights (height set min of to golden ratio and 90% browser height)
+ * 
+ * pc.setPlotType(plot number, plot type)
+ * pc.addData(dataid, url)
+ * pc.addDataToPlot(dataid, plot number)
+ * pc.linkAxes([plot number, axis or selection], [plot number, axis or selection])
+ *
+ * pc.removeDataFromPlot(dataid, plot number)
+ * pc.moveData(dataid, from plot, to plot)
+ *
+ */
+
+function PlotContainer(id, rows, columns) {
+
+    // Store element ID selector
+    this.id = id;
+
+    // "raw" should plot any unaltered data? not just line?
+    // TODO: js has first class functions - shouldn't we just pass functions around and inspect?
+    this.plotTypes = {
+	'raw':this.plotLine, 
+	'spectrogram':this.plotSpectrogram,
+	//'powerspectrum':this.plotPowerSpectrum,
+	'powerspectrum':this.plotLine,
+	//'raw2d':this.plotRaw2D,
+	// TODO - plotSpectrogram just plots 2d? - rename
+	// spectrogram stuff is really in the getSpectrogramUri
+	'raw2d':this.plotSpectrogram
+    }
+
+    // create SVG
+    var w = $(id).width();
+
+    // TODO: allow more flexibiity with height - e.g. user resize portlet
+    var _h = w/1.618;
+
+    // but don't make it more than 90% of browser height..
+    var h = d3.min([_h, 0.9*$(window).height()]);
+    
+    this.control_panel = d3.select(id)
+	.append("div")
+	.classed("pc-control-panel", true)
+	.append("ul");
+
+    this.svg = d3.select(id)
+	.append("svg:svg")
+	.attr("width", w)
+	.attr("height", h);
+
+    // TODO: replace with algorithm to generate distinct colours.
+    this.data_colours = ['#A11D20', '#662C91', '#1859A9', '#008C47', '#ED2D2E', '#010101'];
+
+    this.plotGrid = this.setPlotGrid(rows, columns);
+    //this.plotRenderOrder = [];
+    //for (var i=0; i<this.plotGrid.length;i++) this.plotRenderOrder[i]=i;
+
+    // url_cache is an object for storing url:plot_data key/value pairs
+    // This is the one place where data is stored.
+    this.url_cache = {};
+
+    // mapping of data_ids to URLs, colour, etc
+    this.data_ids = {}
+
+    // how much to extend the y-axis past the data limits.
+    this.dataPadding = 0.05
+
+    // TODO: can we base this on font size rather than magic number of pixels?
+    // padding for axes
+    this.xAxisPadding = 40;
+    this.yAxisPadding = 60;
 }
+
+
+PlotContainer.prototype.plotLine = function(selection) {
+
+    var do_flip = selection.datum().plot.flip;
+
+    selection.append("path")
+	.classed("path-filled", function(d) { return d.data.is_minmax })
+	.style("stroke", function(d,i) { return d.data.colour; })
+	.style("fill", function(d,i) { return d.data.is_minmax ? d.data.colour : "none" })
+	.attr("d", function(d,i) {
+	    if (d.data.is_minmax) {
+		var fill_data = fillPlot(d.data);
+		var line = d3.svg.line()
+		    .x(function(a) { return d.plot.x(a[do_flip?1:0]); })
+		    .y(function(a) { return d.plot.y(a[do_flip?0:1]); });
+		return line(fill_data);
+	    } else {
+		var line = d3.svg.line()
+		    .x(function(a,j) { return d.plot.x(do_flip?a:d.data.dim[j]); })
+		    .y(function(a,j) { return d.plot.y(do_flip?d.data.dim[j]:a); });
+		return line(d.data.data);
+	    }
+	});
+};
+
+
 
 PlotContainer.prototype.plotRaw2D = function(selection) {
 
@@ -770,98 +781,6 @@ PlotContainer.prototype.addDataToPlot = function(data_id, plot_id, update) {
 	this.updateDisplay();
     }
 };
-
-ProcessH1DSHeaders = function(header_string) {
-    var lines = header_string.split("\n");
-    var processed_headers = {};
-    for (var header_i=0;header_i<lines.length;header_i++) {
-	// split the keys and values
-	var header_kv = lines[header_i].split(":");
-	if (header_kv.length === 2) { // so we can ignore trailing \n
-	    if (header_kv[0].match("^X-H1DS")) {
-		processed_headers[header_kv[0]] = $.trim(header_kv[1]);
-	    }
-	}
-    }
-    return processed_headers;
-}
-
-ProcessBinaryData = function(data_string, headers) {
-    // TODO: only works with uint8 for now...
-    var bin_data = new Uint8Array(str2ab(data_string));    
-    var ndim = parseInt(headers["X-H1DS-ndim"]);
-    var counter = 0;
-    var output = {'data':[], 'dim':[], 'n_dim':ndim};
-    // populate dim
-    for (var dim=0; dim<ndim; dim++) {
-	output['dim'][dim] = [];
-	var dim_length = parseInt(headers["X-H1DS-dim-"+dim+"-length"]);
-	var dim_delta = parseFloat(headers["X-H1DS-dim-"+dim+"-delta"]);
-	var dim_first = parseFloat(headers["X-H1DS-dim-"+dim+"-first"]);	
-	for (var i=0; i<dim_length; i++) {
-	    output['dim'][dim][i] = dim_delta*i+dim_first;
-	}
-    }
-    // populate data
-    // TODO: use a recursion to populate arbitary ndim. 
-    var data_delta = parseFloat(headers["X-H1DS-data-delta"]);
-    var data_min = parseFloat(headers["X-H1DS-data-min"]);	
-
-    if (ndim > 0) {
-	var dim_0_length = parseInt(headers["X-H1DS-dim-0-length"]);
-	var dim_0_delta = parseFloat(headers["X-H1DS-dim-0-delta"]);
-	var dim_0_first = parseFloat(headers["X-H1DS-dim-0-first"]);	
-	for (var i0=0; i0<dim_0_length; i0++){
-	    if (ndim > 1) {
-		output['data'][i0] = [];
-		var dim_1_length = parseInt(headers["X-H1DS-dim-1-length"]);
-		var dim_1_delta = parseFloat(headers["X-H1DS-dim-1-delta"]);
-		var dim_1_first = parseFloat(headers["X-H1DS-dim-1-first"]);
-		for (var i1=0; i1<dim_1_length; i1++){
-		    if (ndim > 2) {
-			output['data'][i0][i1] = [];
-			var dim_2_length = parseInt(headers["X-H2DS-dim-2-length"]);
-			var dim_2_delta = parseFloat(headers["X-H1DS-dim-2-delta"]);
-			var dim_2_first = parseFloat(headers["X-H1DS-dim-2-first"]);
-			for (var i2=0; i2<dim_2_length; i2++){
-			    // TODO: only up to 3d supported, generalise
-			    output['data'][i0][i1][i2] = data_delta*bin_data[counter]+data_min;
-			    counter++;
-			}
-		    } else {
-			//output['data'][i0][i1] = data_delta*bin_data[counter]+data_min;
-			// TODO: putting back delta and min screw up the spectrogram, why?
-			output['data'][i0][i1] = bin_data[counter];
-			counter++;
-		    }
-		}		
-	    } else {
-		output['data'][i0] = data_delta*bin_data[counter]+data_min;
-		counter++;
-	    }
-	}
-    }
-    return output;
-}
-
-
-// from http://updates.html5rocks.com/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
-// changed to Uint8Array for UTF-8
-function ab2str(buf) {
-    //return String.fromCharCode.apply(null, new Uint16Array(buf));
-    return String.fromCharCode.apply(null, new Uint8Array(buf));
-}
-function str2ab(str) {
-    //var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
-    var buf = new ArrayBuffer(str.length);
-    //var bufView = new Uint16Array(buf);
-    var bufView = new Uint8Array(buf);
-    for (var i=0, strLen=str.length; i<strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
-    }
-    return buf;
-}
-   
 
 PlotContainer.prototype.loadURL = function(data_url, is_binary) {
     var that = this;
@@ -1089,238 +1008,186 @@ PlotContainer.prototype.updatePlot = function(plot_id) {
 
 };
 
+// Utils for PlotContainer
 
-function getLastShotInDisplayedPage() {
-    // get latest shot in document
-    // TODO - this assumes shot is first column
-    // if we get more flexible about the table/data structure
-    // then we should get more clever about how we get this value
-    var latest_shot = -1;
-    d3.selectAll("table.main-table tr")
-	.each(function(d,i) {
-	    if (i > 0) {
-		var shot = Number(d3.select(this).select("td").text());
-		if (shot > latest_shot) {
-		    latest_shot = shot;
-		}
+function fillPlot(data) {
+    // return a line of points from data object
+    // require data.dim, data.data=[[min,,,,], [max,,,,]]
+    
+    var d = Array(2*data.dim.length);
+
+    for( i=0; i < data.dim.length; i++){
+        d[i]=[data.dim[i],data.data[0][i]];
+        d[data.dim.length + i]=[data.dim[data.dim.length-(i+1)],data.data[1][data.dim.length-(i+1)]];
+    }
+    return d;
+}
+
+// If we have min and max signals, then we fill the area between them.
+function isMinMaxPlot(signal_data) {
+    return  (($.inArray("min", signal_data.labels) > -1) && 
+	     ($.inArray("max", signal_data.labels) > -1) && 
+	     (signal_data.labels.length == 2)) ? true : false;
+}
+
+// Functions to modify a URL to return data suitable for a given plot type
+
+function getSpectrogramUri(original_uri) {
+    // assume original_url gives a timeseries.
+    var h1ds_uri = new H1DSUri(original_uri);
+    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
+    h1ds_uri.appendFilter('spectrogram', {'bin_size':-1});
+    h1ds_uri.appendFilter('norm_dim_range_2d', {'x_min':0, 'x_max':1, 'y_min':0, 'y_max':0.5});
+    h1ds_uri.appendFilter('y_axis_energy_limit', {'threshold':0.995});
+    h1ds_uri.non_h1ds_query['format'] = 'bin';
+    h1ds_uri.non_h1ds_query['bin_assert_dtype'] = 'uint8';
+    return h1ds_uri;
+}
+
+function getPowerspectrumUri(original_uri, width) {
+    // assume original_url gives a timeseries.
+    var h1ds_uri = new H1DSUri(original_uri);
+    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
+    h1ds_uri.appendFilter('power_spectrum', {});
+    h1ds_uri.appendFilter('norm_dim_range', {'min':0,'max':0.5});
+    //h1ds_uri.appendFilter('x_axis_energy_limit',{'threshold':0.995});
+    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
+    h1ds_uri.non_h1ds_query['format'] = 'json';
+    return h1ds_uri;
+}
+
+function getRawUri(original_uri, width) {
+    // assume original_url gives a timeseries.
+    var h1ds_uri = new H1DSUri(original_uri);
+    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
+    h1ds_uri.non_h1ds_query['format'] = 'json';
+    return h1ds_uri;
+}
+
+ProcessH1DSHeaders = function(header_string) {
+    var lines = header_string.split("\n");
+    var processed_headers = {};
+    for (var header_i=0;header_i<lines.length;header_i++) {
+	// split the keys and values
+	var header_kv = lines[header_i].split(":");
+	if (header_kv.length === 2) { // so we can ignore trailing \n
+	    if (header_kv[0].match("^X-H1DS")) {
+		processed_headers[header_kv[0]] = $.trim(header_kv[1]);
 	    }
 	}
-	     );
-    return latest_shot;
-}
-
-
-function summaryUpdateRequired(last_update) {
-    //var latest_shot_in_doc = getLastShotInDisplayedPage();
-    //var latest_summary_shot = -1;
-    $.ajax({url: '/summary/_/get_last_update_time/', 
-	    dataType: "json",
-	    async:false})
-	.done(function(a) {
-	    //latest_summary_shot = Number(a.latest_shot);
-	    latest_summdb_update = new Date(a.last_update);
-	});
-    return latest_summdb_update > last_update;
-}
-
-function updateSummaryDB() {
-    var latest_shot_in_doc = getLastShotInDisplayedPage();
-    var latest_summary_shot = -1;
-    $.ajax({url: '/summary/_/get_latest_summarydb_shot/', 
-	    dataType: "json",
-	    async:false})
-	.done(function(a) {
-	    latest_summary_shot = Number(a.latest_shot);
-	});
-
-    if (latest_summary_shot > latest_shot_in_doc) {
-	var query_char = window.location.search.length ? '&' : '?';
-	var query_str = window.location.search + query_char + 'format=json';
-	var json_url = window.location.toString()+query_str
-	// keep async = false, to make sure we don't check document for 
-	// current shot until we've updated the document.
-	$.ajax({url: json_url, 
-		dataType: "json",
-		async:false})
-	    .done(function(a) {
-		// 
-	    });
     }
-
+    return processed_headers;
 }
 
-function cross(a) {
-    var data = [], di, ai, shot_dat;
-    for (di=0;di<a.data.length;di++) {
-	data[di] = [];
-	data[di].shot
-	for (ai=0; ai<a.attributes.length; ai++) {
-	    data[di][ai] = {'shot':a.data[di].shot, 'attr':a.attributes[ai], 'value':a.data[di].d[ai]};
+ProcessBinaryData = function(data_string, headers) {
+    // TODO: only works with uint8 for now...
+    var bin_data = new Uint8Array(str2ab(data_string));    
+    var ndim = parseInt(headers["X-H1DS-ndim"]);
+    var counter = 0;
+    var output = {'data':[], 'dim':[], 'n_dim':ndim};
+    // populate dim
+    for (var dim=0; dim<ndim; dim++) {
+	output['dim'][dim] = [];
+	var dim_length = parseInt(headers["X-H1DS-dim-"+dim+"-length"]);
+	var dim_delta = parseFloat(headers["X-H1DS-dim-"+dim+"-delta"]);
+	var dim_first = parseFloat(headers["X-H1DS-dim-"+dim+"-first"]);	
+	for (var i=0; i<dim_length; i++) {
+	    output['dim'][dim][i] = dim_delta*i+dim_first;
 	}
     }
-    return data;
-}
+    // populate data
+    // TODO: use a recursion to populate arbitary ndim. 
+    var data_delta = parseFloat(headers["X-H1DS-data-delta"]);
+    var data_min = parseFloat(headers["X-H1DS-data-min"]);	
 
-$("span.toggleVertical").each(function() {
-    if ($.cookie("vertical-"+$(this).text()) === "true") {
-	$(this).toggleClass("verticalText");
-	$(this).html($(this).text().replace(/(.)/g, "$1<br />"));
-    }}
-);
-
-
-$("span.toggleVertical").click(function() {
-    $(this).toggleClass("verticalText");
-    if ($(this).hasClass("verticalText")) {
-	$(this).html($(this).text().replace(/(.)/g, "$1<br />"));
-	$.cookie("vertical-"+$(this).text(),true); 
-	
-    } else {
-	$(this).html($(this).text().replace("$1<br />",""));
-	$.cookie("vertical-"+$(this).text(),false); 
-    }
-});
-
-function autoPollSummaryDB() {
-    var do_poll = d3.select("#poll-summarydb-server");
-    if (do_poll[0][0] !== null && do_poll.text() === 'True') {
-	var last_update = null;
-	var query_char = window.location.search.length ? '&' : '?';
-	var query_str = window.location.search + query_char + 'format=json';
-	var json_url = window.location.toString()+query_str	
-	// select table elements
-	var table = d3.select("table.main-table tbody");
-	//var rows = table.selectAll("tr")
-	//    .data([], function(d) {return d.shot;})
-	//    .enter().append("tr")
-	//    .each(function(d,i) {
-	//	d3.select(this).selectAll("td").data(d.d).enter().append("td");
-	//	// console.log(d);
-	//    });
-
-	function doSummaryUpdate(fade_duration) {
-	    $.ajax({url: json_url, 
-		    dataType: "json",
-		    async:false})
-		.done(function(a) {
-		    /*
-		    var rows = table.selectAll("tr")
-			.data(a.data, function(d) { return d.shot;});
-		    rows.enter()
-			.insert("tr", "tr")
-			.style('background-color', 'yellow')
-			.each(function(d,i) {
-			    d3.select(this).selectAll("td").data(d.d).enter()
-				.append("td")
-				.html(function(j,i){ return '<a href="/summary/_/go_to_source/'+a.attributes[i]+'/'+d.shot+'/" >'+j+'</a>'; });
-			});
-		    rows.transition()
-			.duration(fade_duration)
-			.style('background-color', 'white');
-		    
-		    rows.exit().remove();
-		    */
-		    last_update = new Date(a.timestamp);
-		    var rows = table.selectAll("tr")
-			.data(cross(a), function(d) { return d[0].shot;});
-		    rows.enter()
-			.insert("tr", "tr")
-			.style('background-color', 'yellow');
-
-		    var td = rows.selectAll("td")
-			.data(function(d) { return d; });
-		    td.enter()
-			.append("td")
-		    //.style('background-color', 'yellow')
-			.html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
-			//.text(function(d) { return d.value; });
-		    
-		    td.transition()
-			.duration(500)
-			//.styleTween('background-color', function tween(d, i, a) {console.log([d,i,a, this]); return d3.interpolate('yellow', 'white');})
-			//.each(function(d) {console.log(d3.select(this))});
-			.each(function(d) {
-			    d3.select(this).html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
-			    });
-			//.text(function(d) {return d.value;});
-			//.html(function(d,i){ return '<a href="/summary/_/go_to_source/'+d.attr+'/'+d.shot+'/" >'+d.value+'</a>'; });
-			//.style('background-color', 'white');
-			
-		    rows.transition()
-			.duration(fade_duration)
-			.style('background-color', 'white');
-
-		    rows.exit().remove();
-			//.insert("tr", "tr")
-			//.style('background-color', 'yellow')
-			//.each(function(d,i) {
-			//    d3.select(this).selectAll("td").data(d.d).enter()
-		//		.append("td")
-			// .html(function(j,i){ return '<a href="/summary/_/go_to_source/'+a.attributes[i]+'/'+d.shot+'/" >'+j+'</a>'; });
-		//	});
-		  //  rows.transition()
-	//		.duration(fade_duration)
-	//		.style('background-color', 'white');
-		    
-	//	    rows.exit().remove();
-		});
-	}
-	doSummaryUpdate(1000);
-	setInterval(function() {
-	    if (summaryUpdateRequired(last_update)) {
-		doSummaryUpdate(300000);
+    if (ndim > 0) {
+	var dim_0_length = parseInt(headers["X-H1DS-dim-0-length"]);
+	var dim_0_delta = parseFloat(headers["X-H1DS-dim-0-delta"]);
+	var dim_0_first = parseFloat(headers["X-H1DS-dim-0-first"]);	
+	for (var i0=0; i0<dim_0_length; i0++){
+	    if (ndim > 1) {
+		output['data'][i0] = [];
+		var dim_1_length = parseInt(headers["X-H1DS-dim-1-length"]);
+		var dim_1_delta = parseFloat(headers["X-H1DS-dim-1-delta"]);
+		var dim_1_first = parseFloat(headers["X-H1DS-dim-1-first"]);
+		for (var i1=0; i1<dim_1_length; i1++){
+		    if (ndim > 2) {
+			output['data'][i0][i1] = [];
+			var dim_2_length = parseInt(headers["X-H2DS-dim-2-length"]);
+			var dim_2_delta = parseFloat(headers["X-H1DS-dim-2-delta"]);
+			var dim_2_first = parseFloat(headers["X-H1DS-dim-2-first"]);
+			for (var i2=0; i2<dim_2_length; i2++){
+			    // TODO: only up to 3d supported, generalise
+			    output['data'][i0][i1][i2] = data_delta*bin_data[counter]+data_min;
+			    counter++;
+			}
+		    } else {
+			//output['data'][i0][i1] = data_delta*bin_data[counter]+data_min;
+			// TODO: putting back delta and min screw up the spectrogram, why?
+			output['data'][i0][i1] = bin_data[counter];
+			counter++;
+		    }
+		}		
+	    } else {
+		output['data'][i0] = data_delta*bin_data[counter]+data_min;
+		counter++;
 	    }
-	}, 2000);
-	//setInterval(function() {
-	//    doSummaryUpdate(300000, last_update);
-	//}, 2000);
+	}
+    }
+    return output;
+}
+
+// from http://updates.html5rocks.com/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
+// changed to Uint8Array for UTF-8
+function ab2str(buf) {
+    //return String.fromCharCode.apply(null, new Uint16Array(buf));
+    return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+function str2ab(str) {
+    //var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+    var buf = new ArrayBuffer(str.length);
+    //var bufView = new Uint16Array(buf);
+    var bufView = new Uint8Array(buf);
+    for (var i=0, strLen=str.length; i<strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
+}
+
+////////////////////////////////////////////////////////////////////////
+// Functions for setting up a plot container instance.
+////////////////////////////////////////////////////////////////////////
+
+function populatePagelet(d, pagelet_url) {
+
+    // Get URL for pagelet data
+    var _json_url = new H1DSUri(pagelet_url);
+    _json_url.non_h1ds_query['format'] = 'json';
+    var json_url = _json_url.renderUri();
+
+    // Read dtype and ndim from the DOM
+    var dtype = d.attr("data-dtype");
+    var ndim = d.attr("data-ndim");
+
+    // Find the approapriate plotting function  and run it with the JSON
+    // format URL
+    var plot_fn = getPlotFunction(dtype, ndim);
+    plot_fn(d.attr("id"), json_url);
+}
+
+function getPlotFunction(dtype, ndim) {
+
+    // TODO: check dtype etc
+    switch(ndim) {
+	case "1":
+	return plot1DimArray;
+	break;
+	case "2":
+	return plot2DimArray;
+	break;
     }
 }
 
-var shot_stream_client = new XMLHttpRequest();
-
-// TODO: rather not have big chunks of html here - use js instead, eg http://stackoverflow.com/questions/3365325/form-action-javascriptblock-redirects-to-javascriptblock-url-in-firefo
-function turnOffShotTracker() {
-    $("#h1ds-track-latest-shot").hide();
-    $("#h1ds-shot-controller").show();
-    $("#h1ds-toggle-track-latest-shot").html('<FORM class="inline-form right" action="." onsubmit="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="track latest shot"></FORM>');
-    $.cookie("shotTracking", 'false', {path:'/'});
-    shot_stream_client.abort();
-}
-
-// TODO: rather not have big chunks of html here - use js instead, eg http://stackoverflow.com/questions/3365325/form-action-javascriptblock-redirects-to-javascriptblock-url-in-firefo
-function turnOnShotTracker() {
-    $("#h1ds-shot-controller").hide();
-    $("#h1ds-track-latest-shot").show();
-    $("#h1ds-toggletrack-latest-shot").html('<FORM class="inline-form right" action="." onsubmit="javascript:toggleTrackLatestShot()" method="post"><INPUT type="submit" id="h1ds-toggletrack-shot" name="h1ds-toggletrack-shot" value="stop tracking latest shot"></FORM>');
-    $.cookie("shotTracking", 'true', {path:'/'});
-
-    shot_stream_client.open('get', '/_/shot_stream/');
-    shot_stream_client.send();
-    shot_stream_client.onprogress = function(){
-	var split_response = this.responseText.split("\n");
-	// -2 because each shot has a trailing \n
-	var new_shot = split_response[split_response.length-2];
-	$.getJSON("/_/url_for_shot",
-		  {'input_path':window.location.toString(), 'shot':new_shot},
-		  function(d){window.location = d.new_url;});
-    };
-}
-
-function toggleTrackLatestShot() {
-    // Keep toggle state in cookie so we can retain user preference through navigation etc.
-    var currentState = $.cookie("shotTracking");
-    if (currentState === 'true') {
-	turnOffShotTracker();
-    } else {
-	turnOnShotTracker();
-    }
-    return false;
-}  
-
-function plotScalar(d, url) {
-    return 0;
-}
 
 function plot1DimArray(d, url) {
     //var pc = new PlotContainer("#"+d, [300,250],[0.75,0.25]);
@@ -1356,114 +1223,30 @@ function plot2DimArray(d, url) {
 	//pc.addDataToPlot("default", 3, true);
 }
 
-function getPlotFunction(dtype, ndim) {
-    // TODO: check dtype etc
-    switch(ndim) {
-	//case "0":
-	//return plotScalar;
-	//break;
-	case "1":
-	return plot1DimArray;
-	break;
-	case "2":
-	return plot2DimArray;
-	break;
-    }
-}
-
-function populatePagelet(d, pagelet_url) {
-    // get URL for pagelet data
-    //var pagelet_url = d.attr("data-pagelet-url");
-    //if (typeof pagelet_url === 'undefined') {
-    //pagelet_url = window.location.toString();
-    //}
-    var _json_url = new H1DSUri(pagelet_url);
-    _json_url.non_h1ds_query['format'] = 'json';
-    var json_url = _json_url.renderUri();
-
-    var dtype = d.attr("data-dtype");
-    var ndim = d.attr("data-ndim");
-
-    
-
-    var plot_fn = getPlotFunction(dtype, ndim);
-    plot_fn(d.attr("id"), json_url);
-    /*
-    $.ajax({url: data_url, 
-	    dataType: "json",
-	    async:true})
-	.done(function(a) {
-	    
-	});
-    */
-    // console.log(d.attr("id"));
-    //d.text(json_url);
-}
-
-//function populateTreeNav(navtree) {
-//
-//}
-
-$.fn.scrollView = function () {
-    return this.each(function () {
-        $('html, body').animate({
-            scrollTop: $(this).offset().top
-        }, 0);
-    });
-}
-
-
-// HACK
-updateShotNav = function() {
-    var current_url = new H1DSUri(window.location.toString());
-    var current_shot = current_url.getShot();
-    if (current_shot === 0) {
-
-	current_url.uri_components.path = $("#debug-node-path").html();
-	current_shot = current_url.getShot();
-	//current_shot = Number($("#h1ds-shot-current").html());
-	//console.log($("#h1ds-shot-current").html());
-	//var tmp_path = current_url.uri_components.path;
-	//if (tmp_path[tmp_path.length-1] === "/"){
-	//    
-	//} else {
-	//    current_url.uri_components.path = current_url.uri_components.path+"/"+current_shot;
-//	}
-    }
-    current_url.setShot(current_shot+1);
-    var next_url = current_url.renderUri();
-    current_url.setShot(current_shot-1);
-    var previous_url = current_url.renderUri();
-    $("#h1ds-shot-previous").html("<a class='shotnav' href='"+previous_url+"'>&larr;</a>");
-    $("#h1ds-shot-next").html("<a class='shotnav' href='"+next_url+"'>&rarr;</a>");
-	//.attr("method", "get")
-	//.attr("action", previous_url);
-    //$("#h1ds-shot-previous form input[type=hidden]").remove();
-}
+////////////////////////////////////////////////////////////////////////
+// Run code when DOM is ready
+////////////////////////////////////////////////////////////////////////
 
 $(document).ready(function() {
-    // updateShotNav();
+
+    // Scroll past the  header so there is more space  for viewing data,
+    // especially helps usability on mobile devices.
+
     $('#main').scrollView();
+    
+    // For summary database, poll server for new shots.
+    // TODO: use SSE instead of short polling!!
+
     autoPollSummaryDB();
-    // autoUpdateEvents();
+
+    // Load cookie to arrange portlets, etc.
+
     loadCookie();
+
+    // Populate the data pagelets.
+
     $(".h1ds-pagelet").each(function() {
 	populatePagelet($(this), window.location.toString());
     });
-    //$(".h1ds-tree-nav").each(function() {
-//	populateTreeNav($(this));
- //   });
-    //d3.json("http://bl.ocks.org/mbostock/raw/1093025/flare.json", function(json) {
-    //json.x0 = 0;
-    //json.y0 = 0;
-    //updateNav(root = json);
-    //});
-    //tmp_json.x0 = 0;
-    //tmp_json.y0 = 0;
-    //var x = $("#test-nav").width();
-    //$("#test-nav svg:svg").attr("width", x);
-    
-    //updateNav(root = tmp_json);
 });
-
 
