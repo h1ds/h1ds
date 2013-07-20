@@ -441,10 +441,10 @@ class DimRange(Array1DimNumericBaseFilter):
     def apply(self, node):
         _min = float(self.kwargs["min"])
         _max = float(self.kwargs["max"])
-        min_e, max_e = np.searchsorted(node.dim, [_min, _max])
-        node.data = node.data[min_e:max_e]
-        node.dim = node.dim[min_e:max_e]
-        node.labels = ('dim_range(%s, %s, %s)' %(node.labels[0],
+        min_e, max_e = np.searchsorted(node.data.dimension[0], [_min, _max])
+        node.data.value = [node.data.value[0][min_e:max_e]]
+        node.data.dimension = [node.data.dimension[0][min_e:max_e]]
+        node.data.value_labels = ('dim_range(%s, %s, %s)' %(node.data.value_labels[0],
                                                  self.kwargs["min"],
                                                  self.kwargs["max"]),)
 
