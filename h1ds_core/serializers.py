@@ -75,10 +75,15 @@ class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
 
 class DataField(serializers.WritableField):
     def to_native(self, obj):
-        pass
+        if np.isscalar(obj):
+            return obj
+        else:
+            output = [d.tolist() for d in obj]
+            return output
+        
     def from_native(self,obj):
         pass
-    
+
 class DataSerializer(serializers.Serializer):
     """Serializer for a single data object.
 
@@ -93,6 +98,13 @@ class DataSerializer(serializers.Serializer):
     
     name = serializers.CharField()
     value = DataField()
+    dimension = DataField()
+    value_units = serializers.CharField()
+    dimension_units = serializers.CharField()
+    value_dtype = serializers.CharField()
+    dimension_dtype = serializers.CharField()
+    metadata = serializers.WritableField()
+
     
 class NodeSerializer(serializers.HyperlinkedModelSerializer):
     # slug ?

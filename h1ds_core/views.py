@@ -387,7 +387,7 @@ class NodeView(APIView):
         checksum = hashlib.sha1(nodepath).hexdigest()
 
         node = Node.objects.get(shot__number=shot, path_checksum=checksum)
-        node.data = [node.read_primary_data()]
+        node.data = node.read_primary_data()
         node.apply_filters(self.request)
         return node
         

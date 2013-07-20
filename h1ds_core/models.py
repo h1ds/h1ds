@@ -183,7 +183,7 @@ class Node(MPTTModel, backend_module.NodeData):
     ## data has dim, labels, name, units etc.
     ## for now, consider channels as indep, can later share info.
     
-    primary_data = []
+    primary_data = None
     #filtered_data = []
     #dim = None
     #labels = None
@@ -206,7 +206,7 @@ class Node(MPTTModel, backend_module.NodeData):
 
     def get_data(self):
         if not hasattr(self, 'data'):
-            self.primary_data = [self.read_primary_data()]
+            self.primary_data = self.read_primary_data()
             self.data = self.primary_data
         return self.data
                 
@@ -224,14 +224,14 @@ class Node(MPTTModel, backend_module.NodeData):
         self.slug = slugify(self.path)
         super(Node, self).save(*args, **kwargs)
         # TODO: only single channel...
-        self.primary_data = [self.read_primary_data()]
-        if self.primary_data in [None, []]:
+        self.primary_data = self.read_primary_data()
+        if not self.primary_data:
             self.has_data = False
         else:
             self.has_data = True
-            self.n_dimensions = self.primary_data[0].get_n_dimensions()
-            self.dtype = self.primary_data[0].value_dtype
-            self.n_channels = len(self.primary_data)
+            self.n_dimensions = self.primary_data.get_n_dimensions()
+            self.dtype = self.primary_data.value_dtype
+            self.n_channels = len(self.primary_data.value)
             
         self.path_checksum = self._get_sha1()
         super(Node, self).save()#update_fields=['path_checksum'])

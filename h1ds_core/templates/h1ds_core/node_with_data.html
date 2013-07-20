@@ -1,13 +1,4 @@
 {% extends "h1ds_core/base_node.html" %}
 {% block node_data %}
-{% if node.data|length == 0 %}
-<p>Data not found</p>
-{% elif node.data|length == 1 %}
-<div id="data-plot" class="h1ds-pagelet" data-dtype="{{node.data.0.value_dtype}}" data-ndim="{{node.data.0.get_n_dimensions}}">{% if node.data.0.get_n_dimensions == 0 %}{{node.data.0.value}}{% endif %}</div>
-{% else %}
-{% for data in node.data %}
-<h3>Channel {{forloop.counter}}</h3>
-<div id="data-plot-{{forloop.counter}}" class="h1ds-pagelet" data-dtype="{{data.value_dtype}}" data-ndim="{{data.get_n_dimensions}}">{% if data.get_n_dimensions == 0 %}{{ data.value }}{% endif %}</div>
-{% endfor %}
-{% endif %}
+<div id="data-plot" class="h1ds-pagelet" data-dtype="{{node.data.value_dtype}}" data-ndim="{{node.data.get_n_dimensions}}">{% if node.data.get_n_dimensions == 0 %}{{node.data.value}}{% endif %}</div>
 {% endblock node_data %}

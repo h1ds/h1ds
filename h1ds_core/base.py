@@ -66,7 +66,7 @@ class Data(object):
     def __init__(self, name="", value=None, dimension=None,
                  value_units="", dimension_units="",
                  value_dtype="", dimension_dtype="",
-                 metadata={}):
+                 metadata={}, value_labels=[], dimension_labels=[]):
         self.name = name
         self.value = value
         self.dimension = dimension
@@ -74,11 +74,25 @@ class Data(object):
         self.dimension_units = dimension_units
         self.value_dtype = value_dtype
         self.dimension_dtype = dimension_dtype
+        self.value_labels = value_labels
+        self.dimension_labels = dimension_labels
+        if len(self.value) > len(self.value_labels):
+            self.value_labels = ["channel_%d" %(i+1) for i in range(self.get_n_channels())]
+        if len(self.dimension) > len(self.dimension_labels):
+            self.dimension_labels = ["dimension_%d" %(i+1) for i in range(self.get_n_dimensions())]
         self.metadata = metadata
     
     def get_n_dimensions(self):
         return len(self.dimension)
-        
+
+    def get_n_channels(self):
+        return len(self.value)
+    
+    def get_signal_length(self):
+        if np.isscalar(self.value[0]):
+            return 0
+        else:
+            return len(self.value[0])
 
 class BaseNodeData(object):
 

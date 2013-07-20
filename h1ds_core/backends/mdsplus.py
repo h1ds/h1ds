@@ -64,7 +64,12 @@ class NodeData(BaseNodeData):
             primary_data = mds_node.getData().data()
         except (TreeNoDataException, TdiException, AttributeError):
             primary_data = None
-        return primary_data
+        if np.isscalar(primary_data) or primary_data == None:
+            return [primary_data]
+        elif len(primary_data.shape) == 1:
+            return np.array([primary_data])
+        else:
+            return primary_data
 
     def get_dimension(self):
         """Get dimension of raw data (i.e. no filters)."""
@@ -74,7 +79,7 @@ class NodeData(BaseNodeData):
         try:
             shape = mds_node.getShape()
             if len(shape) == 1:
-                raw_dim = [np.array([mds_node.getDimensionAt().data()])]
+                raw_dim = [mds_node.getDimensionAt().data()]
             else:
                 dim_list = []
                 for i in range(len(shape)):

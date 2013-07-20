@@ -382,58 +382,40 @@ class ResampleMinMax(Array1DimNumericBaseFilter):
     """TODO: only works for 1D array..."""
     slug = "resample_minmax"
     kwarg_names = ["n_bins"]
-    
+
     def apply(self, node):
         from h1ds_core.base import Data
         _n_bins = int(self.kwargs["n_bins"])
-        new_data_list = []
-        for data in node.data:
-            signal_length = data.value.T.shape[0]
-            if signal_length >= 2*_n_bins:
-                delta_sample = signal_length/_n_bins
-                new_dimension = data.dimension[::delta_sample][:_n_bins]
-                max_data = []
-                min_data = []
-                for i in range(_n_bins):
-                    tmp = data.value[i*delta_sample:(i+1)*delta_sample]
-                    max_data.append(max(tmp))
-                    min_data.append(min(tmp))
-                min_metadata = data.metadata.copy()
-                min_metadata['is_minmax'] = True
-                min_metadata['minmax_value'] = 'min'
-                min_metadata['original_name'] = data.name
+        signal_length = node.data.get_signal_length()
+        if signal_length >= 2*_n_bins: # Only apply filter if length is more than 2*n_bins
+            delta_sample = signal_length/_n_bins
+            new_dimension = [node.data.dimension[0][::delta_sample][:_n_bins]]
+            max_data = []
+            min_data = []
+            new_metadata = node.data.metadata
 
-                min_data = Data(name="min_resampled("+data.name+")",
-                                value=np.array(min_data),
+            for i in range(_n_bins):
+                tmp = node.data.value[0][i*delta_sample:(i+1)*delta_sample]
+                max_data.append(max(tmp))
+                min_data.append(min(tmp))
+            
+            new_metadata['is_minmax'] = True
+            new_metadata['minmax_min_channel'] = 0
+            new_metadata['minmax_max_channel'] = 1
+            new_metadata['original_name'] = node.data.name
+            new_data = Data(name = "resampled_minmax("+node.data.name+")",
+                                value=np.array([min_data, max_data]),
                                 dimension=new_dimension,
-                                value_units = data.value_units,
-                                dimension_units = data.dimension_units,
-                                value_dtype = data.value_dtype,
-                                dimension_dtype = data.dimension_dtype,
-                                metadata = min_metadata
-                                )
-                new_data_list.append(min_data)
-
-                max_metadata = data.metadata.copy()
-                max_metadata['is_minmax'] = True
-                max_metadata['minmax_value'] = 'max'
-                max_metadata['original_name'] = data.name
-
-                max_data = Data(name="max_resampled("+data.name+")",
-                                value=np.array(max_data),
-                                dimension=new_dimension,
-                                value_units = data.value_units,
-                                dimension_units = data.dimension_units,
-                                value_dtype = data.value_dtype,
-                                dimension_dtype = data.dimension_dtype,
-                                metadata = max_metadata
-                                )
-                new_data_list.append(max_data)
-
-                #node.labels = ('min', 'max',)
-                #node.data = np.array([min_data, max_data])
-        node.data = new_data_list
-        
+                                value_units = node.data.value_units,
+                                dimension_units = node.data.dimension_units,
+                                value_dtype = node.data.value_dtype,
+                                dimension_dtype = node.data.dimension_dtype,
+                                value_labels = ["min_rebinned("+node.data.value_labels[0]+")",
+                                                "max_rebinned("+node.data.value_labels[0]+")"],
+                                dimension_labels = node.data.dimension_labels,
+                                metadata = new_metadata)
+            node.data = new_data
+                    
 class NormDimRange(Array1DimNumericBaseFilter):
     """Reduce range of signal."""
 

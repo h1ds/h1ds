@@ -540,7 +540,34 @@ function mouseup() {
 
 ////////////////////////////////////////////////////////////////////////
 // Plot Container - the main object for viewing data
+// TODO: see whether it's worth using  the new d3/chart library in place
+// of PlotContainer
 ////////////////////////////////////////////////////////////////////////
+
+
+/*
+ * PlotContainer(id, rows, columns) 
+ *     - id: element ID where the plot container should be placed.
+ *     - rows: list of row widths (these will be normalised)
+ *     - columns: list of column heights (these will be normalised)
+ * 
+ *     Create a PlotContainer object with the requested grid.
+ * 
+ * PlotContainer.setPlotGrid(rows, columns)
+ *     - rows: list of row widths (these will be normalised)
+ *     - columns: list of column heights (these will be normalised)
+ * 
+ *     Returns object with horizontal and vertical translations for grid elements.
+ *
+ * PlotContainer.plotLine(selection)
+ *     - selection: d3js selection with attached data for plotting.
+ *     
+ *     Simple line plot of data attached to selection.
+ * 
+ * .....
+*/
+
+
 
 /*
  * planned API:
@@ -619,17 +646,63 @@ function PlotContainer(id, rows, columns) {
     this.yAxisPadding = 60;
 }
 
+PlotContainer.prototype.setPlotGrid = function(rows, columns) {
+    // convert rows, columns from relative widths to absolute pixel widths
+    var column_sum = d3.sum(columns);
+    var row_sum = d3.sum(rows);
+    var column_pixels = [];
+    var row_pixels = [];
+    var width = this.svg.attr("width");
+    var height = this.svg.attr("height");
+
+    for (var i=0; i<columns.length; i++) {
+	column_pixels[i] = width*columns[i]/column_sum;
+    }
+
+    for (var i=0; i<rows.length; i++) {
+	row_pixels[i] = height*rows[i]/row_sum;
+    }
+
+    var plot_grid = [];
+    var plot_id_counter = 0;
+    var row_translate = 0;
+    var col_translate = 0;
+    for (var row_i=0; row_i<rows.length; row_i++) {
+	col_translate = 0;
+	for (var col_i=0;col_i<column_pixels.length;col_i++) {
+	    plot_grid[plot_id_counter] = {
+		'translate':[col_translate, row_translate], 
+		'width':column_pixels[col_i], 
+		'height':row_pixels[row_i],
+		'data_ids':[],
+		'data':[],
+		'plotType':"",
+		'flip':false,
+		'bindAxis':[-1,-1]
+	    };
+	    col_translate += column_pixels[col_i];
+	    plot_id_counter++;	    
+	} // end col_i
+	row_translate += row_pixels[row_i];
+    } // end row_i
+
+    this.svg.attr("height",row_translate);
+    $(this.id).height(row_translate);
+
+    return plot_grid;
+};
+
 
 PlotContainer.prototype.plotLine = function(selection) {
 
     var do_flip = selection.datum().plot.flip;
-
+    
     selection.append("path")
-	.classed("path-filled", function(d) { return d.data.is_minmax })
+	.classed("path-filled", function(d) { return d.data.data.metadata.is_minmax })
 	.style("stroke", function(d,i) { return d.data.colour; })
-	.style("fill", function(d,i) { return d.data.is_minmax ? d.data.colour : "none" })
+	.style("fill", function(d,i) { return d.data.data.metadata.is_minmax ? d.data.colour : "none" })
 	.attr("d", function(d,i) {
-	    if (d.data.is_minmax) {
+	    if (d.data.data.metadata.is_minmax) {
 		var fill_data = fillPlot(d.data);
 		var line = d3.svg.line()
 		    .x(function(a) { return d.plot.x(a[do_flip?1:0]); })
@@ -639,7 +712,7 @@ PlotContainer.prototype.plotLine = function(selection) {
 		var line = d3.svg.line()
 		    .x(function(a,j) { return d.plot.x(do_flip?a:d.data.dim[j]); })
 		    .y(function(a,j) { return d.plot.y(do_flip?d.data.dim[j]:a); });
-		return line(d.data.data);
+		return line(d.data.data.value[0]);
 	    }
 	});
 };
@@ -721,51 +794,6 @@ PlotContainer.prototype.setPlot = function(plot_id, new_properties, update) {
     
 };
 
-PlotContainer.prototype.setPlotGrid = function(rows, columns) {
-    // convert rows, columns from relative widths to absolute pixel widths
-    var column_sum = d3.sum(columns);
-    var row_sum = d3.sum(rows);
-    var column_pixels = [];
-    var row_pixels = [];
-    var width = this.svg.attr("width");
-    var height = this.svg.attr("height");
-
-    for (var i=0; i<columns.length; i++) {
-	column_pixels[i] = width*columns[i]/column_sum;
-    }
-
-    for (var i=0; i<rows.length; i++) {
-	row_pixels[i] = height*rows[i]/row_sum;
-    }
-
-    var plot_grid = [];
-    var plot_id_counter = 0;
-    var row_translate = 0;
-    var col_translate = 0;
-    for (var row_i=0; row_i<rows.length; row_i++) {
-	col_translate = 0;
-	for (var col_i=0;col_i<column_pixels.length;col_i++) {
-	    plot_grid[plot_id_counter] = {
-		'translate':[col_translate, row_translate], 
-		'width':column_pixels[col_i], 
-		'height':row_pixels[row_i],
-		'data_ids':[],
-		'data':[],
-		'plotType':"",
-		'flip':false,
-		'bindAxis':[-1,-1]
-	    };
-	    col_translate += column_pixels[col_i];
-	    plot_id_counter++;	    
-	} // end col_i
-	row_translate += row_pixels[row_i];
-    } // end row_i
-
-    this.svg.attr("height",row_translate);
-    $(this.id).height(row_translate);
-
-    return plot_grid;
-};
 
 PlotContainer.prototype.addData = function(data_id, data_url) {
     this.data_ids[data_id] = {'uri':data_url, 'colour':this.data_colours.pop()};
@@ -893,7 +921,7 @@ PlotContainer.prototype.updateDisplay = function() {
 	.attr("text-anchor", "middle")
 	.attr("x", function(d) { return that.yAxisPadding+0.5*(d.width-that.yAxisPadding); })
 	.attr("y", function(d) { return 0.8*that.xAxisPadding; })
-	.text(function(d) { return "["+d.data[0].units[1]+"]"; }); // TODO: uses data[0], rather than data for this plot.
+	.text(function(d) { return "["+d.data.dimension_units+"]"; });
 
     // # y axis
     plots.append("g")
@@ -906,7 +934,7 @@ PlotContainer.prototype.updateDisplay = function() {
 	.attr("transform", "rotate(-90)")
 	.attr("x", function(d) { return -0.5*(d.height-that.xAxisPadding); })
 	.attr("y", function(d) { return -0.8*that.yAxisPadding; })
-	.text(function(d) { return "["+d.data[0].units[0]+"]"; }); // TODO: uses data[0], rather than data for this plot.
+	.text(function(d) { return "["+d.data.value_units+"]"; }); // TODO: uses data[0], rather than data for this plot.
 
     plots.append("svg:rect")
 	.attr("class", "selectrect")
@@ -956,9 +984,11 @@ PlotContainer.prototype.updatePlot = function(plot_id) {
     var horizontal_range = [that.yAxisPadding,this.plotGrid[plot_id].width];
     var vertical_range = [this.plotGrid[plot_id].height-that.xAxisPadding, 0];
 
+    // for now, just use first dimension of first data channel
+    // TODO: generalise this for multidimensions, multi-channels...
     var dim_domain = [
-	d3.min(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.min(d.dim) : d3.min(d.dim[0]);}),
-	d3.max(this.plotGrid[plot_id].data, function(d,i) { return d.n_dim===1 ? d3.max(d.dim) : d3.max(d.dim[0]);})
+	d3.min(this.plotGrid[plot_id].data, function(d,i) { return d3.min(d.data.dimension[0]);}),
+	d3.max(this.plotGrid[plot_id].data, function(d,i) { return d3.max(d.data.dimension[0]);})
     ];
 
     var _x = d3.scale.linear()
@@ -971,9 +1001,11 @@ PlotContainer.prototype.updatePlot = function(plot_id) {
 	this.plotGrid[plot_id].x = _x;
     }
 
+    // for now, just use first data of first data channel
+    // TODO: generalise this for multidimensions, multi-channels...
     var data_domain = [
-	d3.min(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.min(d.data[0]) : d3.min(d.data)) : d3.min(d.dim[1])}),
-	d3.max(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.max(d.data[1]) : d3.max(d.data)) : d3.max(d.dim[1])})
+	d3.min(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.min(d.data.value[d.data.metadata["minmax_min_channel"]]) : d3.min(d.data.value[0])) : d3.min(d.data.value[0])}),
+	d3.max(this.plotGrid[plot_id].data, function(d,i) {return d.n_dim === 1 ? (d.is_minmax ? d3.max(d.data.value[d.data.metadata["minmax_min_channel"]]) : d3.max(d.data.value[0])) : d3.max(d.data.value[0])})
     ];
     
     var data_span = data_domain[1]-data_domain[0];
@@ -1012,13 +1044,11 @@ PlotContainer.prototype.updatePlot = function(plot_id) {
 
 function fillPlot(data) {
     // return a line of points from data object
-    // require data.dim, data.data=[[min,,,,], [max,,,,]]
     
-    var d = Array(2*data.dim.length);
-
-    for( i=0; i < data.dim.length; i++){
-        d[i]=[data.dim[i],data.data[0][i]];
-        d[data.dim.length + i]=[data.dim[data.dim.length-(i+1)],data.data[1][data.dim.length-(i+1)]];
+    var d = Array(2*data.data.dimension[0].length);
+    for( i=0; i < data.data.dimension[0].length; i++){
+        d[i]=[data.data.dimension[0][i],data.data.value[data.data.metadata.minmax_min_channel][i]];
+        d[data.data.dimension[0].length + i]=[data.data.dimension[0][data.data.dimension[0].length-(i+1)],data.data.value[data.data.metadata.minmax_max_channel][data.data.dimension[0].length-(i+1)]];
     }
     return d;
 }
