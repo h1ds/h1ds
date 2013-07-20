@@ -710,8 +710,8 @@ PlotContainer.prototype.plotLine = function(selection) {
 		return line(fill_data);
 	    } else {
 		var line = d3.svg.line()
-		    .x(function(a,j) { return d.plot.x(do_flip?a:d.data.dim[j]); })
-		    .y(function(a,j) { return d.plot.y(do_flip?d.data.dim[j]:a); });
+		    .x(function(a,j) { return d.plot.x(do_flip?a:d.data.data.dimension[0][j]); })
+		    .y(function(a,j) { return d.plot.y(do_flip?d.data.data.dimension[0][j]:a); });
 		return line(d.data.data.value[0]);
 	    }
 	});
