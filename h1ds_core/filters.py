@@ -399,10 +399,14 @@ class ResampleMinMax(Array1DimNumericBaseFilter):
                 max_data.append(max(tmp))
                 min_data.append(min(tmp))
             
-            new_metadata['is_minmax'] = True
-            new_metadata['minmax_min_channel'] = 0
-            new_metadata['minmax_max_channel'] = 1
+            new_metadata['minmax_pairs'] = [[0,1]]
             new_metadata['original_name'] = node.data.name
+            try:
+                # TODO: should make sure labels are populated higher up the food chain...
+                value_labels = ["min_rebinned("+node.data.value_labels[0]+")",
+                                "max_rebinned("+node.data.value_labels[0]+")"]
+            except:
+                value_labels = ["min_rebinned", "max_rebinned"]
             new_data = Data(name = "resampled_minmax("+node.data.name+")",
                                 value=np.array([min_data, max_data]),
                                 dimension=new_dimension,
@@ -410,8 +414,7 @@ class ResampleMinMax(Array1DimNumericBaseFilter):
                                 dimension_units = node.data.dimension_units,
                                 value_dtype = node.data.value_dtype,
                                 dimension_dtype = node.data.dimension_dtype,
-                                value_labels = ["min_rebinned("+node.data.value_labels[0]+")",
-                                                "max_rebinned("+node.data.value_labels[0]+")"],
+                                value_labels = value_labels,
                                 dimension_labels = node.data.dimension_labels,
                                 metadata = new_metadata)
             node.data = new_data
@@ -444,6 +447,8 @@ class DimRange(Array1DimNumericBaseFilter):
         min_e, max_e = np.searchsorted(node.data.dimension[0], [_min, _max])
         node.data.value = [node.data.value[0][min_e:max_e]]
         node.data.dimension = [node.data.dimension[0][min_e:max_e]]
+        # HACK, TODO: fix
+        node.data.value_labels = ["temp"]
         node.data.value_labels = ('dim_range(%s, %s, %s)' %(node.data.value_labels[0],
                                                  self.kwargs["min"],
                                                  self.kwargs["max"]),)

@@ -1453,6 +1453,63 @@ form.inline-form {
 }
 
 /* ============================================================
+   New version of data vis
+   ============================================================ */
+
+/*
+svg {
+    pointer-events: all;
+}
+
+svg g {
+    pointer-events: all;
+}
+
+svg g g {
+    pointer-events: all;
+}
+*/
+svg g.pagelet-grid line {
+    stroke: #ddd;
+    stroke-opacity: 0.5;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+svg rect.background {
+    fill: white;
+    shape-rendering: crispEdges;
+  /*  pointer-events: none; */
+    
+}
+
+svg rect.background-edit {
+    fill: blue;
+    fill-opacity:0.2;
+    shape-rendering: crispEdges;
+    pointer-events: none;
+    
+}
+
+svg rect.resizebar {
+    fill: yellow;
+    fill-opacity: 0.5;
+    shape-rendering: crispEdges;
+}
+
+
+svg rect.resizebar:hover {
+    fill-opacity: 0.8;
+}
+
+
+svg rect.resizebar.corner {
+    fill: red;
+}
+
+
+
+/* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 
    ============================================================ */
 

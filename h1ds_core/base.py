@@ -76,9 +76,9 @@ class Data(object):
         self.dimension_dtype = dimension_dtype
         self.value_labels = value_labels
         self.dimension_labels = dimension_labels
-        if len(self.value) > len(self.value_labels):
+        if hasattr(value, "len") and len(self.value) > len(self.value_labels):
             self.value_labels = ["channel_%d" %(i+1) for i in range(self.get_n_channels())]
-        if len(self.dimension) > len(self.dimension_labels):
+        if hasattr(dimension, "len") and len(self.dimension) > len(self.dimension_labels):
             self.dimension_labels = ["dimension_%d" %(i+1) for i in range(self.get_n_dimensions())]
         self.metadata = metadata
     

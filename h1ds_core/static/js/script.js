@@ -3,6 +3,8 @@
 // David Pretty, 2010-2013
 ////////////////////////////////////////////////////////////////////////
 
+var golden_ratio = 1.61803398875;
+
 ////////////////////////////////////////////////////////////////////////
 // Masonry - for  grid layout. Currently just used in  homepage, but not
 // really needed there.
@@ -388,13 +390,27 @@ H1DSUri.prototype.getNextFilterID = function() {
     return largest_fid + 1;
 };
 
+H1DSUri.prototype.packFilterIDs = function() {
+    // renumber the filter ids so they are continuous from 0...
+    console.log(this.h1ds_filters);
+};
+
+H1DSUri.prototype.changeFilterID = function (oldID, newID) {
+    // Check for the oldID name to avoid a ReferenceError in strict mode.
+    if (this.h1ds_filters.hasOwnProperty(oldID)) {
+        this.h1ds_filters[newID] = this.h1ds_filters[oldID];
+        delete this.h1ds_filters[oldID];
+    }
+    return this;
+};
+
 H1DSUri.prototype.getFilterIDsForFilterName = function(filter_name) {
     var fids = [];
     for (var key in this.h1ds_filters) {
 	if (this.h1ds_filters.hasOwnProperty(key)) {
 	    //if (Number(key) > largest_fid) largest_fid=Number(key);
-	    if (h1ds_filters[key].name == filter_name) {
-		fids[fids.length] = key;
+	    if (this.h1ds_filters[key].name == filter_name) {
+		fids.push(key);
 	    }
 	}
     }
@@ -531,7 +547,7 @@ function mouseup() {
 	});
 	if (Modernizr.history) {
 	    history.pushState(null, null, thisURI.renderUri());
-	}
+	} // TODO: if not, shoudl we refresh the page so that URI is consistent?
 
     })
     rect.remove();
@@ -1253,9 +1269,672 @@ function plot2DimArray(d, url) {
 	//pc.addDataToPlot("default", 3, true);
 }
 
+
+////////////////////////////////////////////////////////////////////////
+// loadPlotState
+// load the  data required for  plotting etc,  to be handled  by HTML5
+// history API
+////////////////////////////////////////////////////////////////////////
+
+/*
+ * Data format (TODO: document this somewhere more visible when the format is more settled).
+ * 
+ * Data format to be passed to plots = list of data object
+ *
+ * [data1, data2, data3, ....]
+ *
+ * data = {
+ *    dimension: [dim1, dim2, ...],
+ *    dimension_dtype: str,
+ *    dimension_units: str,
+ *    metadata: {key1:val1, key2:val2, ...},
+ *    name: str,
+ *    value: [ch1, ch2, ...],
+ *    value_dype: str,
+ *    value_units: str,
+ * }
+ *
+ */
+
+function loadPlotState() {
+    //TODO: should  we use urlcache  to share data between  charts, or
+    //can   we   assume   each   chart  will   have   different   data
+    //(e.g. different width rebinning etc)
+    plotState.settings = {'edit_mode': false,};
+    plotState.url_cache = {};
+    plotState.pagelets = [];
+    $(".h1ds-pagelet").each(function(i, e) {
+	loadPageletPlotState(i,e);
+    });
+}
+
+function loadPageletPlotStateFromURL(i, e) {
+    // TODO
+    plotState.pagelets[i] = null;
+}
+
+function loadDefaultPageletPlotState(i, e) {
+    // if the URL  query string does not specify  pagelet layout, then
+    // by  default we  make a  10x10 grid  with a  single "raw"  chart
+    // filling the whole pagelet.
+    var pagelet_plotstate = {};
+    var default_url = window.location.toString();
+    var elmt = $(e);
+
+    // pagelet margins
+    pagelet_plotstate.margin = {top: 1, right: 1, bottom: 1, left: 1};
+
+    // default grid is 10x10
+    pagelet_plotstate.n_rows = 10;
+    pagelet_plotstate.n_columns = 10;
+    
+    pagelet_plotstate.width = elmt.width() - pagelet_plotstate.margin.left - pagelet_plotstate.margin.right;
+    // TODO: allow more flexibiity with height - e.g. user resize portlet
+    pagelet_plotstate.height = Math.round(d3.min([pagelet_plotstate.width/golden_ratio, 0.9*$(window).height()]));
+    pagelet_plotstate.dtype = elmt.attr("data-dtype");
+    pagelet_plotstate.ndim = elmt.attr("data-ndim");
+
+    
+    // default  is a  single chart  fill the  whole grid,  showing raw
+    // data.
+    chart_state = {};
+    chart_state.x0 = 0;
+    chart_state.y0 = 0;
+    chart_state.x1 = 10;
+    chart_state.y1 = 10;
+    // TODO - match default chart type to dtype & ndim
+    chart_state.chart_type = "raw";
+    chart_state.chart_width = ((chart_state.x1 - chart_state.x0)/pagelet_plotstate.n_columns)*pagelet_plotstate.width;
+    chart_state.stateIndex = [0, 0]; // pagelet number, chart number - TODO: make this work for multiple pagelets & charts
+
+    chart_state.data = [{}];
+    chart_state.data[0].uri = getRawUri(default_url, chart_state.chart_width);
+    chart_state.data[0].data = null;
+
+    // insert the pagelet state into plotState
+    pagelet_plotstate.charts = [chart_state];
+    plotState.pagelets[i] = pagelet_plotstate;
+
+    // load data asynchronously
+
+    $.ajax({url: plotState.pagelets[i].charts[0].data[0].uri.renderUri(),
+	    dataType: "json",
+	    async:true})
+	.done(function(a) {
+	    plotState.pagelets[i].charts[0].data[0].data = a;
+	    // by updating asyncronousely,  this will probably interrupt
+	    // existing updates when  each data comes in...  it may look
+	    // messy...
+	    // TODO: should we use queue.js when loading all data?
+	    // https://github.com/mbostock/queue
+	    // (and load visuals once all data is loaded?)
+	    updateCharts();
+	    //console.log("loaded data for pagelet "+i);
+	});
+    //console.log("finished state for pagelet "+i)
+}
+
+function loadPageletPlotState(i, e) {
+    // arguments:
+    // i: index of h1ds-pagelet (first is 0).
+    // e: h1ds-pagelet element
+    var elmt = $(e);
+   
+    loadPageletPlotStateFromURL(i,e);
+
+    if (plotState.pagelets[i] === null) {
+	loadDefaultPageletPlotState(i,e);
+    }
+}
+
+//
+//function updatePagelets() {
+//    $(".h1ds-pagelet").each(function() {
+//	
+//    }
+//}
+
+// Base chart with features common to all h1ds charts...
+// Note: follow conventions for margins: http://bl.ocks.org/mbostock/3019563
+d3.chart("H1DSBaseChart", {
+    initialize: function() {
+	
+	var chart = this;
+	var background = this.base.append("g")
+	    .classed("graph-background", true);
+	
+	chart.main = chart.base.append("g")
+	    .attr("class", "chart-main");
+
+	chart.brush = d3.svg.brush();
+
+	// default
+	chart.margin = {top: 10, right: 10, bottom: 10, left: 10};
+
+	//var background = this.base.append("g")
+	//    .classed("graph-background", true);
+
+	//set_margin({top: 10, right: 10, bottom: 10, left: 10});
+	//chart.main = chart.base.append("g")
+	//    .attr("class", "chart-main")
+	//    .attr("transform", "translate(" + chart.margin.left + "," + chart.margin.top + ")");
+
+	// set defaults 
+	chart._width = 100;
+	chart._height = 100;
+
+	this.set_margin =  function(newMargin) {
+	    // newMargin = {top: xx, right: xx, bottom: xx, left: xx}
+	    //if (!arguments.length) {
+	    //	return chart.margin;
+	    //}
+
+	    var full_width = chart._width + chart.margin.left + chart.margin.right;
+	    var full_height = chart._height + chart.margin.bottom + chart.margin.top;
+	    
+	    chart.margin = newMargin;
+	    chart.base.select("g.chart-main")
+		.attr("transform", "translate(" + chart.margin.left + "," + chart.margin.top + ")");
+
+	    chart._width = full_width - chart.margin.left - chart.margin.right;
+	    chart._height = full_height - chart.margin.top - chart.margin.bottom;
+	};
+
+	this.set_margin({top: 10, right: 10, bottom: 10, left: 10});
+
+	
+
+	
+	this.layer("background", background, {
+	    dataBind: function(data) {
+		return this.selectAll("rect.background").data([data]);
+	    },
+	    insert: function() {
+		return this.insert("rect")
+		.attr("class", "background")
+		.attr("x", 0)
+		.attr("y", 0)
+		.attr("width", chart._width+chart.margin.left+chart.margin.right)
+		.attr("height", chart._height+chart.margin.top+chart.margin.bottom)
+	    }
+	    
+	});
+    },
+    
+    width: function(newWidth) {
+	// for external calls, we care about the total width (incl margins)
+	// internally we use the margin convention http://bl.ocks.org/mbostock/3019563
+	// to avoid too much confusion, we use _width internally rather than have 
+	// different values from width and width()
+	if (!arguments.length) {
+	    return this._width + this.margin.left + this.margin.right; 
+	}
+
+	this._width = newWidth - this.margin.left - this.margin.right;
+	
+	// the background uses the full width (including margins).
+	this.base.select("g rect.background")
+	    .attr("width", newWidth);
+	
+	return this;	
+    },
+    height: function(newHeight) {
+	// see notes for width method
+	if (!arguments.length) {
+	    return this._height + this.margin.top + this.margin.bottom;
+	}
+
+	this._height = newHeight - this.margin.top - this.margin.bottom;
+	
+	// the background uses the full width (including margins).
+	this.base.select("g rect.background")
+	    .attr("y", newHeight)
+	    .attr("height", newHeight);
+	
+	return this;	
+    },
+    
+});
+
+
+// a chart for testing... 
+d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
+    initialize: function () {
+	var chart = this;
+
+	this.set_margin({top: 50, right: 50, bottom: 50, left: 50});
+
+	this.xScale = d3.scale.linear()
+	    .range([0, chart._width]);
+
+	this.yScale = d3.scale.linear()
+	    .range([chart._height, 0]);
+
+	this.xAxis = d3.svg.axis()
+	    .scale(this.xScale)
+	    .orient("bottom");
+
+	this.yAxis = d3.svg.axis()
+	    .scale(this.yScale)
+	    .orient("left");
+
+
+	// this limits us to 10 signals. it gives us 2 colours per signal, one for outline, one for the fill (if required).
+	this.colors = d3.scale.category20();
+
+	this.layer("xAxis", chart.main.append("g"), {
+	    dataBind: function(data) {
+		// TODO: chart.data should be [data1, data2, etc...] so we can overplot
+		chart.data = data[0];
+		chart.xScale
+		    .range([0, chart._width])
+		    .domain([d3.min(chart.data.dimension, function(v) {return d3.min(v); }),
+			     d3.max(chart.data.dimension, function(v) {return d3.max(v); })]);
+		return this.selectAll("g.x.axis").data([data]);
+	    },
+	    insert: function() {
+		return this.insert("g")
+		    .attr("class", "x axis")
+	    	    .attr("transform", function (d) {return "translate(" + 0 + "," + chart._height + ")";})
+		    .call(chart.xAxis);
+		
+	    },
+	    events: {
+		"update": function() {
+		    return this.call(chart.xAxis);
+		},
+		"enter": function() {
+		    return this.call(chart.xAxis);		
+		},
+	    },
+	});
+	
+	this.layer("yAxis", chart.main.append("g"), {
+	    dataBind: function(data) {
+		// TODO: shouldn't need to attach data for each layer?
+		chart.data = data[0];
+		// we find min and max and add 5% to above and below.
+		var minval = d3.min(chart.data.value, function(v) {return d3.min(v); });
+		var maxval = d3.max(chart.data.value, function(v) {return d3.max(v); });
+		var delta = 0.05*(maxval - minval);
+		chart.yScale
+		    .range([chart._height, 0])
+		    .domain([minval-delta, maxval+delta]);
+
+		return this.selectAll("g.y.axis").data([data]);
+	    },
+	    insert: function() {
+		return this.append("g")
+		    .attr("class", "y axis")
+	    	    .attr("transform", function (d) {return "translate(" + 0 + "," + 0 + ")";});
+	    },
+	    events: {
+		"update": function() {
+		    return this.call(chart.yAxis);
+		},
+		"enter": function() {
+		    return this.call(chart.yAxis);
+		},
+		
+	    },
+	});
+
+	var line = d3.svg.line()
+	    .x(function(d) { return chart.xScale(d[0]); })
+	    .y(function(d) { return chart.yScale(d[1]); });
+	
+	// join n-th signal and dim together as [[s0,d0], [s1, d1], ...]
+	// assume 1D (d.dimension has only one vector)
+	// TODO - replace by format_data
+	var join_data = function(d, n) {
+	    var new_data = [];
+	    for (var i=0; i<d.value[n].length; i++) {
+		new_data.push([d.dimension[0][i], d.value[n][i]]);
+	    }
+	    return new_data;
+	};
+
+	// read in the data values provided and give back list of [x,y] for each data series
+	// the lists have a boolean property 'closeLine', if true, the line will be closed
+	// the lists have a boolean property 'fillLine', if true, the line will be filled..
+	var format_data = function(data) {
+	    var output_data = [];
+	    // minmax pairs use up 2 channels but are combined here as a single line
+	    var n_minmax_pairs = 0;
+	    if (typeof data.metadata.minmax_pairs !== 'undefined') {
+		n_minmax_pairs = data.metadata.minmax_pairs.length;
+	    }
+	    var non_minmax_indices = d3.range(data.value.length);
+	    // first, get the minmax pairs
+	    if (n_minmax_pairs > 0) {
+		for (var i=0; i<n_minmax_pairs; i++) {
+		    non_minmax_indices.splice(non_minmax_indices.indexOf(data.metadata.minmax_pairs[i][0]), 1);
+		    non_minmax_indices.splice(non_minmax_indices.indexOf(data.metadata.minmax_pairs[i][1]), 1);
+		    
+		    var tmp_output_data = [];
+		    for (var j=0; j<data.value[data.metadata.minmax_pairs[i][0]].length; j++) {
+			tmp_output_data.push([data.dimension[0][j], data.value[data.metadata.minmax_pairs[i][0]][j]]);
+		    }
+		    
+		    for (var j=data.value[data.metadata.minmax_pairs[i][1]].length-1; j>=0; j--) {
+			tmp_output_data.push([data.dimension[0][j], data.value[data.metadata.minmax_pairs[i][1]][j]]);
+		    }
+		    tmp_output_data['closeLine'] = true;
+		    tmp_output_data['fillLine'] = true;
+		    output_data.push(tmp_output_data);
+		    
+		}
+	    }
+	    
+	    for (var i=0; i<non_minmax_indices.length; i++) {
+		var ch_i = non_minmax_indices[i];
+		var tmp_output_data = [];
+		for (var j=0; j<data.value[ch_i].length; j++) {
+		    tmp_output_data.push([data.dimension[0][j], data.value[ch_i][j]]);
+		}
+		tmp_output_data['closeLine'] = false;
+		tmp_output_data['fillLine'] = false;
+		output_data.push(tmp_output_data);
+	    }
+	    
+	    return output_data;
+
+	};
+
+	this.layer("data", chart.main.append("g"), {
+	    dataBind: function(data) {
+		chart.data = data[0];
+		return this.selectAll("path.signal").data(format_data(chart.data));
+	    },
+	    insert: function() {
+		return this.append("path");
+	    },
+	    events: {
+		"update": function() {
+		    return this
+			.attr("class", "signal")
+			.style("stroke", function(d, i) { return chart.colors(2*i); })
+			.style("fill", function(d, i) {return (d.fillLine ? chart.colors(2*i+1) : "none"); })
+			.attr("d", function(d,i) {return line(d) + (d.closeLine ? "Z" : "");});
+		},
+		
+		"enter": function() {
+		    return this
+			.attr("class", "signal")
+			.style("stroke", function(d, i) { return chart.colors(2*i); })
+			.style("fill", function(d, i) {return (d.fillLine ? chart.colors(2*i+1) : "none"); })
+			.attr("d", function(d,i) {return line(d) + (d.closeLine ? "Z" : "");});
+		},
+	    },
+	});
+
+	var load_selection = function() {
+	    // TODO: HACK - use stateindex rather than assume 0!!!
+	    var current_uri = plotState
+		.pagelets[0]
+		.charts[0]
+		.data[0].uri;
+	    // remove resample_minmax
+	    
+	    current_uri.appendFilter("dim_range", {'min':chart.brush.extent()[0], 'max':chart.brush.extent()[1]});
+
+	    var minmax_filters = current_uri.getFilterIDsForFilterName("resample_minmax");
+	    var nextID = current_uri.getNextFilterID();
+	    for (var i=0; i<minmax_filters.length; i++ ) {
+		var new_id = nextID + parseInt(minmax_filters[i]);
+		current_uri.changeFilterID(minmax_filters[i], String(new_id));
+	    }
+	    current_uri.packFilterIDs();
+	    
+	    plotState // SAME HACK
+		.pagelets[0]
+		.charts[0]
+		.data[0].uri = current_uri;
+	    console.log(current_uri.renderUri());
+	    $.ajax({url: current_uri.renderUri(),
+		    dataType: "json",
+		    async:false})
+		.done(function(a) {
+		    plotState //same HACK
+			.pagelets[0]
+			.charts[0]
+			.data[0].data = a;
+		    chart.draw([a.data]); // TODO: make sure we're not missing any hacks in updateCharts.
+		});
+
+	    
+	    	    
+	};
+
+	this.layer("interactive", chart.main, {
+	    dataBind: function(data) {
+		chart.data = data[0];
+		return this.selectAll("g.brush").data([chart.data]);
+	    },
+	    insert: function() {
+		return this.append("g")
+		    .attr("class", "brush");
+	    },
+	    events: {
+		"update": function() {
+		    chart.brush = d3.svg.brush().x(chart.xScale).on("brushend", load_selection);
+		    return this
+			.call(chart.brush)
+			.selectAll("rect")
+			.attr("y", 0)
+			.attr("height", chart._height);
+		},
+		"enter": function() {
+		    chart.brush = d3.svg.brush().x(chart.xScale).on("brushend", load_selection);
+		    return this
+			.call(chart.brush)
+			.selectAll("rect")
+			.attr("y", 0)
+			.attr("height", chart._height);
+		},
+	    },
+	    
+	});
+    }
+});
+
+d3.chart("H1DSEditModeChart", {
+    initialize: function() {
+	// resize bar width
+	var rb_width = 15;
+	//var background = this.base.append("g")
+	//    .classed("graph-background", true);
+	var chart = this;
+
+
+	var resizebar_data = function(data) {
+	    
+	}
+
+	this.layer("background", chart.base.append("g"), {
+	    dataBind: function(data) {
+		return this.selectAll("rect.background").data([data]);
+	    },
+	    insert: function() {
+		return this.insert("rect")
+		.attr("class", "background-edit")
+		.attr("x", function(d) {return d.x0px;})
+		.attr("y", function(d) {return d.y1px;})
+		.attr("width", function(d) {return d.x1px-d.x0px;})
+		.attr("height", function(d) {return d.y0px - d.y1px;});
+	    }
+	    
+	});
+
+	// rb_x (rb_y) classes are to identify which attibute should be modified by mouse events
+	var resizebar_data = function(d) {
+	    var rb_length = d.x1px - d.x0px - 2*rb_width;
+	    var rb_height = d.y0px - d.y1px - 2*rb_width;
+	    return [
+		// edges
+		{'x': d.x0px,
+		 'y': d.y1px + rb_width,
+		 'width': rb_width,
+		 'height': rb_height,
+		 'class': "resizebar edge rb_x"
+		},
+		{'x': d.x1px-rb_width,
+		 'y': d.y1px + rb_width,
+		 'width': rb_width,
+		 'height': rb_height,
+		 'class': "resizebar edge rb_x"
+		},
+		{'x': d.x0px+rb_width,
+		 'y': d.y1px,
+		 'width': rb_length,
+		 'height': rb_width,
+		 'class': "resizebar edge rb_y"
+		},
+		{'x': d.x0px+rb_width,
+		 'y': d.y0px-rb_width,
+		 'width': rb_length,
+		 'height': rb_width,
+		 'class': "resizebar edge rb_y"
+		},
+		// corners
+		{'x': d.x0px,
+		 'y': d.y1px,
+		 'width': rb_width,
+		 'height': rb_width,
+		 'class': "resizebar corner rb_x rb_y"
+		},
+		{'x': d.x1px-rb_width,
+		 'y': d.y1px,
+		 'width': rb_width,
+		 'height': rb_width,
+		 'class': "resizebar corner rb_x rb_y"
+		},
+		{'x': d.x0px,
+		 'y': d.y0px-rb_width,
+		 'width': rb_width,
+		 'height': rb_width,
+		 'class': "resizebar corner rb_x rb_y"
+		},
+		{'x': d.x1px-rb_width,
+		 'y': d.y0px-rb_width,
+		 'width': rb_width,
+		 'height': rb_width,
+		 'class': "resizebar corner rb_x rb_y"
+		},
+	    ];
+	}
+
+
+	this.layer("resizeedges", chart.base.append("g"), {
+	    dataBind: function(data) {
+		return this.selectAll("rect.resizebar ").data(resizebar_data(data));
+	    },
+	    events: {
+		"enter": function() {
+		    this.on("click", function() {console.log("xx events");})
+		}
+	    },
+	    insert: function() {
+		return this.insert("rect")
+		.attr("class", function(d) {return d.class;})
+		.attr("x", function(d) {return d.x;})
+		.attr("y", function(d) {return d.y;})
+		.attr("width", function(d) {return d.width;})
+		.attr("height", function(d) {return d.height;})
+	    }
+	    
+	});
+    }
+        
+});
+
+
+
+function updateCharts() {
+    var pagelets = d3.selectAll("#h1ds-portlet-data div.portlet-content")
+	.data(plotState.pagelets)
+	.append("svg")
+	.attr("width", function(d) {return d.width + d.margin.left + d.margin.right; })
+	.attr("height", function(d) {return d.height + d.margin.top + d.margin.bottom; })
+	.append("g")
+	.attr("transform", function(d) {return "translate(" + d.margin.left + "," + d.margin.top + ")"});
+
+    pagelets.each(function(d, i) {
+	// calculate widths of rows and columns
+	d.column_width = d.width/d.n_columns;
+	d.row_height = d.height/d.n_rows;
+
+	// generate scales to map pagelet grid to pixels.
+	d.xScale = d3.scale.linear()
+	    .domain([0, d.n_columns])
+	    .range([0, d.width]);
+	d.yScale = d3.scale.linear()
+	    .domain([0, d.n_rows])
+	    .range([d.height, 0]);
+
+	// set up pagelet grid on which the charts are set.
+	var pagelet_grid = d3.select(this).append("g").attr("class", "pagelet-grid");
+	for (var j=0; j <= d.n_columns; j++) {
+	    pagelet_grid
+		.append("line")
+		.attr("x1", function() {return Math.round(j*d.column_width)})
+		.attr("x2", function() {return Math.round(j*d.column_width)})
+		.attr("y1", 0)
+		.attr("y2", d.height);
+	}
+	for (var j=0; j <= d.n_rows; j++) {
+	    pagelet_grid
+		.append("line")
+		.attr("x1", 0)
+		.attr("x2", d.width)
+		.attr("y1", function() {return Math.round(j*d.row_height)})
+		.attr("y2", function() {return Math.round(j*d.row_height)});
+	}
+
+	// update the chart locations in pixels (from pagelet grid coordinates).
+	for (var j=0; j < d.charts.length; j++) {
+	    d.charts[j].x0px = d.xScale(d.charts[j].x0);
+	    d.charts[j].x1px = d.xScale(d.charts[j].x1);
+	    d.charts[j].y0px = d.yScale(d.charts[j].y0);
+	    d.charts[j].y1px = d.yScale(d.charts[j].y1);
+
+	    if (plotState.settings.edit_mode == true) {
+		var chart = d3.select(this).append("g")
+		    .attr("transform", "translate(" + d.charts[j].x0px + "," + d.charts[j].y1px + ")")
+		    .chart("H1DSEditModeChart");
+		console.log(d.charts[j].x1px - d.charts[j].x0px);
+		chart.width(d.charts[j].x1px - d.charts[j].x0px);
+		chart.height(d.charts[j].y1px - d.charts[j].y0px);
+		chart.draw(d.charts[j]);
+		//d3.select("rect.resizebar").on("click", function(d,i) {return "test";});
+
+	    } else {	    
+		var chart = d3.select(this).append("g")
+		    .attr("class", "chart")
+		    .attr("transform", "translate(" + d.charts[j].x0px + "," + d.charts[j].y1px + ")")
+		    .chart("H1DSTestChart");
+		chart.width(d.charts[j].x1px - d.charts[j].x0px);
+		chart.height(d.charts[j].y0px - d.charts[j].y1px);
+		// TODO: fix the recurive datas before here!
+		chart.draw([d.charts[j].data[0].data.data]);
+	    }
+	    
+	}
+
+    });
+
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Run code when DOM is ready
 ////////////////////////////////////////////////////////////////////////
+
+// we maintain  the page state  in a single object  so we can  pass it
+// around using the  HTML5 history API (i.e. change  plots and browser
+// location  bar  without reloading  page,  making  sure browser  back
+// button still works)
+
+var plotState = {};
 
 $(document).ready(function() {
 
@@ -1273,10 +1952,18 @@ $(document).ready(function() {
 
     loadCookie();
 
-    // Populate the data pagelets.
+    // load the state info 
 
-    $(".h1ds-pagelet").each(function() {
-	populatePagelet($(this), window.location.toString());
-    });
+    loadPlotState(); // this will update charts as the data comes in...
+
+    // update pagelets
+
+    //updatePagelets();
+
+    // REMOVEPopulate the data pagelets.
+
+    //$(".h1ds-pagelet").each(function() {
+    //populatePagelet($(this), window.location.toString());
+    //});
 });
 

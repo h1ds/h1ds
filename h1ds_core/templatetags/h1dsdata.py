@@ -128,8 +128,10 @@ def show_filters(context, data_node):
 def show_active_filters(context, data_node):
     active_filters = ""
     for fid, f, fdata in data_node.filter_history:
+        print fid, f, fdata
         active_filters += get_filter(context, f, is_active=True,
                                      f_id=fid, f_data=fdata)
+    
     return active_filters
 
 @register.simple_tag(takes_context=True)
