@@ -1302,7 +1302,7 @@ function loadPlotState() {
     //TODO: should  we use urlcache  to share data between  charts, or
     //can   we   assume   each   chart  will   have   different   data
     //(e.g. different width rebinning etc)
-    plotState.settings = {'edit_mode': false,};
+    plotState.settings = {'edit_mode': false};
     plotState.url_cache = {};
     plotState.pagelets = [];
     $(".h1ds-pagelet").each(function(i, e) {
@@ -1494,7 +1494,7 @@ d3.chart("H1DSBaseChart", {
 	    .attr("height", newHeight);
 	
 	return this;	
-    },
+    }
     
 });
 
@@ -1552,8 +1552,8 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 		    
 		    return this.call(chart.xAxis);		
 		},
-		"exit": function() {return this.remove()},
-	    },
+		"exit": function() {return this.remove()}
+	    }
 	});
 	
 	this.layer("yAxis", chart.main.append("g"), {
@@ -1590,9 +1590,8 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 			.domain([minval-delta, maxval+delta]);
 		    return this.call(chart.yAxis);
 		},
-		"exit": function() {return this.remove()},
-		
-	    },
+		"exit": function() {return this.remove()}
+	    }
 	});
 
 	var line = d3.svg.line()
@@ -1681,8 +1680,8 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 			.style("fill", function(d, i) {return (d.fillLine ? chart.colors(2*i+1) : "none"); })
 			.attr("d", function(d,i) {return line(d) + (d.closeLine ? "Z" : "");});
 		},
-		"exit": function() {return this.remove()},
-	    },
+		"exit": function() {return this.remove()}
+	    }
 	});
 
 	var load_selection = function() {
@@ -1748,8 +1747,8 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 			.selectAll("rect")
 			.attr("y", 0)
 			.attr("height", chart._height);
-		},
-	    },
+		}
+	    }
 	    
 	});
     }
@@ -1837,7 +1836,7 @@ d3.chart("H1DSEditModeChart", {
 		 'width': rb_width,
 		 'height': rb_width,
 		 'class': "resizebar corner rb_x rb_y"
-		},
+		}
 	    ];
 	}
 
