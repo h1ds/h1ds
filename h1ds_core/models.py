@@ -28,10 +28,10 @@ else:
     public_worksheets_default = False
 
 # Match strings "f(fid)_name", where fid is the filter ID
-filter_name_regex = re.compile('^f(?P<fid>\d+?)')
+filter_name_regex = re.compile('^f(?P<fid>\d+)')
 
 # Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
-filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_(?P<kwarg>.+)')
+filter_kwarg_regex = re.compile('^f(?P<fid>\d+)_(?P<kwarg>.+)')
     
 backend_module = import_module(settings.H1DS_DATA_BACKEND)
 
@@ -73,7 +73,7 @@ def get_filter_list(request):
     
     for fid, filter_data in sorted(filter_dict.items()):
         filter_list.append([fid, filter_data['name'], filter_data['kwargs']])
-                           
+
     return filter_list
 
 def get_all_filters():
