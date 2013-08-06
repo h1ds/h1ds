@@ -392,6 +392,7 @@ H1DSUri.prototype.getNextFilterID = function() {
 
 H1DSUri.prototype.packFilterIDs = function() {
     // renumber the filter ids so they are continuous from 0...
+
     console.log(this.h1ds_filters);
 };
 
@@ -421,6 +422,7 @@ H1DSUri.prototype.appendFilter = function(filter_name, filter_kwargs) {
     var new_id = this.getNextFilterID();
     this.h1ds_filters[String(new_id)] = {'name':filter_name,'kwargs':filter_kwargs};
 };
+
 
 H1DSUri.prototype.renderUri = function() {
     var newQueryKey = {};
@@ -1526,26 +1528,31 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 	    dataBind: function(data) {
 		// TODO: chart.data should be [data1, data2, etc...] so we can overplot
 		chart.data = data[0];
-		chart.xScale
-		    .range([0, chart._width])
-		    .domain([d3.min(chart.data.dimension, function(v) {return d3.min(v); }),
-			     d3.max(chart.data.dimension, function(v) {return d3.max(v); })]);
 		return this.selectAll("g.x.axis").data([data]);
 	    },
 	    insert: function() {
 		return this.insert("g")
 		    .attr("class", "x axis")
-	    	    .attr("transform", function (d) {return "translate(" + 0 + "," + chart._height + ")";})
-		    .call(chart.xAxis);
+	    	    .attr("transform", function (d) {return "translate(" + 0 + "," + chart._height + ")";});
 		
 	    },
 	    events: {
-		"update": function() {
+		"merge": function() {
+		    chart.xScale
+			.range([0, chart._width])
+			.domain([d3.min(chart.data.dimension, function(v) {return d3.min(v); }),
+				 d3.max(chart.data.dimension, function(v) {return d3.max(v); })]);
 		    return this.call(chart.xAxis);
 		},
 		"enter": function() {
+		    chart.xScale
+			.range([0, chart._width])
+			.domain([d3.min(chart.data.dimension, function(v) {return d3.min(v); }),
+				 d3.max(chart.data.dimension, function(v) {return d3.max(v); })]);
+		    
 		    return this.call(chart.xAxis);		
 		},
+		"exit": function() {return this.remove()},
 	    },
 	});
 	
@@ -1553,13 +1560,6 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 	    dataBind: function(data) {
 		// TODO: shouldn't need to attach data for each layer?
 		chart.data = data[0];
-		// we find min and max and add 5% to above and below.
-		var minval = d3.min(chart.data.value, function(v) {return d3.min(v); });
-		var maxval = d3.max(chart.data.value, function(v) {return d3.max(v); });
-		var delta = 0.05*(maxval - minval);
-		chart.yScale
-		    .range([chart._height, 0])
-		    .domain([minval-delta, maxval+delta]);
 
 		return this.selectAll("g.y.axis").data([data]);
 	    },
@@ -1569,12 +1569,28 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 	    	    .attr("transform", function (d) {return "translate(" + 0 + "," + 0 + ")";});
 	    },
 	    events: {
-		"update": function() {
+		"merge": function() {
+		    // we find min and max and add 5% to above and below.
+		    var minval = d3.min(chart.data.value, function(v) {return d3.min(v); });
+		    var maxval = d3.max(chart.data.value, function(v) {return d3.max(v); });
+		    var delta = 0.05*(maxval - minval);
+		    chart.yScale
+			.range([chart._height, 0])
+			.domain([minval-delta, maxval+delta]);
+		    
 		    return this.call(chart.yAxis);
 		},
 		"enter": function() {
+		    // we find min and max and add 5% to above and below.
+		    var minval = d3.min(chart.data.value, function(v) {return d3.min(v); });
+		    var maxval = d3.max(chart.data.value, function(v) {return d3.max(v); });
+		    var delta = 0.05*(maxval - minval);
+		    chart.yScale
+			.range([chart._height, 0])
+			.domain([minval-delta, maxval+delta]);
 		    return this.call(chart.yAxis);
 		},
+		"exit": function() {return this.remove()},
 		
 	    },
 	});
@@ -1650,7 +1666,7 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 		return this.append("path");
 	    },
 	    events: {
-		"update": function() {
+		"merge": function() {
 		    return this
 			.attr("class", "signal")
 			.style("stroke", function(d, i) { return chart.colors(2*i); })
@@ -1665,19 +1681,27 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 			.style("fill", function(d, i) {return (d.fillLine ? chart.colors(2*i+1) : "none"); })
 			.attr("d", function(d,i) {return line(d) + (d.closeLine ? "Z" : "");});
 		},
+		"exit": function() {return this.remove()},
 	    },
 	});
 
 	var load_selection = function() {
 	    // TODO: HACK - use stateindex rather than assume 0!!!
+
 	    var current_uri = plotState
 		.pagelets[0]
 		.charts[0]
 		.data[0].uri;
-	    // remove resample_minmax
-	    
-	    current_uri.appendFilter("dim_range", {'min':chart.brush.extent()[0], 'max':chart.brush.extent()[1]});
 
+	    // set up dim_range filter
+	    var dr_kwargs = {'min':chart.brush.extent()[0], 'max':chart.brush.extent()[1]};
+	    var cur_dr = current_uri.getFilterIDsForFilterName("dim_range");
+	    if (cur_dr.length > 0) {
+		//edit the last one
+		current_uri.h1ds_filters[cur_dr[cur_dr.length-1]].kwargs = dr_kwargs;
+	    } else {
+		current_uri.appendFilter("dim_range", dr_kwargs);
+	    }
 	    var minmax_filters = current_uri.getFilterIDsForFilterName("resample_minmax");
 	    var nextID = current_uri.getNextFilterID();
 	    for (var i=0; i<minmax_filters.length; i++ ) {
@@ -1690,7 +1714,7 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 		.pagelets[0]
 		.charts[0]
 		.data[0].uri = current_uri;
-	    console.log(current_uri.renderUri());
+
 	    $.ajax({url: current_uri.renderUri(),
 		    dataType: "json",
 		    async:false})
@@ -1712,19 +1736,12 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 		return this.selectAll("g.brush").data([chart.data]);
 	    },
 	    insert: function() {
+		chart.brush.clear();
 		return this.append("g")
 		    .attr("class", "brush");
 	    },
 	    events: {
-		"update": function() {
-		    chart.brush = d3.svg.brush().x(chart.xScale).on("brushend", load_selection);
-		    return this
-			.call(chart.brush)
-			.selectAll("rect")
-			.attr("y", 0)
-			.attr("height", chart._height);
-		},
-		"enter": function() {
+		"merge": function() {
 		    chart.brush = d3.svg.brush().x(chart.xScale).on("brushend", load_selection);
 		    return this
 			.call(chart.brush)
