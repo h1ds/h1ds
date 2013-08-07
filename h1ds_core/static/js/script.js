@@ -5,6 +5,13 @@
 
 var golden_ratio = 1.61803398875;
 
+function sortByKey(array, key) {
+    return array.sort(function(a, b) {
+        var x = a[key]; var y = b[key];
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+}
+
 ////////////////////////////////////////////////////////////////////////
 // Masonry - for  grid layout. Currently just used in  homepage, but not
 // really needed there.
@@ -263,8 +270,8 @@ function getLastShotInDisplayedPage() {
     // if we get more flexible about the table/data structure
     // then we should get more clever about how we get this value
     var latest_shot = -1;
-    d3.selectAll("table.main-table tr")
-	.each(function(d,i) {
+    d3.selectAll("table.main-table tr")	
+.each(function(d,i) {
 	    if (i > 0) {
 		var shot = Number(d3.select(this).select("td").text());
 		if (shot > latest_shot) {
@@ -351,106 +358,234 @@ $("span.toggleVertical").click(function() {
 ////////////////////////////////////////////////////////////////////////
 // H1DSUri -  an object which  allows easy manipulation of  query string
 // filters.
+//
+// TODO: H1DSUri stores the base_uri, and allows filters etc to be added
+// - the base_uri should be what is in the browser window. The additional 
+// filters are used in the presentation of the resource, fetched via ajax
+// 
 ////////////////////////////////////////////////////////////////////////
 
-function H1DSUri(original_uri) {
-    this.uri_components = parseUri(original_uri);
-    this.h1ds_filters = {};
-    this.non_h1ds_query = {};
-    //var filter_re = /^f(\d+)_(name|arg(\d+))$/;
+function H1DSUri(base_uri) {
+
+    this.base_uri = base_uri;
+    this.base_uri_components = parseUri(base_uri);
+
+    // extract h1ds filters from query strings
+    this.base_h1ds_filters = [];
+    this.base_non_h1ds_query = {};
+
+    // extra query strings for visual display of data from base_uri
+    // for example, subsample large data timeseries.
+    this.extra_h1ds_filters = [];
+    this.extra_non_h1ds_query = {};
+
+    var tmp_h1ds_filters = {'fids':[]};
     var filter_re = /^f(\d+)(_(\w+))?/;
-    for (var key in this.uri_components.queryKey) {
-	if (this.uri_components.queryKey.hasOwnProperty(key)) {
+
+    for (var key in this.base_uri_components.queryKey) {
+	if (this.base_uri_components.queryKey.hasOwnProperty(key)) {
 	    var filter_info = filter_re.exec(key);
 	    if (filter_info) {
-		if (!this.h1ds_filters.hasOwnProperty(filter_info[1])) {
-		    this.h1ds_filters[filter_info[1]] = {'name':"", "kwargs":{}};
+		if (!tmp_h1ds_filters.hasOwnProperty(filter_info[1])) {
+		    tmp_h1ds_filters.fids.push(filter_info[1]);
+		    tmp_h1ds_filters[filter_info[1]] = {'name':"", "kwargs":{}, "fid":parseInt(filter_info[1])};
 		}
 		if (typeof filter_info[2] === 'undefined') {
-		    this.h1ds_filters[filter_info[1]].name = this.uri_components.queryKey[key];
+		    tmp_h1ds_filters[filter_info[1]].name = this.base_uri_components.queryKey[key];
 		}
 		else {
-		    this.h1ds_filters[filter_info[1]].kwargs[filter_info[3]] = this.uri_components.queryKey[key];
+		    tmp_h1ds_filters[filter_info[1]].kwargs[filter_info[3]] = this.base_uri_components.queryKey[key];
 		}
 	    }
 	    else {
-		this.non_h1ds_query[key] = this.uri_components.queryKey[key];
+		this.base_non_h1ds_query[key] = this.base_uri_components.queryKey[key];
 	    }
 	}
     }
+    for (var i=0; i<tmp_h1ds_filters.fids.length; i++) {
+	this.base_h1ds_filters.push(tmp_h1ds_filters[tmp_h1ds_filters.fids[i]]);
+    }
+    
+    this.sortH1DSFilters();
+
 }
 
-H1DSUri.prototype.getNextFilterID = function() {
-    var largest_fid = -1;
-    for (var key in this.h1ds_filters) {
-	if (this.h1ds_filters.hasOwnProperty(key)) {
-	    if (Number(key) > largest_fid) largest_fid=Number(key);
-	}
+H1DSUri.prototype.sortH1DSFilters = function() {
+    this.base_h1ds_filters = sortByKey(this.base_h1ds_filters, "fid");    
+    this.extra_h1ds_filters = sortByKey(this.extra_h1ds_filters, "fid");    
+}
+
+H1DSUri.prototype.updateOrAddBaseFilter = function(name, kwargs) {
+    // if the last base filter is the same as name, then we swap in the kwargs, otherwise append the kwargs on the end.
+    var len = this.base_h1ds_filters.length;
+    if (len>0 && this.base_h1ds_filters[len-1].name == name) {
+	this.base_h1ds_filters[len-1].kwargs = kwargs;
+    } else {
+	this.addBaseFilter(name, kwargs);
     }
-    return largest_fid + 1;
+
 };
 
+H1DSUri.prototype.shiftExtraH1DSFilterFIDs = function(delta) {
+    for (var i=0; i<this.extra_h1ds_filters.length; i++) {
+	this.extra_h1ds_filters[i].fid += delta;
+    }
+}
+
+H1DSUri.prototype.shiftExtraFilterIDs = function() {
+    // make sure the fids of extra filters all come after the base filter fids
+    // if fid overlaps with extras, shift extra fids
+    this.sortH1DSFilters();
+    if (this.extra_h1ds_filters.length > 0) {
+	var delta_fid = new_fid - this.extra_h1ds_filters[0].fid; 
+	if (delta_fid >= 0) {
+	    this.shiftExtraH1DSFilterFIDs(delta_fid+1);
+	}
+    }
+    
+}
+
+H1DSUri.prototype.addBaseFilter = function(name, kwargs) {
+    this.sortH1DSFilters();
+    var len = this.base_h1ds_filters.length;
+    if (len>0) {
+	var new_fid = this.base_h1ds_filters[len-1].fid + 1;
+    } else {
+	var new_fid = 0;
+    }
+    this.base_h1ds_filters.push({"name":name, "kwargs":kwargs, "fid":new_fid});
+    this.shiftExtraH1DSFilterFIDs();
+}
+
+H1DSUri.prototype.addExtraFilter = function(name, kwargs) {
+    this.sortH1DSFilters();
+    var len_extra = this.extra_h1ds_filters.length;
+    var len_base = this.base_h1ds_filters.length;
+    if (len_extra>0) {
+	var new_fid = this.extra_h1ds_filters[len_extra-1].fid + 1;
+    } else if (len_base>0) { 
+	var new_fid = this.base_h1ds_filters[len_base-1].fid + 1;
+    } else {
+	var new_fid = 0;
+    }
+    this.extra_h1ds_filters.push({"name":name, "kwargs":kwargs, "fid":new_fid});
+}
+
 H1DSUri.prototype.packFilterIDs = function() {
+    // TODO
     // renumber the filter ids so they are continuous from 0...
 
-    console.log(this.h1ds_filters);
+    console.log(this.extra_h1ds_filters);
 };
 
 H1DSUri.prototype.changeFilterID = function (oldID, newID) {
     // Check for the oldID name to avoid a ReferenceError in strict mode.
-    if (this.h1ds_filters.hasOwnProperty(oldID)) {
-        this.h1ds_filters[newID] = this.h1ds_filters[oldID];
-        delete this.h1ds_filters[oldID];
+    
+    for (var i=0; i<this.base_h1ds_filters.length; i++) {
+	if (this.base_h1ds_filters[i].fid == parseInt(oldID)) {
+	    this.base_h1ds_filters[i].fid = parseInt(newID);
+	}
     }
-    return this;
+
+    for (var i=0; i<this.extra_h1ds_filters.length; i++) {
+	if (this.extra_h1ds_filters[i].fid == parseInt(oldID)) {
+	    this.extra_h1ds_filters[i].fid = parseInt(newID);
+	}
+    }
+
+    this.shiftExtraFilterIDs();
 };
 
+/*
 H1DSUri.prototype.getFilterIDsForFilterName = function(filter_name) {
     var fids = [];
-    for (var key in this.h1ds_filters) {
-	if (this.h1ds_filters.hasOwnProperty(key)) {
+    for (var key in this.base_h1ds_filters) {
+	if (this.base_h1ds_filters.hasOwnProperty(key)) {
 	    //if (Number(key) > largest_fid) largest_fid=Number(key);
-	    if (this.h1ds_filters[key].name == filter_name) {
+	    if (this.base_h1ds_filters[key].name == filter_name) {
+		fids.push(key);
+	    }
+	}
+    }
+    for (var key in this.extra_h1ds_filters) {
+	if (this.extra_h1ds_filters.hasOwnProperty(key)) {
+	    //if (Number(key) > largest_fid) largest_fid=Number(key);
+	    if (this.extra_h1ds_filters[key].name == filter_name) {
 		fids.push(key);
 	    }
 	}
     }
     return fids;
 }
-
+*/
+/*
 H1DSUri.prototype.appendFilter = function(filter_name, filter_kwargs) {
     var new_id = this.getNextFilterID();
-    this.h1ds_filters[String(new_id)] = {'name':filter_name,'kwargs':filter_kwargs};
+    this.extra_h1ds_filters[String(new_id)] = {'name':filter_name,'kwargs':filter_kwargs};
+};
+*/
+
+
+
+H1DSUri.prototype.renderBaseUri = function() {
+
+    var newQueryKey = {};
+    for (var key in this.base_non_h1ds_query) {
+	if (this.base_non_h1ds_query.hasOwnProperty(key)) {
+	    newQueryKey[key] = this.base_non_h1ds_query[key];
+	}
+    }
+
+    for (var i=0; i<this.base_h1ds_filters.length; i++) {
+	var fid = this.base_h1ds_filters[i].fid
+	newQueryKey["f"+fid] = this.base_h1ds_filters[i].name;
+	for (var fkey in this.base_h1ds_filters[i].kwargs) {
+	    newQueryKey["f"+fid+"_"+fkey] = this.base_h1ds_filters[i].kwargs[fkey];
+	}
+    }
+
+    var new_uri_components = jQuery.extend({}, this.base_uri_components);
+    new_uri_components.queryKey = newQueryKey;
+    return makeUri(new_uri_components);
 };
 
-
-H1DSUri.prototype.renderUri = function() {
+H1DSUri.prototype.renderExtraUri = function() {
     var newQueryKey = {};
-    for (var key in this.non_h1ds_query) {
-	if (this.non_h1ds_query.hasOwnProperty(key)) {
-	    newQueryKey[key] = this.non_h1ds_query[key];
+    for (var key in this.base_non_h1ds_query) {
+	if (this.base_non_h1ds_query.hasOwnProperty(key)) {
+	    newQueryKey[key] = this.base_non_h1ds_query[key];
 	}
     }
 
-    for (var key in this.h1ds_filters) {
-	if (this.h1ds_filters.hasOwnProperty(key)) {
-	    newQueryKey["f"+key] = this.h1ds_filters[key].name;
-	   // for (var i=0; i<this.h1ds_filters[key].args.length;i++) { // can 
-		// newQueryKey["f"+key+"_arg"+i] = this.h1ds_filters[key].args[i];
-	    //}
-	    for (var fkey in this.h1ds_filters[key].kwargs) {
-		newQueryKey["f"+key+"_"+fkey] = this.h1ds_filters[key].kwargs[fkey];
-	    }
+    for (var i=0; i<this.base_h1ds_filters.length; i++) {
+	var fid = this.base_h1ds_filters[i].fid
+	newQueryKey["f"+fid] = this.base_h1ds_filters[i].name;
+	for (var fkey in this.base_h1ds_filters[i].kwargs) {
+	    newQueryKey["f"+fid+"_"+fkey] = this.base_h1ds_filters[i].kwargs[fkey];
 	}
     }
 
-    var new_uri_components = jQuery.extend({}, this.uri_components);
+    for (var key in this.extra_non_h1ds_query) {
+	if (this.extra_non_h1ds_query.hasOwnProperty(key)) {
+	    newQueryKey[key] = this.extra_non_h1ds_query[key];
+	}
+    }
+
+    for (var i=0; i<this.extra_h1ds_filters.length; i++) {
+	var fid = this.extra_h1ds_filters[i].fid
+	newQueryKey["f"+fid] = this.extra_h1ds_filters[i].name;
+	for (var fkey in this.extra_h1ds_filters[i].kwargs) {
+	    newQueryKey["f"+fid+"_"+fkey] = this.extra_h1ds_filters[i].kwargs[fkey];
+	}
+    }
+
+    var new_uri_components = jQuery.extend({}, this.base_uri_components);
     new_uri_components.queryKey = newQueryKey;
     return makeUri(new_uri_components);
 };
 
 H1DSUri.prototype.isBinary = function() {
-    return (this.non_h1ds_query['format'] === 'bin') 
+    return (this.base_non_h1ds_query['format'] === 'bin') 
 }
 
 H1DSUri.prototype.getShot = function() {
@@ -1083,32 +1218,32 @@ function isMinMaxPlot(signal_data) {
 function getSpectrogramUri(original_uri) {
     // assume original_url gives a timeseries.
     var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
-    h1ds_uri.appendFilter('spectrogram', {'bin_size':-1});
-    h1ds_uri.appendFilter('norm_dim_range_2d', {'x_min':0, 'x_max':1, 'y_min':0, 'y_max':0.5});
-    h1ds_uri.appendFilter('y_axis_energy_limit', {'threshold':0.995});
-    h1ds_uri.non_h1ds_query['format'] = 'bin';
-    h1ds_uri.non_h1ds_query['bin_assert_dtype'] = 'uint8';
+    h1ds_uri.addExtraFilter('slanted_baseline', {'window':10});
+    h1ds_uri.addExtraFilter('spectrogram', {'bin_size':-1});
+    h1ds_uri.addExtraFilter('norm_dim_range_2d', {'x_min':0, 'x_max':1, 'y_min':0, 'y_max':0.5});
+    h1ds_uri.addExtraFilter('y_axis_energy_limit', {'threshold':0.995});
+    h1ds_uri.extra_non_h1ds_query['format'] = 'bin';
+    h1ds_uri.extra_non_h1ds_query['bin_assert_dtype'] = 'uint8';
     return h1ds_uri;
 }
 
 function getPowerspectrumUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('slanted_baseline', {'window':10});
-    h1ds_uri.appendFilter('power_spectrum', {});
-    h1ds_uri.appendFilter('norm_dim_range', {'min':0,'max':0.5});
-    //h1ds_uri.appendFilter('x_axis_energy_limit',{'threshold':0.995});
-    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
-    h1ds_uri.non_h1ds_query['format'] = 'json';
+    h1ds_uri.addExtraFilter('slanted_baseline', {'window':10});
+    h1ds_uri.addExtraFilter('power_spectrum', {});
+    h1ds_uri.addExtraFilter('norm_dim_range', {'min':0,'max':0.5});
+    //h1ds_uri.addExtraFilter('x_axis_energy_limit',{'threshold':0.995});
+    h1ds_uri.addExtraFilter('resample_minmax', {'n_bins':width});
+    h1ds_uri.extra_non_h1ds_query['format'] = 'json';
     return h1ds_uri;
 }
 
 function getRawUri(original_uri, width) {
     // assume original_url gives a timeseries.
     var h1ds_uri = new H1DSUri(original_uri);
-    h1ds_uri.appendFilter('resample_minmax', {'n_bins':width});
-    h1ds_uri.non_h1ds_query['format'] = 'json';
+    h1ds_uri.addExtraFilter('resample_minmax', {'n_bins':width});
+    h1ds_uri.extra_non_h1ds_query['format'] = 'json';
     return h1ds_uri;
 }
 
@@ -1302,7 +1437,8 @@ function loadPlotState() {
     //TODO: should  we use urlcache  to share data between  charts, or
     //can   we   assume   each   chart  will   have   different   data
     //(e.g. different width rebinning etc)
-    plotState.settings = {'edit_mode': false};
+    // worksheet_mode - don't assume the browser url points to a node.
+    plotState.settings = {'edit_mode': false, 'worksheet_mode': false};
     plotState.url_cache = {};
     plotState.pagelets = [];
     $(".h1ds-pagelet").each(function(i, e) {
@@ -1359,7 +1495,7 @@ function loadDefaultPageletPlotState(i, e) {
 
     // load data asynchronously
 
-    $.ajax({url: plotState.pagelets[i].charts[0].data[0].uri.renderUri(),
+    $.ajax({url: plotState.pagelets[i].charts[0].data[0].uri.renderExtraUri(),
 	    dataType: "json",
 	    async:true})
 	.done(function(a) {
@@ -1413,24 +1549,11 @@ d3.chart("H1DSBaseChart", {
 	// default
 	chart.margin = {top: 10, right: 10, bottom: 10, left: 10};
 
-	//var background = this.base.append("g")
-	//    .classed("graph-background", true);
-
-	//set_margin({top: 10, right: 10, bottom: 10, left: 10});
-	//chart.main = chart.base.append("g")
-	//    .attr("class", "chart-main")
-	//    .attr("transform", "translate(" + chart.margin.left + "," + chart.margin.top + ")");
-
 	// set defaults 
 	chart._width = 100;
 	chart._height = 100;
 
 	this.set_margin =  function(newMargin) {
-	    // newMargin = {top: xx, right: xx, bottom: xx, left: xx}
-	    //if (!arguments.length) {
-	    //	return chart.margin;
-	    //}
-
 	    var full_width = chart._width + chart.margin.left + chart.margin.right;
 	    var full_height = chart._height + chart.margin.bottom + chart.margin.top;
 	    
@@ -1444,9 +1567,6 @@ d3.chart("H1DSBaseChart", {
 
 	this.set_margin({top: 10, right: 10, bottom: 10, left: 10});
 
-	
-
-	
 	this.layer("background", background, {
 	    dataBind: function(data) {
 		return this.selectAll("rect.background").data([data]);
@@ -1692,29 +1812,51 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 		.charts[0]
 		.data[0].uri;
 
-	    // set up dim_range filter
+	    // create  a new  base  URI (i.e.  in location  base)  with the  new
+	    // dim_range 
+	    // NOTE: this  is for 1d  signals - this  method is still  a testing
+	    // plot, but really assumes 1d data for the moment.
+	    // TODO: abstract  out the  bits which  can be  used for  other plot
+	    // types
+	    // if the last  main_h1ds_filter is dim_range, then  we overwrite it
+	    // (save the server  doing a needless dim_range).  Otherwise we just
+	    // append the dim_range  filter (so we don't  interfere with filters
+	    // coming after an existing dim_range filter, if there is one).
+	    // 
+
 	    var dr_kwargs = {'min':chart.brush.extent()[0], 'max':chart.brush.extent()[1]};
+	    var new_uri = new H1DSUri(current_uri.base_uri);
+	    new_uri.updateOrAddBaseFilter("dim_range", dr_kwargs);
+
+	    // set up dim_range filter
+	    /*
 	    var cur_dr = current_uri.getFilterIDsForFilterName("dim_range");
 	    if (cur_dr.length > 0) {
 		//edit the last one
 		current_uri.h1ds_filters[cur_dr[cur_dr.length-1]].kwargs = dr_kwargs;
 	    } else {
-		current_uri.appendFilter("dim_range", dr_kwargs);
+		current_uri.addExtraFilter("dim_range", dr_kwargs);
 	    }
+	    */
+	    /*
 	    var minmax_filters = current_uri.getFilterIDsForFilterName("resample_minmax");
 	    var nextID = current_uri.getNextFilterID();
 	    for (var i=0; i<minmax_filters.length; i++ ) {
 		var new_id = nextID + parseInt(minmax_filters[i]);
 		current_uri.changeFilterID(minmax_filters[i], String(new_id));
 	    }
-	    current_uri.packFilterIDs();
+	    */
+
+	    // TODO: hard coded for raw URI...
+	    // TODO: perhaps getRawUri should figure out the width it needs?
+	    new_uri = getRawUri(new_uri.renderBaseUri(), (chart._width + chart.margin.left + chart.margin.right));
 	    
 	    plotState // SAME HACK
 		.pagelets[0]
 		.charts[0]
-		.data[0].uri = current_uri;
+		.data[0].uri = new_uri;
 
-	    $.ajax({url: current_uri.renderUri(),
+	    $.ajax({url: new_uri.renderExtraUri(),
 		    dataType: "json",
 		    async:false})
 		.done(function(a) {
@@ -1723,10 +1865,9 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 			.charts[0]
 			.data[0].data = a;
 		    chart.draw([a.data]); // TODO: make sure we're not missing any hacks in updateCharts.
+		    // TODO: pushstate, use base_uri..
 		});
-
 	    
-	    	    
 	};
 
 	this.layer("interactive", chart.main, {
