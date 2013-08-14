@@ -1275,7 +1275,7 @@ function testWorksheet() {
 		]},
 	{'plot_coords':[0,0,10,5],
 	 'modifiers':{},
-	 'data':[{url:  window.location.toString(), url_parser: url_parser},
+	 'data':[{url:  window.location.toString(), url_parser: url_parser}
 		]}
 		    ];
     
