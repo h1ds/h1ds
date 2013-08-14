@@ -5,12 +5,6 @@
 
 var golden_ratio = 1.61803398875;
 
-function sortByKey(array, key) {
-    return array.sort(function(a, b) {
-        var x = a[key]; var y = b[key];
-        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
-    });
-}
 
 ////////////////////////////////////////////////////////////////////////
 // Masonry - for  grid layout. Currently just used in  homepage, but not
@@ -355,261 +349,6 @@ $("span.toggleVertical").click(function() {
     }
 });
 
-////////////////////////////////////////////////////////////////////////
-// H1DSUri -  an object which  allows easy manipulation of  query string
-// filters.
-//
-// TODO: H1DSUri stores the base_uri, and allows filters etc to be added
-// - the base_uri should be what is in the browser window. The additional 
-// filters are used in the presentation of the resource, fetched via ajax
-// 
-////////////////////////////////////////////////////////////////////////
-
-function H1DSUri(base_uri) {
-
-    this.base_uri = base_uri;
-    this.base_uri_components = parseUri(base_uri);
-
-    // extract h1ds filters from query strings
-    this.base_h1ds_filters = [];
-    this.base_non_h1ds_query = {};
-
-    // extra query strings for visual display of data from base_uri
-    // for example, subsample large data timeseries.
-    this.extra_h1ds_filters = [];
-    this.extra_non_h1ds_query = {};
-
-    var tmp_h1ds_filters = {'fids':[]};
-    var filter_re = /^f(\d+)(_(\w+))?/;
-
-    for (var key in this.base_uri_components.queryKey) {
-	if (this.base_uri_components.queryKey.hasOwnProperty(key)) {
-	    var filter_info = filter_re.exec(key);
-	    if (filter_info) {
-		if (!tmp_h1ds_filters.hasOwnProperty(filter_info[1])) {
-		    tmp_h1ds_filters.fids.push(filter_info[1]);
-		    tmp_h1ds_filters[filter_info[1]] = {'name':"", "kwargs":{}, "fid":parseInt(filter_info[1])};
-		}
-		if (typeof filter_info[2] === 'undefined') {
-		    tmp_h1ds_filters[filter_info[1]].name = this.base_uri_components.queryKey[key];
-		}
-		else {
-		    tmp_h1ds_filters[filter_info[1]].kwargs[filter_info[3]] = this.base_uri_components.queryKey[key];
-		}
-	    }
-	    else {
-		this.base_non_h1ds_query[key] = this.base_uri_components.queryKey[key];
-	    }
-	}
-    }
-    for (var i=0; i<tmp_h1ds_filters.fids.length; i++) {
-	this.base_h1ds_filters.push(tmp_h1ds_filters[tmp_h1ds_filters.fids[i]]);
-    }
-    
-    this.sortH1DSFilters();
-
-}
-
-H1DSUri.prototype.sortH1DSFilters = function() {
-    this.base_h1ds_filters = sortByKey(this.base_h1ds_filters, "fid");    
-    this.extra_h1ds_filters = sortByKey(this.extra_h1ds_filters, "fid");    
-}
-
-H1DSUri.prototype.updateOrAddBaseFilter = function(name, kwargs) {
-    // if the last base filter is the same as name, then we swap in the kwargs, otherwise append the kwargs on the end.
-    var len = this.base_h1ds_filters.length;
-    if (len>0 && this.base_h1ds_filters[len-1].name == name) {
-	this.base_h1ds_filters[len-1].kwargs = kwargs;
-    } else {
-	this.addBaseFilter(name, kwargs);
-    }
-
-};
-
-H1DSUri.prototype.shiftExtraH1DSFilterFIDs = function(delta) {
-    for (var i=0; i<this.extra_h1ds_filters.length; i++) {
-	this.extra_h1ds_filters[i].fid += delta;
-    }
-}
-
-H1DSUri.prototype.shiftExtraFilterIDs = function() {
-    // make sure the fids of extra filters all come after the base filter fids
-    // if fid overlaps with extras, shift extra fids
-    this.sortH1DSFilters();
-    if (this.extra_h1ds_filters.length > 0) {
-	var delta_fid = new_fid - this.extra_h1ds_filters[0].fid; 
-	if (delta_fid >= 0) {
-	    this.shiftExtraH1DSFilterFIDs(delta_fid+1);
-	}
-    }
-    
-}
-
-H1DSUri.prototype.addBaseFilter = function(name, kwargs) {
-    this.sortH1DSFilters();
-    var len = this.base_h1ds_filters.length;
-    if (len>0) {
-	var new_fid = this.base_h1ds_filters[len-1].fid + 1;
-    } else {
-	var new_fid = 0;
-    }
-    this.base_h1ds_filters.push({"name":name, "kwargs":kwargs, "fid":new_fid});
-    this.shiftExtraH1DSFilterFIDs();
-}
-
-H1DSUri.prototype.addExtraFilter = function(name, kwargs) {
-    this.sortH1DSFilters();
-    var len_extra = this.extra_h1ds_filters.length;
-    var len_base = this.base_h1ds_filters.length;
-    if (len_extra>0) {
-	var new_fid = this.extra_h1ds_filters[len_extra-1].fid + 1;
-    } else if (len_base>0) { 
-	var new_fid = this.base_h1ds_filters[len_base-1].fid + 1;
-    } else {
-	var new_fid = 0;
-    }
-    this.extra_h1ds_filters.push({"name":name, "kwargs":kwargs, "fid":new_fid});
-}
-
-H1DSUri.prototype.packFilterIDs = function() {
-    // TODO
-    // renumber the filter ids so they are continuous from 0...
-
-    console.log(this.extra_h1ds_filters);
-};
-
-H1DSUri.prototype.changeFilterID = function (oldID, newID) {
-    // Check for the oldID name to avoid a ReferenceError in strict mode.
-    
-    for (var i=0; i<this.base_h1ds_filters.length; i++) {
-	if (this.base_h1ds_filters[i].fid == parseInt(oldID)) {
-	    this.base_h1ds_filters[i].fid = parseInt(newID);
-	}
-    }
-
-    for (var i=0; i<this.extra_h1ds_filters.length; i++) {
-	if (this.extra_h1ds_filters[i].fid == parseInt(oldID)) {
-	    this.extra_h1ds_filters[i].fid = parseInt(newID);
-	}
-    }
-
-    this.shiftExtraFilterIDs();
-};
-
-/*
-H1DSUri.prototype.getFilterIDsForFilterName = function(filter_name) {
-    var fids = [];
-    for (var key in this.base_h1ds_filters) {
-	if (this.base_h1ds_filters.hasOwnProperty(key)) {
-	    //if (Number(key) > largest_fid) largest_fid=Number(key);
-	    if (this.base_h1ds_filters[key].name == filter_name) {
-		fids.push(key);
-	    }
-	}
-    }
-    for (var key in this.extra_h1ds_filters) {
-	if (this.extra_h1ds_filters.hasOwnProperty(key)) {
-	    //if (Number(key) > largest_fid) largest_fid=Number(key);
-	    if (this.extra_h1ds_filters[key].name == filter_name) {
-		fids.push(key);
-	    }
-	}
-    }
-    return fids;
-}
-*/
-/*
-H1DSUri.prototype.appendFilter = function(filter_name, filter_kwargs) {
-    var new_id = this.getNextFilterID();
-    this.extra_h1ds_filters[String(new_id)] = {'name':filter_name,'kwargs':filter_kwargs};
-};
-*/
-
-
-
-H1DSUri.prototype.renderBaseUri = function() {
-
-    var newQueryKey = {};
-    for (var key in this.base_non_h1ds_query) {
-	if (this.base_non_h1ds_query.hasOwnProperty(key)) {
-	    newQueryKey[key] = this.base_non_h1ds_query[key];
-	}
-    }
-
-    for (var i=0; i<this.base_h1ds_filters.length; i++) {
-	var fid = this.base_h1ds_filters[i].fid
-	newQueryKey["f"+fid] = this.base_h1ds_filters[i].name;
-	for (var fkey in this.base_h1ds_filters[i].kwargs) {
-	    newQueryKey["f"+fid+"_"+fkey] = this.base_h1ds_filters[i].kwargs[fkey];
-	}
-    }
-
-    var new_uri_components = jQuery.extend({}, this.base_uri_components);
-    new_uri_components.queryKey = newQueryKey;
-    return makeUri(new_uri_components);
-};
-
-H1DSUri.prototype.renderExtraUri = function() {
-    var newQueryKey = {};
-    for (var key in this.base_non_h1ds_query) {
-	if (this.base_non_h1ds_query.hasOwnProperty(key)) {
-	    newQueryKey[key] = this.base_non_h1ds_query[key];
-	}
-    }
-
-    for (var i=0; i<this.base_h1ds_filters.length; i++) {
-	var fid = this.base_h1ds_filters[i].fid
-	newQueryKey["f"+fid] = this.base_h1ds_filters[i].name;
-	for (var fkey in this.base_h1ds_filters[i].kwargs) {
-	    newQueryKey["f"+fid+"_"+fkey] = this.base_h1ds_filters[i].kwargs[fkey];
-	}
-    }
-
-    for (var key in this.extra_non_h1ds_query) {
-	if (this.extra_non_h1ds_query.hasOwnProperty(key)) {
-	    newQueryKey[key] = this.extra_non_h1ds_query[key];
-	}
-    }
-
-    for (var i=0; i<this.extra_h1ds_filters.length; i++) {
-	var fid = this.extra_h1ds_filters[i].fid
-	newQueryKey["f"+fid] = this.extra_h1ds_filters[i].name;
-	for (var fkey in this.extra_h1ds_filters[i].kwargs) {
-	    newQueryKey["f"+fid+"_"+fkey] = this.extra_h1ds_filters[i].kwargs[fkey];
-	}
-    }
-
-    var new_uri_components = jQuery.extend({}, this.base_uri_components);
-    new_uri_components.queryKey = newQueryKey;
-    return makeUri(new_uri_components);
-};
-
-H1DSUri.prototype.isBinary = function() {
-    return (this.base_non_h1ds_query['format'] === 'bin') 
-}
-
-H1DSUri.prototype.getShot = function() {
-    var path = this.uri_components.path;
-    if (path[path.length-1] !== "/") {
-	path = path+"/";
-    }
-    var tmp = path.match(/\/\d+\//);
-    if (tmp===null) {
-	return 0;
-    } else {
-	return Number(tmp[0].substring(1, tmp[0].length-1));
-    }
-}
-
-H1DSUri.prototype.setShot = function(new_shot) {
-    var path = this.uri_components.path;
-    if (path[path.length-1] !== "/") {
-	path = path+"/";
-    }
-    var new_path = path.replace(/\/\d+\//, "/"+new_shot+"/");
-    this.uri_components.path = new_path;
-}
-
 
 ////////////////////////////////////////////////////////////////////////
 // Mouse controls for data zooming etc.
@@ -843,7 +582,7 @@ function str2ab(str) {
  * }
  *
  */
-
+/*
 function loadPlotState() {
     //TODO: should  we use urlcache  to share data between  charts, or
     //can   we   assume   each   chart  will   have   different   data
@@ -1240,23 +979,6 @@ d3.chart("H1DSBaseChart").extend("H1DSTestChart", {
 	    new_uri.updateOrAddBaseFilter("dim_range", dr_kwargs);
 
 	    // set up dim_range filter
-	    /*
-	    var cur_dr = current_uri.getFilterIDsForFilterName("dim_range");
-	    if (cur_dr.length > 0) {
-		//edit the last one
-		current_uri.h1ds_filters[cur_dr[cur_dr.length-1]].kwargs = dr_kwargs;
-	    } else {
-		current_uri.addExtraFilter("dim_range", dr_kwargs);
-	    }
-	    */
-	    /*
-	    var minmax_filters = current_uri.getFilterIDsForFilterName("resample_minmax");
-	    var nextID = current_uri.getNextFilterID();
-	    for (var i=0; i<minmax_filters.length; i++ ) {
-		var new_id = nextID + parseInt(minmax_filters[i]);
-		current_uri.changeFilterID(minmax_filters[i], String(new_id));
-	    }
-	    */
 
 	    // TODO: hard coded for raw URI...
 	    // TODO: perhaps getRawUri should figure out the width it needs?
@@ -1493,6 +1215,8 @@ function updateCharts() {
 
 }
 
+*/
+
 ////////////////////////////////////////////////////////////////////////
 // Run code when DOM is ready
 ////////////////////////////////////////////////////////////////////////
@@ -1503,6 +1227,65 @@ function updateCharts() {
 // button still works)
 
 var plotState = {};
+
+function datamap(data) {
+};
+
+function testWorksheet() {
+	// data = [plot_1, plot_2, plot_3, ..., plot_n]
+	// plot_n = {plot_coords:[x0, y0, x1, y1],
+	//           data = [series_1,series_2,..., series_n],
+        //            }
+	// series_n = {url: source_url,
+	//             url_parser: function which returns object defined below}
+	// url_parser: function(url, {dim_limits=[[dim0_min, dim0_max], [dim1_min, dim1_max],...], (other modifiers)})
+	//             
+	//             returns {
+	//	        dimension: [dim1, dim2, ...],
+	//	        dimension_dtype: str,
+	//	        dimension_units: str,
+	//	        metadata: {key1:val1, key2:val2, ...},
+	//	        name: str,
+	//	        value: [ch1, ch2, ...],
+	//	        value_dype: str,
+	//	        value_units: str,
+	//	       }
+    function url_parser(url, settings) {
+	// TODO: allow for settings - zooming etc
+	var new_uri = getRawUri(url, settings.width);
+	if (settings.hasOwnProperty("min")) { // TODO - what if only min or max but not both?
+	    new_uri.updateOrAddBaseFilter("dim_range", {'min':settings.min, 'max':settings.max});
+	}
+
+	var output;
+	$.ajax({url: new_uri.renderExtraUri(),
+		dataType: "json",
+		async:false})
+	    .done(function(a) {
+		output = a.data;
+	    });
+	return output;
+    }
+
+    var test_data = [
+	{'plot_coords':[0,5,10,10],
+	 'modifiers':{},
+	 'data':[{url:  window.location.toString(), url_parser: url_parser},
+		 {url: "http://localhost:8000/data/58063/h1data/operations/a14_1/input_2/", url_parser:url_parser}
+		]},
+	{'plot_coords':[0,0,10,5],
+	 'modifiers':{},
+	 'data':[{url:  window.location.toString(), url_parser: url_parser},
+		]}
+		    ];
+    
+    var worksheet = dataviewer.create("div.h1ds-pagelet");
+    worksheet.data(test_data);
+    worksheet.draw();
+    
+    }
+
+
 
 $(document).ready(function() {
 
@@ -1522,7 +1305,16 @@ $(document).ready(function() {
 
     // load the state info 
 
-    loadPlotState(); // this will update charts as the data comes in...
+    // use external jsDataViewer lib instead
+    //loadPlotState(); // this will update charts as the data comes in...
+
+    testWorksheet();
+
+    //var worksheet = dataviewer.create("div.h1ds-pagelet");
+	//.append("svg")
+	//.worksheet("test-worksheet")
+	//.data([[window.location.toString()]], datamap);
+
 
     // update pagelets
 
