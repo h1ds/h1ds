@@ -407,9 +407,17 @@ class JSONNodeResponseMixin(object):
             }
         # add metadata...
         response_data.update({'meta':metadata})
-        return HttpResponse(json.dumps(response_data),
-                            mimetype='application/json')
 
+        
+        http_response =  HttpResponse(json.dumps(response_data),
+                                      mimetype='application/json')
+
+        http_response["Access-Control-Allow-Origin"] = "*"
+        http_response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        http_response["Access-Control-Max-Age"] = "1000"
+        http_response["Access-Control-Allow-Headers"] = "*"
+        return http_response
+    
 class CSVNodeResponseMixin(object):
 
     http_method_names = ['get']
