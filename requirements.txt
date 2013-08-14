@@ -6,11 +6,11 @@ South==0.7.6
 celery==3.0.15
 django-celery==3.0.11
 python-openid==2.2.5
--e git+http://github.com/h1ds/django-openid-auth.git#egg=django_openid_auth-dev
--e git+http://github.com/h1ds/h1ds_configdb.git#egg=h1ds_configdb-dev
--e git+http://github.com/h1ds/h1ds_core.git#egg=h1ds_core-dev
--e git+http://github.com/h1ds/h1ds_mdsplus.git#egg=h1ds_mdsplus-dev
--e git+http://github.com/h1ds/h1ds_summary.git#egg=h1ds_summary-dev
+-e git+https://github.com/h1ds/django-openid-auth.git#egg=django_openid_auth-dev
+-e git+https://github.com/h1ds/h1ds_configdb.git#egg=h1ds_configdb-dev
+-e git+https://github.com/h1ds/h1ds_core.git#egg=h1ds_core-dev
+-e git+https://github.com/h1ds/h1ds_mdsplus.git#egg=h1ds_mdsplus-dev
+-e git+https://github.com/h1ds/h1ds_summary.git#egg=h1ds_summary-dev
 moin==1.9.6
 sphinx
 # for django-sphinxdoc
