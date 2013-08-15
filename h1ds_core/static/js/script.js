@@ -1231,7 +1231,7 @@ var plotState = {};
 function datamap(data) {
 };
 
-function testWorksheet() {
+function loadWorksheet() {
 	// data = [plot_1, plot_2, plot_3, ..., plot_n]
 	// plot_n = {plot_coords:[x0, y0, x1, y1],
 	//           data = [series_1,series_2,..., series_n],
@@ -1268,18 +1268,13 @@ function testWorksheet() {
     }
 
     var test_data = [
-	{'plot_coords':[0,5,10,10],
+	{'plot_coords':[0,0,10,10],
 	 'modifiers':{},
 	 'data':[{url:  window.location.toString(), url_parser: url_parser},
-		 {url: "http://localhost:8000/data/58063/h1data/operations/a14_1/input_2/", url_parser:url_parser}
 		]},
-	{'plot_coords':[0,0,10,5],
-	 'modifiers':{},
-	 'data':[{url:  window.location.toString(), url_parser: url_parser}
-		]}
 		    ];
     
-    var worksheet = dataviewer.create("div.h1ds-pagelet");
+    var worksheet = dataviewer.create("div.data.worksheet");
     worksheet.data(test_data);
     worksheet.draw();
     
@@ -1305,16 +1300,7 @@ $(document).ready(function() {
 
     // load the state info 
 
-    // use external jsDataViewer lib instead
-    //loadPlotState(); // this will update charts as the data comes in...
-
-    testWorksheet();
-
-    //var worksheet = dataviewer.create("div.h1ds-pagelet");
-	//.append("svg")
-	//.worksheet("test-worksheet")
-	//.data([[window.location.toString()]], datamap);
-
+    loadWorksheet();
 
     // update pagelets
 
