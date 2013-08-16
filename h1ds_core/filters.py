@@ -73,13 +73,13 @@ class BaseFilter:
         self.kwargs = dict((k, http_arg(v)) for k, v in kwargs.iteritems())
 
     @classmethod
-    def valid_ndim(cls, data):
-        data_ndim = data.ndim if hasattr(data, 'ndim') else 0
-        return (data_ndim == cls.ndim or cls.ndim == "any")
+    def valid_ndim(cls, n_dim):
+        return (cls.ndim == "any" or n_dim == cls.ndim)
+
         
     @classmethod
     def is_filterable(cls, data):
-        return cls.valid_ndim(data) and cls.valid_dtype(data)
+        return cls.valid_ndim(data.get_n_dimensions()) and cls.valid_dtype(data.value)
 
     @classmethod
     def get_slug(cls):

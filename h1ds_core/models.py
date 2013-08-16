@@ -99,12 +99,8 @@ class FilterManager(object):
 
     def get_filters(self, data):
         """Get available processing filters for data object provided."""
-        ndim = data.ndim if hasattr(data, "ndim") else 0
-        if ndim == 0:
-            _dt = type(data)
-        else:
-            _dt = data.dtype
-        data_type = (ndim, _dt)
+
+        data_type = (data.get_n_dimensions(), data.value_dtype)
         if not self.cache.has_key(data_type):
             data_filters = {}
             for fname, filter_ in self.filters.iteritems():
