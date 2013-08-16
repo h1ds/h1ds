@@ -219,7 +219,10 @@ class BaseNode(object):
         
     def get_data(self):
         if type(self.data) == type(None):
-            self.data = self.get_raw_data()
+            try:
+                self.data = self.get_raw_data()
+            except:
+                self.data = None
         return self.data
 
     def get_raw_dim(self):
