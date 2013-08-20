@@ -1,6 +1,6 @@
 from django.contrib import admin
 from h1ds_core.models import H1DSSignal, H1DSSignalInstance, Worksheet
-from h1ds_core.models import UserSignal, Node, Filter
+from h1ds_core.models import UserSignal, Node, Filter, FilterDtype, FilterDim
 
 class H1DSSignalAdmin(admin.ModelAdmin):
     pass
@@ -32,4 +32,14 @@ class FilterAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 admin.site.register(Filter, FilterAdmin)
+
+class FilterDtypeAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(FilterDtype, FilterDtypeAdmin)
+
+class FilterDimAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(FilterDim, FilterDimAdmin)
 

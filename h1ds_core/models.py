@@ -318,11 +318,28 @@ class Node(MPTTModel, backend_module.NodeData):
         #self.available_filters = get_dtype_mappings(self.data)['filters']
         #self.available_views = get_dtype_mappings(self.data)['views'].keys()
             
+class FilterDtype(models.Model):
+
+    name = models.CharField(max_length=128)
+    code = PythonCodeField()
+    def __unicode__(self):
+        return unicode(self.name)
+
+class FilterDim(models.Model):
+    name = models.CharField(max_length=128)
+    code = PythonCodeField()
+    def __unicode__(self):
+        return unicode(self.name)
+        
 class Filter(models.Model):
     name = models.CharField(max_length=128)
     slug = models.SlugField()
+    data_dim = models.ManyToManyField(FilterDim)
+    data_type = models.ManyToManyField(FilterDtype)
     code = PythonCodeField()
-        
+
+    def __unicode__(self):
+        return unicode(self.name)
 
 class H1DSSignal(models.Model):
     """Identifier for signals passed though the H1DS system."""
