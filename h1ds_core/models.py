@@ -144,6 +144,11 @@ class Node(MPTTModel, backend_module.NodeData):
     A single data tree represents one shot.
     The root node has path = str(shot_number).
     """
+
+    def __init__(self, *args, **kwargs):
+        super(Node, self).__init__(*args, **kwargs)
+        self.filter_history = []
+
     # While it may be overkill to link to a shot for every node in the
     # tree, it allows  us to more easily search  nodes irrespective of
     # their tree  - for  example if we  want to find  all data  with a
@@ -186,7 +191,6 @@ class Node(MPTTModel, backend_module.NodeData):
     #primary_data = None
     #primary_dim = None
     #primary_labels = None
-    filter_history = []
     
     # TODO: rename so that path, nodepath are intuitive
     def _get_node_path(self):
