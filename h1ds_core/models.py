@@ -296,6 +296,20 @@ class Node(MPTTModel, backend_module.NodeData):
         #self.labels = self.primary_labels
         for fid, name, kwargs in get_filter_list(request):
             self.apply_filter(fid, name, **kwargs)
+
+    def get_alternative_format_urls(self, request, alternative_formats):
+        # alternative_formats = ['json', 'xml', etc...]
+        self.alternative_format_urls = {}
+        query_dict = request.GET.copy()
+        try:
+            query_dict.pop('format')
+        except KeyError:
+            pass
+        for fmt in alternative_formats:
+            query_dict.update({'format':fmt})
+            self.alternative_format_urls[fmt] = request.build_absolute_uri(request.path)+"?"+query_dict.urlencode()
+            query_dict.pop('format')
+        
         
     def preprocess_filter_kwargs(self, kwargs):
         # TODO: should filters.http_arg be put here instead?

@@ -183,7 +183,7 @@ HTML tables. -->
   <div class="portlet" id="h1ds-portlet-formats">
     <div class="portlet-header">alternative formats</div>
     <div class="portlet-content">
-      {% for format in alt_formats %}{% show_format format %} {% endfor %}
+      {% for fmt, val in node.alternative_format_urls.items %} <a href="{{val}}">{{fmt}}</a>{% endfor %}
     </div> <!-- end portlet-content -->
   </div> <!-- end portlet -->
 

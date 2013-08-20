@@ -393,6 +393,9 @@ class NodeView(APIView):
         
     def get(self, request, shot, nodepath, format=None):
         node = self.get_object(shot, nodepath)
+        # TODO: yaml not working yet
+        # TODO: format list shoudl be maintained elsewhere... probably in settings.
+        node.get_alternative_format_urls(self.request, ["html", "json", "xml"]) 
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
             if node.has_data == False:
