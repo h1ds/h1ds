@@ -42,7 +42,7 @@ filter_patterns = patterns('',
     )
 
 usersignal_patterns = patterns('',
-    url(r'^add$/', UserSignalCreateView.as_view(), name="h1ds-add-user-signal"),
+    url(r'^add/$', UserSignalCreateView.as_view(), name="h1ds-add-user-signal"),
     url(r'^delete/(?P<pk>\d+)$', UserSignalDeleteView.as_view(), name="h1ds-delete-user-signal"),
     url(r'^update/(?P<pk>\d+)$', UserSignalUpdateView.as_view(), name="h1ds-update-user-signal"),
     )
