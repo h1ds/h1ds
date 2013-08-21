@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse, resolve
 from django.db import connection, transaction
 from django.conf import settings
 
-from h1ds_core.base import get_latest_shot_function
+from h1ds_core.utils import get_backend_shot_manager
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
 from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary.utils import CACHE_UPDATE_TIMEOUT
@@ -19,8 +19,9 @@ try:
 except AttributeError:
     MINIMUM_SUMMARY_TABLE_SHOT = 1
 
-get_latest_shot = get_latest_shot_function()
-    
+#get_latest_shot = get_latest_shot_function()
+backend_shot_manager = get_backend_shot_manager()
+
 # Time between summary table synchronisations
 sync_timedelta = timedelta(minutes=1)
 #sync_timedelta = timedelta(seconds=10)
@@ -64,9 +65,10 @@ def get_sync_info():
     # get time since last summary table modification...
     sync_info['time_since_last_mod'] = time_since_last_summary_table_modification()
     #print sync_info['time_since_last_mod']
+    shot_manager = backend_shot_manager()
     if sync_info['time_since_last_mod'] > sync_timedelta:
         # Check if the latest summary table shot is up to date.
-        sync_info['latest_h1ds_shot'] = get_latest_shot()
+        sync_info['latest_h1ds_shot'] = shot_manager.get_latest_shot()
         sync_info['latest_sql_shot'] = max(get_latest_shot_from_summary_table(), MINIMUM_SUMMARY_TABLE_SHOT)
         if sync_info['latest_sql_shot'] < sync_info['latest_h1ds_shot']:
             sync_info['do_sync'] = True
