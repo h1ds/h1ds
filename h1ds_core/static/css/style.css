@@ -568,6 +568,26 @@ div.mbox {
     border: 1px solid #eee;
 }
 
+.shot-list ul {
+    margin: 0;
+    padding: 0;
+
+}
+.shot-list ul li {
+    margin: 0.5em;
+    padding: 0;
+    /*width:100%;*/
+    border: 1px solid #eee;
+    display: inline-block;
+    vertical-align: top;
+    font-size:200%;
+}
+
+.shot-list ul li a {
+    display:inline-block;
+    padding: 0.6em;
+    
+}
 div#main {
     padding: 1em;
 }
@@ -1368,9 +1388,126 @@ form.inline-form {
     background:#eee;
 }
 
+#controlbarwrapper {
+    width:100%;
+    background:#eee;
+    padding-top:0.2em;
+    padding-bottom:0.2em;
+}
+
+#controlbar {
+    width:320px;
+    margin:auto;
+}
+
+#controlbar ul {
+    padding:0;
+    margin:0;
+}
+
+#controlbar ul li {
+    color:#777;
+    display:inline-block;
+    margin-left:0.5em;
+    margin-right:0.5em;
+    background:#fff;
+    border-style:solid;
+    border-width:1px;
+    border-color:#ccc;
+}
+
+#controlbar ul li.inactive {
+    padding: 0.3em;
+    background:#eee;
+}
+
+#controlbar ul li a {
+    display:inline-block;
+    padding: 0.3em;
+}
+
+#controlbar ul li form {
+    display:inline-block;
+    padding: 0.3em;
+}
+#controlbar ul li form input {
+    border:none;
+}
+
+
+
+#controlbar ul li.first {
+    margin-left:0;
+}
+
+#controlbar ul li.last {
+    margin-right:0;
+}
+
+
+
+
+
 .shotnav {
     font-size:xx-large;
 }
+
+/* ============================================================
+   New version of data vis
+   ============================================================ */
+
+/*
+svg {
+    pointer-events: all;
+}
+
+svg g {
+    pointer-events: all;
+}
+
+svg g g {
+    pointer-events: all;
+}
+*/
+svg g.pagelet-grid line {
+    stroke: #ddd;
+    stroke-opacity: 0.5;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+svg rect.background {
+    fill: white;
+    shape-rendering: crispEdges;
+  /*  pointer-events: none; */
+    
+}
+
+svg rect.background-edit {
+    fill: blue;
+    fill-opacity:0.2;
+    shape-rendering: crispEdges;
+    pointer-events: none;
+    
+}
+
+svg rect.resizebar {
+    fill: yellow;
+    fill-opacity: 0.5;
+    shape-rendering: crispEdges;
+}
+
+
+svg rect.resizebar:hover {
+    fill-opacity: 0.8;
+}
+
+
+svg rect.resizebar.corner {
+    fill: red;
+}
+
+
 
 /* ============================================================
    from http://jqueryui.com/demos/sortable/#portlets 
@@ -1498,6 +1635,11 @@ g.button.active rect {
     margin:auto;
 }
 
+#controlbar {
+    width:90%;
+    margin:auto;
+}
+
 #h1ds-column-sidebar {
     width:100%;
 }
@@ -1521,6 +1663,12 @@ div.mbox {
     padding:8px;
     margin: 2px;
 }
+
+/*
+.shot-list ul li {
+    width: 10em;
+}
+*/
 #h1ds-column-sidebar {
     width:20%;
 }
@@ -1538,6 +1686,11 @@ div.mbox {
 .fixed-centre {
     width:960px;
 }
+
+#controlbar {
+    width:960px;
+}
+
 }
 
 

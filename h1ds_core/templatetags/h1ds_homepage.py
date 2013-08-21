@@ -12,7 +12,7 @@ item_template = (
 '</div>'
 )
 
-H1DS_APP_BLACKLIST = ['h1ds_core', settings.H1DS_DATA_MODULE]
+H1DS_APP_BLACKLIST = ['h1ds_core']
 
 class H1DSHomepageNode(template.Node):
     def render(self, context):

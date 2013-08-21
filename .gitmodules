@@ -1,0 +1,3 @@
+[submodule "h1ds_core/static/js/libs/jsDataViewer"]
+	path = h1ds_core/static/js/libs/jsDataViewer
+	url = https://github.com/dpretty/jsDataViewer.git

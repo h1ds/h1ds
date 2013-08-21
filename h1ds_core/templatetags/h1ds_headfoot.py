@@ -9,7 +9,7 @@ for app in settings.INSTALLED_APPS:
     if app.startswith('h1ds_'):
         h1ds_installed_apps.append(app)
 
-h1ds_ignore = [settings.H1DS_DATA_MODULE, 'h1ds_core']
+h1ds_ignore = ['h1ds_core']
 
 google_track_script = ("<script type=\"text/javascript\">var _gaq = _gaq || "
                        "[];_gaq.push(['_setAccount', 'GOOGLE_TRACKING_ID']);"

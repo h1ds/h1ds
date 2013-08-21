@@ -8,22 +8,57 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Worksheet.slug'
-        db.add_column(u'h1ds_core_worksheet', 'slug',
-                      self.gf('django.db.models.fields.SlugField')(default=''),
-                      keep_default=False)
+        # Adding model 'Node'
+        db.create_table(u'h1ds_core_node', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('shot', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['h1ds_core.Shot'])),
+            ('path', self.gf('django.db.models.fields.CharField')(max_length=256)),
+            ('parent', self.gf('mptt.fields.TreeForeignKey')(blank=True, related_name='children', null=True, to=orm['h1ds_core.Node'])),
+            ('slug', self.gf('django.db.models.fields.SlugField')(max_length=50)),
+            ('has_data', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('dimension', self.gf('django.db.models.fields.PositiveSmallIntegerField')(null=True, blank=True)),
+            ('dtype', self.gf('django.db.models.fields.CharField')(max_length=16)),
+            ('path_checksum', self.gf('django.db.models.fields.CharField')(max_length=40)),
+            ('lft', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
+            ('rght', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
+            ('tree_id', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
+            ('level', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
+        ))
+        db.send_create_signal(u'h1ds_core', ['Node'])
 
-        # Adding unique constraint on 'Worksheet', fields ['user', 'slug']
-        #db.create_unique(u'h1ds_core_worksheet', ['user_id', 'slug'])
+        # Adding model 'Filter'
+        db.create_table(u'h1ds_core_filter', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
+            ('slug', self.gf('django.db.models.fields.SlugField')(max_length=50)),
+            ('code', self.gf('python_field.fields.PythonCodeField')()),
+        ))
+        db.send_create_signal(u'h1ds_core', ['Filter'])
 
+        # Adding model 'Shot'
+        db.create_table(u'h1ds_core_shot', (
+            ('number', self.gf('django.db.models.fields.PositiveIntegerField')(primary_key=True)),
+            ('timestamp', self.gf('django.db.models.fields.DateTimeField')()),
+        ))
+        db.send_create_signal(u'h1ds_core', ['Shot'])
+
+
+        # Changing field 'Worksheet.slug'
+        db.alter_column(u'h1ds_core_worksheet', 'slug', self.gf('django.db.models.fields.SlugField')(max_length=50))
 
     def backwards(self, orm):
-        # Removing unique constraint on 'Worksheet', fields ['user', 'slug']
-        #db.delete_unique(u'h1ds_core_worksheet', ['user_id', 'slug'])
+        # Deleting model 'Node'
+        db.delete_table(u'h1ds_core_node')
 
-        # Deleting field 'Worksheet.slug'
-        db.delete_column(u'h1ds_core_worksheet', 'slug')
+        # Deleting model 'Filter'
+        db.delete_table(u'h1ds_core_filter')
 
+        # Deleting model 'Shot'
+        db.delete_table(u'h1ds_core_shot')
+
+
+        # Changing field 'Worksheet.slug'
+        db.alter_column(u'h1ds_core_worksheet', 'slug', self.gf('django.db.models.fields.SlugField')())
 
     models = {
         u'auth.group': {
@@ -62,6 +97,13 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
+        u'h1ds_core.filter': {
+            'Meta': {'object_name': 'Filter'},
+            'code': ('python_field.fields.PythonCodeField', [], {}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'slug': ('django.db.models.fields.SlugField', [], {'max_length': '50'})
+        },
         u'h1ds_core.h1dssignal': {
             'Meta': {'object_name': 'H1DSSignal'},
             'description': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
@@ -74,6 +116,22 @@ class Migration(SchemaMigration):
             'signal': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['h1ds_core.H1DSSignal']"}),
             'time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'value': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'blank': 'True'})
+        },
+        u'h1ds_core.node': {
+            'Meta': {'object_name': 'Node'},
+            'dimension': ('django.db.models.fields.PositiveSmallIntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'dtype': ('django.db.models.fields.CharField', [], {'max_length': '16'}),
+            'has_data': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'level': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
+            'lft': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
+            'parent': ('mptt.fields.TreeForeignKey', [], {'blank': 'True', 'related_name': "'children'", 'null': 'True', 'to': u"orm['h1ds_core.Node']"}),
+            'path': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
+            'path_checksum': ('django.db.models.fields.CharField', [], {'max_length': '40'}),
+            'rght': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
+            'shot': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['h1ds_core.Shot']"}),
+            'slug': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
+            'tree_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'})
         },
         u'h1ds_core.pagelet': {
             'Meta': {'object_name': 'Pagelet'},
@@ -89,14 +147,29 @@ class Migration(SchemaMigration):
             'pagelet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['h1ds_core.Pagelet']"}),
             'worksheet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['h1ds_core.Worksheet']"})
         },
+        u'h1ds_core.shot': {
+            'Meta': {'object_name': 'Shot'},
+            'number': ('django.db.models.fields.PositiveIntegerField', [], {'primary_key': 'True'}),
+            'timestamp': ('django.db.models.fields.DateTimeField', [], {})
+        },
+        u'h1ds_core.usersignal': {
+            'Meta': {'object_name': 'UserSignal'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_fixed_to_shot': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'ordering': ('django.db.models.fields.IntegerField', [], {'blank': 'True'}),
+            'shot': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'url': ('django.db.models.fields.URLField', [], {'max_length': '2048'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
+        },
         u'h1ds_core.worksheet': {
-            #'Meta': {'unique_together': "(('user', 'slug'),)", 'object_name': 'Worksheet'},
+            'Meta': {'object_name': 'Worksheet'},
             'description': ('django.db.models.fields.TextField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'pagelets': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['h1ds_core.Pagelet']", 'through': u"orm['h1ds_core.PageletCoordinates']", 'symmetrical': 'False'}),
-            'slug': ('django.db.models.fields.SlugField', [], {}),
+            'slug': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         }
     }
