@@ -117,10 +117,13 @@ you      to      the      virtualenv      directory      (here      it's
 
 .. code-block:: bash
 
-    $ mkvirtualenv --no-site-packages h1ds_development
+    $ mkvirtualenv h1ds_development
     (h1ds_development)$ cdvirtualenv
 
+.. note::
 
+    If you have an old version of virtualenv (before version 1.7) you may 
+    need to include the ``--no-site-packages`` flag
 
 We'll be  using `Fabric <http://fabfile.org>`_  to automate much  of the
 installation process, so let's install it into our virtualenv now:
