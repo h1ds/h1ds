@@ -17,7 +17,8 @@ from django.views.generic import View
 from django.utils.importlib import import_module
 from django.conf import settings
 
-from h1ds_core.base import get_latest_shot_function
+#from h1ds_core.base import get_latest_shot_function
+from h1ds_core.models import Node
 
 from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
@@ -25,10 +26,6 @@ from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str, get_latest_shot_from_summary_table
 from h1ds_summary.tasks import populate_summary_table_task, populate_attribute_task
 
-get_latest_shot = get_latest_shot_function()
-
-data_module = import_module(settings.H1DS_DATA_MODULE)
-URLProcessor = getattr(data_module, 'URLProcessor')
 
 DEFAULT_SHOT_REGEX = "last30"
 DEFAULT_ATTR_STR = "default"
@@ -236,7 +233,8 @@ class HTMLSummaryResponseMixin(SummaryMixin):
 
         return render_to_response('h1ds_summary/summary_table.html',
                                   {'data':new_data, 'data_headers':data_headers,
-                                   'latest_shot':get_latest_shot(),
+                                   # TODO: use an API provided by h1ds_core to get latest shot...
+                                   'latest_shot':0,#get_latest_shot(),
                                    'included_attrs':attribute_slugs,
                                    'poll_server':poll_server,
                                    'excluded_attrs':excluded_attribute_slugs},
@@ -373,7 +371,11 @@ def get_summary_attribute_form_from_url(request):
 
     # Get the django view function corresponding to the URL path
     view, args, kwargs = resolve(parsed_url_list[2])
-    url_processor = URLProcessor(url=kwargs['url'])
+    
+    node_ancestry = kwargs['nodepath'].split("/")
+    node = Node.datatree.get_node_from_ancestry(node_ancestry)
+    
+    #url_processor = URLProcessor(url=kwargs['url'])
     # Create a  new query  dict from the  queries in the  requested URL,
     # i.e. data filters, etc...
     new_query = QueryDict(parsed_url_list[4]).copy()
@@ -396,7 +398,7 @@ def get_summary_attribute_form_from_url(request):
 
     # Now we generalise the URL  for any shot, replacing the shot number
     # with __shot__
-    general_url = attr_url_json.replace(str(url_processor.shot), "__shot__")
+    general_url = attr_url_json.replace(str(node.shot.number), "__shot__")
 
     # Create a SummaryAttributeForm with URL and data type entries pre-filled
     summary_attribute_form = SummaryAttributeForm(initial={'source':general_url})
