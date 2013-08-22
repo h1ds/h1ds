@@ -9,7 +9,7 @@ it  should  run  on  any  other operating  system  supported  by  Python
 (Windows, Linux/Unix, Mac OS X).
 
 
-H1DS is  currently supports python 2.6.5+ and 2.7.x
+H1DS currently supports python 2.6.5+ and 2.7.x
 
 
 Currently `MDSplus <http://www.mdsplus.org>`_ is the only supported data
