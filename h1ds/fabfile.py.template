@@ -81,8 +81,7 @@ def production():
 
 def start_supervisord():
     with prefix('workon %(venv)s && cdvirtualenv' %env):
-        #run('supervisord -c h1ds/conf/celeryd.conf.%(environment)s' %env)
-        run('supervisord -c h1ds/conf/supervisord.%(environment)s.conf' %env)
+        run('supervisord -c h1ds/conf/supervisord.%(environment)s.conf' %env, pty=False)
 
 def stop_supervisord():
     with prefix('workon %(venv)s && cdvirtualenv' %env):
@@ -96,6 +95,12 @@ def stop_supervisord():
             print "done"
 
 def restart_supervisord():
+    """Restart supervisord.
+
+    According to http://supervisord.org/running.html, SIGHUP will reload
+    config  and  restart  all  processes.   But  this  doesn't  seem  to
+    work.  Perhaps  because the  config  file  is  not in  the  standard
+    location? Instead we just stop and start the process.
     stop_supervisord()
     start_supervisord()
 
@@ -357,7 +362,10 @@ def update():
         h1ds_nginx_conf = '/etc/nginx/sites-enabled/h1ds'
         if not exists(h1ds_nginx_conf):
             sudo("ln -s %s/h1ds/conf/nginx/h1ds_%s.conf %s" %(env_dir, env.environment, h1ds_nginx_conf))
-        sudo('/etc/init.d/nginx reload')
+        # clear the pagespeed cache
+        sudo('/etc/init.d/nginx stop')
+        sudo('rm -rf /var/ngx_pagespeed_cache/*')
+        sudo('/etc/init.d/nginx start')
         
     if env.webserver != "development":
         restart_supervisord()
