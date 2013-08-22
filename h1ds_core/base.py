@@ -8,14 +8,16 @@ BaseURLProcessor
 import re
 import inspect
 import numpy as np
+import datetime
 
+from django.db import models
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
 
 from h1ds_core.filters import BaseFilter, excluded_filters
 
-data_module = import_module(settings.H1DS_DATA_MODULE)
+#data_module = import_module(settings.H1DS_DATA_MODULE)
 
 # Match strings "f(fid)_name", where fid is the filter ID
 filter_name_regex = re.compile('^f(?P<fid>\d+?)')
@@ -59,6 +61,173 @@ def get_all_filters():
                        not cl in excluded_filters]
         filters.update((f.get_slug(), f) for f in mod_filters)
     return filters
+
+class Data(object):
+    def __init__(self, name="", value=None, dimension=None,
+                 value_units="", dimension_units="",
+                 value_dtype="", dimension_dtype="",
+                 metadata={}, value_labels=[], dimension_labels=[]):
+        self.name = name
+        self.value = value
+        self.dimension = dimension
+        self.value_units = value_units
+        self.dimension_units = dimension_units
+        self.value_dtype = value_dtype
+        self.dimension_dtype = dimension_dtype
+        self.value_labels = value_labels
+        self.dimension_labels = dimension_labels
+        if hasattr(value, "len") and len(self.value) > len(self.value_labels):
+            self.value_labels = ["channel_%d" %(i+1) for i in range(self.get_n_channels())]
+        if hasattr(dimension, "len") and len(self.dimension) > len(self.dimension_labels):
+            self.dimension_labels = ["dimension_%d" %(i+1) for i in range(self.get_n_dimensions())]
+        self.metadata = metadata
+    
+    def get_n_dimensions(self):
+        return len(self.dimension)
+
+    def get_n_channels(self):
+        return len(self.value)
+    
+    def get_signal_length(self):
+        if np.isscalar(self.value[0]):
+            return 0
+        else:
+            return len(self.value[0])
+
+class BaseNodeData(object):
+
+    def get_child_names_from_primary_source(self):
+        """Override this"""
+        pass
+
+    def get_name(self):
+        return ""
+
+    def get_value(self):
+        return None
+
+    def get_dimension(self):
+        return None
+
+    def get_value_units(self):
+        return ""
+    
+    def get_dimension_units(self):
+        return ""
+
+    def get_value_dtype(self):
+        return ""
+
+    def get_dimension_dtype(self):
+        return ""
+       
+    def get_metadata(self):
+        return {}
+    
+    def read_primary_data(self):
+        name = self.get_name()
+        value = self.get_value()
+        dimension = self.get_dimension()
+        value_units = self.get_value_units()
+        dimension_units = self.get_dimension_units()
+        value_dtype = self.get_value_dtype()
+        dimension_dtype = self.get_dimension_dtype()
+        metadata = self.get_metadata()
+        data = Data(name=name, value=value, dimension=dimension, value_units=value_units,
+                    dimension_units=dimension_units, value_dtype=value_dtype,
+                    dimension_dtype=dimension_dtype, metadata=metadata)
+
+        return data
+    
+    def write_primary_data(self):
+        pass
+
+    """
+    def read_primary_dim(self):
+        pass
+
+    def write_primary_dim(self):
+        pass
+
+    def get_primary_ndim(self):
+        if self.primary_dim == None:
+            self.primary_dim = self.read_primary_dim()
+        return len(self.primary_dim)
+    
+    def read_primary_labels(self):
+        # [data label, dim0 label, dim1 label, etc]
+        ndim = self.get_primary_ndim()
+        labels = ["data"]
+        labels.extend(["d%d" %i for i in xrange(ndim)])
+        return labels
+    #def apply_filters(self, data):
+    #    return data
+    
+    #def read_data(self):
+    #    primary_data = self.read_primary_data()
+    #    data = self.apply_filters(primary_data)
+    #    return data
+
+    #def write_data(self):
+    #    pass
+    """
+    
+
+class BaseDataTreeManager(models.Manager):
+
+    def get_shot_root_node(self, shot):
+        """Get root node of shot tree.
+
+        Returns None if node doesn't exist.
+        """
+        try:
+            shot_root_node = self.model.objects.get(path=str(shot), level=0)
+        except self.model.DoesNotExist:
+            shot_root_node = None
+        return shot_root_node
+
+    def get_trees(self):
+        """Get a list of available data trees.
+
+        Override this with backend subclass.
+
+        """
+        pass
+    
+    def add_shot(self, shot, overwrite=False):
+
+        shot_root_node = self.get_shot_root_node(shot)
+
+        if shot_root_node:
+            if overwrite == True:
+                # delete existing
+                shot_nodes = self.model.objects.filter(tree_id=shot_root_node.tree_id)
+                shot_nodes.delete()
+            else:
+                # We have  an exisiting shot  root node, and  we don't
+                # want to overwrite, so we're done.
+                return None
+            
+        # Now we have nothing for the shot, let's build it again.
+
+        shot_root_node = self.model(path=str(shot), level=0)
+        shot_root_node.save()
+
+        self.populate_shot(shot_root_node)
+
+    def populate_shot(self, shot_root_node):
+        pass
+    
+    def get_node_from_ancestry(self, ancestry):
+        shot_node = self.model.objects.get(path=ancestry[0], level=0)
+        if len(ancestry) == 1:
+            return shot_node
+        # get top of tree        
+        node = self.model.objects.get(parent=shot_node, slug=ancestry[1])
+        for child in ancestry[2:]:
+            node = self.model.objects.get(parent=node, slug__iexact=child)
+        return node
+
         
 class FilterManager(object):
     """Get available filters for given data.
@@ -87,24 +256,6 @@ class FilterManager(object):
         return self.cache[data_type]
 
 filter_manager = FilterManager()
-
-
-def get_latest_shot_function():
-    """Get the module specified in settings.LATEST_SHOT_FUNCTION."""
-    i = settings.LATEST_SHOT_FUNCTION.rfind('.')
-    module = settings.LATEST_SHOT_FUNCTION[:i]
-    attr = settings.LATEST_SHOT_FUNCTION[i+1:]
-    try:
-        mod = import_module(module)
-    except ImportError as error:
-        msg = 'Error importing module {}: "{}"'.format(module, error)
-        raise ImproperlyConfigured(msg)
-    try:
-        func  = getattr(mod, attr)
-    except AttributeError:
-        msg = 'Module "{}" has no attribute "{}"'.format(module, attr)
-        raise ImproperlyConfigured(msg)
-    return func
 
 class BaseURLProcessor(object):
     """Base class for mapping between URLs and data paths."""
@@ -423,3 +574,37 @@ def get_filter_list(request):
         filter_list.append([fid, filter_data['name'], filter_data['kwargs']])
                            
     return filter_list
+
+class BaseBackendShotManager(models.Manager):
+    """Base class for interactiing with backend shots."""
+
+    def get_latest_shot(self):
+        pass
+    
+    def get_timestamp_for_shot(self, shot):
+        return datetime.datetime.now()
+
+    def get_min_shot_number(self):
+        return self.model.objects.all().aggregate(models.Min('number'))['number__min']
+
+    def get_max_shot_number(self):
+        return self.model.objects.all().aggregate(models.Max('number'))['number__max']
+
+    def get_next_shot_number(self, shot_number):
+        """Get value of next shot.
+
+        Usually, this will be shot_number+1...
+
+        """
+        next_shot = self.model.objects.filter(number__gt=shot_number).aggregate(models.Min('number'))['number__min']
+        return next_shot
+
+    def get_previous_shot_number(self, shot_number):
+        """Get value of previous shot.
+
+        Usually, this will be shot_number-1...
+
+        """
+        previous_shot = self.model.objects.filter(number__lt=shot_number).aggregate(models.Max('number'))['number__max']
+        return previous_shot
+

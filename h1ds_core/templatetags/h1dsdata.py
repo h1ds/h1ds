@@ -129,7 +129,8 @@ def show_active_filters(context, data_node):
     active_filters = ""
     for fid, f, fdata in data_node.filter_history:
         active_filters += get_filter(context, f, is_active=True,
-                                     fid=fid, filter_data=fdata)
+                                     f_id=fid, f_data=fdata)
+    
     return active_filters
 
 @register.simple_tag(takes_context=True)
@@ -142,34 +143,6 @@ def get_url_for_shot(context, url, new_shot):
     #input_shot = shot_regex.findall(url)[0]
     print "temp hack - not working"
     return url#url.replace(str(input_shot), str(new_shot))
-
-
-class H1DSFormatNode(template.Node):
-    def __init__(self, format_name):
-        self.format_name_var = template.Variable(format_name)
-
-    def render(self, context):
-        try:
-            format_name = self.format_name_var.resolve(context)
-            request = context['request']
-            qd_copy = request.GET.copy()
-            qd_copy.update({'format': format_name})
-            link_url = '?'.join([request.path, qd_copy.urlencode()])
-            return '<a href="%s">%s</a>' %(link_url, format_name)
-        except template.VariableDoesNotExist:
-            return ''
-
-def show_format(parser, token):
-    try:
-        # split_contents() knows not to split quoted strings.
-        tag_name, format_name = token.split_contents()
-    except ValueError:
-        msg = "%r tag requires a single argument" % token.contents.split()[0]
-        raise template.TemplateSyntaxError, msg
-    return H1DSFormatNode(format_name)
-
-register.tag('show_format', show_format)
-
 
 class GetAbsoluteUriNode(template.Node):
     def __init__(self):

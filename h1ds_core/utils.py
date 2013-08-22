@@ -19,7 +19,11 @@ been usable before)
 Original Author: Boyd Blackwell.
 
 """
+import inspect
 import numpy as np
+from django.utils.importlib import import_module
+from django.conf import settings
+from h1ds_core.base import BaseBackendShotManager
 def discretise_array(arr, eps=0, bits=0, maxcount=0, delta_encode=False):
     """
     Return  an integer  array  and  scales etc  in  a  dictionary -  the
@@ -161,3 +165,32 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, delta_encode=False):
     ret_value = {'iarr':iarr, 'maxerror':maxerr, 'deltar':deltar,
                'minarr':np.min(arr), 'intmax':np.max(iarr)}
     return ret_value
+
+
+## from h1ds_core.models import Node
+## def add_shot(shot_number):
+##     new_shot = Node(path=str(shot_number),
+##                     parent=None,
+##                     has_data=False,
+##                     dimension=None,
+##                     dtype="")
+##     new_shot.save()
+##     Node.datatree.populate_shot(new_shot)
+
+def find_subclasses(module, requested_class):
+    subclasses = []
+    for name, class_ in inspect.getmembers(module):
+        if inspect.isclass(class_) and issubclass(class_, requested_class) and class_ != BaseBackendShotManager:
+            subclasses.append(class_)
+    return subclasses
+
+def get_backend_shot_manager():
+    data_backend_module = import_module(settings.H1DS_DATA_BACKEND)
+    candidate_classes = find_subclasses(data_backend_module, BaseBackendShotManager)
+    if len(candidate_classes) == 1:
+        return candidate_classes[0]
+    if len(candidate_classes) == 0:
+        msg = "Data backend module {} does not contain a subclass of BaseBackendShotManager".format(settings.H1DS_DATA_BACKEND)
+    else:
+        msg = "Data backend module {} contains multiple subclasses of BaseBackendShotManager".format(settings.H1DS_DATA_BACKEND)
+    raise ImportError(msg)
