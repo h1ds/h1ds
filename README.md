@@ -1,2 +1,2 @@
 
-# Currently undergoing major refactor in drf branch, if you are looking to deploy H1DS, please hold off a week or so until refactor is complete...
+# H1DS: A data access system for nuclear fusion research.

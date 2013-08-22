@@ -148,21 +148,21 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'mptt',
     'h1ds_core',
     'djcelery',
     'kombu.transport.django',
     'south',
     'django_openid_auth',
-    'h1ds_mdsplus',
     'h1ds_summary',
     'h1ds_configdb',
+    'python_field',
     #'haystack',
     #'sphinxdoc',
 )
 
-H1DS_DATA_MODULE = 'h1ds_mdsplus'
-H1DS_DATA_PREFIX = "data"
-LATEST_SHOT_FUNCTION = 'h1ds_mdsplus.utils.get_latest_shot'
+H1DS_DATA_BACKEND = "h1ds_core.backends.h1"
+H1DS_DATA_PREFIX = r"data"
 
 DATA_FILTER_MODULES = (
     'h1ds_core.filters',
@@ -251,6 +251,7 @@ DEFAULT_TREE = "test"
 # each entry should be a (name, path), for example
 # EXTRA_MDS_TREES = [('extratree1', 'mdsserver::'), ('anothertree', '/data/tree'),]
 EXTRA_MDS_TREES = [('test', os.path.join(VENV_DIR, 'test_mds_data'))]
+
 
 # celery settings
 #BROKER_BACKEND = "djkombu.transport.DatabaseTransport"
