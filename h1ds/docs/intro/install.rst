@@ -137,8 +137,8 @@ Now grab the H1DS project from the git repository:
 
 .. code-block:: bash
 
-    (h1ds_development)$ git clone git://code.h1svr.anu.edu.au/h1ds/h1ds.git
-    (h1ds_development)$ cd h1ds
+    (h1ds_development)$ git clone https://github.com/h1ds/h1ds.git
+    (h1ds_development)$ cd h1ds/h1ds
 
 In the H1DS project we need  to create a couple of initial configuration
 files from the provided templates; the  H1DS fabric script (they call it
