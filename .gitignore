@@ -33,7 +33,7 @@ settings_production.py
 rabbitmq-signing-key-public.asc
 
 # don't include built sphinx docs.
-doc/_build
+docs/_build
 
 whoosh_index
 

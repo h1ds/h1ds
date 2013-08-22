@@ -1,6 +1,5 @@
 ipython
 numpy==1.6.2
-supervisor
 django==1.5
 South==0.7.6
 celery==3.0.15
@@ -12,9 +11,3 @@ django-mptt==0.5
 -e git+https://github.com/h1ds/h1ds-core.git#egg=h1ds_core-dev
 -e git+https://github.com/h1ds/h1ds-mdsplus.git#egg=h1ds_mdsplus-dev
 -e git+https://github.com/h1ds/h1ds-summary.git#egg=h1ds_summary-dev
-moin==1.9.6
-sphinx
-# for django-sphinxdoc
-Whoosh
-django-haystack
-django-sphinxdoc
