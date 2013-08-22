@@ -20,6 +20,16 @@ THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 PARENT_DIR = os.path.dirname(THIS_DIR)
 sys.path.insert(0, os.path.dirname(PARENT_DIR))
 
+# Are we on Read the Docs?
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if on_rtd:
+    html_theme = 'default'
+else:
+    html_theme = 'f6'
+    html_theme_path = ["themes"]
+    html_static_path = ['_static']
+
+
 # Set up the Django settings/environment
 from django.core.management import setup_environ
 from h1ds import settings
@@ -99,7 +109,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'f6'
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -107,7 +117,6 @@ html_theme = 'f6'
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ["themes"]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -128,7 +137,6 @@ html_theme_path = ["themes"]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
