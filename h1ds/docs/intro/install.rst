@@ -9,14 +9,8 @@ it  should  run  on  any  other operating  system  supported  by  Python
 (Windows, Linux/Unix, Mac OS X).
 
 
-H1DS is  known to run on  Python 2.7. It  is built using the  Django web
-framework, currently version 1.5 which supports Python 2.6.5 and above.
+H1DS is  currently supports python 2.6.5+ and 2.7.x
 
-.. note::
-
-    There is  an open issue  in the H1DS  issue tracker to  find exactly
-    which       versions       of       Python       are       supported
-    (`H1DS issue #8 <https://github.com/h1ds/h1ds/issues/8>`_)
 
 Currently `MDSplus <http://www.mdsplus.org>`_ is the only supported data
 system.  While  H1DS is designed  to be modular  such that it  will work
