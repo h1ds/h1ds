@@ -36,8 +36,8 @@ First, install  `git <http://git-scm.com/>`_, virtualenv and  the python
 header files (needed for compiling  some python libraries). Currently we
 also need  openssh server,  as the script  which deploys  the production
 server over  ssh is also  used to set up  the development server  on the
-local           computer            (`H1DS           issue           #93
-<http://code.h1svr.anu.edu.au/issues/93>`_).      We    also     install
+local           computer            (`H1DS           issue           #10
+<https://github.com/h1ds/h1ds/issues/10>`_).      We    also     install
 ``gfortran`` and ``libatlas-base-dev`` so we  can build ``numpy`` in our
 virtualenv,  and ``libfreetype6-dev``  and  ``libpng12-dev``  so we  can
 build ``matplotlib`` :
