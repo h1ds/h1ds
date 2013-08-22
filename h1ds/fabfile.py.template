@@ -45,8 +45,7 @@ PRODUCTION_WEBSERVER = "apache"
 ########################################################################
 
 env.project = "h1ds"
-env.git_url = "git://code.h1svr.anu.edu.au/h1ds/h1ds.git"
-
+env.git_url = "https://github.com/h1ds/h1ds.git"
 def dev():
     """Django development on localhost."""
     env.environment = 'development'
