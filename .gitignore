@@ -18,31 +18,31 @@ celerybeat-schedule
 
 local_settings.py
 
-conf/apache/h1ds_staging.conf
-conf/apache/h1ds_production.conf
+h1ds/conf/apache/h1ds_staging.conf
+h1ds/conf/apache/h1ds_production.conf
 
 # ignore files with custom settings
 # the templates for these files are kept in the repo
 # but not the customised versions.
-fabfile.py
-settings_development.py
-settings_staging.py
-settings_production.py
+h1ds/fabfile.py
+h1ds/settings_development.py
+h1ds/settings_staging.py
+h1ds/settings_production.py
 
 
 rabbitmq-signing-key-public.asc
 
 # don't include built sphinx docs.
-docs/_build
+h1ds/docs/_build
 
 whoosh_index
 
-moin.staging.sh
-moin.production.sh
-gunicorn.staging.sh
-gunicorn.production.sh
+h1ds/moin.staging.sh
+h1ds/moin.production.sh
+h1ds/gunicorn.staging.sh
+h1ds/gunicorn.production.sh
 
-conf/nginx/h1ds_staging.conf
-conf/nginx/h1ds_production.conf
-conf/supervisord.staging.conf
-conf/supervisord.production.conf
+h1ds/conf/nginx/h1ds_staging.conf
+h1ds/conf/nginx/h1ds_production.conf
+h1ds/conf/supervisord.staging.conf
+h1ds/conf/supervisord.production.conf
