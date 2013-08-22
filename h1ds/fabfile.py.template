@@ -99,7 +99,9 @@ def restart_supervisord():
     According to http://supervisord.org/running.html, SIGHUP will reload
     config  and  restart  all  processes.   But  this  doesn't  seem  to
     work.  Perhaps  because the  config  file  is  not in  the  standard
-    location? Instead we just stop and start the process.
+    location? Instead we just stop and start the process
+
+    ."""
     stop_supervisord()
     start_supervisord()
 
