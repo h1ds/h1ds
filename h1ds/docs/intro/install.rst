@@ -16,7 +16,7 @@ framework, currently version 1.5 which supports Python 2.6.5 and above.
 
     There is  an open issue  in the H1DS  issue tracker to  find exactly
     which       versions       of       Python       are       supported
-    (`H1DS issue #92 <http://code.h1svr.anu.edu.au/issues/92>`_)
+    (`H1DS issue #8 <https://github.com/h1ds/h1ds/issues/8>`_)
 
 Currently `MDSplus <http://www.mdsplus.org>`_ is the only supported data
 system.  While  H1DS is designed  to be modular  such that it  will work
