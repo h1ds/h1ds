@@ -292,13 +292,13 @@ def update():
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         with prefix('cd %(project)s' %env):
-            run("pip install -r requirements.txt")
+            run("pip install -r requirements/requirements.txt")
             # the recalcitrant_requirements file contains packages which
             # needs   those   in    requirements.txt   installed   first
             # (e.g. numpy).
-            run("pip install -r recalcitrant_requirements.txt")
+            run("pip install -r requirements/recalcitrant_requirements.txt")
             if env.webserver == "nginx":
-                run("pip install -r requirements_nginx.txt")
+                run("pip install -r requirements/requirements_nginx.txt")
             # need server perms to run db through webserver, so use sudo to
             # modify db and make sure we chown the db after to be sure.
             run('./manage.py syncdb --settings=%(settings)s' % env)
