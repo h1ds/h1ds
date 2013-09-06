@@ -9,40 +9,34 @@
 \#*
 *.db
 
-# links setup for static files in in django 1.2 version of h1ds
-h1ds_core
-h1ds_mdsplus
-
 celery
 celerybeat-schedule
 
 local_settings.py
 
-h1ds/conf/apache/h1ds_staging.conf
-h1ds/conf/apache/h1ds_production.conf
+h1ds/h1ds/conf/apache/h1ds_staging.conf
+h1ds/h1ds/conf/apache/h1ds_production.conf
 
 # ignore files with custom settings
 # the templates for these files are kept in the repo
 # but not the customised versions.
-h1ds/fabfile.py
-h1ds/settings_development.py
-h1ds/settings_staging.py
-h1ds/settings_production.py
+fabfile.py
+h1ds/h1ds/settings_development.py
+h1ds/h1ds/settings_staging.py
+h1ds/h1ds/settings_production.py
 
 
 rabbitmq-signing-key-public.asc
 
 # don't include built sphinx docs.
-h1ds/docs/_build
+docs/_build
 
-whoosh_index
+h1ds/h1ds/moin.staging.sh
+h1ds/h1ds/moin.production.sh
+h1ds/h1ds/gunicorn.staging.sh
+h1ds/h1ds/gunicorn.production.sh
 
-h1ds/moin.staging.sh
-h1ds/moin.production.sh
-h1ds/gunicorn.staging.sh
-h1ds/gunicorn.production.sh
-
-h1ds/conf/nginx/h1ds_staging.conf
-h1ds/conf/nginx/h1ds_production.conf
-h1ds/conf/supervisord.staging.conf
-h1ds/conf/supervisord.production.conf
+h1ds/h1ds/conf/nginx/h1ds_staging.conf
+h1ds/h1ds/conf/nginx/h1ds_production.conf
+h1ds/h1ds/conf/supervisord.staging.conf
+h1ds/h1ds/conf/supervisord.production.conf
