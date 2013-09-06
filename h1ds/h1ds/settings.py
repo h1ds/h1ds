@@ -149,23 +149,22 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mptt',
-    'h1ds_core',
     'djcelery',
     'kombu.transport.django',
     'south',
     'django_openid_auth',
-    'h1ds_summary',
-    'h1ds_configdb',
+    'summary',
+    'configdb',
     'python_field',
     #'haystack',
     #'sphinxdoc',
 )
 
-H1DS_DATA_BACKEND = "h1ds_core.backends.h1"
+H1DS_DATA_BACKEND = "h1ds..backends.h1"
 H1DS_DATA_PREFIX = r"data"
 
 DATA_FILTER_MODULES = (
-    'h1ds_core.filters',
+    'h1ds.filters',
     )
 
 

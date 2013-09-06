@@ -40,3 +40,7 @@ h1ds/h1ds/conf/nginx/h1ds_staging.conf
 h1ds/h1ds/conf/nginx/h1ds_production.conf
 h1ds/h1ds/conf/supervisord.staging.conf
 h1ds/h1ds/conf/supervisord.production.conf
+
+h1ds/log
+h1ds/static
+h1ds/wiki

@@ -17,6 +17,7 @@ from __future__ import with_statement
 import os, platform, tempfile, time, stat
 from fabric.api import *
 from fabric.contrib.files import exists
+from contextlib import contextmanager
 
 ########################################################################
 ## Settings
@@ -78,6 +79,15 @@ def production():
     env.server_group = 'www-data'
     env.webserver = PRODUCTION_WEBSERVER
 
+@contextmanager
+def shell_env(**env_vars):
+    orig_shell = env['shell']
+    env_vars_str = ' '.join('{0}={1}'.format(key, value)
+                            for key, value in env_vars.items())
+    env['shell']='{0} {1}'.format(env_vars_str, orig_shell)
+    yield
+    env['shell']= orig_shell
+    
 def start_supervisord():
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         run('supervisord -c h1ds/conf/supervisord.%(environment)s.conf' %env, pty=False)
@@ -135,15 +145,17 @@ def update_dir_structure():
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         ## Grab the dir so we can use sudo without workon
         env_dir = run('echo $PWD')
+	repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
+	django_project_dir = os.path.join(repository_dir, "h1ds")
 
-    with cd(env_dir):
+    with cd(django_project_dir):
         server_perm_paths = map(lambda x: os.path.join(*x), server_perms)
         if env.webserver == "apache":
             for sp in server_perm_paths:
                 if exists(sp):
                     sudo('chown -R --reference=$PWD %s' %sp)
 
-    with cd(env_dir):
+    with cd(django_project_dir):
         d_paths = map(lambda x: os.path.join(*x), dirs)
         t_paths = map(lambda x: os.path.join(*x), touch)
         for d in d_paths:
@@ -153,12 +165,12 @@ def update_dir_structure():
             if not exists(t):
                 run('touch %s' %t)
 
-    with cd(env_dir):
+    with cd(django_project_dir):
         with cd("static"):
             if not exists("img"):
                 run("ln -s ../h1ds/moin/static/h1ds/img img")
 
-    with cd(env_dir):
+    with cd(django_project_dir):
         sudo('chmod -R ugo+rwX db')
         if env.webserver == "apache":
             for sp in server_perm_paths:
@@ -242,8 +254,11 @@ def update():
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         env_dir = run('echo $PWD')
-        project_dir = os.path.join(env_dir, env.project)
+	repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
+	django_project_dir = os.path.join(repository_dir, "h1ds")
+    h1ds_app_dir = os.path.join(django_project_dir, "h1ds")
 
+    # TODO: provide test data for non-mds sources
     env.test_mds_dir = os.path.join(env_dir, 'test_mds_data')
 
     # We assume the user has created the settings file for the requested
@@ -251,28 +266,29 @@ def update():
     # file.  We'll  attempt to copy  it to the virtual  environment, and
     # abort if the copy fails.
     settings_filename = "settings_%(environment)s.py" %env
-    with cd(project_dir):
+    with cd(h1ds_app_dir):
         try:
             env_settings_md5 = run("md5sum "+settings_filename)
         except:
             env_settings_md5 = "dummy_checksum"
-    local_settings_md5 = local("md5sum "+settings_filename, capture=True)
-    if env_settings_md5 != local_settings_md5:
-        try:
-            put(settings_filename, project_dir)
-        except ValueError:
-            print "Cannot copy settings file [%s] to environment. " %settings_filename
-            print "Please make sure the file exists."
-            return False
+    with lcd(h1ds_app_dir):
+        local_settings_md5 = local("md5sum "+settings_filename, capture=True)
+        if env_settings_md5 != local_settings_md5:
+            try:
+                put(settings_filename, h1ds_app_dir)
+            except ValueError:
+                print "Cannot copy settings file [%s] to environment. " %settings_filename
+                print "Please make sure the file exists."
+                return False
 
     # update the h1ds dir from the repository.
-    with cd(project_dir):
+    with cd(repository_dir):
         run("git pull")
     
     # set up / refresh wiki directories.
-    with cd(env_dir):
-        sudo('cp -r %(project)s/moin/underlay wiki' %env)
-        sudo('cp %(project)s/conf/h1ds.py wiki/data/plugin/theme' %env)
+    with cd(django_project_dir):
+        sudo('cp -r h1ds/moin/underlay wiki')
+        sudo('cp h1ds/conf/h1ds.py wiki/data/plugin/theme')
         if env.webserver == "apache":
             sudo('chown -R %(server_user)s:%(server_group)s wiki' %env)
         sudo('chmod -R ug+rwX wiki')
@@ -286,7 +302,7 @@ def update():
     # problems when subsequent commands are run as a normal user.
 
     if env.webserver == "apache":
-        with cd(env_dir):
+        with cd(django_project_dir):
             sudo('chown -R --reference=$PWD db')
             sudo('chown -R --reference=$PWD serverfiles')
 
@@ -301,16 +317,13 @@ def update():
                 run("pip install -r requirements/requirements_nginx.txt")
             # need server perms to run db through webserver, so use sudo to
             # modify db and make sure we chown the db after to be sure.
-            run('./manage.py syncdb --settings=%(settings)s' % env)
-            run('./manage.py collectstatic --noinput --settings=%(settings)s' % env)
-            run("./manage.py migrate h1ds --settings=%(settings)s" % env)
-            run("./manage.py migrate summary --settings=%(settings)s" % env)
-            run("./manage.py migrate configdb --settings=%(settings)s" % env)
-            run("./manage.py migrate kombu.transport.django --settings=%(settings)s" % env)
-            run("./manage.py migrate djcelery --settings=%(settings)s" % env)
-            run("./manage.py createtree %(test_mds_dir)s --settings=%(settings)s" % env)
-            #run("./manage.py loaddata sphinxdoc_project --settings=%(settings)s" % env)
-            #run("./manage.py updatedoc -b h1ds --settings=%(settings)s" % env)
+    with prefix('workon %(venv)s' %env):
+        with cd(django_project_dir):
+            with shell_env(PYTHONPATH=django_project_dir, DJANGO_SETTINGS_MODULE="%(settings)s" %env):
+                run("django-admin.py syncdb")
+                run("django-admin.py collectstatic --noinput")
+                run("django-admin.py migrate")
+                run("django-admin.py createtree %(test_mds_dir)s" % env)
     
     # Now that we  have finished making changes to  the database, change
     # the permissions back to those appropriate for the server.
