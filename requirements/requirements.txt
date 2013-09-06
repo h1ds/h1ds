@@ -1,6 +1,5 @@
-ipython
 numpy==1.6.2
-supervisor
+supervisor==3.0
 django==1.5
 South==0.7.6
 celery==3.0.15
@@ -8,13 +7,4 @@ django-celery==3.0.11
 python-openid==2.2.5
 django-mptt==0.5
 -e git+https://github.com/h1ds/django-openid-auth.git#egg=django_openid_auth-dev
--e git+https://github.com/h1ds/h1ds-configdb.git#egg=h1ds_configdb-dev
--e git+https://github.com/h1ds/h1ds-core.git#egg=h1ds_core-dev
--e git+https://github.com/h1ds/h1ds-mdsplus.git#egg=h1ds_mdsplus-dev
--e git+https://github.com/h1ds/h1ds-summary.git#egg=h1ds_summary-dev
 moin==1.9.6
-sphinx
-# for django-sphinxdoc
-Whoosh
-django-haystack
-django-sphinxdoc
