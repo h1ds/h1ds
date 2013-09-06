@@ -1,0 +1,4 @@
+south
+django-celery
+-e git+git://code.h1svr.anu.edu.au/h1ds/django-openid-auth.git#egg=django_openid_auth
+

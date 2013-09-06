@@ -1,0 +1,198 @@
+{% extends "h1ds_core/base.html" %}
+
+<!-- This loads the 'display_data' and 'show_filter' template tags, used
+for displaying data and H1DS data filters in the template. -->
+{% load h1dsdata %}
+
+<!-- This loads the 'table' template tag, used for dynamic generation of
+HTML tables. -->
+{% load templatetable %}
+
+{% block extrahead %}
+{% for name, content in html_metadata.items %}
+<meta name="{{name}}" content="{{content}}" />{% endfor%}
+{% endblock%}
+<div class="fixed-centre">
+{% block content %}
+
+<!-- *************************************************************** -->
+<!-- ****** Data *************************************************** -->
+<!-- *************************************************************** -->
+
+
+<div class="column" id="h1ds-column-main">
+  <div class="portlet" id="h1ds-portlet-data">
+    <div class="portlet-header">data</div>
+    <div class="portlet-content">
+      {% block node_data %}{% endblock node_data %}
+    </div>
+  </div> <!-- end portlet -->
+
+
+  <!-- Node metadata -->
+  <div class="portlet" id="h1ds-portlet-metadata">
+    <div class="portlet-header">metadata</div>
+    <div class="portlet-content">
+      {% for key, value in node_meta.items %}
+      <div class="h1ds-meta-item"><span class="h1ds-meta-key">{{key}}</span><span class="h1ds-meta-value">{{value}}</span></div>
+      {% endfor%}
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+
+
+</div> <!-- end column -->
+
+
+<div class="column" id="h1ds-column-sidebar">
+  <!--  This generates  the 'select  shot'  form in  the top  left of  the
+	page. -->
+  <div class="portlet" id="h1ds-portlet-shot">
+    <div class="portlet-header">shot</div>
+    <div class="portlet-content"> 
+      <div id="h1ds-shot-controller">
+	<div class="sidebarcontent">
+	  <FORM id="h1ds-go-to-shot" class="inline-form" action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
+	    <INPUT type="hidden" name="reqpath" value="{{request.get_full_path|safe}}">
+	    <INPUT type="text" id="requested-shot" name="go_to_shot" placeholder="shot #" size="8">
+	  </FORM>
+	</div> <!-- end sidebarcontent -->
+	<div class="sidebarcontent"> 
+<div id="h1ds-shot-previous">
+{% with previous_shot_node=node.get_node_for_previous_shot %}
+	  {% if previous_shot_node %}
+	  <a href="{{previous_shot_node.get_absolute_url}}"> previous </a>
+	  {% else%}
+	  no previous shot
+	  {% endif %}
+	  {% endwith%}
+	  </div>
+	  <div id="h1ds-shot-current">{{node.get_shot}}</div>
+	  <div id="h1ds-shot-next">
+	    {% with next_shot_node=node.get_node_for_next_shot %}
+	  {% if next_shot_node %}
+	  <a href="{{next_shot_node.get_absolute_url}}"> next </a>
+	  {% else%}
+	  no next shot
+	  {% endif %}
+	  {% endwith%}
+	  </div>
+	</div>  <!-- end sidebarcontent -->
+      </div> <!-- end h1ds-shot-controller -->
+      <div id="h1ds-track-latest-shot"></div>
+      <div id="h1ds-toggle-track-latest-shot"></div>
+    </div>  <!-- end portlet-content -->
+    </div> <!-- end portlet -->
+  <!--  Navigation of data  trees. -->
+  <div class="portlet" id="h1ds-portlet-trees">
+    <div class="portlet-header">navigation</div>
+    <div class="portlet-content">
+      {% for a in node.get_ancestors %}
+      <ul>
+	<li><a href="{{a.get_absolute_url}}">{{a.path|lower}}</a>
+	  {% endfor%}
+	  <ul>
+	    <li><span class="current"><a href="{{node.get_absolute_url}}">{{node.path|lower}}</a></span>
+	      <ul>
+		{% for c in node.get_children|dictsort:"path" %}
+		<li><a href="{{c.get_absolute_url}}">{{c.path|lower}}</a>
+		  {% endfor %}
+	      </ul>
+	  </ul>
+	  {% for a in node.get_ancestors reversed %}</li>{% endfor %}
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+
+
+  <!-- If there is a summary data (SQL) dtype associated with the filtered
+       data then display a form for adding the data to the summary database -->
+  {% if perms.h1ds_summary.add_summaryattribute %}
+  {% if node.get_summary_dtype %}
+  <div class="portlet" id="h1ds-portlet-summarydb">
+    <div class="portlet-header">add to summary db</div>
+    <div class="portlet-content">
+      <FORM action="{% url "get-summary-attribute-form-from-url" %}" method="post">{% csrf_token %}
+	<span class="left">add</span>
+	<span class="right">
+	  <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
+	  <INPUT title="add attribute" type="submit" value="&#x21b5;"></span>
+      </FORM>
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+  {% endif %}
+  {% endif %}
+
+  <!--  If the  data has  been filtered,  display the  applied  filters in
+	order, with option to adjust or remove each filter -->
+  {% if node.filter_history %}
+  <div class="portlet" id="h1ds-portlet-activefilters">
+    <div class="portlet-header">active filters</div>
+    <div class="portlet-content">
+      {% show_active_filters node %}
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+  {% endif %}
+
+
+  <div class="portlet" id="h1ds-portlet-savedsignals">
+    <div class="portlet-header">my signals</div>
+    <div class="portlet-content">
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url "h1ds-add-user-signal" %}">{% csrf_token %}
+	{{ user_signal_form.name }}
+	<INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
+	<INPUT title="add" type="submit" value="+">
+      </form>
+      <div class="sidebar-section">
+      {% for sig in user_signals %}
+      <div class="sidebar-section-item">
+	{% if sig.is_fixed_to_shot %}
+	<a href="{% get_url_for_shot sig.url sig.shot %}">{{sig}}</a>[{{sig.shot}}]
+	{% else %}
+	<a href="{% get_url_for_shot sig.url node.url_processor.shot %}">{{sig}}</a>
+	{% endif %}
+
+	<div class="sidebar-section-item-delete">
+	  <FORM action="{% url "h1ds-delete-user-signal" sig.pk %}" method="post">{% csrf_token %}
+	    <INPUT type="hidden" id="url" name="url" value="{% get_absolute_uri %}">
+	    <INPUT title="go to shot" type="submit" value="-">
+	  </FORM>
+	</div> <!-- end sidebar-section-item-delete -->
+	<div class="sidebar-section-item-edit">
+	  <a href="{% url "h1ds-update-user-signal" sig.pk %}?redirect_url={% get_absolute_uri %}">edit</a>
+	</div> <!-- end sidebar-section-item-edit -->
+
+      </div> <!-- end sidebar-section-item -->
+      {% endfor %}
+      </div> <!-- end sidebar-secton -->
+      {% else %}
+      Log in to save and restore signals.
+      {% endif %} 
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+
+  <!--  List the filters  which can  be applied  to the  (possibly already
+	filtered) data -->
+  <div class="portlet" id="h1ds-portlet-filters">
+    <div class="portlet-header">filters</div>
+    <div class="portlet-content">
+      {% show_filters node %}
+    </div> <!-- end portlet-content -->
+  </div> <!--end portlet -->
+
+  <!-- List the formats available for the node data type -->
+  <div class="portlet" id="h1ds-portlet-formats">
+    <div class="portlet-header">alternative formats</div>
+    <div class="portlet-content">
+      {% for fmt, val in node.alternative_format_urls.items %} <a href="{{val}}">{{fmt}}</a>{% endfor %}
+    </div> <!-- end portlet-content -->
+  </div> <!-- end portlet -->
+
+
+</div>
+
+
+{% endblock content %}
+{% block rightpanel %}
+{% block nodemeta %}{% endblock nodemeta %}
+</div>
+{% endblock %}

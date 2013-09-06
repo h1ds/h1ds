@@ -1,0 +1,8 @@
+{% extends "h1ds_core/base_node.html" %}
+{% block node_data %}
+<form action="{% url "h1ds-update-user-signal" object.pk %}" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="hidden" id="redirect_url" name="redirect_url" value="{{ redirect_url }}">
+<input type="submit" value="Submit" />
+</form>
+{% endblock %}
