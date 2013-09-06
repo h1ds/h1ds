@@ -8,3 +8,4 @@ python-openid==2.2.5
 django-mptt==0.5
 -e git+https://github.com/h1ds/django-openid-auth.git#egg=django_openid_auth-dev
 moin==1.9.6
+-e hg+https://bitbucket.org/schinckel/django-python-code-field#egg=python_field
