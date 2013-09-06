@@ -1,0 +1,4 @@
+*.pyc
+*~
+build
+h1ds_configdb.egg-info

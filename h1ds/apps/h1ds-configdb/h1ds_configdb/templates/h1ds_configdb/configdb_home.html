@@ -1,0 +1,45 @@
+{% extends "h1ds_configdb/base.html"%}
+
+{% load configdb_display %}
+
+{% block configdb_content %}
+
+Number of results: {{ n_files }}
+
+<div class="pagination clearfix">
+    <span class="step-links">
+        {% if config_files.has_previous %}
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ config_files.number }} of {{ config_files.paginator.num_pages }}.
+        </span>
+
+        {% if config_files.has_next %}
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+
+<div id="masonry-container" class="clearfix">
+{% for dbfile in config_files.object_list %}
+{% show_configfile dbfile %}
+{% endfor %}
+</div>
+<div class="pagination clearfix">
+    <span class="step-links">
+        {% if config_files.has_previous %}
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ config_files.number }} of {{ config_files.paginator.num_pages }}.
+        </span>
+
+        {% if config_files.has_next %}
+            <a href="?{% for key, values in request.GET.iterlists %}{% ifnotequal key "page" %}{% for value in values %}{{ key }}={{ value }}&amp;{% endfor %}{% endifnotequal %}{% endfor %}page={{ config_files.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}
