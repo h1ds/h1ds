@@ -25,6 +25,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.conf import settings
 from django.utils.importlib import import_module
+from django.views.generic import TemplateView
 
 from h1ds_core.models import UserSignal, UserSignalForm, Worksheet, Node, Shot
 from h1ds_core.utils import get_backend_shot_manager
@@ -436,3 +437,8 @@ class ShotDetailView(APIView):
         serializer = self.serializer_class(shot)
         return Response(serializer.data)
         
+class TextTemplateView(TemplateView):
+    def render_to_response(self, context, **response_kwargs):
+        response_kwargs['content_type'] = 'text/plain'
+        return super(TemplateView, self).render_to_response(context, **response_kwargs)
+
