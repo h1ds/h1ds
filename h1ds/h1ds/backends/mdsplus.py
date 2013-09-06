@@ -10,9 +10,9 @@ from MDSplus import TdiException
 from MDSplus._treeshr import TreeNoDataException, TreeException
 
 # TODO: base vs models - it's not intuitive what should be where...
-from h1ds_core.base import BaseNodeData
-from h1ds_core.base import BaseDataTreeManager
-from h1ds_core.base import BaseBackendShotManager
+from h1ds.base import BaseNodeData
+from h1ds.base import BaseDataTreeManager
+from h1ds.base import BaseBackendShotManager
 # Load MDS trees into environment
 for config_tree in settings.EXTRA_MDS_TREES:
     os.environ[config_tree[0]+"_path"] = config_tree[1]

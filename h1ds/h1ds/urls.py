@@ -12,7 +12,7 @@ URLS provided by this module:
 
 URLS passed to other H1DS modules.
 
-* '' -- all queries are first checked against h1ds_core for a match.
+* '' -- all queries are first checked against h1ds for a match.
 
 For   the  optional   submodules  (i.e.   h1ds_mdsplus,  h1ds_summary,
 h1ds_configdb),  settings.INSTALLED_APPS  is  checked to  see  if  the

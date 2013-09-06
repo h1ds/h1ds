@@ -22,7 +22,7 @@ from MoinMoin import i18n, wikiutil, config, version, caching
 from MoinMoin.action import get_available_actions
 from MoinMoin.Page import Page
 from MoinMoin.util import pysupport
-from h1ds_core.templatetags import h1ds_headfoot
+from h1ds.templatetags import h1ds_headfoot
 from django.conf import settings as django_settings
 
 class Theme(ThemeBase):

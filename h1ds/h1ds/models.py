@@ -1,4 +1,4 @@
-"""Model classes for h1ds_core
+"""Model classes for h1ds
 
 H1DS Core contains models for communicating between H1DS modules.
 
@@ -19,8 +19,8 @@ from python_field.fields import PythonCodeField
 from mptt.models import MPTTModel, TreeForeignKey
 from mptt.managers import TreeManager
 
-from h1ds_core.filters import BaseFilter, excluded_filters
-from h1ds_core.utils import get_backend_shot_manager
+from h1ds.filters import BaseFilter, excluded_filters
+from h1ds.utils import get_backend_shot_manager
 
 if hasattr(settings, "WORKSHEETS_PUBLIC_BY_DEFAULT"):
     public_worksheets_default = settings.WORKSHEETS_PUBLIC_BY_DEFAULT
@@ -116,6 +116,9 @@ class Shot(models.Model):
     objects = models.Manager()
     backend = get_backend_shot_manager()()
 
+    class Meta:
+        db_table = "h1ds_core_shot"
+    
     def _get_root_nodes(self):
         return Node.objects.filter(level=0, shot=self)
 
@@ -204,6 +207,10 @@ class Node(MPTTModel, backend_module.NodeData):
     objects = TreeManager()
     datatree = backend_module.DataTreeManager()
 
+    class Meta:
+        db_table = "h1ds_core_node"
+
+    
     def get_data(self):
         if not hasattr(self, 'data'):
             self.primary_data = self.read_primary_data()
@@ -342,12 +349,16 @@ class FilterDtype(models.Model):
     code = PythonCodeField()
     def __unicode__(self):
         return unicode(self.name)
+    class Meta:
+        db_table = "h1ds_core_filterdtype"
 
 class FilterDim(models.Model):
     name = models.CharField(max_length=128)
     code = PythonCodeField()
     def __unicode__(self):
         return unicode(self.name)
+    class Meta:
+        db_table = "h1ds_core_filterdim"
         
 class Filter(models.Model):
     name = models.CharField(max_length=128)
@@ -358,6 +369,8 @@ class Filter(models.Model):
 
     def __unicode__(self):
         return unicode(self.name)
+    class Meta:
+        db_table = "h1ds_core_filter"
 
 class H1DSSignal(models.Model):
     """Identifier for signals passed though the H1DS system."""
@@ -372,6 +385,8 @@ class H1DSSignal(models.Model):
 
     def __unicode__(self):
         return unicode(self.name)
+    class Meta:
+        db_table = "h1ds_core_h1dssignal"
 
 class H1DSSignalInstance(models.Model):
     """Records an instance of an H1DS signal."""
@@ -385,13 +400,16 @@ class H1DSSignalInstance(models.Model):
     class Meta:
         ordering = ('-time',)
         get_latest_by = 'time'
+        db_table = "h1ds_core_h1dssignalinstance"
 
 
 class Pagelet(models.Model):
     name = models.CharField(max_length=1024)
     pagelet_type = models.CharField(max_length=128)
     url = models.URLField(max_length=2048)
-        
+    class Meta:
+        db_table = "h1ds_core_pagelet"
+
 class Worksheet(models.Model):
     """A page for users to organise and store content."""
     user = models.ForeignKey(User)
@@ -413,7 +431,9 @@ class Worksheet(models.Model):
         return reverse("h1ds-user-worksheet", kwargs={
             "username":self.user.username,
             "worksheet":self.slug})
-
+    class Meta:
+        db_table = "h1ds_core_worksheet"
+    
 class PageletCoordinates(models.Model):
     pagelet = models.ForeignKey(Pagelet)
     worksheet = models.ForeignKey(Worksheet)
@@ -421,6 +441,8 @@ class PageletCoordinates(models.Model):
 
     def get_coordinates(self):
         pass
+    class Meta:
+        db_table = "h1ds_core_pageletcoordinates"
     
 class UserSignal(models.Model):
     """Save data URLs for user."""
@@ -437,6 +459,8 @@ class UserSignal(models.Model):
     def __unicode__(self):
         return unicode("%s" %(self.name))
 
+    class Meta:
+        db_table = "h1ds_core_usersignal"
 
 class UserSignalForm(ModelForm):
     class Meta:

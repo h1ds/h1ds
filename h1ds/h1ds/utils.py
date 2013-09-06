@@ -23,7 +23,7 @@ import inspect
 import numpy as np
 from django.utils.importlib import import_module
 from django.conf import settings
-from h1ds_core.base import BaseBackendShotManager
+from h1ds.base import BaseBackendShotManager
 def discretise_array(arr, eps=0, bits=0, maxcount=0, delta_encode=False):
     """
     Return  an integer  array  and  scales etc  in  a  dictionary -  the
@@ -167,7 +167,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, delta_encode=False):
     return ret_value
 
 
-## from h1ds_core.models import Node
+## from h1ds.models import Node
 ## def add_shot(shot_number):
 ##     new_shot = Node(path=str(shot_number),
 ##                     parent=None,

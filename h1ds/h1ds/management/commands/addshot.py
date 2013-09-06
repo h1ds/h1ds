@@ -1,6 +1,6 @@
 """Add specified shots."""
 from django.core.management.base import BaseCommand, CommandError
-from h1ds_core.models import Shot
+from h1ds.models import Shot
 
 class Command(BaseCommand):
     args = '<shot_number shot_number ...>'

@@ -15,7 +15,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
 
-from h1ds_core.filters import BaseFilter, excluded_filters
+from h1ds.filters import BaseFilter, excluded_filters
 
 #data_module = import_module(settings.H1DS_DATA_MODULE)
 

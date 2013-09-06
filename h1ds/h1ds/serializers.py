@@ -3,7 +3,7 @@ import numpy as np
 
 from rest_framework import serializers
 from rest_framework.reverse import reverse
-from h1ds_core.models import Node, Filter, Shot
+from h1ds.models import Node, Filter, Shot
 from django.core.urlresolvers import NoReverseMatch
 
 import warnings

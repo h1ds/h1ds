@@ -27,9 +27,9 @@ from django.conf import settings
 from django.utils.importlib import import_module
 from django.views.generic import TemplateView
 
-from h1ds_core.models import UserSignal, UserSignalForm, Worksheet, Node, Shot
-from h1ds_core.utils import get_backend_shot_manager
-from h1ds_core.base import get_filter_list
+from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot
+from h1ds.utils import get_backend_shot_manager
+from h1ds.base import get_filter_list
 
 backend_shot_manager = get_backend_shot_manager()
 
@@ -48,8 +48,8 @@ def get_shot_stream_generator():
 new_shot_generator = get_shot_stream_generator()
 
 ### TEMP ###
-#import h1ds_core.filters
-from h1ds_core.base import get_all_filters
+#import h1ds.filters
+from h1ds.base import get_all_filters
 ############
 all_filters = get_all_filters()
 
@@ -67,7 +67,7 @@ def get_format(request, default='html'):
     
 def homepage(request):
     """Return the H1DS homepage."""
-    return render_to_response('h1ds_core/homepage.html', 
+    return render_to_response('h1ds/homepage.html', 
                               context_instance=RequestContext(request))
 
 def logout_view(request):
@@ -128,7 +128,7 @@ def edit_profile(request, username=''):
                 user_form = ChangeProfileForm(data)
                 response_dict = {'form': user_form, 
                                  'return_url': '/user/profile/%s/' % username}
-                return render_to_response('h1ds_core/userprofile.html', 
+                return render_to_response('h1ds/userprofile.html', 
                                 response_dict,
                                 context_instance=RequestContext(request))
         else:
@@ -137,7 +137,7 @@ def edit_profile(request, username=''):
                     'last_name':request.user.last_name,
                     'email':request.user.email}
             user_form = ChangeProfileForm(data)
-            return render_to_response('h1ds_core/userprofile.html', 
+            return render_to_response('h1ds/userprofile.html', 
                                       {'form':user_form},
                                       context_instance=RequestContext(request))
     else:
@@ -366,7 +366,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.renderers import YAMLRenderer
 from rest_framework.renderers import XMLRenderer
 from rest_framework.generics import ListAPIView
-from h1ds_core.serializers import NodeSerializer, ShotSerializer
+from h1ds.serializers import NodeSerializer, ShotSerializer
 
 class NodeView(APIView):
 
@@ -403,7 +403,7 @@ class NodeView(APIView):
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"
-            return Response({'node':node}, template_name='h1ds_core/'+template)
+            return Response({'node':node}, template_name='h1ds/'+template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)
             
@@ -417,7 +417,7 @@ class ShotListView(ListAPIView):
     serializer_class = ShotSerializer
 
     def get_template_names(self):
-        return ("h1ds_core/shot_list.html", )
+        return ("h1ds/shot_list.html", )
 
 class ShotDetailView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
@@ -430,7 +430,7 @@ class ShotDetailView(APIView):
         #return qs
 
     def get_template_names(self):
-        return ("h1ds_core/shot_detail.html", )
+        return ("h1ds/shot_detail.html", )
 
     def get(self, request, shot, format=None):
         shot = self.get_object()

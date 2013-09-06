@@ -472,7 +472,7 @@ class ResampleMinMax(Array1DimNumericBaseFilter):
     kwarg_names = ["n_bins"]
 
     def apply(self, node):
-        from h1ds_core.base import Data
+        from h1ds.base import Data
         _n_bins = int(self.kwargs["n_bins"])
         signal_length = node.data.get_signal_length()
         if signal_length >= 2*_n_bins: # Only apply filter if length is more than 2*n_bins

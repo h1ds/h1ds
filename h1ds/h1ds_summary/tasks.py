@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse, resolve
 from django.db import connection, transaction
 from django.conf import settings
 
-from h1ds_core.utils import get_backend_shot_manager
+from h1ds.utils import get_backend_shot_manager
 from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
 from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary.utils import CACHE_UPDATE_TIMEOUT

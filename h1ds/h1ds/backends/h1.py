@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import MDSplus
-from h1ds_core.backends import mdsplus
+from h1ds.backends import mdsplus
 
 class NodeData(mdsplus.NodeData):
     pass
