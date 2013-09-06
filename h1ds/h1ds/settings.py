@@ -153,14 +153,14 @@ INSTALLED_APPS = (
     'kombu.transport.django',
     'south',
     'django_openid_auth',
-    'summary',
-    'configdb',
+    'h1ds_summary',
+    'h1ds_configdb',
     'python_field',
     #'haystack',
     #'sphinxdoc',
 )
 
-H1DS_DATA_BACKEND = "h1ds..backends.h1"
+H1DS_DATA_BACKEND = "h1ds.backends.h1"
 H1DS_DATA_PREFIX = r"data"
 
 DATA_FILTER_MODULES = (
