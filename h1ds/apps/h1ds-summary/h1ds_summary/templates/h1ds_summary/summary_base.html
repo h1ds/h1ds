@@ -1,0 +1,93 @@
+{% extends "h1ds_core/base.html" %}
+
+{% load templatetable %}
+
+{% block content %}
+<div id="poll-summarydb-server" style="display: none;">{{ poll_server}}</div>
+<div class="column w80">
+  <div class="portlet" id="summary-portlet-data">
+    <div class="portlet-header">summary data</div>
+    <div class="portlet-content">
+      {% block summarycontent%}{% endblock summarycontent %}
+    </div>
+  </div>
+</div>
+<div class="column w20" id="summary-column-right">
+  <div class="portlet" id="summary-portlet-show">
+    <div class="portlet-header">show attributes</div>
+    <div class="portlet-content">
+      <div class="sidebarcontent">
+	<table width="100%" class="side-table">
+	  {% colsorttable item excluded_attrs 2 %}
+	  {% if table.startrow %}
+	  {% if table.oddrow %}
+	  <tr class="highlight">
+	    {% else %}
+	  <tr>
+	    {% endif %}
+	    {% endif %}
+	    {% if table.lastcellinrow %}
+	    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+	      {% else %}
+	    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+	      {% endif %}
+	      <div class="options displayNone"></div>
+	      <a href="?show_attr={{item}}">{{item}}</a>
+	    </td>
+	    {% if table.endrow %}
+	  </tr>
+	  {% endif %}
+	  {% endtable %}
+	</table>
+      </div>
+    </div>
+  </div>
+
+  <div class="portlet" id="summary-portlet-hide">
+    <div class="portlet-header">hide attributes</div>
+    <div class="portlet-content">
+      <div class="sidebarcontent">
+	<table width="100%" class="side-table">
+	  {% table item included_attrs 2 %}
+	  {% if table.startrow %}
+	  {% if table.oddrow %}
+	  <tr class="highlight">
+	    {% else %}
+	  <tr>
+	    {% endif %}
+	    {% endif %}
+	    {% if table.lastcellinrow %}
+	    <td class="{% if table.oddrow %}highlightableCell {% endif %}cellAutoAdjust">
+	      {% else %}
+	    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
+	      {% endif %}
+	      <div class="options displayNone"></div>
+	      <a href="?hide_attr={{item}}">{{item}}</a>
+	    </td>
+	    {% if table.endrow %}
+	  </tr>
+	  {% endif %}
+	  {% endtable %}
+	</table>
+      </div>
+    </div>
+  </div>
+{% if perms.h1ds_summary.raw_sql_query_summaryattribute %}
+  <div class="portlet" id="summary-portlet-sql">
+    <div class="portlet-header">SQL query</div>
+    <div class="portlet-content">
+      <div class="sidebarcontent fullform">
+	<form action="{% url "raw-sql" %}" method="post">{% csrf_token %}
+	  <span class="left">select</span>
+	  <INPUT style="width:100%" type="text" id="select" name="select" value="{{select}}"/>
+	  <span class="left">where</span>
+	  <textarea style="width:100%" id="where" name="where">{{where}}</textarea>
+	  <INPUT title="submit query" type="submit" value="&#x21b5;" />
+	</form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+</div>
+{% endblock content %}
+

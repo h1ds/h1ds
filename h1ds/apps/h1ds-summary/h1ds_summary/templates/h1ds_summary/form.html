@@ -1,0 +1,14 @@
+{% extends "h1ds_summary/summary_base.html" %}
+
+{% block summarycontent %}
+<div class="genericform">
+<form action="{{submit_url}}" method="post">{% csrf_token %}
+    {% for field in form %}
+  <p title="{{ field.help_text}}" {% if field.errors %} class="error"{% endif %}>
+            {% for error in field.errors %}{{ error }}<br />{% endfor%}
+            {{ field.label_tag }}: {{ field }}</p>
+    {% endfor %}
+    <p><input type="submit" value="Submit" /></p>
+</form>
+</div>
+{% endblock summarycontent %}
