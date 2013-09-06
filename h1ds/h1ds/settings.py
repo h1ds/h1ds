@@ -157,6 +157,7 @@ INSTALLED_APPS = (
     'h1ds_summary',
     'h1ds_configdb',
     'python_field',
+    'rest_framework',
     #'haystack',
     #'sphinxdoc',
 )
