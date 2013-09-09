@@ -21,9 +21,9 @@ h1ds/h1ds/conf/apache/h1ds_production.conf
 # the templates for these files are kept in the repo
 # but not the customised versions.
 fabfile.py
-h1ds/h1ds/settings_development.py
-h1ds/h1ds/settings_staging.py
-h1ds/h1ds/settings_production.py
+h1ds/h1ds/settings/development.py
+h1ds/h1ds/settings/staging.py
+h1ds/h1ds/settings/production.py
 
 
 rabbitmq-signing-key-public.asc
