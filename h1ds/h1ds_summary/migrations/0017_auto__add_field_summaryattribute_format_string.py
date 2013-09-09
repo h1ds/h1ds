@@ -26,9 +26,9 @@ class Migration(SchemaMigration):
             'format_string': ('django.db.models.fields.CharField', [], {'max_length': '64', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_default': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
-            'source': ('django.db.models.fields.CharField', [], {'max_length': '4096'})
+            'source': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         }
     }
 

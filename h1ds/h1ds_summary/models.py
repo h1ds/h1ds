@@ -23,9 +23,9 @@ e.g. %.2f will format a float to 2 decimal places.',
 class SummaryAttribute(models.Model):
     slug = models.SlugField(max_length=100, unique=True, 
                             help_text=sa_help_text['slug'])
-    name = models.CharField(max_length=500, 
+    name = models.CharField(max_length=255,
                             help_text=sa_help_text['name'])
-    source = models.CharField(max_length=4096,
+    source = models.CharField(max_length=255,
                               help_text=sa_help_text['source'])
     description = models.TextField(help_text=sa_help_text['description'])
     is_default = models.BooleanField(default=False, blank=True,
