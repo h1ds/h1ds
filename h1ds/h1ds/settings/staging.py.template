@@ -1,4 +1,4 @@
-from h1ds.settings import *
+from .base import *
 
 DEBUG = False
 
@@ -7,11 +7,9 @@ SECRET_KEY = '***ChangeMeToSomethingUnique***'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(VENV_DIR, 'db', 'h1ds_production.db')
+        'NAME': os.path.join(DJANGO_PROJECT_DIR, 'db', 'h1ds_staging.db')
             }
     }
-
-VERBOSE=0
 
 ########################################################################
 ## Wiki settings                                                      ##
@@ -23,3 +21,13 @@ WIKI_EDITOR_GROUPS = [u"EditorGroup", ]
 WIKI_SUPERUSERS = [u"MyUsername", ]
 WIKI_ACL_RIGHTS_BEFORE = u"MyUsername:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
 
+########################################################################
+## Settings which should be optional                                  ##
+########################################################################
+
+import h1.metadata
+H1DS_CONFIGDB_METADATA_FUNCTION = h1.metadata.read_metadata
+
+########################################################################
+## Optional settings                                                  ##
+########################################################################

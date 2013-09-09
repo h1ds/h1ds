@@ -1,4 +1,4 @@
-from h1ds.settings import *
+from .base import *
 
 DEBUG = True
 
@@ -7,7 +7,7 @@ SECRET_KEY = '***ChangeMeToSomethingUnique***'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(VENV_DIR, 'db', 'h1ds_development.db')
+        'NAME': os.path.join(DJANGO_PROJECT_DIR, 'db', 'h1ds_development.db')
             }
     }
 

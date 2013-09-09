@@ -132,7 +132,7 @@ Now grab the H1DS project from the git repository:
 .. code-block:: bash
 
     (h1ds_development)$ git clone https://github.com/h1ds/h1ds.git
-    (h1ds_development)$ cd h1ds/h1ds
+    (h1ds_development)$ cd h1ds
 
 In the H1DS project we need  to create a couple of initial configuration
 files from the provided templates; the  H1DS fabric script (they call it
@@ -141,9 +141,10 @@ a *fabfile*) and the Django project settings file:
 .. code-block:: bash
 
     (h1ds_development)$ cp fabfile.py{.template,}
-    (h1ds_development)$ cp settings_development.py{.template,}
+    (h1ds_development)$ cd h1ds/h1ds/settings
+    (h1ds_development)$ cp development.py{.template,}
 
-Open  up  ``settings_development.py``  in   an  editor  and  change  the
+Open  up  ``development.py``  in   an  editor  and  change  the
 ``SECRET_KEY`` to something unique and unguessable. For other options in the configuration file, see :ref:`config_settings`.
 
 
@@ -168,7 +169,7 @@ You can now start the development server via:
 .. code-block:: bash
 
     (h1ds_development)$ export PYTHONPATH=$VIRTUAL_ENV/h1ds/h1ds:$PYTHONPATH
-    (h1ds_development)$ export DJANGO_SETTINGS_MODULE=h1ds.settings_development
+    (h1ds_development)$ export DJANGO_SETTINGS_MODULE=h1ds.settings.development
     (h1ds_development)$ django-admin.py runserver
 
 You can update H1DS any time by repeating the ``fab dev update`` command.
@@ -193,6 +194,7 @@ guest operating system. There are plenty of resources on the web to help
 you with that, so I won't go into  any detail here on how to do it. Once
 you have  your Ubuntu  virtual server  working, follow  the prerequisite
 steps above (see :ref:`installing_h1ds_prerequisites`).
+
 
 
 You can set up H1DS to use either the Nginx or Apache web servers. Nginx
@@ -279,9 +281,10 @@ Next, in your development virtualenv, run:
 .. code-block:: bash
 
     (h1ds_development)$ fab staging setup
-    (h1ds_development)$ cp settings_staging.py{.template,}
+    (h1ds_development)$ cd h1ds/h1ds/settings
+    (h1ds_development)$ cp staging.py{.template,}
 
-Make any desired  changes to ``settings_staging.py`` --  you should at
+Make any desired  changes to ``staging.py`` --  you should at
 least edit  ``SECRET_KEY`` to  something unique and  unguessable. Then
 update the staging server:
 
@@ -319,7 +322,7 @@ The setup procedure for the  production environment is essentially the
 same as for  the staging environment. You'll just need  to install the
 prerequisites   and   Apache,   edit   the   ``PRODUCTION_USER``   and
 ``PRODUCTION_HOST``      in      your      ``fabfile.py``,      create
-``settings_production.py`` from the template  and run ``fab production
+``production.py`` from the template  and run ``fab production
 setup``  and ``fab production update``  from within  your  development
 environment.
 

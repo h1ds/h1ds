@@ -11,8 +11,11 @@ threading._DummyThread._Thread__stop = lambda x: 42
 import os
 import djcelery
 
-THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-VENV_DIR = os.path.dirname(THIS_DIR)
+SETTINGS_DIR = os.path.abspath(os.path.dirname(__file__))
+H1DS_APP_DIR = os.path.dirname(SETTINGS_DIR)
+DJANGO_PROJECT_DIR = os.path.dirname(H1DS_APP_DIR)
+REPOSITORY_DIR = os.path.dirname(DJANGO_PROJECT_DIR)
+VENV_DIR = os.path.dirname(REPOSITORY_DIR)
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
@@ -44,7 +47,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(VENV_DIR, 'serverfiles', 'django_cache'),
+        'LOCATION': os.path.join(DJANGO_PROJECT_DIR, 'serverfiles', 'django_cache'),
         }
 }
 
@@ -72,7 +75,7 @@ USE_L10N = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded
 # files. Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = '/'.join([THIS_DIR, '..', 'media'])
+MEDIA_ROOT = '/'.join([DJANGO_PROJECT_DIR, 'media'])
 
 # URL that handles the media served  from MEDIA_ROOT. Make sure to use a
 # trailing    slash.    Examples:    "http://media.lawrence.com/media/",
@@ -83,7 +86,7 @@ MEDIA_URL = '/media/'
 # to. Don't put  anything in this directory yourself;  store your static
 # files  in  apps'  "static/" subdirectories  and  in  STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = '/'.join([THIS_DIR, '..', 'static'])
+STATIC_ROOT = '/'.join([DJANGO_PROJECT_DIR, 'static'])
 
 
 # URL        prefix       for        static       files.        Example:
@@ -136,7 +139,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'h1ds.urls'
 
 TEMPLATE_DIRS = (
-    os.path.join(THIS_DIR, 'templates'),
+    os.path.join(DJANGO_PROJECT_DIR, 'templates'),
 )
 
 INSTALLED_APPS = (
@@ -200,7 +203,7 @@ LOGGING = {
         'default': {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(VENV_DIR, 'log', 'django.log'),
+            'filename': os.path.join(DJANGO_PROJECT_DIR, 'log', 'django.log'),
             'maxBytes': 1024*1024*50, # 50 MB
             'backupCount': 10,
             'formatter':'verbose',
@@ -251,7 +254,7 @@ DEFAULT_TREE = "test"
 # list of extra mds trees to load into environment
 # each entry should be a (name, path), for example
 # EXTRA_MDS_TREES = [('extratree1', 'mdsserver::'), ('anothertree', '/data/tree'),]
-EXTRA_MDS_TREES = [('test', os.path.join(VENV_DIR, 'test_mds_data'))]
+EXTRA_MDS_TREES = [('test', os.path.join(DJANGO_PROJECT_DIR, 'test_mds_data'))]
 
 
 # celery settings
@@ -268,11 +271,11 @@ SHOT_TRACKER = "ping"
 SHOT_TRACKER_PING_INTERVAL = 2
 
 
-HAYSTACK_SITECONF='h1ds.search_site'
-HAYSTACK_SEARCH_ENGINE = 'whoosh'
-HAYSTACK_WHOOSH_PATH = os.path.join(THIS_DIR, 'whoosh_index')
+#HAYSTACK_SITECONF='h1ds.search_site'
+#HAYSTACK_SEARCH_ENGINE = 'whoosh'
+#HAYSTACK_WHOOSH_PATH = os.path.join(THIS_DIR, 'whoosh_index')
 
-FIXTURE_DIRS = (os.path.join(THIS_DIR, 'fixtures'),)
+FIXTURE_DIRS = (os.path.join(H1DS_APP_DIR, 'fixtures'),)
 
 # Example
 #WIKI_ACL_RIGHTS_BEFORE = u"BoydBlackwell:read,write,delete,revert,admin"

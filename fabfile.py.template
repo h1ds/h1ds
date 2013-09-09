@@ -250,13 +250,14 @@ def update():
     """Can be run multiple times. Idempotent."""
 
     update_dir_structure()
-    env.settings = '%(project)s.settings_%(environment)s' % env
+    env.settings = '%(project)s.settings.%(environment)s' % env
 
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         env_dir = run('echo $PWD')
 	repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
 	django_project_dir = os.path.join(repository_dir, "h1ds")
     h1ds_app_dir = os.path.join(django_project_dir, "h1ds")
+    h1ds_settings_dir = os.path.join(h1ds_app_dir, "settings")
 
     # TODO: provide test data for non-mds sources
     env.test_mds_dir = os.path.join(env_dir, 'test_mds_data')
@@ -265,17 +266,17 @@ def update():
     # environment,  and that  it exists  in the  same directory  as this
     # file.  We'll  attempt to copy  it to the virtual  environment, and
     # abort if the copy fails.
-    settings_filename = "settings_%(environment)s.py" %env
-    with cd(h1ds_app_dir):
+    settings_filename = "%(environment)s.py" %env
+    with cd(h1ds_settings_dir):
         try:
             env_settings_md5 = run("md5sum "+settings_filename)
         except:
             env_settings_md5 = "dummy_checksum"
-    with lcd(h1ds_app_dir):
+    with lcd(h1ds_settings_dir):
         local_settings_md5 = local("md5sum "+settings_filename, capture=True)
         if env_settings_md5 != local_settings_md5:
             try:
-                put(settings_filename, h1ds_app_dir)
+                put(settings_filename, h1ds_settings_dir)
             except ValueError:
                 print "Cannot copy settings file [%s] to environment. " %settings_filename
                 print "Please make sure the file exists."
