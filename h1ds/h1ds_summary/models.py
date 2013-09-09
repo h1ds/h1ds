@@ -28,11 +28,11 @@ class SummaryAttribute(models.Model):
     source = models.CharField(max_length=255,
                               help_text=sa_help_text['source'])
     description = models.TextField(help_text=sa_help_text['description'])
+
     is_default = models.BooleanField(default=False, blank=True,
                                      help_text=sa_help_text['is_default'])
     display_order = models.IntegerField(default=1000, blank=False,
                                         help_text=sa_help_text['display_order'])
-
     format_string = models.CharField(max_length=64, 
                                      blank=True, 
                                      help_text=sa_help_text['format_string'])
@@ -41,8 +41,8 @@ class SummaryAttribute(models.Model):
         ordering = ["display_order", "slug"]
 
         permissions = (
-            ("recompute_summaryattribute", "Can recompute the summary attribute and update the database."),
-            ("raw_sql_query_summaryattribute", "Can query database with raw SQL."),
+            ("sa_recompute", "Can recompute the summ. att. and update database."),
+            ("sa_raw_sql", "Can query database with raw SQL."),
             )
     
     def save(self, *args, **kwargs):
