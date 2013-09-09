@@ -167,7 +167,9 @@ You can now start the development server via:
 
 .. code-block:: bash
 
-    (h1ds_development)$ ./manage.py runserver --settings=h1ds.settings_development
+    (h1ds_development)$ export PYTHONPATH=$VIRTUAL_ENV/h1ds/h1ds:$PYTHONPATH
+    (h1ds_development)$ export DJANGO_SETTINGS_MODULE=h1ds.settings_development
+    (h1ds_development)$ django-admin.py runserver
 
 You can update H1DS any time by repeating the ``fab dev update`` command.
 
