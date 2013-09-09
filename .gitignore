@@ -44,3 +44,5 @@ h1ds/h1ds/conf/supervisord.production.conf
 h1ds/log
 h1ds/static
 h1ds/wiki
+
+h1ds/test_mds_data/
