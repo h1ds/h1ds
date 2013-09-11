@@ -288,3 +288,4 @@ WIKI_ACL_RIGHTS_DEFAULT = u""
 # You should set this to the list of used servers in settings_production.py
 ALLOWED_HOSTS = ['*',]
 
+INTERNAL_IPS = ('127.0.0.1', )
