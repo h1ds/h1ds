@@ -51,7 +51,7 @@ body, button, input, select, textarea { font-family: Verdana,Arial,sans-serif; c
    ========================================================================== */
 
 a { color: #00e; }
-a:visited { color: color:#369;}
+a:visited { color: #369;}
 a:hover { color: #06e; }
 a:focus { outline: thin dotted; }
 
