@@ -1317,27 +1317,31 @@ form.inline-form {
     display:inline;
 }
 
-//#h1ds-portlet-trees ul {
-//    list-style-type:none;
-//    padding: 0 0 0 1em;
-//    margin: 0;
-//}
+/*
 
-//#h1ds-portlet-trees li {
-//    background:blue;
-//    margin: 0.2em;
-//}
+#h1ds-portlet-trees ul {
+    list-style-type:none;
+    padding: 0 0 0 1em;
+    margin: 0;
+}
+
+#h1ds-portlet-trees li {
+    background:blue;
+    margin: 0.2em;
+}
+
+*/
 
  
 #h1ds-portlet-trees ul {
   list-style-type: none;
   margin: 0;
     padding: 0 0 0 1em;
-//  padding: 0;
+/*  padding: 0; */
 }
  
 #h1ds-portlet-trees li {
-//  font: 200 20px/1.5 Helvetica, Verdana, sans-serif;
+/*  font: 200 20px/1.5 Helvetica, Verdana, sans-serif;  */
   border-bottom: 1px solid #ccc;
   border-top: 1px solid #ccc;
 }
