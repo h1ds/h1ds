@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 closure --js h1ds/h1ds/static/js/plugins.js \
-        --js h1ds/h1ds/static/js/libs/masonry.pkgd.min.js \
+        --js h1ds/h1ds/static/js/libs/masonry.pkgd.js \
         --js h1ds/h1ds/static/js/mylibs/h1dsuri.js \
         --js h1ds/h1ds/static/js/libs/jsDataViewer/dataviewer.js \
         --js h1ds/h1ds/static/js/script.js \
