@@ -1,6 +1,6 @@
 numpy==1.6.2
 supervisor==3.0
-django==1.5
+django==1.5.3
 South==0.7.6
 celery==3.0.15
 django-celery==3.0.23
