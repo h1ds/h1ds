@@ -1300,8 +1300,9 @@ $(document).ready(function() {
 
     // load the state info 
 
-    loadWorksheet();
-
+    if ($("div.data.worksheet").length) {
+	loadWorksheet();
+    }
     // update pagelets
 
     //updatePagelets();
