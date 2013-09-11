@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+closure --js h1ds/h1ds/static/js/plugins.js \
+        --js h1ds/h1ds/static/js/mylibs/h1dsuri.js \
+        --js h1ds/h1ds/static/js/libs/jsDataViewer/dataviewer.js \
+        --js h1ds/h1ds/static/js/script.js \
+        --js_output_file h1ds/h1ds/static/js/h1ds.min.js
+git add h1ds/h1ds/static/js/h1ds.min.js
