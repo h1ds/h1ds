@@ -1270,8 +1270,8 @@ function loadWorksheet() {
     var test_data = [
 	{'plot_coords':[0,0,10,10],
 	 'modifiers':{},
-	 'data':[{url:  window.location.toString(), url_parser: url_parser},
-		]},
+	 'data':[{url:  window.location.toString(), url_parser: url_parser}
+		]}
 		    ];
     
     var worksheet = dataviewer.create("div.data.worksheet");
