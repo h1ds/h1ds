@@ -148,6 +148,19 @@ Open  up  ``development.py``  in   an  editor  and  change  the
 ``SECRET_KEY`` to something unique and unguessable. For other options in the configuration file, see :ref:`config_settings`.
 
 
+It is also recommended that you use use a database server such as Postgres or MySQL, rather than the default SQLite. For instructions on how to configure for various databases, see `https://docs.djangoproject.com/en/1.5/ref/settings/#databases`_.
+
+
+Currently H1DS requires MDS, so you'll need to install the MDS python bindings into your virtualenv. 
+
+.. code-block:: bash
+
+    (h1ds_development)$ mkdir $VIRTUAL_ENV/src
+    (h1ds_development)$ cp -rp /usr/local/mdsplus/mdsobjects/python $VIRTUAL_ENV/src/python-mdsplus
+    (h1ds_development)$ cd $VIRTUAL_ENV/src/python-mdsplus
+    (h1ds_development)$ python ./setup.py install
+
+
 Then, install the rest of the required software using the fabric script:
 
 .. code-block:: bash
