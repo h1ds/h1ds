@@ -231,7 +231,12 @@ class Node(MPTTModel, backend_module.NodeData):
             self.has_data = True
             self.n_dimensions = self.primary_data.get_n_dimensions()
             self.dtype = self.primary_data.value_dtype
-            self.n_channels = len(self.primary_data.value)
+            # TODO: shouldn't need try/except here
+            try:
+                self.n_channels = len(self.primary_data.value)
+            except:
+                self.n_channels = 0
+
             
         self.path_checksum = self._get_sha1()
         super(Node, self).save()#update_fields=['path_checksum'])
