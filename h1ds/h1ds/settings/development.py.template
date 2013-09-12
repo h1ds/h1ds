@@ -28,6 +28,4 @@ WIKI_EDITOR_GROUPS = [u"EditorGroup", ]
 WIKI_SUPERUSERS = [u"MyUsername", ]
 WIKI_ACL_RIGHTS_BEFORE = u"MyUsername:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
 
-INSTALLED_APPS += ('localcrawler',)
-
-LOCALCRAWLER_ENTRY_POINT="/data"
+INSTALLED_APPS += ('crawler',)
