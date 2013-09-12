@@ -5,7 +5,7 @@
 # matplotlib in  a separate requirements  file so our fabric  script can
 # try installing it after all the well-behaved packages are installed.
 
-matplotlib
+matplotlib==1.3.0
 
 # python-h1 requires scipy  which requires numpy to be built,  so it can
 # stay here also.
