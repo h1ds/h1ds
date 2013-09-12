@@ -39,12 +39,13 @@ server over  ssh is also  used to set up  the development server  on the
 local           computer            (`H1DS           issue           #10
 <https://github.com/h1ds/h1ds/issues/10>`_).      We    also     install
 ``gfortran`` and ``libatlas-base-dev`` so we  can build ``numpy`` in our
-virtualenv,  and ``libfreetype6-dev``  and  ``libpng12-dev``  so we  can
-build ``matplotlib`` :
+virtualenv,  and  ``libfreetype6-dev`` and  ``libpng12-dev``  so we  can
+build ``matplotlib``.   ``mercurial`` is needed to fetch  the source for
+django-python-code-field:
 
 .. code-block:: bash
 
-    $ sudo apt-get install git python-virtualenv python-dev ssh gfortran build-essential libatlas-base-dev libfreetype6-dev libpng12-dev
+    $ sudo apt-get install git python-virtualenv python-dev ssh gfortran build-essential libatlas-base-dev libfreetype6-dev libpng12-dev mercurial
 
 
 We               also               use               `virtualenvwrapper
