@@ -141,8 +141,7 @@ a *fabfile*) and the Django project settings file:
 .. code-block:: bash
 
     (h1ds_development)$ cp fabfile.py{.template,}
-    (h1ds_development)$ cd h1ds/h1ds/settings
-    (h1ds_development)$ cp development.py{.template,}
+    (h1ds_development)$ cp h1ds/h1ds/settings/development.py{.template,}
 
 Open  up  ``development.py``  in   an  editor  and  change  the
 ``SECRET_KEY`` to something unique and unguessable. For other options in the configuration file, see :ref:`config_settings`.
