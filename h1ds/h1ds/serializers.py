@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from h1ds.models import Node, Filter, Shot
 from django.core.urlresolvers import NoReverseMatch
+from types import NoneType
 
 import warnings
 
@@ -75,7 +76,7 @@ class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
 
 class DataField(serializers.WritableField):
     def to_native(self, obj):
-        if np.isscalar(obj):
+        if np.isscalar(obj) or type(obj) == NoneType:
             return obj
         else:
             output = [d.tolist() for d in obj]
