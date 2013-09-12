@@ -155,12 +155,12 @@ INSTALLED_APPS = (
     'djcelery',
     'kombu.transport.django',
     'south',
-    'django_openid_auth',
     'h1ds',
     'h1ds_summary',
     'h1ds_configdb',
     'python_field',
     'rest_framework',
+    'django_openid_auth',
     #'haystack',
     #'sphinxdoc',
 )
