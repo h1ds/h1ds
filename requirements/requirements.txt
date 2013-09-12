@@ -11,3 +11,5 @@ django-mptt==0.5
 moin==1.9.6
 -e hg+https://bitbucket.org/schinckel/django-python-code-field#egg=python_field
 djangorestframework==2.3.7
+django-localcrawler==0.1.1
+
