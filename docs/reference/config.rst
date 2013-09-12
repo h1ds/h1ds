@@ -19,8 +19,8 @@ used by H1DS. Defaults are  those values specified in ``settings.py``,
 and         are         overridden        by         values         in
 ``settings_(development|staging|production).py``.
 
-Settings for h1ds_core
-^^^^^^^^^^^^^^^^^^^^^^
+Settings for h1ds
+^^^^^^^^^^^^^^^^^
 
 H1DS_EXTRA_SUBLINKS
 """""""""""""""""""
