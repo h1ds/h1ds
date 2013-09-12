@@ -236,7 +236,8 @@ H1DS_MDSPLUS_NODE_BLACKLIST = []
 # Syntax: (name, url, description)
 H1DS_EXTRA_SUBLINKS = (
     ("Wiki", "/wiki", "Documentation wiki"),
-    ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"),
+    ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"), 
+    ("H1DS Documentation", "https://h1ds.readthedocs.org/en/latest/", "Documentation for the H1DS server"),
 )
 
 AUTHENTICATION_BACKENDS = (
