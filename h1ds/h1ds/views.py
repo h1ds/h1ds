@@ -406,10 +406,10 @@ class JSONNumpyEncoder(json.JSONEncoder):
             return str(o.total_seconds())
         elif isinstance(o, decimal.Decimal):
             return str(o)
-        elif hasattr(o, '__iter__'):
-            return [i for i in o]
         elif hasattr(o, 'tolist'):
             return o.tolist()
+        elif hasattr(o, '__iter__'):
+            return [i for i in o]
         return super(JSONEncoder, self).default(o)
     
 
