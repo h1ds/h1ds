@@ -121,6 +121,9 @@ class Shot(models.Model):
 
     root_nodes = property(_get_root_nodes)
 
+    def __unicode__(self):
+        return unicode(self.number)
+
     def get_absolute_url(self):
         return reverse('shot-detail', kwargs={'shot':self.number})
 
