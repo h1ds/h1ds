@@ -109,6 +109,20 @@ class FilterManager(object):
             self.cache[data_type] = data_filters
         return self.cache[data_type]
 
+class Device(models.Model):
+    """Representation of an experimental device with its own data set."""
+
+    name = models.CharField(max_length=32)
+    description = models.TextField()
+    slug = models.SlugField()
+    
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(Device, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return self.name
+    
 class Shot(models.Model):
     number = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
