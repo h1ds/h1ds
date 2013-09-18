@@ -126,6 +126,7 @@ class Device(models.Model):
 class Shot(models.Model):
     number = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
+    device = models.ForeignKey(Device)
     
     objects = models.Manager()
     backend = get_backend_shot_manager()()
