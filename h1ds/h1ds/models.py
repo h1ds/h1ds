@@ -115,7 +115,11 @@ class Device(models.Model):
     name = models.CharField(max_length=32)
     description = models.TextField()
     slug = models.SlugField()
-    
+    # Using "+" for related_name tells Django not to create a backwards relation.
+    # In this case, we don't want a backwards relation as it would clash with Shot.device.
+    # We set null=True so that we can set up devices before we have shots and datasets set up.
+    latest_shot = models.ForeignKey("Shot", null=True, related_name="+")
+
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Device, self).save(*args, **kwargs)
