@@ -11,10 +11,12 @@ TODO:
 
 """
 from urlparse import urlparse, urlunparse
-import urllib2, json
+import urllib2
+import json
 import numpy as np
 
 excluded_filters = set()
+
 
 def exclude_filter(original_class):
     """Decorator to mark subclasses of BaseFilter which aren't useable filters.
@@ -28,14 +30,17 @@ def exclude_filter(original_class):
     excluded_filters.add(original_class)
     return original_class
 
+
 def is_numeric(cls, obj):
     attrs = ['__add__', '__sub__', '__mul__', '__div__', '__pow__']
     # numpy string_ have these attrs, do any others?
-    is_numpy_str = type(obj) in [np.string_,]
+    is_numpy_str = type(obj) in [np.string_, ]
     return all(hasattr(obj, attr) for attr in attrs) and not is_numpy_str
 
+
 is_string = lambda cls, d: isinstance(d, basestring)
-    
+
+
 def http_arg(arg):
     if arg.startswith("http://"):
         # make sure we get the JSON  format, in case the user didn't add
@@ -60,6 +65,7 @@ def http_arg(arg):
     else:
         return arg
 
+
 class BaseFilterMetaclass(type):
     def __new__(cls, name, bases, dct):
         # assert  some classmethods  which  simplify the  API, so  users
@@ -71,13 +77,13 @@ class BaseFilterMetaclass(type):
                 dct[cm] = classmethod(dct[cm])
         return type.__new__(cls, name, bases, dct)
 
+
 @exclude_filter
 class BaseFilter:
-
     __metaclass__ = BaseFilterMetaclass
 
     ndim = 0
-    
+
     def __init__(self, **kwargs):
         self.kwargs = dict((k, http_arg(v)) for k, v in kwargs.iteritems())
 
@@ -85,7 +91,6 @@ class BaseFilter:
     def valid_ndim(cls, n_dim):
         return cls.ndim == "any" or n_dim == cls.ndim
 
-        
     @classmethod
     def is_filterable(cls, data):
         return cls.valid_ndim(data.get_n_dimensions()) and cls.valid_dtype(data.value)
@@ -94,30 +99,30 @@ class BaseFilter:
     def get_slug(cls):
         return cls.slug
 
+
 @exclude_filter
 class ScalarNumericBaseFilter(BaseFilter):
-
     ndim = 0
     valid_dtype = is_numeric
+
 
 @exclude_filter
 class ScalarStringBaseFilter(BaseFilter):
-
     ndim = 0
     valid_dtype = is_string
 
+
 @exclude_filter
 class Array1DimNumericBaseFilter(BaseFilter):
-    
     ndim = 1
     valid_dtype = is_numeric
 
+
 @exclude_filter
 class Array2DimNumericBaseFilter(BaseFilter):
-    
     ndim = 2
     valid_dtype = is_numeric
-    
+
 
 def float_or_array(data):
     """Cast data to float if string, or array if list."""
@@ -127,7 +132,7 @@ def float_or_array(data):
         return float(data)
 
 
-binary_powers = 2**np.arange(30)
+binary_powers = 2 ** np.arange(30)
 
 ########################################################################
 ## signal -> scalar                                                   ##
@@ -140,20 +145,19 @@ class FirstPulse(Array1DimNumericBaseFilter):
     threshold = 'mid' will use (max(signal)+min(signal))/2
     """
 
-    
     slug = "first_pulse"
     kwarg_names = ["threshold"]
-    
+
     def apply(self, node):
         _threshold = self.kwargs["threshold"]
         if _threshold.lower() == 'mid':
-            _threshold = (np.max(node.data.value)+np.min(node.data.value))/2
+            _threshold = (np.max(node.data.value) + np.min(node.data.value)) / 2
         else:
             _threshold = float(_threshold)
 
-        first_element = np.where(node.data.value[0]>_threshold)[0][0]        
-        
-        node.data.name = 'first_pulse(%s, %s)' %(node.data.name, self.kwargs["threshold"])
+        first_element = np.where(node.data.value[0] > _threshold)[0][0]
+
+        node.data.name = 'first_pulse(%s, %s)' % (node.data.name, self.kwargs["threshold"])
         node.data.value = node.data.dimension[0][first_element]
         node.data.dimension = []
         node.data.value_units = None
@@ -161,11 +165,11 @@ class FirstPulse(Array1DimNumericBaseFilter):
         node.data.value_dtype = 'int' # TODO: should we use dtypes rather than strings?
         node.data.dimension_dtype = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = 'first_pulse(%s, %s)' %(node.data.value_labels[0], self.kwargs["threshold"])
+            node.data.value_labels[0] = 'first_pulse(%s, %s)' % (node.data.value_labels[0], self.kwargs["threshold"])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
-            
+
 
 class PulseWidth(Array1DimNumericBaseFilter):
     """
@@ -180,34 +184,35 @@ class PulseWidth(Array1DimNumericBaseFilter):
     def apply(self, node):
         _threshold = self.kwargs["threshold"]
         if _threshold.lower() == 'mid':
-            _threshold = (np.max(node.data.value)+np.min(node.data.value))/2
+            _threshold = (np.max(node.data.value) + np.min(node.data.value)) / 2
         else:
             _threshold = float(_threshold)
 
         t = node.data.dimension[0][node.data.value[0] > _threshold]
-        end1 = node.data.dimension[0][(node.data.value[0][:-1]-node.data.value[0][1:])>_threshold]
-        
+        end1 = node.data.dimension[0][(node.data.value[0][:-1] - node.data.value[0][1:]) > _threshold]
+
         use_size = np.min([len(t), len(end1)])
 
         if use_size > 0:         # TODO: tell the user what's going on...
-            node.data.name = "pulse_width(%s, %s)" %(node.data.name, self.kwargs["threshold"])
-            node.data.value = np.min(end1[:use_size]-t[:use_size])
+            node.data.name = "pulse_width(%s, %s)" % (node.data.name, self.kwargs["threshold"])
+            node.data.value = np.min(end1[:use_size] - t[:use_size])
             node.data.dimension = []
             node.data.value_units = None
             node.data.dimension_units = None
             node.data.value_dtype = node.data.dimension_dtype
             node.data.dimension_dtype = None
             if len(node.data.value_labels) > 0:
-                node.data.value_labels[0] = "pulse_width('%s', '%s')" %(node.data.value_labels[0], self.kwargs["threshold"])
+                node.data.value_labels[0] = "pulse_width('%s', '%s')" % (
+                    node.data.value_labels[0], self.kwargs["threshold"])
             else:
                 node.data.value_labels = [node.data.name]
             node.data.dimension_labels = []
 
-class PulseNumber(Array1DimNumericBaseFilter):
 
+class PulseNumber(Array1DimNumericBaseFilter):
     slug = "pulse_number"
     kwarg_names = ["threshold"]
-            
+
     def apply(self, node):
         """
         number of pulses...??
@@ -215,37 +220,36 @@ class PulseNumber(Array1DimNumericBaseFilter):
         """
         _threshold = self.kwargs["threshold"]
         if _threshold.lower() == 'mid':
-            _threshold = (max(node.data.value)+min(node.data.value))/2
+            _threshold = (max(node.data.value) + min(node.data.value)) / 2
         else:
             _threshold = float(_threshold)
 
         t = node.data.dimension[0][node.data.value[0] > _threshold]
-        end1 = node.data.dimension[0][(node.data.value[0][:-1]-node.data.value[0][1:])>_threshold]
+        end1 = node.data.dimension[0][(node.data.value[0][:-1] - node.data.value[0][1:]) > _threshold]
 
         # TODO: should no need to cast  this as int32, but there is some
         # bizarre problem with dtype_mapping  key... without casting the
         # result of np.min, type(node.data)  says it is numpy.int32, but
         # it   is  somehow   different   to  the   numpy.int32  in   the
         # dtype_mapping key.
-        node.data.name = "pulse_number(%s, %s)" %(node.data.name, self.kwargs["threshold"])
+        node.data.name = "pulse_number(%s, %s)" % (node.data.name, self.kwargs["threshold"])
         node.data.value = np.int32(np.min([t.shape[0], end1.shape[0]]))
         node.data.dimension = []
         node.data.value_units = None
-        node.data.dimension_units =[]
+        node.data.dimension_units = []
         node.data.value_dtype = "int"
         node.data.dimension_dtype = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "pulse_number(%s, %s)" %(node.data.value_labels[0], self.kwargs["threshold"])
+            node.data.value_labels[0] = "pulse_number(%s, %s)" % (node.data.value_labels[0], self.kwargs["threshold"])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
 
-            
+
 class Max(Array1DimNumericBaseFilter):
-    
     slug = "max"
     kwarg_names = []
-    
+
     def apply(self, node):
         node.data.name = "max(%s)" % node.data.name
         node.data.value = np.max(node.data.value)
@@ -254,18 +258,17 @@ class Max(Array1DimNumericBaseFilter):
         node.data.dimension_units = []
         node.data.dimension_dtype = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = 'max(%s)' %(node.data.value_labels[0])
+            node.data.value_labels[0] = 'max(%s)' % (node.data.value_labels[0])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
 
-        
+
 class MaxOf(Array1DimNumericBaseFilter):
     # TODO: this maps 1d to 1d, or scalar to scalar - not tested for scalar
     slug = "max_of"
     kwarg_names = ["value"]
 
-        
     def apply(self, node):
         """Returns max(data, value).
 
@@ -277,11 +280,11 @@ class MaxOf(Array1DimNumericBaseFilter):
         if isinstance(node.data.value[0], np.ndarray):
             node.data.value[0][node.data.value[0] < _value] = _value
         else:
-            node.data.value =  np.max([node.data.value[0], _value])
+            node.data.value = np.max([node.data.value[0], _value])
 
-        node.data.name = "max_of(%s, %s)" %(node.data.name, self.kwargs["value"])
+        node.data.name = "max_of(%s, %s)" % (node.data.name, self.kwargs["value"])
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "max_of(%s, %s)" %(node.data.value_labels[0], self.kwargs["value"])
+            node.data.value_labels[0] = "max_of(%s, %s)" % (node.data.value_labels[0], self.kwargs["value"])
         else:
             node.data.value_labels = [node.data.name]
 
@@ -293,7 +296,7 @@ class DimOfMaxVal(Array1DimNumericBaseFilter):
 
     slug = "dim_of_max"
     kwarg_names = []
-    
+
     def apply(self, node):
         node.data.name = "dim_of_max(%s)" % node.data.name
         node.data.value = node.data.dimension[0][np.argmax(node.data.value[0])]
@@ -303,17 +306,16 @@ class DimOfMaxVal(Array1DimNumericBaseFilter):
         node.data.dimension_dtype = None
         node.data.dimension_units = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "dim_of_max(%s)" %(node.data.value_labels[0])
+            node.data.value_labels[0] = "dim_of_max(%s)" % (node.data.value_labels[0])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
 
 
 class Mean(Array1DimNumericBaseFilter):
-
     slug = "mean"
     kwarg_names = []
-    
+
     def apply(self, node):
 
         node.data.name = "mean(%s)" % node.data.name
@@ -322,7 +324,7 @@ class Mean(Array1DimNumericBaseFilter):
         node.data.dimension_dtype = None
         node.data.dimension_units = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "mean(%s)" %(node.data.value_labels[0])
+            node.data.value_labels[0] = "mean(%s)" % (node.data.value_labels[0])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
@@ -339,19 +341,18 @@ class Element(Array1DimNumericBaseFilter):
 
     def apply(self, node):
         _index = int(self.kwargs["index"])
-        node.data.name = "index(%s, %s)" %(node.data.name, self.kwargs["index"])
+        node.data.name = "index(%s, %s)" % (node.data.name, self.kwargs["index"])
         node.data.value = node.data.value[0][_index]
         node.data.dimension = []
         node.data.dimension_dtype = None
         node.data.dimension_units = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "index(%s, %s)" %(node.data.value_labels[0], self.kwargs["index"])
+            node.data.value_labels[0] = "index(%s, %s)" % (node.data.value_labels[0], self.kwargs["index"])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
 
 
-        
 class PeakToPeak(Array1DimNumericBaseFilter):
     """Max(signal) - min(signal)."""
 
@@ -365,7 +366,7 @@ class PeakToPeak(Array1DimNumericBaseFilter):
         node.data.dimension_dtype = None
         node.data.dimension_units = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "peak_to_peak(%s)" %(node.data.labels[0])
+            node.data.value_labels[0] = "peak_to_peak(%s)" % (node.data.labels[0])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
@@ -387,22 +388,22 @@ class SlantedBaseline(Array1DimNumericBaseFilter):
     slug = "slanted_baseline"
     kwarg_names = ["window"]
 
-    
     def apply(self, node):
         _window = int(self.kwargs["window"])
         start = np.mean(node.data.value[0][:_window])
         end = np.mean(node.data.value[0][-_window:])
 
         dim_len = node.data.value[0].shape[0]
-        norm_dim = np.arange(dim_len, dtype=float)/(dim_len-1)
-        baseline = start + (end-start)*norm_dim
-        
-        node.data.name = "slanted_baseline(%s, %s)" %(node.data.name, self.kwargs["window"])
+        norm_dim = np.arange(dim_len, dtype=float) / (dim_len - 1)
+        baseline = start + (end - start) * norm_dim
+
+        node.data.name = "slanted_baseline(%s, %s)" % (node.data.name, self.kwargs["window"])
         node.data.value[0] -= baseline
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "slanted_baseline(%s, %s)" %(node.data.value_labels[0], self.kwargs["window"])
+            node.data.value_labels[0] = "slanted_baseline(%s, %s)" % (node.data.value_labels[0], self.kwargs["window"])
         else:
             node.data.value_labels = [node.data.name]
+
 
 class PrlLpn(Array1DimNumericBaseFilter):
     """prl_lpn
@@ -411,25 +412,25 @@ class PrlLpn(Array1DimNumericBaseFilter):
     """
     slug = "prl_lpn"
     kwarg_names = ["f0", "order"]
-    
+
     def _do_prl_lpn(self, signal, dim, f0, order):
         """This  function is required  to handle  the recursion  in prl_lpn.
 
         Handle  only the  signal,  not  the data  wrapper.  Also, we  assume
         arguments have already been cast to numeric types.
         """
-        N = int(0.5 + 0.5/(dim[1]-dim[0])/f0)
+        N = int(0.5 + 0.5 / (dim[1] - dim[0]) / f0)
         a = np.cumsum(signal)
         if order > 1:
             return self._do_prl_lpn(
-                self._do_prl_lpn(signal, dim, f0, order-1), dim, f0, 1)
+                self._do_prl_lpn(signal, dim, f0, order - 1), dim, f0, 1)
         else:
-            return (a[N:]-a[:-N])/float(N)
-    
+            return (a[N:] - a[:-N]) / float(N)
+
     def apply(self, node):
         _f0 = float(self.kwargs["f0"])
         _order = int(self.kwargs["order"])
-        node.data.name = 'prl_lpn(%s, %s, %s)' %(node.data.name,
+        node.data.name = 'prl_lpn(%s, %s, %s)' % (node.data.name,
                                                   self.kwargs["f0"],
                                                   self.kwargs["order"])
         print len(node.data.value[0])
@@ -438,33 +439,33 @@ class PrlLpn(Array1DimNumericBaseFilter):
         d_min = node.data.dimension[0][0]
         d_max = node.data.dimension[0][-1]
         len_signal = len(node.data.value[0])
-        node.data.dimension = [d_min + (d_max-d_min)*np.arange(len_signal)/(len_signal-1)]
+        node.data.dimension = [d_min + (d_max - d_min) * np.arange(len_signal) / (len_signal - 1)]
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = 'prl_lpn(%s, %s, %s)' %(node.data.value_labels[0],
-                                                                self.kwargs["f0"],
-                                                                self.kwargs["order"])
+            node.data.value_labels[0] = 'prl_lpn(%s, %s, %s)' % (node.data.value_labels[0],
+                                                                 self.kwargs["f0"],
+                                                                 self.kwargs["order"])
         else:
             node.data.value_labels = [node.data.name]
-            
+
 
 class Resample(Array1DimNumericBaseFilter):
     slug = "resample"
     kwarg_names = ["max_samples"]
-   
+
     def apply(self, node):
         _max_samples = int(self.kwargs["max_samples"])
         signal_length = node.data.value[0].T.shape[0]
-        delta_sample = signal_length/_max_samples
-        
-        node.data.name = "resample(%s, %s)" %(node.data.name, self.kwargs["max_samples"])
+        delta_sample = signal_length / _max_samples
+
+        node.data.name = "resample(%s, %s)" % (node.data.name, self.kwargs["max_samples"])
         # put trailing [:max_samples] in case we get an extra one at the end
         node.data.value = [node.data.value[0][::delta_sample][:_max_samples]]
         node.data.dimension = [node.data.dimension[0][::delta_sample][:_max_samples]]
-        if len(node.data.value_labels) > 0:            
-            node.data.value_labels[0] = "resample(%s, %s)" %(node.data.value_label[0], self.kwargs["max_samples"])
+        if len(node.data.value_labels) > 0:
+            node.data.value_labels[0] = "resample(%s, %s)" % (node.data.value_label[0], self.kwargs["max_samples"])
         else:
             node.data.value_label = [node.data.name]
-        
+
 
 class ResampleMinMax(Array1DimNumericBaseFilter):
     """TODO: only works for 1D array..."""
@@ -473,74 +474,79 @@ class ResampleMinMax(Array1DimNumericBaseFilter):
 
     def apply(self, node):
         from h1ds.base import Data
+
         _n_bins = int(self.kwargs["n_bins"])
         signal_length = node.data.get_signal_length()
-        if signal_length >= 2*_n_bins: # Only apply filter if length is more than 2*n_bins
-            delta_sample = signal_length/_n_bins
+        if signal_length >= 2 * _n_bins:  # Only apply filter if length is more than 2*n_bins
+            delta_sample = signal_length / _n_bins
             new_dimension = [node.data.dimension[0][::delta_sample][:_n_bins]]
             max_data = []
             min_data = []
             new_metadata = node.data.metadata
 
             for i in range(_n_bins):
-                tmp = node.data.value[0][i*delta_sample:(i+1)*delta_sample]
+                tmp = node.data.value[0][i * delta_sample:(i + 1) * delta_sample]
                 max_data.append(max(tmp))
                 min_data.append(min(tmp))
-            
-            new_metadata['minmax_pairs'] = [[0,1]]
+
+            new_metadata['minmax_pairs'] = [[0, 1]]
             new_metadata['original_name'] = node.data.name
             try:
                 # TODO: should make sure labels are populated higher up the food chain...
-                value_labels = ["min_rebinned("+node.data.value_labels[0]+")",
-                                "max_rebinned("+node.data.value_labels[0]+")"]
+                value_labels = ["min_rebinned(" + node.data.value_labels[0] + ")",
+                                "max_rebinned(" + node.data.value_labels[0] + ")"]
             except:
                 value_labels = ["min_rebinned", "max_rebinned"]
-            new_data = Data(name = "resampled_minmax("+node.data.name+")",
-                                value=np.array([min_data, max_data]),
-                                dimension=new_dimension,
-                                value_units = node.data.value_units,
-                                dimension_units = node.data.dimension_units,
-                                value_dtype = node.data.value_dtype,
-                                dimension_dtype = node.data.dimension_dtype,
-                                value_labels = value_labels,
-                                dimension_labels = node.data.dimension_labels,
-                                metadata = new_metadata)
+            new_data = Data(name="resampled_minmax(" + node.data.name + ")",
+                            value=np.array([min_data, max_data]),
+                            dimension=new_dimension,
+                            value_units=node.data.value_units,
+                            dimension_units=node.data.dimension_units,
+                            value_dtype=node.data.value_dtype,
+                            dimension_dtype=node.data.dimension_dtype,
+                            value_labels=value_labels,
+                            dimension_labels=node.data.dimension_labels,
+                            metadata=new_metadata)
             node.data = new_data
-            
+
+
 class NormDimRange(Array1DimNumericBaseFilter):
     """Reduce range of signal."""
 
     slug = "norm_dim_range"
     kwarg_names = ["min", "max"]
-    
+
     def apply(self, node):
         _min = float(self.kwargs["min"])
         _max = float(self.kwargs["max"])
-        min_e, max_e = int(_min*len(node.data.dimension[0])), int(_max*len(node.data.dimension[0]))
-        node.data.name = "normdim_range(%s, %s, %s)" %(node.data.name, self.kwargs["min"], self.kwargs["max"])        
+        min_e, max_e = int(_min * len(node.data.dimension[0])), int(_max * len(node.data.dimension[0]))
+        node.data.name = "normdim_range(%s, %s, %s)" % (node.data.name, self.kwargs["min"], self.kwargs["max"])
         node.data.value = [node.data.value[0][min_e:max_e]]
         node.data.dimension = [node.data.dimension[0][min_e:max_e]]
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "normdim_range(%s, %s, %s)" %(node.data.value_labels[0], self.kwargs["min"], self.kwargs["max"])
+            node.data.value_labels[0] = "normdim_range(%s, %s, %s)" % (
+                node.data.value_labels[0], self.kwargs["min"], self.kwargs["max"])
         else:
             node.data.value_labels = [node.data.name]
+
 
 class DimRange(Array1DimNumericBaseFilter):
     """Reduce range of signal."""
 
     slug = "dim_range"
     kwarg_names = ["min", "max"]
-    
+
     def apply(self, node):
         _min = float(self.kwargs["min"])
         _max = float(self.kwargs["max"])
         min_e, max_e = np.searchsorted(node.data.dimension[0], [_min, _max])
-        node.data.name = "dim_range(%s, %s, %s)" %(node.data.name, self.kwargs["min"], self.kwargs["max"])
+        node.data.name = "dim_range(%s, %s, %s)" % (node.data.name, self.kwargs["min"], self.kwargs["max"])
         node.data.value = [node.data.value[0][min_e:max_e]]
         node.data.dimension = [node.data.dimension[0][min_e:max_e]]
 
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "dim_range(%s, %s, %s)" %(node.data.value_labels[0], self.kwargs["min"], self.kwargs["max"])
+            node.data.value_labels[0] = "dim_range(%s, %s, %s)" % (
+                node.data.value_labels[0], self.kwargs["min"], self.kwargs["max"])
         else:
             node.data.value_labels = [node.data.name]
 
@@ -550,19 +556,19 @@ class PowerSpectrum(Array1DimNumericBaseFilter):
 
     slug = "power_spectrum"
     kwarg_names = []
-    
+
     def apply(self, node):
-        output_size = 2**np.searchsorted(binary_powers, node.data.value[0].shape[0])
+        output_size = 2 ** np.searchsorted(binary_powers, node.data.value[0].shape[0])
 
         node.data.name = "power_spectrum(%s)" % node.data.name
         node.data.value = [np.abs(np.fft.fft(node.data.value[0], n=output_size))]
         length = len(node.data.value[0])
         sample_rate = np.mean(node.data.dimension[0][1:] - node.data.dimension[0][:-1])
-        node.data.dimension = [(1./sample_rate)*np.arange(length)/(length-1)]
+        node.data.dimension = [(1. / sample_rate) * np.arange(length) / (length - 1)]
         node.data.dimension_units = "1/%s" % node.data.dimension_units
 
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "power_spectrum(%s)" %(node.data.value_labels[0])
+            node.data.value_labels[0] = "power_spectrum(%s)" % (node.data.value_labels[0])
         else:
             node.data.value_labels = [node.data.name]
 
@@ -581,13 +587,13 @@ class XAxisEnergyLimit(Array1DimNumericBaseFilter):
         ## TODO: need to get x,y dimensions standardised for matrix
         ## which dimension should be which??
 
-        total_power = np.sum(node.data.value[0].ravel()**2)
+        total_power = np.sum(node.data.value[0].ravel() ** 2)
 
         removed_power = 0
-        while removed_power < (1-_threshold)*total_power:
-            lower = node.data.value[0][0]**2
-            upper = node.data.value[0][-1]**2
-            if (min(lower, upper) + removed_power) > _threshold*total_power:
+        while removed_power < (1 - _threshold) * total_power:
+            lower = node.data.value[0][0] ** 2
+            upper = node.data.value[0][-1] ** 2
+            if (min(lower, upper) + removed_power) > _threshold * total_power:
                 break
             if lower < upper:
                 node.data.value = [node.data.value[0][1:]]
@@ -597,12 +603,12 @@ class XAxisEnergyLimit(Array1DimNumericBaseFilter):
                 node.data.value = [node.data.value[0][:-1]]
                 node.data.dimension = [node.data.dimension[0][:-1]]
                 removed_power += upper
-        node.data.name = "x_axis_energy_limit(%s, %s)" %(node.data.name, self.kwargs["threshold"])
+        node.data.name = "x_axis_energy_limit(%s, %s)" % (node.data.name, self.kwargs["threshold"])
         if len(node.data.value_labels) > 0:
-            node.data.labels[0] = "x_axis_energy_limit(%s, %s)" %(node.data.value_labels[0], self.kwargs["threshold"])
+            node.data.labels[0] = "x_axis_energy_limit(%s, %s)" % (node.data.value_labels[0], self.kwargs["threshold"])
         else:
             node.data.labels = [node.data.name]
-            
+
     def apply(self, node):
         self.x_axis_energy_limit(node)
 
@@ -611,7 +617,7 @@ class XAxisEnergyLimit(Array1DimNumericBaseFilter):
 ## scalar or vector -> same                                           ##
 ########################################################################
 
-            
+
 class Multiply(BaseFilter):
     """Multiply data by scale factor"""
 
@@ -623,11 +629,11 @@ class Multiply(BaseFilter):
     def apply(self, node):
 
         _factor = float_or_array(self.kwargs["factor"])
-        
-        node.data.name = "(%s)*%s" %(self.kwargs["factor"], node.data.name)
-        node.data.value = _factor*node.data.value
+
+        node.data.name = "(%s)*%s" % (self.kwargs["factor"], node.data.name)
+        node.data.value = _factor * node.data.value
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "(%s)*%s" %(self.kwargs["factor"], node.data.value_labels[0])
+            node.data.value_labels[0] = "(%s)*%s" % (self.kwargs["factor"], node.data.value_labels[0])
         else:
             node.data.value_labels = [node.data.name]
 
@@ -643,10 +649,10 @@ class Divide(BaseFilter):
     def apply(self, node):
         _factor = float(self.kwargs["factor"])
 
-        node.data.name = "(%s)/%s" %(node.data.name, self.kwargs["factor"])
+        node.data.name = "(%s)/%s" % (node.data.name, self.kwargs["factor"])
         node.data.value /= _factor
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "(%s)/%s" %(node.data.value_labels[0], self.kwargs["factor"])
+            node.data.value_labels[0] = "(%s)/%s" % (node.data.value_labels[0], self.kwargs["factor"])
         else:
             node.data.value_labels = [node.data.name]
 
@@ -659,19 +665,19 @@ class Subtract(BaseFilter):
     ndim = "any"
     valid_dtype = is_numeric
     kwarg_names = ["value"]
-            
+
     def apply(self, node):
         _value = float(self.kwargs["value"])
 
-        node.data.name = "%s - %s" %(node.data.name, self.kwargs["value"])
+        node.data.name = "%s - %s" % (node.data.name, self.kwargs["value"])
         node.data.value -= _value
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "%s - %s" %(node.data.value_labels[0], self.kwargs["value"])
+            node.data.value_labels[0] = "%s - %s" % (node.data.value_labels[0], self.kwargs["value"])
         else:
             node.data.value_labels = [node.data.name]
 
 
-class Add(BaseFilter):        
+class Add(BaseFilter):
     """Add the value.
 
     """
@@ -679,18 +685,19 @@ class Add(BaseFilter):
     ndim = "any"
     valid_dtype = is_numeric
     kwarg_names = ["value"]
+
     def apply(self, node):
         _value = float(self.kwargs["value"])
 
-        node.data.name = "%s + %s" %(node.data.name, self.kwargs["value"])
+        node.data.name = "%s + %s" % (node.data.name, self.kwargs["value"])
         node.data.value += _value
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "%s + %s" %(node.data.value_labels[0], self.kwargs["value"])
+            node.data.value_labels[0] = "%s + %s" % (node.data.value_labels[0], self.kwargs["value"])
         else:
             node.data.value_labels = [node.data.name]
 
 
-class Exponent(BaseFilter):        
+class Exponent(BaseFilter):
     """Raise data to the (value)th power."""
 
     slug = "exponent"
@@ -701,15 +708,14 @@ class Exponent(BaseFilter):
     def apply(self, node):
         _value = float(self.kwargs["value"])
 
-        node.data.name = "(%s)^%s" %(node.data.name, self.kwargs["value"])
+        node.data.name = "(%s)^%s" % (node.data.name, self.kwargs["value"])
         node.data.value **= _value
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "(%s)^%s" %(node.data.value_labels[0], self.kwargs["value"])
+            node.data.value_labels[0] = "(%s)^%s" % (node.data.value_labels[0], self.kwargs["value"])
         else:
             node.data.value_labels = [node.data.name]
-        
 
-            
+
 ## ########################################################################
 ## ## 1d signals -> 2d                                                   ##
 ## ########################################################################
@@ -718,7 +724,7 @@ class Exponent(BaseFilter):
 
 ##     slug = "spectrogram"
 ##     kwarg_names = ["bin_size"]
-    
+
 ##     def apply(self, node):
 ##         _bin_size = int(self.kwargs["bin_size"])
 ##         if _bin_size < 0:
@@ -770,7 +776,7 @@ class Exponent(BaseFilter):
 
 ##     slug = "shape"
 ##     kwarg_names = []
-    
+
 ##     def apply(self, node):
 ##         node.data = {"rows":node.data.shape[0],
 ##                         "columns":node.data.shape[1]}
@@ -782,7 +788,7 @@ class Exponent(BaseFilter):
 
 ##     slug = "transpose"
 ##     kwarg_names = []
-    
+
 ##     def apply(self, node):
 ##         node.data = np.transpose(node.data)
 ##         #TODO: how to treat dim?
@@ -793,7 +799,7 @@ class Exponent(BaseFilter):
 
 ##     slug = "flip_vertical"
 ##     kwarg_names = []
-    
+
 ##     def apply(self, node):
 ##         tmp_data = node.data.copy()
 ##         for r in xrange(tmp_data.shape[0]/2):
@@ -807,7 +813,7 @@ class Exponent(BaseFilter):
 
 ##     slug = "flip_horizontal"
 ##     kwarg_names = []
-    
+
 ##     def apply(self, node):
 ##         tmp_data = node.data.copy()
 ##         for c in xrange(tmp_data.shape[1]/2):
@@ -842,10 +848,10 @@ class Exponent(BaseFilter):
 
 ## class YAxisEnergyLimit(Array2DimNumericBaseFilter):
 ##     "2D reduce y-axis range to threshold*100% of total signal energy"
-    
+
 ##     slug = "y_axis_energy_limit"
 ##     kwarg_names = ["threshold"]
-    
+
 ##     def apply(self, node):
 ##         _threshold = float(self.kwargs["threshold"])
 
@@ -903,5 +909,4 @@ class Exponent(BaseFilter):
 ##         cast_dtype = getattr(np, self.kwargs["dtype"])
 ##         node.data = cast_dtype(node.data)
 ##         node.dim = cast_dtype(node.dim)
-        
 

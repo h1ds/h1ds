@@ -9,13 +9,15 @@ from types import NoneType
 
 import warnings
 
+
 class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
     """Small hack to allow multiple kwargs on reverse lookup."""
+
     def field_to_native(self, obj, field_name):
         request = self.context.get('request', None)
         format = self.context.get('format', None)
         view_name = self.view_name or self.parent.opts.view_name
-        kwargs = {'shot':obj.shot.number, 'nodepath':obj.nodepath}
+        kwargs = {'shot': obj.shot.number, 'nodepath': obj.nodepath}
 
         if request is None:
             warnings.warn("Using `HyperlinkedIdentityField` without including the "
@@ -96,9 +98,8 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
 
 class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
     def get_url(self, obj, view_name, request, format):
-        kwargs = {'shot': obj.shot.number, 'nodepath': obj.nodepath}#, 'format':format}
+        kwargs = {'shot': obj.shot.number, 'nodepath': obj.nodepath}  # , 'format':format}
         return reverse(view_name, kwargs=kwargs, request=request, format=format)
-
 
     def get_object(self, queryset, view_name, view_args, view_kwargs):
         shot = view_kwargs['shot']
@@ -107,21 +108,23 @@ class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
         node = Node.objects.get(shot__number=shot, path_checksum=checksum)
         return node
 
+
 class DataField(serializers.WritableField):
     def to_native(self, obj):
         if np.isscalar(obj) or type(obj) == NoneType:
             return obj
         else:
             output = []
-            for d in obj: # TODO: hack
+            for d in obj:  # TODO: hack
                 if np.isscalar(d) or type(d) == NoneType:
                     output.append(d)
                 else:
                     output.append(d.tolist())
             return output
-        
-    def from_native(self,obj):
+
+    def from_native(self, obj):
         pass
+
 
 class DataSerializer(serializers.Serializer):
     """Serializer for a single data object.
@@ -134,7 +137,7 @@ class DataSerializer(serializers.Serializer):
     dtype
     meta
     """
-    
+
     name = serializers.CharField()
     value = DataField()
     dimension = DataField()
@@ -144,7 +147,7 @@ class DataSerializer(serializers.Serializer):
     dimension_dtype = serializers.CharField()
     metadata = serializers.WritableField()
 
-    
+
 class NodeSerializer(serializers.HyperlinkedModelSerializer):
     # slug ?
     # data (optional depending on ?show_data query string
@@ -154,14 +157,14 @@ class NodeSerializer(serializers.HyperlinkedModelSerializer):
     #data = serializers.Field()
     data = DataSerializer(source='get_data')
     url = NodeHyperlinkedIdentityField(view_name="node-detail", slug_field="nodepath")
+
     class Meta:
         model = Node
         fields = ('path', 'parent', 'children', 'data', 'url')
-    
+
 
 class FilterSerializer(serializers.Serializer):
     pass
-
 
 
 class ShotSerializer(serializers.HyperlinkedModelSerializer):
@@ -174,7 +177,7 @@ class ShotSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('number', 'timestamp', 'root_nodes', )
 
     def get_root_nodes(self, obj):
-        return [{'path':n.path, 'url':n.get_absolute_url()}  for n in obj.root_nodes]
+        return [{'path': n.path, 'url': n.get_absolute_url()} for n in obj.root_nodes]
 
 
 class DeviceSerializer(serializers.HyperlinkedModelSerializer):

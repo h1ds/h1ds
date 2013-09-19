@@ -27,8 +27,10 @@ from h1ds.base import get_filter_list
 
 backend_shot_manager = get_backend_shot_manager()
 
+
 def get_shot_stream_generator():
     shotman = backend_shot_manager()
+
     def new_shot_generator():
         latest_shot = shotman.get_latest_shot()
         while True:
@@ -37,8 +39,10 @@ def get_shot_stream_generator():
             if tmp != latest_shot:
                 latest_shot = tmp
                 yield "{}\n".format(latest_shot)
+
     return new_shot_generator
-    
+
+
 new_shot_generator = get_shot_stream_generator()
 
 ### TEMP ###
@@ -47,28 +51,30 @@ from h1ds.base import get_all_filters
 ############
 all_filters = get_all_filters()
 
+
 def get_format(request, default='html'):
     """get format URI query key.
 
     Fall back to 'view' for backwards compatability.
 
     """
-    format_ =  request.GET.get('format', None)
+    format_ = request.GET.get('format', None)
     if not format_:
         format_ = request.GET.get('view', default)
     return format_
 
-    
+
 def homepage(request):
     """Return the H1DS homepage."""
-    return render_to_response('h1ds/homepage.html', 
+    return render_to_response('h1ds/homepage.html',
                               context_instance=RequestContext(request))
+
 
 def logout_view(request):
     """Log the user out of H1DS."""
     logout(request)
     return redirect('/')
-            
+
 
 class ChangeProfileForm(forms.Form):
     help_text = ("Please use CamelCase, with each word capitalised. "
@@ -80,7 +86,6 @@ class ChangeProfileForm(forms.Form):
 
 
 class UserMainView(ListView):
-
     def get_queryset(self):
         return Worksheet.objects.filter(user=self.request.user)
 
@@ -88,8 +93,8 @@ class UserMainView(ListView):
     def dispatch(self, *args, **kwargs):
         return super(UserMainView, self).dispatch(*args, **kwargs)
 
-class WorksheetView(DetailView):
 
+class WorksheetView(DetailView):
     def get_object(self):
         w = get_object_or_404(Worksheet,
                               user__username=self.kwargs['username'],
@@ -113,26 +118,26 @@ def edit_profile(request, username=''):
                 u.email = form.cleaned_data['email']
                 u.save()
                 return redirect('/')
-                
+
             else:
-                data = {'username':username, 
-                        'first_name':request.user.first_name,
-                        'last_name':request.user.last_name,
-                        'email':request.user.email}
+                data = {'username': username,
+                        'first_name': request.user.first_name,
+                        'last_name': request.user.last_name,
+                        'email': request.user.email}
                 user_form = ChangeProfileForm(data)
-                response_dict = {'form': user_form, 
+                response_dict = {'form': user_form,
                                  'return_url': '/user/profile/%s/' % username}
-                return render_to_response('h1ds/userprofile.html', 
-                                response_dict,
-                                context_instance=RequestContext(request))
+                return render_to_response('h1ds/userprofile.html',
+                                          response_dict,
+                                          context_instance=RequestContext(request))
         else:
-            data = {'username':username, 
-                    'first_name':request.user.first_name,
-                    'last_name':request.user.last_name,
-                    'email':request.user.email}
+            data = {'username': username,
+                    'first_name': request.user.first_name,
+                    'last_name': request.user.last_name,
+                    'email': request.user.email}
             user_form = ChangeProfileForm(data)
-            return render_to_response('h1ds/userprofile.html', 
-                                      {'form':user_form},
+            return render_to_response('h1ds/userprofile.html',
+                                      {'form': user_form},
                                       context_instance=RequestContext(request))
     else:
         return redirect('/')
@@ -146,6 +151,7 @@ def get_max_fid(request):
     else:
         max_filter_num = max([i[0] for i in filter_list])
     return max_filter_num
+
 
 class FilterBaseView(RedirectView):
     """Read in filter info from HTTP query and apply H1DS filter syntax.
@@ -164,7 +170,7 @@ class FilterBaseView(RedirectView):
     request, but we return url from path... can't be good.
     TODO: kwargs are not yet supported for filter functions.
     """
-    
+
     http_method_name = ['get']
 
     def get_filter_url(self, overwrite_fid=False):
@@ -175,40 +181,42 @@ class FilterBaseView(RedirectView):
         # Get the actual filter function
         #filter_function = getattr(df, filter_name)
         filter_class = all_filters[filter_name]
-        
+
         # We'll append the filter to this path and redirect there.
         return_path = qdict.pop('path')[-1]
 
         if overwrite_fid:
             fid = int(qdict.pop('fid')[-1])
             for k, v in qdict.items():
-                if k.startswith('f%d' %fid):
+                if k.startswith('f%d' % fid):
                     qdict.pop(k)
         else:
             # Find the maximum fid in the existing query and +1
-            fid = get_max_fid(self.request)+1
+            fid = get_max_fid(self.request) + 1
 
         # We expect the filter arguments  to be passed as key&value in
         # the HTTP query.
         filter_arg_values = [qdict.pop(a)[-1] for a in filter_class.kwarg_names]
 
         # add new filter to query dict
-        qdict.update({'f%d' % fid:filter_name})
+        qdict.update({'f%d' % fid: filter_name})
         for name, val in zip(filter_class.kwarg_names, filter_arg_values):
-            qdict.update({'f%d_%s' %(fid, name): val})
+            qdict.update({'f%d_%s' % (fid, name): val})
 
         return '?'.join([return_path, qdict.urlencode()])
+
 
 class ApplyFilterView(FilterBaseView):
     def get_redirect_url(self, **kwargs):
         return self.get_filter_url()
 
+
 class UpdateFilterView(FilterBaseView):
     def get_redirect_url(self, **kwargs):
         return self.get_filter_url(overwrite_fid=True)
 
-class RemoveFilterView(RedirectView):
 
+class RemoveFilterView(RedirectView):
     http_method_names = ['get']
 
     def get_redirect_url(self, **kwargs):
@@ -216,15 +224,12 @@ class RemoveFilterView(RedirectView):
         filter_id = int(qdict.pop('fid')[-1])
         return_path = qdict.pop('path')[-1]
         for k, v in qdict.items():
-            if k.startswith('f%d' %filter_id):
+            if k.startswith('f%d' % filter_id):
                 qdict.pop(k)
         return '?'.join([return_path, qdict.urlencode()])
 
 
-
-
 class UserSignalCreateView(CreateView):
-
     form_class = UserSignalForm
 
     def get_success_url(self):
@@ -250,6 +255,7 @@ class UserSignalUpdateView(UpdateView):
         context['redirect_url'] = self.request.GET.get('redirect_url', "/")
         return context
 
+
 class UserSignalDeleteView(DeleteView):
     model = UserSignal
 
@@ -257,9 +263,7 @@ class UserSignalDeleteView(DeleteView):
         return self.request.POST.get('url', "/")
 
 
-        
 class ShotStreamView(View):
-
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
@@ -279,6 +283,7 @@ class RequestShotView(RedirectView):
         new_path = "/".join(split_path)
         return new_path
 
+
 class AJAXShotRequestURL(View):
     """Return URL modified for requested shot"""
 
@@ -293,6 +298,7 @@ class AJAXShotRequestURL(View):
         output_json = '{"new_url": "%s"}' % new_url
         return HttpResponse(output_json, 'application/javascript')
 
+
 def xml_latest_shot(request):
     """Hack...
 
@@ -300,20 +306,21 @@ def xml_latest_shot(request):
     with other latest shot view
 
     """
-    
+
     shot = str(get_latest_shot())
     # TODO - get URI from settings, don't hardwire h1svr
     response_xml = etree.Element('{http://h1svr.anu.edu.au/data}dataurlmap',
-                    attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
-    
+                                 attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
+
     shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
     shot_number.text = shot
     return HttpResponse(etree.tostring(response_xml),
                         mimetype='text/xml; charset=utf-8')
 
+
 class AJAXLatestShotView(View):
     """Return latest shot."""
-    
+
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
@@ -321,12 +328,13 @@ class AJAXLatestShotView(View):
         if format_.lower() == 'xml':
             return xml_latest_shot(request)
         latest_shot = get_latest_shot()
-        return HttpResponse('{"latest_shot":"%s"}' %latest_shot,
+        return HttpResponse('{"latest_shot":"%s"}' % latest_shot,
                             'application/javascript')
+
 
 def request_url(request):
     """Return the URL for the requested parameters."""
-    
+
     shot = request.GET['shot']
     path = request.GET['path']
     tree = request.GET['tree']
@@ -334,7 +342,7 @@ def request_url(request):
     xml_elmt = '{http://h1svr.anu.edu.au/}dataurlmap'
     lang_attr = {'{http://www.w3.org/XML/1998/namespace}lang': 'en'}
     url_xml = etree.Element(xml_elmt, attrib=lang_attr)
-    
+
     shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
     shot_number.text = shot
     data_path = etree.SubElement(url_xml, 'path', attrib={})
@@ -349,7 +357,6 @@ def request_url(request):
 
     return HttpResponse(etree.tostring(url_xml),
                         mimetype='text/xml; charset=utf-8')
-
 
 
 from rest_framework.views import APIView
@@ -367,6 +374,7 @@ import datetime
 import decimal
 from rest_framework.compat import timezone, force_text
 
+
 class JSONNumpyEncoder(json.JSONEncoder):
     """
     JSONEncoder subclass that knows how to encode date/time/timedelta,
@@ -374,6 +382,7 @@ class JSONNumpyEncoder(json.JSONEncoder):
 
     trivial rewite of rest_framework class to allow numpy types.
     """
+
     def default(self, o):
         # For Date Time string spec, see ECMA 262
         # http://ecma-international.org/ecma-262/5.1/#sec-15.9.1.15
@@ -404,18 +413,16 @@ class JSONNumpyEncoder(json.JSONEncoder):
         elif hasattr(o, '__iter__'):
             return [i for i in o]
         return super(JSONNumpyEncoder, self).default(o)
-    
+
 
 class JSONNumpyRenderer(JSONRenderer):
     """Subclass of JSONRenderer which can handle numpy data types."""
     encoder_class = JSONNumpyEncoder
 
 
-
 class NodeView(APIView):
-
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
-    
+
     def get_object(self, shot, nodepath):
         """Get node object for request.
 
@@ -435,25 +442,24 @@ class NodeView(APIView):
         node.data = node.read_primary_data()
         node.apply_filters(self.request)
         return node
-        
+
     def get(self, request, shot, nodepath, format=None):
         node = self.get_object(shot, nodepath)
         # TODO: yaml not working yet
         # TODO: format list shoudl be maintained elsewhere... probably in settings.
-        node.get_alternative_format_urls(self.request, ["html", "json", "xml"]) 
+        node.get_alternative_format_urls(self.request, ["html", "json", "xml"])
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
             if not node.has_data:
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"
-            return Response({'node':node}, template_name='h1ds/'+template)
+            return Response({'node': node}, template_name='h1ds/' + template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)
-            
+
 
 class ShotListView(ListAPIView):
-
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     # TODO: make this customisable.
     paginate_by = 25
@@ -463,10 +469,11 @@ class ShotListView(ListAPIView):
     def get_template_names(self):
         return ("h1ds/shot_list.html", )
 
+
 class ShotDetailView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     serializer_class = ShotSerializer
-    
+
     def get_object(self):
         shot = Shot.objects.get(number=self.kwargs['shot'])
         return shot

@@ -25,11 +25,12 @@ filter_name_regex = re.compile('^f(?P<fid>\d+?)')
 filter_kwarg_regex = re.compile('^f(?P<fid>\d+?)_(?P<kwarg>.+)')
 
 sql_type_mapping = {
-    np.float32:"FLOAT",
-    np.float64:"FLOAT",
-    np.int32:"INT",
-    np.int64:"INT",
-    }
+    np.float32: "FLOAT",
+    np.float64: "FLOAT",
+    np.int32: "INT",
+    np.int64: "INT",
+}
+
 
 def remove_prefix(url):
     """Strip any prefix in the URL path."""
@@ -38,17 +39,19 @@ def remove_prefix(url):
     if hasattr(settings, "H1DS_DATA_PREFIX"):
         pref = settings.H1DS_DATA_PREFIX + "/"
         if url.startswith(pref):
-            url = url[len(pref):]        
+            url = url[len(pref):]
     return url
+
 
 def apply_prefix(url):
     """Apply any prefix to the URL path."""
     if not url.startswith("/"):
-        url = "/"+url
+        url = "/" + url
     if hasattr(settings, "H1DS_DATA_PREFIX"):
-        if not url.startswith("/"+settings.H1DS_DATA_PREFIX+"/"):
-            url = "/"+settings.H1DS_DATA_PREFIX+ url
+        if not url.startswith("/" + settings.H1DS_DATA_PREFIX + "/"):
+            url = "/" + settings.H1DS_DATA_PREFIX + url
     return url
+
 
 def get_all_filters():
     """Get all filters from modules listed in settings.DATA_FILTER_MODULES."""
@@ -60,6 +63,7 @@ def get_all_filters():
                        not cl in excluded_filters]
         filters.update((f.get_slug(), f) for f in mod_filters)
     return filters
+
 
 class Data(object):
     def __init__(self, name="", value=None, dimension=None, value_units="", dimension_units="", value_dtype="",
@@ -77,25 +81,25 @@ class Data(object):
         self.value_labels = value_labels
         self.dimension_labels = dimension_labels
         if hasattr(value, "len") and len(self.value) > len(self.value_labels):
-            self.value_labels = ["channel_%d" %(i+1) for i in range(self.get_n_channels())]
+            self.value_labels = ["channel_%d" % (i + 1) for i in range(self.get_n_channels())]
         if hasattr(dimension, "len") and len(self.dimension) > len(self.dimension_labels):
-            self.dimension_labels = ["dimension_%d" %(i+1) for i in range(self.get_n_dimensions())]
+            self.dimension_labels = ["dimension_%d" % (i + 1) for i in range(self.get_n_dimensions())]
         self.metadata = metadata
-    
+
     def get_n_dimensions(self):
         return len(self.dimension)
 
     def get_n_channels(self):
         return len(self.value)
-    
+
     def get_signal_length(self):
         if np.isscalar(self.value[0]):
             return 0
         else:
             return len(self.value[0])
 
-class BaseNodeData(object):
 
+class BaseNodeData(object):
     def get_child_names_from_primary_source(self):
         """Override this"""
         pass
@@ -111,7 +115,7 @@ class BaseNodeData(object):
 
     def get_value_units(self):
         return ""
-    
+
     def get_dimension_units(self):
         return ""
 
@@ -120,10 +124,10 @@ class BaseNodeData(object):
 
     def get_dimension_dtype(self):
         return ""
-       
+
     def get_metadata(self):
         return {}
-    
+
     def read_primary_data(self):
         name = self.get_name()
         value = self.get_value()
@@ -138,13 +142,12 @@ class BaseNodeData(object):
                     dimension_dtype=dimension_dtype, metadata=metadata)
 
         return data
-    
+
     def write_primary_data(self):
         pass
 
 
 class BaseDataTreeManager(models.Manager):
-
     def get_shot_root_node(self, shot):
         """Get root node of shot tree.
 
@@ -163,7 +166,7 @@ class BaseDataTreeManager(models.Manager):
 
         """
         pass
-    
+
     def add_shot(self, shot, overwrite=False):
 
         shot_root_node = self.get_shot_root_node(shot)
@@ -177,7 +180,7 @@ class BaseDataTreeManager(models.Manager):
                 # We have  an exisiting shot  root node, and  we don't
                 # want to overwrite, so we're done.
                 return None
-            
+
         # Now we have nothing for the shot, let's build it again.
 
         shot_root_node = self.model(path=str(shot), level=0)
@@ -187,24 +190,25 @@ class BaseDataTreeManager(models.Manager):
 
     def populate_shot(self, shot_root_node):
         pass
-    
+
     def get_node_from_ancestry(self, ancestry):
         shot_node = self.model.objects.get(path=ancestry[0], level=0)
         if len(ancestry) == 1:
             return shot_node
-        # get top of tree        
+            # get top of tree
         node = self.model.objects.get(parent=shot_node, slug=ancestry[1])
         for child in ancestry[2:]:
             node = self.model.objects.get(parent=node, slug__iexact=child)
         return node
 
-        
+
 class FilterManager(object):
     """Get available filters for given data.
 
     FilterManager caches lookups to avoid repeated checks of filters for
     available datatypes.
     """
+
     def __init__(self):
         self.filters = get_all_filters()
         self.cache = {}
@@ -225,10 +229,13 @@ class FilterManager(object):
             self.cache[data_type] = data_filters
         return self.cache[data_type]
 
+
 filter_manager = FilterManager()
+
 
 class BaseURLProcessor(object):
     """Base class for mapping between URLs and data paths."""
+
     def __init__(self, **kwargs):
         """takes url or components.
 
@@ -251,7 +258,7 @@ class BaseURLProcessor(object):
                 raise AttributeError
         else:
             self.tree, self.shot, self.path = tree, shot, path
-    
+
     def get_components_from_url(self, url):
         stripped_url = url.strip("/")
         n_slash = stripped_url.count("/")
@@ -260,26 +267,26 @@ class BaseURLProcessor(object):
             shot = data_module.get_latest_shot(tree)
             path = self.deurlize_path("")
         elif n_slash == 1:
-            t, s = stripped_url.split("/")            
+            t, s = stripped_url.split("/")
             tree = self.deurlize_tree(t)
             shot = self.deurlize_shot(s)
             path = self.deurlize_path("")
         else:
-            t, s, p = stripped_url.split("/", 2)            
+            t, s, p = stripped_url.split("/", 2)
             tree = self.deurlize_tree(t)
             shot = self.deurlize_shot(s)
             path = self.deurlize_path(p)
         return tree, shot, path
-        
+
     def get_url(self):
         return apply_prefix("/".join([self.urlized_tree(),
                                       self.urlized_shot(),
                                       self.urlized_path()]))
-        
+
     def get_url_for_tree(self, tree):
         """TODO: apply urlized_tree to tree arg"""
         return apply_prefix("/".join([tree, self.urlized_shot()]))
-    
+
     def urlized_tree(self):
         return str(self.tree)
 
@@ -301,6 +308,7 @@ class BaseURLProcessor(object):
     def deurlize_path(self, url_path):
         return url_path
 
+
 class BaseNode(object):
     def __init__(self, url_processor=None):
         self.url_processor = url_processor
@@ -309,11 +317,11 @@ class BaseNode(object):
         self.dim = None
         self.labels = []
         self.units = []
-        
+
     def apply_filters(self, request):
         for fid, name, kwargs in get_filter_list(request):
             self.apply_filter(fid, name, **kwargs)
-        
+
     def apply_filter(self, fid, name, **kwargs):
         # make sure data and dim can be accessed via node.data, node.dim... 
         d = self.get_data()
@@ -323,7 +331,7 @@ class BaseNode(object):
         #filter_class = filter_manager.filters[name](*f_args, **f_kwargs)
         filter_class = filter_manager.filters[name](**f_kwargs)
         filter_class.apply(self)
-        
+
         #self.filter_history.append((fid, name, kwargs))
         self.filter_history.append((fid, filter_class, kwargs))
         #self.summary_dtype = sql_type_mapping.get(type(self.data))
@@ -337,7 +345,7 @@ class BaseNode(object):
                 shot_str = str(self.url_processor.shot)
                 kwargs[key] = val.replace("__shot__", shot_str)
         return kwargs
-        
+
     def get_data(self):
         if type(self.data) == type(None):
             try:
@@ -348,17 +356,17 @@ class BaseNode(object):
 
     def get_raw_dim(self):
         return None
-    
+
     def get_dim(self):
         # TODO - scalars etc will have dim None (or should they have
         # dim 0), shouldn't re-read from node for these cases...
         if type(self.dim) == type(None):
             self.dim = self.get_raw_dim()
         return self.dim
-                    
+
     def get_raw_data(self):
         return None
-    
+
     def get_parent(self):
         return None
 
@@ -372,7 +380,7 @@ class BaseNode(object):
             ancestors.extend(p.get_ancestors())
             ancestors.append(p)
         return ancestors
-        
+
     def get_long_name(self):
         return unicode(self.url_processor.path)
 
@@ -414,16 +422,16 @@ class BaseNode(object):
         except TypeError:
             return 0
         return dim_lengths
-    
+
     def consistent_dim(self):
         # check that data and dim shapes match
-        
+
         data_shape = self._get_shape_from_data()
         dim_shape = self._get_shape_from_dim()
         return data_shape == dim_shape
 
     def parameterised_dim(self):
-        """Return start, delta, length for dimension data."""        
+        """Return start, delta, length for dimension data."""
         pdim = {}
         dim = self.get_dim()
         dim_shape = self._get_shape_from_dim()
@@ -432,16 +440,16 @@ class BaseNode(object):
             return pdim
         else:
             pdim['ndim'] = len(dim_shape)
-            
+
         for di, d in enumerate(dim_shape):
-            pdim[di] = {'length':d}
+            pdim[di] = {'length': d}
             if pdim[di]['length'] > 0:
                 darr = np.array(dim[di])
                 pdim[di]['first'] = darr[0]
                 pdim[di]['delta'] = np.mean(np.diff(darr))
-                delta_arr = pdim[di]['delta']*np.arange(pdim[di]['length'])
+                delta_arr = pdim[di]['delta'] * np.arange(pdim[di]['length'])
                 reconst_dim = delta_arr + pdim[di]['first']
-                pdim[di]['rms_err'] = np.sqrt(np.mean((darr - reconst_dim)**2))
+                pdim[di]['rms_err'] = np.sqrt(np.mean((darr - reconst_dim) ** 2))
         return pdim
 
     def discretised_data(self, error_threshold=1.e-3, assert_dtype=None):
@@ -454,21 +462,21 @@ class BaseNode(object):
         if assert_dtype (integer dtype) is provided, error_threshold is ignored.
 
         """
-        
+
         data = self.get_data()
         data_min, data_max = np.min(data), np.max(data)
         dtype_info = np.iinfo(assert_dtype)
         dtype_min, dtype_max = dtype_info.min, dtype_info.max
-        normalised_data = (data-data_min)/(data_max-data_min)
-        rescaled_data = normalised_data*(dtype_max-dtype_min) + dtype_min
+        normalised_data = (data - data_min) / (data_max - data_min)
+        rescaled_data = normalised_data * (dtype_max - dtype_min) + dtype_min
         recast_data = assert_dtype(rescaled_data)
 
-        ret_val = {'data':recast_data,
-                   'min':data_min,
-                   'delta':(data_max-data_min)/(dtype_max-dtype_min)}
+        ret_val = {'data': recast_data,
+                   'min': data_min,
+                   'delta': (data_max - data_min) / (dtype_max - dtype_min)}
 
-        reconstructed_data = ret_val['delta']*recast_data+data_min
-        ret_val['rms_err'] = np.sqrt(np.mean((data-reconstructed_data)**2))
+        reconstructed_data = ret_val['delta'] * recast_data + data_min
+        ret_val['rms_err'] = np.sqrt(np.mean((data - reconstructed_data) ** 2))
 
         return ret_val
 
@@ -477,7 +485,7 @@ class BaseNode(object):
         if not self.labels:
             ndim = self.get_ndim()
             self.labels = ["data"]
-            self.labels.extend(["d%d" %i for i in xrange(ndim)])
+            self.labels.extend(["d%d" % i for i in xrange(ndim)])
         return self.labels
 
     def get_units(self):
@@ -485,7 +493,7 @@ class BaseNode(object):
         if not self.units:
             ndim = self.get_ndim()
             self.units = ["data units"]
-            self.units.extend(["d%d units" %i for i in xrange(ndim)])
+            self.units.extend(["d%d units" % i for i in xrange(ndim)])
         return self.units
 
     def get_info(self):
@@ -499,11 +507,10 @@ class BaseNode(object):
             'metadata': self.get_metadata(),
             'labels': self.get_labels(),
             'units': self.get_units(),
-            }
+        }
         return node_info
 
 
-        
 def get_filter_list(request):
     """Parse GET query sring and return sorted list of filter names.
 
@@ -528,29 +535,30 @@ def get_filter_list(request):
             fid = int(kwarg_match.groups()[0])
             kwarg = kwarg_match.groups()[1]
             if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'kwargs':{}}
+                filter_dict[fid] = {'name': "", 'kwargs': {}}
             filter_dict[fid]['kwargs'][kwarg] = value
             continue
-        
+
         name_match = filter_name_regex.match(key)
         if name_match is not None:
             fid = int(name_match.groups()[0])
             if not filter_dict.has_key(fid):
-                filter_dict[fid] = {'name':"", 'kwargs':{}}
+                filter_dict[fid] = {'name': "", 'kwargs': {}}
             filter_dict[fid]['name'] = value
             continue
-    
+
     for fid, filter_data in sorted(filter_dict.items()):
         filter_list.append([fid, filter_data['name'], filter_data['kwargs']])
-                           
+
     return filter_list
+
 
 class BaseBackendShotManager(models.Manager):
     """Base class for interactiing with backend shots."""
 
     def get_latest_shot(self):
         pass
-    
+
     def get_timestamp_for_shot(self, shot):
         return datetime.datetime.now()
 
