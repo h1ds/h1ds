@@ -1,3 +1,4 @@
+distribute==0.6.49
 numpy==1.6.2
 supervisor==3.0
 django==1.5.3
@@ -10,3 +11,5 @@ django-mptt==0.5
 moin==1.9.6
 -e hg+https://bitbucket.org/schinckel/django-python-code-field#egg=python_field
 djangorestframework==2.3.7
+django-crawler==0.1
+

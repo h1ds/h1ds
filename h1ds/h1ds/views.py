@@ -368,9 +368,60 @@ from rest_framework.renderers import XMLRenderer
 from rest_framework.generics import ListAPIView
 from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer
 
+## for JSONNumpyEncoder
+import json
+from django.utils.functional import Promise
+import datetime
+import decimal
+
+class JSONNumpyEncoder(json.JSONEncoder):
+    """
+    JSONEncoder subclass that knows how to encode date/time/timedelta,
+    decimal types, and generators.
+
+    trivial rewite of rest_framework class to allow numpy types.
+    """
+    def default(self, o):
+        # For Date Time string spec, see ECMA 262
+        # http://ecma-international.org/ecma-262/5.1/#sec-15.9.1.15
+        if isinstance(o, Promise):
+            return force_text(o)
+        elif isinstance(o, datetime.datetime):
+            r = o.isoformat()
+            if o.microsecond:
+                r = r[:23] + r[26:]
+            if r.endswith('+00:00'):
+                r = r[:-6] + 'Z'
+            return r
+        elif isinstance(o, datetime.date):
+            return o.isoformat()
+        elif isinstance(o, datetime.time):
+            if timezone and timezone.is_aware(o):
+                raise ValueError("JSON can't represent timezone-aware times.")
+            r = o.isoformat()
+            if o.microsecond:
+                r = r[:12]
+            return r
+        elif isinstance(o, datetime.timedelta):
+            return str(o.total_seconds())
+        elif isinstance(o, decimal.Decimal):
+            return str(o)
+        elif hasattr(o, 'tolist'):
+            return o.tolist()
+        elif hasattr(o, '__iter__'):
+            return [i for i in o]
+        return super(JSONEncoder, self).default(o)
+    
+
+class JSONNumpyRenderer(JSONRenderer):
+    """Subclass of JSONRenderer which can handle numpy data types."""
+    encoder_class = JSONNumpyEncoder
+
+
+
 class NodeView(APIView):
 
-    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+    renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     
     def get_object(self, shot, nodepath):
         """Get node object for request.
@@ -410,7 +461,7 @@ class NodeView(APIView):
 
 class ShotListView(ListAPIView):
 
-    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+    renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     # TODO: make this customisable.
     paginate_by = 25
     queryset = Shot.objects.all()
@@ -420,7 +471,7 @@ class ShotListView(ListAPIView):
         return ("h1ds/shot_list.html", )
 
 class ShotDetailView(APIView):
-    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+    renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     serializer_class = ShotSerializer
     
     def get_object(self):

@@ -39,12 +39,13 @@ server over  ssh is also  used to set up  the development server  on the
 local           computer            (`H1DS           issue           #10
 <https://github.com/h1ds/h1ds/issues/10>`_).      We    also     install
 ``gfortran`` and ``libatlas-base-dev`` so we  can build ``numpy`` in our
-virtualenv,  and ``libfreetype6-dev``  and  ``libpng12-dev``  so we  can
-build ``matplotlib`` :
+virtualenv,  and  ``libfreetype6-dev`` and  ``libpng12-dev``  so we  can
+build ``matplotlib``.   ``mercurial`` is needed to fetch  the source for
+django-python-code-field:
 
 .. code-block:: bash
 
-    $ sudo apt-get install git python-virtualenv python-dev ssh gfortran build-essential libatlas-base-dev libfreetype6-dev libpng12-dev
+    $ sudo apt-get install git python-virtualenv python-dev ssh gfortran build-essential libatlas-base-dev libfreetype6-dev libpng12-dev mercurial
 
 
 We               also               use               `virtualenvwrapper
@@ -145,6 +146,19 @@ a *fabfile*) and the Django project settings file:
 
 Open  up  ``development.py``  in   an  editor  and  change  the
 ``SECRET_KEY`` to something unique and unguessable. For other options in the configuration file, see :ref:`config_settings`.
+
+
+It is also recommended that you use use a database server such as Postgres or MySQL, rather than the default SQLite. For instructions on how to configure for various databases, see `https://docs.djangoproject.com/en/1.5/ref/settings/#databases`_.
+
+
+Currently H1DS requires MDS, so you'll need to install the MDS python bindings into your virtualenv. 
+
+.. code-block:: bash
+
+    (h1ds_development)$ mkdir $VIRTUAL_ENV/src
+    (h1ds_development)$ cp -rp /usr/local/mdsplus/mdsobjects/python $VIRTUAL_ENV/src/python-mdsplus
+    (h1ds_development)$ cd $VIRTUAL_ENV/src/python-mdsplus
+    (h1ds_development)$ python ./setup.py install
 
 
 Then, install the rest of the required software using the fabric script:

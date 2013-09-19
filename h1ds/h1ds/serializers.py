@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 from h1ds.models import Node, Filter, Shot, Device
 from django.core.urlresolvers import NoReverseMatch
+from types import NoneType
 
 import warnings
 
@@ -14,7 +15,6 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
         request = self.context.get('request', None)
         format = self.context.get('format', None)
         view_name = self.view_name or self.parent.opts.view_name
-        # This line is the only difference between NodeHyperlinkedIdentityField and HyperlinkedIdentityField
         kwargs = {'shot':obj.shot.number, 'nodepath':obj.nodepath}
 
         if request is None:
@@ -35,29 +35,63 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
         if format and self.format and self.format != format:
             format = self.format
 
+        # Return the hyperlink, or error if incorrectly configured.
+        try:
+            return self.get_url(obj, view_name, request, format, kwargs)
+        except NoReverseMatch:
+            msg = (
+                'Could not resolve URL for hyperlinked relationship using '
+                'view name "%s". You may have failed to include the related '
+                'model in your API, or incorrectly configured the '
+                '`lookup_field` attribute on this field.'
+            )
+            raise Exception(msg % view_name)
+
+    def get_url(self, obj, view_name, request, format, custom_kwargs):
+        """
+        Given an object, return the URL that hyperlinks to the object.
+
+        May raise a `NoReverseMatch` if the `view_name` and `lookup_field`
+        attributes are not configured to correctly match the URL conf.
+
+        
+        """
+        lookup_field = getattr(obj, self.lookup_field)
+        # kwargs = {self.lookup_field: lookup_field}
+        kwargs = custom_kwargs
         try:
             return reverse(view_name, kwargs=kwargs, request=request, format=format)
         except NoReverseMatch:
             pass
+
+        if self.pk_url_kwarg != 'pk':
+            # Only try pk if it has been explicitly set.
+            # Otherwise, the default `lookup_field = 'pk'` has us covered.
+            pk = obj.pk
+            kwargs = {self.pk_url_kwarg: pk}
+            try:
+                return reverse(view_name, kwargs=kwargs, request=request, format=format)
+            except NoReverseMatch:
+                pass
 
         slug = getattr(obj, self.slug_field, None)
+        if slug is not None:
+            # Only try slug if it corresponds to an attribute on the object.
+            kwargs = {self.slug_url_kwarg: slug}
+            try:
+                ret = reverse(view_name, kwargs=kwargs, request=request, format=format)
+                if self.slug_field == 'slug' and self.slug_url_kwarg == 'slug':
+                    # If the lookup succeeds using the default slug params,
+                    # then `slug_field` is being used implicitly, and we
+                    # we need to warn about the pending deprecation.
+                    msg = 'Implicit slug field hyperlinked fields are pending deprecation.' \
+                          'You should set `lookup_field=slug` on the HyperlinkedRelatedField.'
+                    warnings.warn(msg, PendingDeprecationWarning, stacklevel=2)
+                return ret
+            except NoReverseMatch:
+                pass
 
-        if not slug:
-            raise Exception('Could not resolve URL for field using view name "%s"' % view_name)
-
-        kwargs = {self.slug_url_kwarg: slug}
-        try:
-            return reverse(view_name, kwargs=kwargs, request=request, format=format)
-        except NoReverseMatch:
-            pass
-
-        kwargs = {self.pk_url_kwarg: obj.pk, self.slug_url_kwarg: slug}
-        try:
-            return reverse(view_name, kwargs=kwargs, request=request, format=format)
-        except NoReverseMatch:
-            pass
-
-        raise Exception('Could not resolve URL for field using view name "%s"' % view_name)
+        raise NoReverseMatch()
 
 
 class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
@@ -75,10 +109,15 @@ class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
 
 class DataField(serializers.WritableField):
     def to_native(self, obj):
-        if np.isscalar(obj):
+        if np.isscalar(obj) or type(obj) == NoneType:
             return obj
         else:
-            output = [d.tolist() for d in obj]
+            output = []
+            for d in obj: # TODO: hack
+                if np.isscalar(d) or type(d) == NoneType:
+                    output.append(d)
+                else:
+                    output.append(d.tolist())
             return output
         
     def from_native(self,obj):
@@ -118,23 +157,6 @@ class NodeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Node
         fields = ('path', 'parent', 'children', 'data', 'url')
-
-    #data = serializers.SerializerMethodField('get_node_data')
-    
-    def get_node_data(self, obj):
-        d = obj.read_primary_data()
-        if np.isscalar(d) or d == None:
-            return d
-        else:
-            return d.tolist()
-        
-    """
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
-    slug = models.SlugField()
-    has_data = models.BooleanField(default=True)
-    dimension = models.PositiveSmallIntegerField(blank=True, null=True)
-    dtype = models.CharField(max_length=16)
-    """
     
 
 class FilterSerializer(serializers.Serializer):

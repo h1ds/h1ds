@@ -16,7 +16,6 @@ H1DS_EXTRA_SUBLINKS = (
     # ("Wiki", "/wiki", "Documentation wiki"),
     # ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"),
     ("Code", "https://code.h1svr.anu.edu.au", "H1 code repository"),
-    ("H1DS Documentation", "/docs/h1ds", "Documentation for the H1DS server"),
 )
 
 ########################################################################
@@ -28,3 +27,5 @@ WIKI_EDITOR_GROUPS = [u"EditorGroup", ]
 # in the wiki. Please use CamelCase for all usernames.
 WIKI_SUPERUSERS = [u"MyUsername", ]
 WIKI_ACL_RIGHTS_BEFORE = u"MyUsername:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
+
+INSTALLED_APPS += ('crawler',)
