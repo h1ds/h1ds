@@ -1,7 +1,9 @@
-from django.template import NodeList, Template, Context, Variable
-from django.template import Library, Node, Variable, loader
-from django.template import TemplateSyntaxError, VariableDoesNotExist
 import math
+
+from django.template import NodeList
+from django.template import Library, Node
+from django.template import VariableDoesNotExist
+
 
 register = Library()
 
@@ -47,19 +49,11 @@ class TableNode(Node):
         totalrows = int(math.ceil(float(len_values) / float(self.cols)))
         rowcount = 0
         for i, item in enumerate(values):
-            loopctx = {
-                'counter0':i,
-                'counter':i+1,
-                'rowcounter0':(i/self.cols),
-                'rowcounter':((i/self.cols)+1),
-                'firstrow':(i<self.cols),
-                'lastrow':(i>len_values-self.cols),
-                'firstcell':(i==0),
-                'lastcell':(i==len_values-1),
-                'evencol':(i%2)==0,
-                'oddcol':(i%2)==1,
-                'parenttable':parenttable,
-            }
+            loopctx = {'counter0': i, 'counter': i + 1, 'rowcounter0': (i / self.cols),
+                       'rowcounter': ((i / self.cols) + 1), 'firstrow': (i < self.cols),
+                       'lastrow': (i > len_values - self.cols), 'firstcell': (i == 0),
+                       'lastcell': (i == len_values - 1), 'evencol': (i % 2) == 0, 'oddcol': (i % 2) == 1,
+                       'parenttable': parenttable}
             context[self.cellvar] = item
             loopctx['oddrow'] = False
             loopctx['evenrow'] = False

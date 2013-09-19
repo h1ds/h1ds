@@ -219,7 +219,7 @@ def urlize_quoted_links(text, trim_url_limit=None, nofollow=True, autoescape=Tru
             for opening, closing in WRAPPING_PUNCTUATION:
                 if middle.startswith(opening):
                     middle = middle[len(opening):]
-                    lead = lead + opening
+                    lead += opening
                 # Keep parentheses at the end only if they're balanced.
                 if (middle.endswith(closing)
                     and middle.count(closing) == middle.count(opening) + 1):

@@ -33,10 +33,8 @@ class DjangoAuth(BaseAuth):
         except User.DoesNotExist:
             return False, {}
         try:
-            self.user_profile = {}
-            self.user_profile['username'] = user.username
-            self.user_profile['name'] = user.first_name + ' ' + user.last_name
-            self.user_profile['email'] = user.email
+            self.user_profile = {'username': user.username, 'name': user.first_name + ' ' + user.last_name,
+                                 'email': user.email}
         except:
             return False, {}
         return True
@@ -112,7 +110,7 @@ class DjangoAuth(BaseAuth):
         return user, try_next
 
     def get_django_groups(self, group_list):
-        from django.contrib.auth.models import Group, User
+        from django.contrib.auth.models import User
         output = {}
         for g_name in group_list:
             output[g_name] = [u.username for u in User.objects.filter(groups__name=g_name)]

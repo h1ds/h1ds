@@ -3,18 +3,14 @@
 TODO: most of the  response mixins do a check for  ndim etc, we should
 be able to refactor code to remove duplication..
 """
-import csv
 import xml.etree.ElementTree as etree
 import json
 import time
-import StringIO
-import numpy as np
 import hashlib
-import pylab
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
-from django.http import HttpResponse, StreamingHttpResponse, Http404
+from django.http import HttpResponse, StreamingHttpResponse
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -23,8 +19,6 @@ from django import forms
 from django.views.generic import View, ListView, DetailView, RedirectView
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.conf import settings
-from django.utils.importlib import import_module
 from django.views.generic import TemplateView
 
 from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device
@@ -199,7 +193,7 @@ class FilterBaseView(RedirectView):
         filter_arg_values = [qdict.pop(a)[-1] for a in filter_class.kwarg_names]
 
         # add new filter to query dict
-        qdict.update({'f%d' %(fid):filter_name})
+        qdict.update({'f%d' % fid:filter_name})
         for name, val in zip(filter_class.kwarg_names, filter_arg_values):
             qdict.update({'f%d_%s' %(fid, name): val})
 
@@ -221,7 +215,6 @@ class RemoveFilterView(RedirectView):
         qdict = self.request.GET.copy()
         filter_id = int(qdict.pop('fid')[-1])
         return_path = qdict.pop('path')[-1]
-        new_filter_values = []
         for k, v in qdict.items():
             if k.startswith('f%d' %filter_id):
                 qdict.pop(k)
@@ -369,10 +362,10 @@ from rest_framework.generics import ListAPIView
 from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer
 
 ## for JSONNumpyEncoder
-import json
 from django.utils.functional import Promise
 import datetime
 import decimal
+from rest_framework.compat import timezone, force_text
 
 class JSONNumpyEncoder(json.JSONEncoder):
     """
@@ -410,7 +403,7 @@ class JSONNumpyEncoder(json.JSONEncoder):
             return o.tolist()
         elif hasattr(o, '__iter__'):
             return [i for i in o]
-        return super(JSONEncoder, self).default(o)
+        return super(JSONNumpyEncoder, self).default(o)
     
 
 class JSONNumpyRenderer(JSONRenderer):
@@ -450,7 +443,7 @@ class NodeView(APIView):
         node.get_alternative_format_urls(self.request, ["html", "json", "xml"]) 
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
-            if node.has_data == False:
+            if not node.has_data:
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"
@@ -517,6 +510,6 @@ class DeviceDetailView(APIView):
         return ("h1ds/device_detail.html", )
 
     def get(self, request, device, format=None):
-        object = self.get_object()
-        serializer = self.serializer_class(object)
+        device = self.get_object()
+        serializer = self.serializer_class(device)
         return Response(serializer.data)

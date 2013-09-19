@@ -18,10 +18,8 @@ def login_logout(d):
         
 
 from MoinMoin.theme import ThemeBase
-from MoinMoin import i18n, wikiutil, config, version, caching
-from MoinMoin.action import get_available_actions
+from MoinMoin import wikiutil
 from MoinMoin.Page import Page
-from MoinMoin.util import pysupport
 from h1ds.templatetags import h1ds_headfoot
 from django.conf import settings as django_settings
 

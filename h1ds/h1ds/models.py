@@ -55,7 +55,7 @@ def get_filter_list(request):
     filter_dict = {}
     for key, value in request.GET.iteritems():
         kwarg_match = filter_kwarg_regex.match(key)
-        if kwarg_match != None:
+        if kwarg_match is not None:
             fid = int(kwarg_match.groups()[0])
             kwarg = kwarg_match.groups()[1]
             if not filter_dict.has_key(fid):
@@ -64,7 +64,7 @@ def get_filter_list(request):
             continue
         
         name_match = filter_name_regex.match(key)
-        if name_match != None:
+        if name_match is not None:
             fid = int(name_match.groups()[0])
             if not filter_dict.has_key(fid):
                 filter_dict[fid] = {'name':"", 'kwargs':{}}
@@ -463,7 +463,7 @@ class UserSignal(models.Model):
     shot = models.IntegerField(blank=True, null=True)
 
     def __unicode__(self):
-        return unicode("%s" %(self.name))
+        return unicode("%s" % self.name)
 
 
 class UserSignalForm(ModelForm):

@@ -76,7 +76,7 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, delta_encode=False):
     """
     if eps == 0:
         eps = 1e-6
-    if deltar == None: 
+    if deltar is not None:
         data_sort = np.unique(arr)
         # don't want uniques because of noise
         diff_sort = np.sort(np.diff(data_sort))

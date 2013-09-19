@@ -5,7 +5,6 @@ make each type obvious by their name.
 import inspect
 from django import template
 from django.core.urlresolvers import reverse
-from django.utils.html import escape
 
 register = template.Library()
 
@@ -77,7 +76,7 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
         if is_active:
             arg_input = ('<input title="%(name)s" type="text" '
                          'size=5 name="%(name)s" value="%(value)s">')
-            if f_data == None:
+            if f_data is None:
                 f_data = []
             update_url = reverse("update-filter")
             remove_url = reverse("remove-filter")

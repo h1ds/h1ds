@@ -39,9 +39,8 @@ In the development environment  (i.e. settings.DEBUG==True), the media
 files (settings.MEDIA_ROOT) are served under '^media/'
 
 """
-import sys
 
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.conf import settings
 
@@ -49,13 +48,12 @@ from h1ds import AVAILABLE_H1DS_MODULES
 from h1ds.views import TextTemplateView
 from h1ds.views import homepage, logout_view, edit_profile
 from h1ds.views import UserMainView, WorksheetView
-from django.views.decorators.cache import cache_page
 
 from h1ds.views import ApplyFilterView, UpdateFilterView, RemoveFilterView
 from h1ds.views import UserSignalCreateView, UserSignalDeleteView
 from h1ds.views import UserSignalUpdateView, ShotStreamView
 from h1ds.views import AJAXShotRequestURL, AJAXLatestShotView, NodeView
-from h1ds.views import RequestShotView, request_url, ShotListView, ShotDetailView
+from h1ds.views import RequestShotView, request_url, ShotDetailView
 from h1ds.views import DeviceListView, DeviceDetailView
 
 

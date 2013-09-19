@@ -83,7 +83,7 @@ class BaseFilter:
 
     @classmethod
     def valid_ndim(cls, n_dim):
-        return (cls.ndim == "any" or n_dim == cls.ndim)
+        return cls.ndim == "any" or n_dim == cls.ndim
 
         
     @classmethod
@@ -247,7 +247,7 @@ class Max(Array1DimNumericBaseFilter):
     kwarg_names = []
     
     def apply(self, node):
-        node.data.name = "max(%s)" %(node.data.name)        
+        node.data.name = "max(%s)" % node.data.name
         node.data.value = np.max(node.data.value)
         # value_units, value_dtype unchanged
         node.data.dimension = []
@@ -295,7 +295,7 @@ class DimOfMaxVal(Array1DimNumericBaseFilter):
     kwarg_names = []
     
     def apply(self, node):
-        node.data.name = "dim_of_max(%s)" %(node.data.name)
+        node.data.name = "dim_of_max(%s)" % node.data.name
         node.data.value = node.data.dimension[0][np.argmax(node.data.value[0])]
         node.data.value_dtype = node.data.dimension_dtype
         node.data.value_units = node.data.dimension_units
@@ -316,7 +316,7 @@ class Mean(Array1DimNumericBaseFilter):
     
     def apply(self, node):
 
-        node.data.name = "mean(%s)" %(node.data.name)
+        node.data.name = "mean(%s)" % node.data.name
         node.data.value = np.mean(node.data.value[0])
         node.data.dimension = []
         node.data.dimension_dtype = None
@@ -345,7 +345,7 @@ class Element(Array1DimNumericBaseFilter):
         node.data.dimension_dtype = None
         node.data.dimension_units = None
         if len(node.data.value_labels) > 0:
-            node.data.value_labels[0] = "index(%s, %a)" %(node.data.value_labels[0], self.kwargs["index"])
+            node.data.value_labels[0] = "index(%s, %s)" %(node.data.value_labels[0], self.kwargs["index"])
         else:
             node.data.value_labels = [node.data.name]
         node.data.dimension_labels = []
@@ -359,7 +359,7 @@ class PeakToPeak(Array1DimNumericBaseFilter):
     kwarg_names = []
 
     def apply(self, node):
-        node.data.name = "peak_to_peak(%s)" %(node.data.name)
+        node.data.name = "peak_to_peak(%s)" % node.data.name
         node.data.value = max(node.data.value[0]) - min(node.data.value[0])
         node.data.dimension = []
         node.data.dimension_dtype = None
@@ -554,12 +554,12 @@ class PowerSpectrum(Array1DimNumericBaseFilter):
     def apply(self, node):
         output_size = 2**np.searchsorted(binary_powers, node.data.value[0].shape[0])
 
-        node.data.name = "power_spectrum(%s)" %(node.data.name)
+        node.data.name = "power_spectrum(%s)" % node.data.name
         node.data.value = [np.abs(np.fft.fft(node.data.value[0], n=output_size))]
         length = len(node.data.value[0])
         sample_rate = np.mean(node.data.dimension[0][1:] - node.data.dimension[0][:-1])
         node.data.dimension = [(1./sample_rate)*np.arange(length)/(length-1)]
-        node.data.dimension_units = "1/%s" %(node.data.dimension_units)
+        node.data.dimension_units = "1/%s" % node.data.dimension_units
 
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "power_spectrum(%s)" %(node.data.value_labels[0])
@@ -644,7 +644,7 @@ class Divide(BaseFilter):
         _factor = float(self.kwargs["factor"])
 
         node.data.name = "(%s)/%s" %(node.data.name, self.kwargs["factor"])
-        node.data.value = node.data.value/_factor
+        node.data.value /= _factor
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "(%s)/%s" %(node.data.value_labels[0], self.kwargs["factor"])
         else:
@@ -664,7 +664,7 @@ class Subtract(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data.name = "%s - %s" %(node.data.name, self.kwargs["value"])
-        node.data.value = node.data.value - _value
+        node.data.value -= _value
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "%s - %s" %(node.data.value_labels[0], self.kwargs["value"])
         else:
@@ -683,7 +683,7 @@ class Add(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data.name = "%s + %s" %(node.data.name, self.kwargs["value"])
-        node.data.value = node.data.value + _value
+        node.data.value += _value
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "%s + %s" %(node.data.value_labels[0], self.kwargs["value"])
         else:
@@ -702,7 +702,7 @@ class Exponent(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data.name = "(%s)^%s" %(node.data.name, self.kwargs["value"])
-        node.data.value = node.data.value**_value
+        node.data.value **= _value
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "(%s)^%s" %(node.data.value_labels[0], self.kwargs["value"])
         else:

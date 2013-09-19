@@ -5,17 +5,16 @@ subclassed to  access databases. At  present, this is only  BaseNode and
 BaseURLProcessor
 
 """
-import re
 import inspect
-import numpy as np
 import datetime
 
+import re
+import numpy as np
 from django.db import models
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.importlib import import_module
-
 from h1ds.filters import BaseFilter, excluded_filters
+
 
 #data_module = import_module(settings.H1DS_DATA_MODULE)
 
@@ -63,10 +62,11 @@ def get_all_filters():
     return filters
 
 class Data(object):
-    def __init__(self, name="", value=None, dimension=None,
-                 value_units="", dimension_units="",
-                 value_dtype="", dimension_dtype="",
-                 metadata={}, value_labels=[], dimension_labels=[]):
+    def __init__(self, name="", value=None, dimension=None, value_units="", dimension_units="", value_dtype="",
+                 dimension_dtype="", metadata=None, value_labels=None, dimension_labels=None):
+        if not dimension_labels: dimension_labels = []
+        if not value_labels: value_labels = []
+        if not metadata: metadata = {}
         self.name = name
         self.value = value
         self.dimension = dimension
@@ -142,36 +142,6 @@ class BaseNodeData(object):
     def write_primary_data(self):
         pass
 
-    """
-    def read_primary_dim(self):
-        pass
-
-    def write_primary_dim(self):
-        pass
-
-    def get_primary_ndim(self):
-        if self.primary_dim == None:
-            self.primary_dim = self.read_primary_dim()
-        return len(self.primary_dim)
-    
-    def read_primary_labels(self):
-        # [data label, dim0 label, dim1 label, etc]
-        ndim = self.get_primary_ndim()
-        labels = ["data"]
-        labels.extend(["d%d" %i for i in xrange(ndim)])
-        return labels
-    #def apply_filters(self, data):
-    #    return data
-    
-    #def read_data(self):
-    #    primary_data = self.read_primary_data()
-    #    data = self.apply_filters(primary_data)
-    #    return data
-
-    #def write_data(self):
-    #    pass
-    """
-    
 
 class BaseDataTreeManager(models.Manager):
 
@@ -199,7 +169,7 @@ class BaseDataTreeManager(models.Manager):
         shot_root_node = self.get_shot_root_node(shot)
 
         if shot_root_node:
-            if overwrite == True:
+            if overwrite:
                 # delete existing
                 shot_nodes = self.model.objects.filter(tree_id=shot_root_node.tree_id)
                 shot_nodes.delete()
@@ -270,14 +240,14 @@ class BaseURLProcessor(object):
         tree = kwargs.get('tree', None)
         shot = kwargs.get('shot', None)
         path = kwargs.get('path', None)
-        if url != None:
+        if url is not None:
             url = remove_prefix(url)
             self.tree, self.shot, self.path = self.get_components_from_url(url)
-            if tree != None and tree != self.tree:
+            if tree is not None and tree != self.tree:
                 raise AttributeError
-            if shot != None and shot != self.shot:
+            if shot is not None and shot != self.shot:
                 raise AttributeError
-            if path != None and path != self.path:
+            if path is not None and path != self.path:
                 raise AttributeError
         else:
             self.tree, self.shot, self.path = tree, shot, path
@@ -398,7 +368,7 @@ class BaseNode(object):
     def get_ancestors(self):
         ancestors = []
         p = self.get_parent()
-        if p != None:
+        if p is not None:
             ancestors.extend(p.get_ancestors())
             ancestors.append(p)
         return ancestors
@@ -554,7 +524,7 @@ def get_filter_list(request):
     filter_dict = {}
     for key, value in request.GET.iteritems():
         kwarg_match = filter_kwarg_regex.match(key)
-        if kwarg_match != None:
+        if kwarg_match is not None:
             fid = int(kwarg_match.groups()[0])
             kwarg = kwarg_match.groups()[1]
             if not filter_dict.has_key(fid):
@@ -563,7 +533,7 @@ def get_filter_list(request):
             continue
         
         name_match = filter_name_regex.match(key)
-        if name_match != None:
+        if name_match is not None:
             fid = int(name_match.groups()[0])
             if not filter_dict.has_key(fid):
                 filter_dict[fid] = {'name':"", 'kwargs':{}}

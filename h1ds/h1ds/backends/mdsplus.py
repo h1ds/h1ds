@@ -64,7 +64,7 @@ class NodeData(BaseNodeData):
             primary_data = mds_node.getData().data()
         except (TreeNoDataException, TdiException, AttributeError):
             primary_data = None
-        if np.isscalar(primary_data) or primary_data == None:
+        if np.isscalar(primary_data) or primary_data is None:
             return [primary_data]
         elif len(primary_data.shape) == 1:
             return np.array([primary_data])
