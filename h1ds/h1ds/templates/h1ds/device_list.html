@@ -1,0 +1,9 @@
+{% extends "h1ds/base.html" %}
+{% block content %}
+
+<ul class="device-list">
+{% for device in results %}
+ <li><a href="{% url 'device-detail' device=device.slug %}">{{device.name}}</a>
+{% endfor %}
+</ul>
+{% endblock content %}

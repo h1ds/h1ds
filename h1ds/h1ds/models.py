@@ -406,10 +406,12 @@ class H1DSSignalInstance(models.Model):
         ordering = ('-time',)
         get_latest_by = 'time'
 
+
 class Pagelet(models.Model):
     name = models.CharField(max_length=1024)
     pagelet_type = models.CharField(max_length=128)
     url = models.URLField(max_length=2048)
+
 
 class Worksheet(models.Model):
     """A page for users to organise and store content."""

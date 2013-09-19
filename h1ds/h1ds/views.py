@@ -27,7 +27,7 @@ from django.conf import settings
 from django.utils.importlib import import_module
 from django.views.generic import TemplateView
 
-from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot
+from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device
 from h1ds.utils import get_backend_shot_manager
 from h1ds.base import get_filter_list
 
@@ -366,7 +366,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.renderers import YAMLRenderer
 from rest_framework.renderers import XMLRenderer
 from rest_framework.generics import ListAPIView
-from h1ds.serializers import NodeSerializer, ShotSerializer
+from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer
 
 class NodeView(APIView):
 
@@ -436,9 +436,36 @@ class ShotDetailView(APIView):
         shot = self.get_object()
         serializer = self.serializer_class(shot)
         return Response(serializer.data)
-        
+
+
 class TextTemplateView(TemplateView):
     def render_to_response(self, context, **response_kwargs):
         response_kwargs['content_type'] = 'text/plain'
         return super(TemplateView, self).render_to_response(context, **response_kwargs)
 
+
+class DeviceListView(ListAPIView):
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+    paginate_by = 25
+
+    def get_template_names(self):
+        return ("h1ds/device_list.html", )
+
+
+class DeviceDetailView(APIView):
+    renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
+    serializer_class = DeviceSerializer
+
+    def get_object(self):
+        device = Device.objects.get(slug=self.kwargs["device"])
+        return device
+
+    def get_template_names(self):
+        return ("h1ds/device_detail.html", )
+
+    def get(self, request, device, format=None):
+        object = self.get_object()
+        serializer = self.serializer_class(object)
+        return Response(serializer.data)

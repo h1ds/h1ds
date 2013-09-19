@@ -3,7 +3,7 @@ import numpy as np
 
 from rest_framework import serializers
 from rest_framework.reverse import reverse
-from h1ds.models import Node, Filter, Shot
+from h1ds.models import Node, Filter, Shot, Device
 from django.core.urlresolvers import NoReverseMatch
 
 import warnings
@@ -153,3 +153,13 @@ class ShotSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_root_nodes(self, obj):
         return [{'path':n.path, 'url':n.get_absolute_url()}  for n in obj.root_nodes]
+
+
+class DeviceSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField()
+    description = serializers.CharField()
+    slug = serializers.SlugField()
+
+    class Meta:
+        model = Device
+        fields = ('name', 'description', 'slug')
