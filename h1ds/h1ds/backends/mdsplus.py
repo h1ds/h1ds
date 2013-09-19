@@ -15,11 +15,10 @@ from h1ds.base import BaseDataTreeManager
 from h1ds.base import BaseBackendShotManager
 # Load MDS trees into environment
 for config_tree in settings.EXTRA_MDS_TREES:
-    os.environ[config_tree[0]+"_path"] = config_tree[1]
+    os.environ[config_tree[0] + "_path"] = config_tree[1]
 
 
 class NodeData(BaseNodeData):
-
     def _get_mds_node_info(self):
         """Get MDS path for node.
 
@@ -33,10 +32,10 @@ class NodeData(BaseNodeData):
         if len(node_ancestors) > 1:
             mds_path = ".".join([n.path for n in node_ancestors[1:]])
         return self.shot.number, mds_tree, mds_path
-    
+
     def _get_mds_node(self):
         """Get the corresponding MDSplus node for this H1DS tree node."""
-        
+
         if not hasattr(self, '_mds_node'):
             shot, tree, path = self._get_mds_node_info()
             try:
@@ -74,7 +73,7 @@ class NodeData(BaseNodeData):
     def get_dimension(self):
         """Get dimension of raw data (i.e. no filters)."""
         if self.level == 0:
-            return []#np.array([])
+            return []  # np.array([])
         mds_node = self._get_mds_node()
         try:
             shape = mds_node.getShape()
@@ -86,7 +85,7 @@ class NodeData(BaseNodeData):
                     dim_list.append(mds_node.getDimensionAt(i).data())
                 raw_dim = np.array(dim_list)
         except TdiException:
-            raw_dim = []#np.array([])
+            raw_dim = []  # np.array([])
         return raw_dim
 
     def get_value_units(self):
@@ -96,7 +95,7 @@ class NodeData(BaseNodeData):
         except:
             units = ""
         return units
-    
+
     def get_dimension_units(self):
         if self.level == 0:
             return np.array([])
@@ -113,7 +112,7 @@ class NodeData(BaseNodeData):
         except TdiException:
             dim_units = ""
         return dim_units
-        
+
     def get_value_dtype(self):
         value = self.get_value()
         try:
@@ -129,11 +128,11 @@ class NodeData(BaseNodeData):
             dtype = str(dim.dtype)
         except:
             dtype = ""
-        return dtype        
-       
+        return dtype
+
     def get_metadata(self):
-        return {}    
-    
+        return {}
+
     def get_child_names_from_primary_source(self):
         try:
             mds_node = self._get_mds_node()
@@ -145,9 +144,8 @@ class NodeData(BaseNodeData):
         else:
             node_names = [n.getNodeName() for n in mds_descendants]
         return node_names
-        
-        
-    
+
+
 class DataTreeManager(BaseDataTreeManager):
     def get_trees(self):
         # TODO: no longer support  getting trees from environment, use
@@ -164,9 +162,8 @@ class DataTreeManager(BaseDataTreeManager):
 
 
 class MDSPlusShotManager(BaseBackendShotManager):
-    
     tree_manager = DataTreeManager()
-    
+
     def get_latest_shot(self):
         default_tree = self.tree_manager.get_trees()[0]
         mds_tree = MDSplus.Tree()

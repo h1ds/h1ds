@@ -6,6 +6,7 @@ settings_(development|staging|production).py.
 # Monkey patch to work around python threading bug.
 # See http://stackoverflow.com/questions/13193278/understand-python-threading-bug
 import threading
+
 threading._DummyThread._Thread__stop = lambda x: 42
 
 import os
@@ -21,7 +22,7 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+# ('Your Name', 'your_email@example.com'),
 )
 
 MANAGERS = ADMINS
@@ -48,7 +49,7 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
         'LOCATION': os.path.join(DJANGO_PROJECT_DIR, 'serverfiles', 'django_cache'),
-        }
+    }
 }
 
 # Local time  zone for  this installation.  Choices  can be  found here:
@@ -100,9 +101,9 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    # Put strings here, like "/home/html/static" or "C:/www/django/static".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+# Put strings here, like "/home/html/static" or "C:/www/django/static".
+# Always use forward slashes, even on Windows.
+# Don't forget to use absolute paths, not relative paths.
 )
 
 # List of finder  classes that know how to find  static files in various
@@ -110,7 +111,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody. Be sure to override
@@ -122,7 +123,7 @@ SECRET_KEY = 'p=5!o!*$hyfr*8ja=e1@s!n54%jofr2xhf%egs(=-97%79v8_4'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    #     'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -134,7 +135,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     #'django.middleware.cache.FetchFromCacheMiddleware',
 )
-
 
 ROOT_URLCONF = 'h1ds.urls'
 
@@ -170,8 +170,7 @@ H1DS_DATA_PREFIX = r"data"
 
 DATA_FILTER_MODULES = (
     'h1ds.filters',
-    )
-
+)
 
 TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
                                "django.core.context_processors.debug",
@@ -194,20 +193,20 @@ LOGGING = {
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-            },
+        },
         'simple': {
             'format': '%(levelname)s %(message)s'
-            },
         },
+    },
     'handlers': {
         'default': {
-            'level':'DEBUG',
-            'class':'logging.handlers.RotatingFileHandler',
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(DJANGO_PROJECT_DIR, 'log', 'django.log'),
-            'maxBytes': 1024*1024*50, # 50 MB
+            'maxBytes': 1024 * 1024 * 50, # 50 MB
             'backupCount': 10,
-            'formatter':'verbose',
-            },
+            'formatter': 'verbose',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
@@ -236,14 +235,14 @@ H1DS_MDSPLUS_NODE_BLACKLIST = []
 # Syntax: (name, url, description)
 H1DS_EXTRA_SUBLINKS = (
     ("Wiki", "/wiki", "Documentation wiki"),
-    ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"), 
+    ("Activity", "/wiki/RecentChanges", "Latest changes to documentation"),
     ("H1DS Documentation", "https://h1ds.readthedocs.org/en/latest/", "Documentation for the H1DS server"),
 )
 
 AUTHENTICATION_BACKENDS = (
     'django_openid_auth.auth.OpenIDBackend',
     'django.contrib.auth.backends.ModelBackend',
-    )
+)
 
 OPENID_CREATE_USERS = True
 LOGIN_URL = '/openid/login'
@@ -287,6 +286,6 @@ WIKI_ACL_RIGHTS_DEFAULT = u""
 
 # See https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-ALLOWED_HOSTS
 # You should set this to the list of used servers in settings_production.py
-ALLOWED_HOSTS = ['*',]
+ALLOWED_HOSTS = ['*', ]
 
 INTERNAL_IPS = ('127.0.0.1', )
