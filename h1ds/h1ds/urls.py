@@ -123,10 +123,10 @@ internal_patterns = patterns('',
 ## Data modules
 data_patterns = patterns('',
                          url(r'^$', DeviceListView.as_view(), name="device-list"),
-                         url(r'^(?P<device>.+)/$', DeviceDetailView.as_view(), name="device-detail"),
+                         url(r'^(?P<device>[-\w]+)/$', DeviceDetailView.as_view(), name="device-detail"),
                          #url(r'^$', ShotListView.as_view(), name="shot-list"),
-                         url(r'^(?P<device>\.+)/(?P<shot>\d+)/$', ShotDetailView.as_view(), name="shot-detail"),
-                         url(r'^(?P<device>\.+)/(?P<shot>\d+)/(?P<nodepath>.+)/$', NodeView.as_view(),
+                         url(r'^(?P<device>[-\w]+)/(?P<shot>\d+|latest)/$', ShotDetailView.as_view(), name="shot-detail"),
+                         url(r'^(?P<device>[-\w]+)/(?P<shot>\d+|latest)/(?P<nodepath>.+)/$', NodeView.as_view(),
                              name="node-detail"),
                          )
 

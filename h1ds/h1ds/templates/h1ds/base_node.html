@@ -88,13 +88,13 @@ HTML tables. -->
     <div class="portlet-content">
       {% for a in node.get_ancestors %}
       <ul>
-	<li><a href="{{a.get_absolute_url}}">{{a.path|lower}}</a>
+	<li><a href="{% if track_latest_shot %}{{ a.get_absolute_url_for_latest_shot }}{% else %}{{ a.get_absolute_url }}{% endif %}">{{a.path|lower}}</a>
 	  {% endfor%}
 	  <ul>
-	    <li><span class="current"><a href="{{node.get_absolute_url}}">{{node.path|lower}}</a></span>
+	    <li><span class="current"><a href="{% if track_latest_shot %}{{ a.get_absolute_url_for_latest_shot }}{% else %}{{node.get_absolute_url}}{% endif %}">{{node.path|lower}}</a></span>
 	      <ul>
 		{% for c in node.get_children|dictsort:"path" %}
-		<li><a href="{{c.get_absolute_url}}">{{c.path|lower}}</a>
+		<li><a href="{% if track_latest_shot%}{{ c.get_absolute_url_for_latest_shot }}{% else %}{{c.get_absolute_url}}{% endif %}">{{c.path|lower}}</a>
 		  {% endfor %}
 	      </ul>
 	  </ul>

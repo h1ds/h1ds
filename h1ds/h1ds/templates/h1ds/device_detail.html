@@ -3,4 +3,9 @@
 {% block content %}
 <h1>{{name}}</h1>
 <p>{{description}}</p>
-{% endblock content%}
+
+
+<p>Latest shot: <a href="{% url 'shot-detail' device=slug shot=latest_shot.number %}">{{ latest_shot.number }}</a></p>
+<p><a href="{% url 'shot-detail' device=slug shot='latest' %}">track latest shot</a></p>
+<p>[run days]</p>
+{% endblock content %}

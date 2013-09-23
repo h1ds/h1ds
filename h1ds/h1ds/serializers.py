@@ -184,7 +184,8 @@ class DeviceSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField()
     description = serializers.CharField()
     slug = serializers.SlugField()
+    latest_shot = ShotSerializer()
 
     class Meta:
         model = Device
-        fields = ('name', 'description', 'slug')
+        fields = ('name', 'description', 'slug', 'latest_shot')

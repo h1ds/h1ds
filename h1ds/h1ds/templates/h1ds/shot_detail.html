@@ -1,12 +1,16 @@
 {% extends "h1ds/base.html" %}
 
 {% block content %}
-<h1>Shot {{number}}</h1>
-<h2>{{timestamp}}</h2>
+<h1>Shot {{shot.number}}</h1>
+<h2>{{shot.timestamp}}</h2>
 <h3>Root nodes</h3>
 <ul>
-{% for node in root_nodes %}
-<li><a href="{{node.url}}">{{node.path}}</a>
+{% for node in shot.root_nodes %}
+    {% if track_latest_shot %}
+<li><a href="{% url 'node-detail' device=shot.device.slug shot='latest' nodepath=node.nodepath %}">{{node.path}}</a>
+    {% else %}
+<li><a href="{{node.get_absolute_url}}">{{node.path}}</a>
+    {% endif %}
 {% endfor %}
 </ul>
 {% endblock content%}

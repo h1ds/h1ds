@@ -239,8 +239,15 @@ class Node(MPTTModel, backend_module.NodeData):
             self.data = self.primary_data
         return self.data
 
-    def get_absolute_url(self):
-        return reverse('node-detail', kwargs={'nodepath': self.nodepath, 'shot': self.shot.number})
+    def get_absolute_url(self, use_latest_shot=False):
+        if use_latest_shot:
+            shot = 'latest'
+        else:
+            shot = self.shot.number
+        return reverse('node-detail', kwargs={'device': self.shot.device, 'nodepath': self.nodepath, 'shot': shot})
+
+    def get_absolute_url_for_latest_shot(self):
+        return self.get_absolute_url(use_latest_shot=True)
 
     def get_available_filters(self):
         return filter_manager.get_filters(self.data)

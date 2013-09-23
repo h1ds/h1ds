@@ -438,13 +438,21 @@ class NodeView(APIView):
         """
         checksum = hashlib.sha1(nodepath).hexdigest()
 
-        node = Node.objects.get(shot__number=shot, path_checksum=checksum)
+        node = Node.objects.get(shot=shot, path_checksum=checksum)
         node.data = node.read_primary_data()
         node.apply_filters(self.request)
         return node
 
-    def get(self, request, shot, nodepath, format=None):
-        node = self.get_object(shot, nodepath)
+    def get(self, request, device, shot, nodepath, format=None):
+        if shot == 'latest':
+            device_instance = Device.objects.get(slug=device)
+            shot_instance = device_instance.latest_shot
+            track_latest_shot = True
+        else:
+            shot_instance = Shot.objects.get(number=shot)
+            track_latest_shot = False
+
+        node = self.get_object(shot_instance, nodepath)
         # TODO: yaml not working yet
         # TODO: format list shoudl be maintained elsewhere... probably in settings.
         node.get_alternative_format_urls(self.request, ["html", "json", "xml"])
@@ -454,7 +462,7 @@ class NodeView(APIView):
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"
-            return Response({'node': node}, template_name='h1ds/' + template)
+            return Response({'node': node, 'track_latest_shot': track_latest_shot}, template_name='h1ds/' + template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)
 
@@ -475,7 +483,11 @@ class ShotDetailView(APIView):
     serializer_class = ShotSerializer
 
     def get_object(self):
-        shot = Shot.objects.get(number=self.kwargs['shot'])
+        if self.kwargs['shot'] == 'latest':
+            device = Device.objects.get(slug=self.kwargs['device'])
+            shot = device.latest_shot
+        else:
+            shot = Shot.objects.get(number=self.kwargs['shot'])
         return shot
         #qs = Node.objects.filter(level=0, shot=shot)
         #return qs
@@ -483,8 +495,12 @@ class ShotDetailView(APIView):
     def get_template_names(self):
         return ("h1ds/shot_detail.html", )
 
-    def get(self, request, shot, format=None):
+    def get(self, request, device, shot, format=None):
+        shot_number = shot
         shot = self.get_object()
+        if request.accepted_renderer.format == 'html':
+            track_latest_shot = (shot_number == 'latest')
+            return Response({'shot': shot, 'track_latest_shot': track_latest_shot})
         serializer = self.serializer_class(shot)
         return Response(serializer.data)
 

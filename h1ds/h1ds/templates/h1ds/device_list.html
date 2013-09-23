@@ -1,6 +1,7 @@
 {% extends "h1ds/base.html" %}
 {% block content %}
 
+<h1>Experimental datasets</h1>
 <ul class="device-list">
 {% for device in results %}
  <li><a href="{% url 'device-detail' device=device.slug %}">{{device.name}}</a>
