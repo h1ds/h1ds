@@ -1,7 +1,7 @@
 distribute==0.6.49
 numpy==1.6.2
 supervisor==3.0
-django==1.5.3
+django==1.5.4
 South==0.7.6
 celery==3.0.15
 django-celery==3.0.23
