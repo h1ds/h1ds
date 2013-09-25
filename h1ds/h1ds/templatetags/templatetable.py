@@ -100,7 +100,7 @@ class ColumnSortedTableNode(TableNode):
             new_values.append(col_1[i])
             try:
                 new_values.append(col_2[i])
-            except:
+            except IndexError:
                 # assume col_2 has one less row
                 pass
         return new_values

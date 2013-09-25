@@ -121,7 +121,6 @@ class NodeData(BaseNodeData):
             dtype = ""
         return dtype
 
-
     def get_dimension_dtype(self):
         dim = self.get_dimension()
         try:
