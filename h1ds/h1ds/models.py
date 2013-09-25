@@ -19,6 +19,7 @@ from python_field.fields import PythonCodeField
 from mptt.models import MPTTModel, TreeForeignKey
 from mptt.managers import TreeManager
 
+from h1ds import tasks
 from h1ds.filters import BaseFilter, excluded_filters
 from h1ds.utils import get_backend_shot_manager
 
@@ -123,7 +124,7 @@ class Device(models.Model):
     # Using "+" for related_name tells Django not to create a backwards relation.
     # In this case, we don't want a backwards relation as it would clash with Shot.device.
     # We set null=True so that we can set up devices before we have shots and datasets set up.
-    latest_shot = models.ForeignKey("Shot", null=True, related_name="+")
+    latest_shot = models.ForeignKey("Shot", null=True, blank=True, related_name="+")
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
@@ -136,7 +137,7 @@ class Device(models.Model):
 class Shot(models.Model):
     number = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
-    device = models.ForeignKey(Device)
+    device = models.ForeignKey(Device, on_delete=models.PROTECT)
 
     objects = models.Manager()
     backend = get_backend_shot_manager()()
@@ -152,16 +153,29 @@ class Shot(models.Model):
     def get_absolute_url(self):
         return reverse('shot-detail', kwargs={'shot': self.number})
 
-    def save(self, *args, **kwargs):
+    def save(self, set_as_latest=False, populate_tree=True, *args, **kwargs):
+        # TODO: don't set timestamp if it's already there.
         self.timestamp = Shot.backend.get_timestamp_for_shot(self.number)
         super(Shot, self).save(*args, **kwargs)
-        self._populate()
+        if populate_tree:
+            task_args = {'args': [self]}
+            if set_as_latest:
+                # TODO: by calling set_as_latest_shot() we execute the method here rather than
+                # as the callback function, probably we should pass the method but not call it
+                # but I need to test that 1) it will be called after task is finished, 2) that
+                # if any exceptions are raised then these are handled appropriately and the callback
+                # function is still run.
+                task_args['link'] = self.set_as_latest_shot()
+            tasks.populate_tree.apply_async(**task_args)
+        elif set_as_latest:
+            self.set_as_latest_shot()
 
-    def _populate(self):
-        for tree in Node.datatree.get_trees():
-            node = Node(path=tree, shot=self)
-            node.save()
-            node.populate_child_nodes()
+    def set_as_latest_shot(self, *args, **kwargs):
+        # allow args, kwargs as this is being used as
+        # callback to populate_tree - which may try to
+        # populate this method with its output
+        self.device.latest_shot = self
+        self.device.save()
 
 
 filter_manager = FilterManager()

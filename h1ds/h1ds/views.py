@@ -10,7 +10,7 @@ import hashlib
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -483,11 +483,11 @@ class ShotDetailView(APIView):
     serializer_class = ShotSerializer
 
     def get_object(self):
+        device = Device.objects.get(slug=self.kwargs['device'])
         if self.kwargs['shot'] == 'latest':
-            device = Device.objects.get(slug=self.kwargs['device'])
             shot = device.latest_shot
         else:
-            shot = Shot.objects.get(number=self.kwargs['shot'])
+            shot = Shot.objects.get(number=self.kwargs['shot'], device=device)
         return shot
         #qs = Node.objects.filter(level=0, shot=shot)
         #return qs
@@ -503,6 +503,21 @@ class ShotDetailView(APIView):
             return Response({'shot': shot, 'track_latest_shot': track_latest_shot})
         serializer = self.serializer_class(shot)
         return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        if self.kwargs['shot'] == 'latest':
+            if 'shot' in request.DATA:
+                device = Device.objects.get(slug=self.kwargs['device'])
+                shot_number = int(request.DATA['shot'])
+                shot, created = Shot.objects.get_or_create(device=device, number=shot_number)
+                # if created then the object is saved and the tree is populated by default
+                shot.save(set_as_latest=True, populate_tree=False)
+                return Response()
+            else:
+                return HttpResponseBadRequest
+            #shot, created  = Shot.objects.get_or_create(device=device, number=xxxx)
+            # update shot (async, )
+            # device.latest_shot = shot (when done)
 
 
 class TextTemplateView(TemplateView):
