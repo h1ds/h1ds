@@ -1,5 +1,5 @@
 from django.contrib import admin
-from h1ds.models import H1DSSignal, H1DSSignalInstance, Worksheet
+from h1ds.models import H1DSSignal, H1DSSignalInstance, Worksheet, Shot
 from h1ds.models import UserSignal, Node, Filter, FilterDtype, FilterDim, Device
 
 
@@ -55,3 +55,9 @@ class FilterDimAdmin(admin.ModelAdmin):
     pass
 
 admin.site.register(FilterDim, FilterDimAdmin)
+
+
+class ShotAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(Shot, ShotAdmin)
