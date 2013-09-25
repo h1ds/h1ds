@@ -10,11 +10,11 @@ class Command(BaseCommand):
     help = 'clear configdb metadata and files.'
 
     def handle(self, *args, **options):
-        
+
         # First, delete the actual files
         for dbfile in h1ds_configdb.models.ConfigDBFile.objects.all():
             dbfile.dbfile.delete()
-        
+
         # Now delete all the models in h1ds_configdb
         for name, obj in inspect.getmembers(h1ds_configdb.models):
             if hasattr(obj, "__bases__") and models.Model in obj.__bases__ and obj.__module__ == 'h1ds_configdb.models':

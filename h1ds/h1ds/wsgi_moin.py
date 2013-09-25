@@ -17,7 +17,10 @@
     @license: GNU GPL, see COPYING for details.
 """
 
-import sys, os
+import sys
+
+import os
+
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 

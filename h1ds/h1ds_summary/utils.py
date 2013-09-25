@@ -11,38 +11,42 @@ import numpy
 
 from h1ds_summary import SUMMARY_TABLE_NAME
 
-CACHE_UPDATE_TIMEOUT = 60*60*24*365
+CACHE_UPDATE_TIMEOUT = 60 * 60 * 24 * 365
 
-SIGNAL_LENGTH = 2**16
+SIGNAL_LENGTH = 2 ** 16
 
 try:
     canonical_shot = settings.H1DS_SUMMARY_CANONICAL_SHOT
 except AttributeError:
     canonical_shot = 0
 
+
 def drop_summary_table(table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
-    cursor.execute("DROP TABLE %s" %table)
+    cursor.execute("DROP TABLE %s" % table)
 
-def generate_base_summary_table(cursor, table = SUMMARY_TABLE_NAME):
+
+def generate_base_summary_table(cursor, table=SUMMARY_TABLE_NAME):
     import h1ds_summary.models
+
     attrs = h1ds_summary.models.SummaryAttribute.objects.all()
-    attr_string = ",".join(("%s %s" %(a.slug, a.get_value(0)[1]) for a in attrs))
+    attr_string = ",".join(("%s %s" % (a.slug, a.get_value(0)[1]) for a in attrs))
     cols = ["shot MEDIUMINT UNSIGNED PRIMARY KEY",
             "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP"]
     if attr_string != "":
         cols.append(attr_string)
     col_str = ','.join(cols)
-    cursor.execute("CREATE TABLE %(table)s (%(cols)s)" %{'table':table, 'cols':col_str})
-    cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
+    cursor.execute("CREATE TABLE %(table)s (%(cols)s)" % {'table': table, 'cols': col_str})
+    cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)
 
-def get_latest_shot_from_summary_table(table = SUMMARY_TABLE_NAME):
+
+def get_latest_shot_from_summary_table(table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
     try:
-        cursor.execute("SELECT MAX(shot) FROM %(table)s" %{'table':table})
+        cursor.execute("SELECT MAX(shot) FROM %(table)s" % {'table': table})
     except DatabaseError:
         generate_base_summary_table(cursor)
-        cursor.execute("SELECT MAX(shot) FROM %(table)s" %{'table':table})
+        cursor.execute("SELECT MAX(shot) FROM %(table)s" % {'table': table})
 
     latest_shot = cursor.fetchone()[0]
     return latest_shot
@@ -78,7 +82,7 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
 
     for shot_comp in shot_components:
         if shot_comp.startswith("last"):
-            shot_ranges.append((latest_shot, latest_shot-int(shot_comp[4:])))
+            shot_ranges.append((latest_shot, latest_shot - int(shot_comp[4:])))
         elif '-' in shot_comp:
             shot_ranges.append(map(int, shot_comp.split('-')))
         else:
@@ -86,17 +90,19 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
 
     # Note that the SQL BETWEEN  operator requires the first argument to
     # be smaller than the second
-    shot_where = " OR ".join("shot BETWEEN %d and %d" %(min(i), max(i)) for i in shot_ranges)
+    shot_where = " OR ".join("shot BETWEEN %d and %d" % (min(i), max(i)) for i in shot_ranges)
 
     if len(individual_shots) > 0:
         if shot_where != '':
             shot_where += " OR "
-        shot_where += "shot IN (%s)" %(','.join(i for i in individual_shots))
+        shot_where += "shot IN (%s)" % (','.join(i for i in individual_shots))
 
     return shot_where
 
+
 def parse_attr_str(attr_str):
     import h1ds_summary.models
+
     """Parse URL component corresponding to selected attributes.
 
     If attr_str is:
@@ -112,7 +118,8 @@ def parse_attr_str(attr_str):
     attr_slugs = []
     for attr_slug in attr_str.lower().split('+'):
         if attr_slug == 'default':
-            attr_slugs.extend(list(h1ds_summary.models.SummaryAttribute.objects.filter(is_default=True).values_list('slug', flat=True)))
+            attr_slugs.extend(list(
+                h1ds_summary.models.SummaryAttribute.objects.filter(is_default=True).values_list('slug', flat=True)))
         else:
             attr_slugs.append(attr_slug)
     return attr_slugs
@@ -126,18 +133,18 @@ def parse_filter_str(filter_str):
     """
     filter_where_list = []
     filter_queries = filter_str.split("+")
-    for filter_query_number,filter_query in enumerate(filter_queries):
+    for filter_query_number, filter_query in enumerate(filter_queries):
         f = filter_query.split("__")
         if f[1].lower() == 'gt':
-            filter_where_list.append("%s > %f" %(f[0], float(f[2])))
+            filter_where_list.append("%s > %f" % (f[0], float(f[2])))
         elif f[1].lower() == 'lt':
-            filter_where_list.append("%s < %f" %(f[0], float(f[2])))
+            filter_where_list.append("%s < %f" % (f[0], float(f[2])))
         elif f[1].lower() == 'gte':
-            filter_where_list.append("%s >= %f" %(f[0], float(f[2])))
+            filter_where_list.append("%s >= %f" % (f[0], float(f[2])))
         elif f[1].lower() == 'lte':
-            filter_where_list.append("%s <= %f" %(f[0], float(f[2])))
+            filter_where_list.append("%s <= %f" % (f[0], float(f[2])))
         elif f[1].lower() in ['bw', 'between']:
-            filter_where_list.append("%s BETWEEN %f AND %f" %(f[0], float(f[2]), float(f[3])))
+            filter_where_list.append("%s BETWEEN %f AND %f" % (f[0], float(f[2]), float(f[3])))
     filter_where_string = " AND ".join(filter_where_list)
     return filter_where_string
 
@@ -149,8 +156,8 @@ def parse_filter_str(filter_str):
 def delete_attr_from_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
     try:
-        cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" %{'table':table, 'col':attr_slug})
-        cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
+        cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" % {'table': table, 'col': attr_slug})
+        cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)
     except DatabaseError:
         # Assume this error is raised because table has been deleted before attributes removed
         pass
@@ -161,13 +168,12 @@ def RGBToHTMLColor(rgb_tuple):
     return '#%02x%02x%02x' % rgb_tuple
 
 
-
-def time_since_last_summary_table_modification(table = SUMMARY_TABLE_NAME):
+def time_since_last_summary_table_modification(table=SUMMARY_TABLE_NAME):
     """Return timedelta since last modification of summary table."""
     cursor = connection.cursor()
     #print datetime.now()
     try:
-        cursor.execute("SELECT max(timestamp) FROM %(table)s" %{'table':table})
+        cursor.execute("SELECT max(timestamp) FROM %(table)s" % {'table': table})
         latest_timestamp = cursor.fetchone()[0]
     except DatabaseError:
         generate_base_summary_table(cursor)
@@ -182,20 +188,22 @@ def time_since_last_summary_table_modification(table = SUMMARY_TABLE_NAME):
         diff = datetime.now() - latest_timestamp
     return diff
 
+
 def get_attr_list(cursor, table=SUMMARY_TABLE_NAME):
     try:
         # horrid hack
-        cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
+        cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" % table)
         fetchall = cursor.fetchall()
         if not fetchall:
             generate_base_summary_table(cursor)
-            cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
+            cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" % table)
             fetchall = cursor.fetchall()
-        return [i for i in fetchall[0][0][15+len(table):-1].split(',')]
+        return [i for i in fetchall[0][0][15 + len(table):-1].split(',')]
     except DatabaseError:
         generate_base_summary_table(cursor)
-        cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" %table)
-        return [i for i in cursor.fetchall()[0][0][15+len(table):-1].split(',')]
+        cursor.execute("SELECT sql FROM sqlite_master WHERE name = '%s'" % table)
+        return [i for i in cursor.fetchall()[0][0][15 + len(table):-1].split(',')]
+
 
 def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     import h1ds_summary.models
@@ -216,16 +224,16 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
             if r[1].startswith(attr_dtype):
                 correct_dtype = True
     if not attr_exists:
-        cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" %(table, attr_slug, attr_dtype))
-        cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
-    # TODO: fails for sqlite
-    # elif not correct_dtype: 
-    #    cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
-    #    cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
+        cursor.execute("ALTER TABLE %s ADD COLUMN %s %s" % (table, attr_slug, attr_dtype))
+        cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)
+        # TODO: fails for sqlite
+        # elif not correct_dtype:
+        #    cursor.execute("ALTER TABLE %s MODIFY COLUMN %s %s" %(table, attr_slug, attr_dtype))
+        #    cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
 
 
 def update_single_entry(attribute, shot, value, table=SUMMARY_TABLE_NAME):
     cursor = connection.cursor()
-    cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" %(table, attribute, str(value), shot))
+    cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" % (table, attribute, str(value), shot))
     transaction.commit_unless_managed()
-    cache.set('last_summarydb_update',datetime.now(), CACHE_UPDATE_TIMEOUT)
+    cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)

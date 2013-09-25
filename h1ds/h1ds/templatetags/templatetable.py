@@ -7,6 +7,7 @@ from django.template import VariableDoesNotExist
 
 register = Library()
 
+
 class TableNode(Node):
     def __init__(self, cellvar, sequence, cols, cellnodes):
         self.cellvar = cellvar
@@ -21,7 +22,7 @@ class TableNode(Node):
     def get_nodes_by_type(self, nodetype):
         nodes = []
         if isinstance(self, nodetype):
-                nodes.append(self)
+            nodes.append(self)
         nodes.extend(self.cellnodes.get_nodes_by_type(nodetype))
         return nodes
 
@@ -32,7 +33,7 @@ class TableNode(Node):
             values = []
         if not values:
             values = []
-        if not hasattr(values,'__len__'):
+        if not hasattr(values, '__len__'):
             values = list(values)
         return values
 
@@ -60,29 +61,29 @@ class TableNode(Node):
             loopctx['lastcellinrow'] = False
             loopctx["startrow"] = False
             loopctx["endrow"] = loopctx["lastcell"]
-            if totalrows == 1 and i == len_values-1:
+            if totalrows == 1 and i == len_values - 1:
                 loopctx['lastcellinrow'] = True
-            elif i == (len_values-1):
+            elif i == (len_values - 1):
                 loopctx['lastcellinrow'] = True
             if i % self.cols == 0:
                 nodelist.append(innernodelist.render(context))
                 innernodelist = NodeList()
                 loopctx["startrow"] = True
-                if (rowcount+1)%2==0:
+                if (rowcount + 1) % 2 == 0:
                     loopctx["oddrow"] = False
                     loopctx["evenrow"] = True
                 else:
                     loopctx["oddrow"] = True
                     loopctx["evenrow"] = False
-            elif (i+1) % self.cols==0:
+            elif (i + 1) % self.cols == 0:
                 loopctx['lastcellinrow'] = True
                 loopctx["endrow"] = True
                 rowcount += 1
             context['table'] = loopctx
             for node in self.cellnodes:
                 innernodelist.append(node.render(context))
-        if innernodelist and len(innernodelist)>0:
-                nodelist.append(innernodelist.render(context))
+        if innernodelist and len(innernodelist) > 0:
+            nodelist.append(innernodelist.render(context))
         context.pop()
         return nodelist.render(context)
 
@@ -91,7 +92,7 @@ class ColumnSortedTableNode(TableNode):
     def get_values(self, context):
         values = super(ColumnSortedTableNode, self).get_values(context)
         len_values = len(values)
-        totalrows = int(math.ceil(float(len_values)/float(self.cols)))
+        totalrows = int(math.ceil(float(len_values) / float(self.cols)))
         # only done for 2 columns for now
         col_1 = values[:totalrows]
         col_2 = values[totalrows:]
@@ -104,7 +105,6 @@ class ColumnSortedTableNode(TableNode):
                 # assume col_2 has one less row
                 pass
         return new_values
-
 
 
 @register.tag(name="table")
@@ -166,6 +166,7 @@ def do_table(parser, token):
     cellnodes = parser.parse(('endtable',))
     parser.delete_first_token()
     return TableNode(cellvar, sequence, cols, cellnodes)
+
 
 @register.tag(name="colsorttable")
 def do_colsorttable(parser, token):

@@ -8,7 +8,7 @@ MODULE_DOC_NAME = "Summary"
 if hasattr(settings, "H1DS_SUMMARY_ROOT_URL"):
     MODULE_ROOT_URL = settings.H1DS_SUMMARY_ROOT_URL
 else:
-    MODULE_ROOT_URL = "summary" 
+    MODULE_ROOT_URL = "summary"
 
 
 # Name of the SQLite summary table.

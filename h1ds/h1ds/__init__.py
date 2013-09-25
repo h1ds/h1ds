@@ -8,5 +8,4 @@ The   :mod:`h1ds`   module   contains:
 
 """
 
-
 AVAILABLE_H1DS_MODULES = ['h1ds_summary', 'h1ds_configdb']

@@ -1,5 +1,6 @@
 from celery import task
 
+
 @task()
 def populate_tree(shot):
     """Asynchronously populate a data tree."""

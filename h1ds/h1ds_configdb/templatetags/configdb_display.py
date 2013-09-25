@@ -1,7 +1,9 @@
 import os
 from django import template
 from django.conf import settings
+
 register = template.Library()
+
 
 @register.inclusion_tag('h1ds_configdb/configdb_display.html')
 def show_configfile(configfile):

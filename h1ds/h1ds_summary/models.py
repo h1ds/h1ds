@@ -1,27 +1,30 @@
-import urllib2, json
-from django.db import models
+import urllib2
+import json
 
+from django.db import models
 from h1ds_summary.utils import delete_attr_from_summary_table
 from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary.tasks import populate_attribute_task
 
-sa_help_text={
-    'slug':"Name of the attribute as it appears in the URL.",
-    'name':"Full name of the attribute.",
-    'source':"Either URL from H1DS  web service (must start with \
+
+sa_help_text = {
+    'slug': "Name of the attribute as it appears in the URL.",
+    'name': "Full name of the attribute.",
+    'source': "Either URL from H1DS  web service (must start with \
 http://) or name of class, e.g. h1nf.KappaH (will use h1ds_summary.attri\
 butes.h1nf.KappaH).",
-    'description':"Full description of the summary attribute.",
-    'is_default':"If true, this attribute will be shown in the default \
+    'description': "Full description of the summary attribute.",
+    'is_default': "If true, this attribute will be shown in the default \
 list, e.g. for shot summary.",
-    'display_order':"When visible, attributes will be displayed from \
+    'display_order': "When visible, attributes will be displayed from \
 left to right with increasing display_order.",
-    'format_string':'How value is to be displayed on website (optional).\
+    'format_string': 'How value is to be displayed on website (optional).\
 e.g. %.2f will format a float to 2 decimal places.',
-    }
+}
+
 
 class SummaryAttribute(models.Model):
-    slug = models.SlugField(max_length=100, unique=True, 
+    slug = models.SlugField(max_length=100, unique=True,
                             help_text=sa_help_text['slug'])
     name = models.CharField(max_length=255,
                             help_text=sa_help_text['name'])
@@ -33,8 +36,8 @@ class SummaryAttribute(models.Model):
                                      help_text=sa_help_text['is_default'])
     display_order = models.IntegerField(default=1000, blank=False,
                                         help_text=sa_help_text['display_order'])
-    format_string = models.CharField(max_length=64, 
-                                     blank=True, 
+    format_string = models.CharField(max_length=64,
+                                     blank=True,
                                      help_text=sa_help_text['format_string'])
 
     class Meta:
@@ -43,8 +46,8 @@ class SummaryAttribute(models.Model):
         permissions = (
             ("sa_recompute", "Can recompute the summ. att. and update database."),
             ("sa_raw_sql", "Can query database with raw SQL."),
-            )
-    
+        )
+
     def save(self, *args, **kwargs):
         super(SummaryAttribute, self).save(*args, **kwargs)
         update_attribute_in_summary_table(self.slug)
@@ -53,7 +56,7 @@ class SummaryAttribute(models.Model):
     def delete(self, *args, **kwargs):
         delete_attr_from_summary_table(self.slug)
         super(SummaryAttribute, self).delete(*args, **kwargs)
-    
+
     def __unicode__(self):
         return self.name
 
@@ -78,7 +81,7 @@ class SummaryAttribute(models.Model):
                 submodule_name = '.'.join(split_name[:-1])
                 module_name = '.'.join(['h1ds_summary.attributes', submodule_name])
                 class_name = split_name[-1]
-                source_module = __import__(module_name, globals(), 
+                source_module = __import__(module_name, globals(),
                                            locals(), [class_name], -1)
                 source_class = source_module.__getattribute__(class_name)
                 return source_class(shot_number).do_script()

@@ -9,6 +9,7 @@ be able to be loaded by a SummaryAttribute instance.
 
 """
 
+
 class AttributeScript(object):
     def __init__(self, shot):
         self.shot = shot

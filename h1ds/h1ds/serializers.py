@@ -17,7 +17,7 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
         request = self.context.get('request', None)
         format = self.context.get('format', None)
         view_name = self.view_name or self.parent.opts.view_name
-        kwargs = {'device':obj.shot.device.slug, 'shot': obj.shot.number, 'nodepath': obj.nodepath}
+        kwargs = {'device': obj.shot.device.slug, 'shot': obj.shot.number, 'nodepath': obj.nodepath}
 
         if request is None:
             warnings.warn("Using `HyperlinkedIdentityField` without including the "
@@ -98,7 +98,8 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
 
 class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
     def get_url(self, obj, view_name, request, format):
-        kwargs = {'device': obj.shot.device.slug, 'shot': obj.shot.number, 'nodepath': obj.nodepath}  # , 'format':format}
+        kwargs = {'device': obj.shot.device.slug, 'shot': obj.shot.number,
+                  'nodepath': obj.nodepath}  # , 'format':format}
         return reverse(view_name, kwargs=kwargs, request=request, format=format)
 
     def get_object(self, queryset, view_name, view_args, view_kwargs):

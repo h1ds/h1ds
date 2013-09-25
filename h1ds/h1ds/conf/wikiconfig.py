@@ -32,12 +32,14 @@ from h1ds.djangoAuth import DjangoAuth
 from MoinMoin.datastruct import ConfigGroups
 from django.conf import settings as django_settings
 
+
 class Config(multiconfig.DefaultConfig):
     ## django Authenticaion
     auth = [DjangoAuth(autocreate=True)]
     # +++ these are suggested changes to the user preferences form if the  external_cookie  is the only auth method
-    user_form_disable = ['name', 'aliasname', 'email',] # don't let the user change these, but show them:
-    user_form_remove = ['password', 'password2', 'css_url', 'logout', 'create', 'account_sendmail','jid'] # remove completely:
+    user_form_disable = ['name', 'aliasname', 'email', ] # don't let the user change these, but show them:
+    user_form_remove = ['password', 'password2', 'css_url', 'logout', 'create', 'account_sendmail',
+                        'jid'] # remove completely:
     # ~ user_autocreate = True # +++ Moin will autocreate new user ID if none exists
     cookie_lifetime = (12, 12)   # (anonymous,logged-in) default (0,12)  page trails for anonymous users moin 1.9
 
@@ -127,8 +129,6 @@ class Config(multiconfig.DefaultConfig):
     # Needs a reliable internet connection.
     #from MoinMoin.security.antispam import SecurityPolicy
 
-    from MoinMoin.security.autoadmin import SecurityPolicy
-
 
     # Mail --------------------------------------------------------------
 
@@ -191,10 +191,9 @@ class Config(multiconfig.DefaultConfig):
     # Enable graphical charts, requires gdchart.
     #chart_options = {'width': 600, 'height': 300}
 
-    navi_bar.insert(0,page_front_page)    # put H1Log first on navigation bar at top
+    navi_bar.insert(0, page_front_page)    # put H1Log first on navigation bar at top
     navi_bar.insert(1, u'H1Upgrade')      # park H1Upgrade next to H1Log tab
     navi_bar.append(u'CheatSheet')        # put CheatSheet after the standard
-
 
     tz_offset = 11
 
@@ -214,15 +213,15 @@ class Config(multiconfig.DefaultConfig):
     surge_lockout_time = 3600 # secs you get locked out when you ignore warnings
     """
 
-    surge_action_limits = { # allow max. <count> <action> requests per <dt> secs
-    # action: (count, dt)
-    'show': (200, 60),
-    'raw': (200, 40),  # some people use this for css
-    'AttachFile': (600, 60),
-    'diff': (300, 60),
-    'fullsearch': (50, 60),
-    'edit': (100, 120),
-    'rss_rc': (10, 60),
-    'default': (300, 60),
+    surge_action_limits = {# allow max. <count> <action> requests per <dt> secs
+                           # action: (count, dt)
+                           'show': (200, 60),
+                           'raw': (200, 40), # some people use this for css
+                           'AttachFile': (600, 60),
+                           'diff': (300, 60),
+                           'fullsearch': (50, 60),
+                           'edit': (100, 120),
+                           'rss_rc': (10, 60),
+                           'default': (300, 60),
     }
     surge_lockout_time = 30 # secs you get locked out when you ignore warnings

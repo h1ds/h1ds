@@ -8,17 +8,20 @@ from django.core.urlresolvers import reverse
 
 register = template.Library()
 
+
 class H1DSDataTemplateNode(template.Node):
     def __init__(self, node_name):
         self.node_var = template.Variable(node_name)
+
     def render(self, context):
         try:
             node = self.node_var.resolve(context)
             return ('<div class="centrecontent">'
                     '<div class="data">%s</div>'
-                    '</div>' %(node.get_format('html')))
+                    '</div>' % (node.get_format('html')))
         except template.VariableDoesNotExist:
             return ''
+
 
 def display_data(parser, token):
     try:
@@ -42,7 +45,6 @@ filter_html = """\
  </form>
 </div>"""
 
-
 active_filter_html = """\
 <div class="sidebarcontent">
  <form action="%(update_url)s">
@@ -63,6 +65,7 @@ active_filter_html = """\
  </span>
 </div>
 """
+
 
 def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
     try:
@@ -94,7 +97,7 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
                 'fid': f_id,
                 'remove_url': remove_url,
                 'existing_query': existing_query_string,
-                }
+            }
             return return_string
 
         else:
@@ -104,7 +107,7 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
             input_str = ""
             for j in arg_list:
                 input_str += arg_input % {'name': j}
-            return_string =  filter_html % {'text': docstring,
+            return_string = filter_html % {'text': docstring,
                                            'input_str': input_str,
                                            'clsname': f_class.slug,
                                            'submit_url': submit_url,
@@ -115,6 +118,7 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
         #return ''
         raise
 
+
 @register.simple_tag(takes_context=True)
 def show_filters(context, data_node):
     # TODO: HACK
@@ -123,25 +127,29 @@ def show_filters(context, data_node):
         filters += get_filter(context, f)
     return filters
 
+
 @register.simple_tag(takes_context=True)
 def show_active_filters(context, data_node):
     active_filters = ""
     for fid, f, fdata in data_node.filter_history:
         active_filters += get_filter(context, f, is_active=True,
                                      f_id=fid, f_data=fdata)
-    
+
     return active_filters
+
 
 @register.simple_tag(takes_context=True)
 def show_info(context, data_node):
     # TODO
-    return ""#"TODO... dtype: %s" % escape(str(type(data_node.data.data)))
+    return ""  # "TODO... dtype: %s" % escape(str(type(data_node.data.data)))
+
 
 @register.simple_tag(takes_context=True)
 def get_url_for_shot(context, url, new_shot):
     #input_shot = shot_regex.findall(url)[0]
     print "temp hack - not working"
-    return url#url.replace(str(input_shot), str(new_shot))
+    return url  # url.replace(str(input_shot), str(new_shot))
+
 
 class GetAbsoluteUriNode(template.Node):
     def __init__(self):
@@ -155,10 +163,13 @@ class GetAbsoluteUriNode(template.Node):
         except template.VariableDoesNotExist:
             return ''
 
+
 def get_absolute_uri(parser, token):
     return GetAbsoluteUriNode()
 
+
 register.tag('get_absolute_uri', get_absolute_uri)
+
 
 class GetTreeURLNode(template.Node):
     def __init__(self, url_processor, tree):
@@ -174,6 +185,7 @@ class GetTreeURLNode(template.Node):
         except template.VariableDoesNotExist:
             return ''
 
+
 def get_tree_url(parser, token):
     try:
         tag_name, url_processor, tree = token.split_contents()
@@ -182,6 +194,5 @@ def get_tree_url(parser, token):
         raise template.TemplateSyntaxError, msg
     return GetTreeURLNode(url_processor, tree)
 
+
 register.tag('get_tree_url', get_tree_url)
-
-

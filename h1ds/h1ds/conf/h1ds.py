@@ -8,14 +8,15 @@
     @license: GNU GPL, see COPYING for details.
 """
 
+
 def login_logout(d):
-    
     if d["user_name"] == "":
-        content =  u'<a href="/openid/login/">log in</a>'
+        content = u'<a href="/openid/login/">log in</a>'
     else:
-        content =  u'%(username)s // <a href="/user/settings/%(username)s">settings</a> // <a href="/logout/">logout</a>' %{'username':d["user_name"]}
+        content = u'%(username)s // <a href="/user/settings/%(username)s">settings</a> // <a href="/logout/">logout</a>' % {
+        'username': d["user_name"]}
     return u'<div id="loginlinks">' + content + "</div>"
-        
+
 
 from MoinMoin.theme import ThemeBase
 from MoinMoin import wikiutil
@@ -23,8 +24,8 @@ from MoinMoin.Page import Page
 from h1ds.templatetags import h1ds_headfoot
 from django.conf import settings as django_settings
 
-class Theme(ThemeBase):
 
+class Theme(ThemeBase):
     name = "h1ds"
 
 
@@ -43,7 +44,6 @@ class Theme(ThemeBase):
         context = ""
         h1ds_header_string = unicode(h1ds_header.render(context))
 
-        
         html = [
             # Pre header custom html
             self.emit_custom_html(self.cfg.page_header1),
@@ -114,7 +114,7 @@ class Theme(ThemeBase):
         tracker = h1ds_headfoot.H1DSGoogleTrackerNode()
         context = ""
         return unicode(tracker.render(context))
-    
+
     def footer(self, d, **keywords):
         """ Assemble wiki footer
 
@@ -150,9 +150,10 @@ class Theme(ThemeBase):
             u'</footer>',
             u'</div>', # close id="container"
             u'<script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>',
-            u"<script>window.jQuery || document.write('<script src="+u'"%sjs/libs/jquery-1.6.2.min.js"' %(django_settings.STATIC_URL) + u"><\/script>')</script>",
-            u'<script defer src="%sjs/plugins.js"></script>' %(django_settings.STATIC_URL),
-            u'<script defer src="%sjs/script.js"></script>' %(django_settings.STATIC_URL),
+            u"<script>window.jQuery || document.write('<script src=" + u'"%sjs/libs/jquery-1.6.2.min.js"' % (
+            django_settings.STATIC_URL) + u"><\/script>')</script>",
+            u'<script defer src="%sjs/plugins.js"></script>' % (django_settings.STATIC_URL),
+            u'<script defer src="%sjs/script.js"></script>' % (django_settings.STATIC_URL),
             u'<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>',
             self.guiEditorScript(d),
             self.google_tracker(d, **keywords),
@@ -164,7 +165,7 @@ class Theme(ThemeBase):
 
             # Post footer custom html
             self.emit_custom_html(self.cfg.page_footer2),
-            ]
+        ]
         return u'\n'.join(html)
 
 
@@ -205,7 +206,8 @@ class Theme(ThemeBase):
         page_word_index = wikiutil.getLocalizedPage(request, 'WordIndex').page_name
         page_help_formatting = wikiutil.getLocalizedPage(request, 'HelpOnFormatting').page_name
         page_find_page = wikiutil.getLocalizedPage(request, 'FindPage').page_name
-        home_page = wikiutil.getInterwikiHomePage(request) # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
+        home_page = wikiutil.getInterwikiHomePage(
+            request) # sorry theme API change!!! Either None or tuple (wikiname,pagename) now.
         page_parent_page = getattr(page.getParentPage(), 'page_name', None)
 
         # Prepare the HTML <head> element
@@ -213,7 +215,8 @@ class Theme(ThemeBase):
 
         # include charset information - needed for moin_dump or any other case
         # when reading the html without a web server
-        user_head.append('''<meta http-equiv="Content-Type" content="%s;charset=%s">\n''' % (page.output_mimetype, page.output_charset))
+        user_head.append('''<meta http-equiv="Content-Type" content="%s;charset=%s">\n''' % (
+        page.output_mimetype, page.output_charset))
 
         meta_keywords = request.getPragma('keywords')
         meta_desc = request.getPragma('description')
@@ -272,15 +275,15 @@ var search_hint = "Search";
 //-->
 </script>
   <script src="%(static_url)sjs/libs/modernizr-2.0.6.min.js"></script>
-""" %{'title':text, 'static_url':django_settings.STATIC_URL})
+""" % {'title': text, 'static_url': django_settings.STATIC_URL})
 
         # Links
         output.append('<link rel="Start" href="%s">\n' % request.href(page_front_page))
         if pagename:
             output.append('<link rel="Alternate" title="%s" href="%s">\n' % (
-                    _('Wiki Markup'), request.href(pagename, action='raw')))
+                _('Wiki Markup'), request.href(pagename, action='raw')))
             output.append('<link rel="Alternate" media="print" title="%s" href="%s">\n' % (
-                    _('Print View'), request.href(pagename, action='print')))
+                _('Print View'), request.href(pagename, action='print')))
 
             # !!! currently disabled due to Mozilla link prefetching, see
             # http://www.mozilla.org/projects/netlib/Link_Prefetching_FAQ.html
@@ -310,6 +313,7 @@ var search_hint = "Search";
         # and it is at least questionable if this fits into the original intent of rel="Appendix".
         if pagename and request.user.may.read(pagename):
             from MoinMoin.action import AttachFile
+
             AttachFile.send_link_rel(request, pagename)
 
         output.extend([
@@ -317,7 +321,7 @@ var search_hint = "Search";
             '<link rel="Index" href="%s">\n' % request.href(page_title_index),
             '<link rel="Glossary" href="%s">\n' % request.href(page_word_index),
             '<link rel="Help" href="%s">\n' % request.href(page_help_formatting),
-                      ])
+        ])
 
         output.append("</head>\n")
         request.write(''.join(output))
@@ -331,8 +335,8 @@ var search_hint = "Search";
 
         # Add doubleclick edit action
         if (pagename and keywords.get('allow_doubleclick', 0) and
-            not keywords.get('print_mode', 0) and
-            request.user.edit_on_doubleclick):
+                not keywords.get('print_mode', 0) and
+                request.user.edit_on_doubleclick):
             if request.user.may.write(pagename): # separating this gains speed
                 url = page.url(request, {'action': 'edit'})
                 bodyattr.append(''' ondblclick="location.href='%s'" ''' % wikiutil.escape(url, True))
@@ -400,9 +404,9 @@ var search_hint = "Search";
             for key in d:
                 if key.startswith('page_'):
                     if not d[key] is None:
-                        newdict['q_'+key] = wikiutil.quoteWikinameURL(d[key])
+                        newdict['q_' + key] = wikiutil.quoteWikinameURL(d[key])
                     else:
-                        newdict['q_'+key] = None
+                        newdict['q_' + key] = None
             d.update(newdict)
             request.themedict = d
 

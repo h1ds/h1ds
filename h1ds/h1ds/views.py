@@ -515,9 +515,9 @@ class ShotDetailView(APIView):
                 return Response()
             else:
                 return HttpResponseBadRequest
-            #shot, created  = Shot.objects.get_or_create(device=device, number=xxxx)
-            # update shot (async, )
-            # device.latest_shot = shot (when done)
+                #shot, created  = Shot.objects.get_or_create(device=device, number=xxxx)
+                # update shot (async, )
+                # device.latest_shot = shot (when done)
 
 
 class TextTemplateView(TemplateView):

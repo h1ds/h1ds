@@ -31,22 +31,26 @@ DEFAULT_SHOT_REGEX = "last30"
 DEFAULT_ATTR_STR = "default"
 DEFAULT_FILTER = None
 
+
 def get_format(request, default='html'):
     """get format URI query key.
 
     Fall back to 'view' for backwards compatability.
 
     """
-    format_ =  request.GET.get('format', None)
+    format_ = request.GET.get('format', None)
     if not format_:
         format_ = request.GET.get('view', default)
     return format_
 
+
 class NoAttributeException(Exception):
     pass
 
+
 class NoShotException(Exception):
     pass
+
 
 class AJAXLatestSummaryShotView(View):
     """Return latest shot."""
@@ -55,7 +59,7 @@ class AJAXLatestSummaryShotView(View):
 
     def get(self, request, *args, **kwargs):
         latest_shot = get_latest_shot_from_summary_table()
-        return HttpResponse('{"latest_shot":"%s"}' %latest_shot, 'application/javascript')
+        return HttpResponse('{"latest_shot":"%s"}' % latest_shot, 'application/javascript')
 
 
 class AJAXLastUpdateTimeView(View):
@@ -66,13 +70,13 @@ class AJAXLastUpdateTimeView(View):
     def get(self, request, *args, **kwargs):
         last_update = cache.get('last_summarydb_update')
         if last_update:
-            return HttpResponse('{"last_update":"%s"}' %str(last_update.isoformat()), 'application/javascript')
+            return HttpResponse('{"last_update":"%s"}' % str(last_update.isoformat()), 'application/javascript')
         else:
             # last_summarydb_update not in cache...
             return HttpResponse('{"last_update":"null"}', 'application/javascript')
 
-class SummaryMixin(object):
 
+class SummaryMixin(object):
     def get_attr_slugs(self, request, *args, **kwargs):
         attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
         return parse_attr_str(attr_str)
@@ -110,10 +114,13 @@ class SummaryMixin(object):
                 new_attr_str = '+'.join(attribute_slugs)
             if filter_str:
                 # TODO: might work for html only - either pass get query(to get format value - html, json etc) or use per-format method
-                return HttpResponseRedirect(reverse('sdfsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str, 'filter_str':filter_str}))
+                return HttpResponseRedirect(reverse('sdfsummary',
+                                                    kwargs={'shot_str': shot_str, 'attr_str': new_attr_str,
+                                                            'filter_str': filter_str}))
             else:
                 # TODO: might work for html only - either pass get query(to get format value - html, json etc) or use per-format method
-                return HttpResponseRedirect(reverse('sdsummary', kwargs={'shot_str':shot_str, 'attr_str':new_attr_str}))
+                return HttpResponseRedirect(
+                    reverse('sdsummary', kwargs={'shot_str': shot_str, 'attr_str': new_attr_str}))
 
         select_list = ['shot']
         select_list.extend(attribute_slugs)
@@ -131,7 +138,9 @@ class SummaryMixin(object):
             where = ' AND '.join([shot_where, filter_where])
 
         cursor = connection.cursor()
-        cursor.execute("SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" %{'table':table, 'select':select_str, 'where':where})
+        cursor.execute(
+            "SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" % {'table': table, 'select': select_str,
+                                                                                 'where': where})
         data = cursor.fetchall()
 
         # Format data as specified in SummaryAttribute
@@ -143,7 +152,6 @@ class SummaryMixin(object):
         for att in SummaryAttribute.objects.all():
             format_strings[att.slug] = att.format_string
 
-
         new_data = []
         data_headers = select_str.split(',')
         for d in data:
@@ -151,7 +159,7 @@ class SummaryMixin(object):
             for j_i, j in enumerate(d):
                 fstr = format_strings.get(data_headers[j_i], None)
                 try:
-                    val = fstr %j
+                    val = fstr % j
                 except TypeError:
                     val = j
                 new_row.append(val)
@@ -161,10 +169,9 @@ class SummaryMixin(object):
 
 
 class MyEncoder(json.JSONEncoder):
-
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
-             return obj.strftime('%Y-%m-%d %H:%M:%S')
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
 
         return json.JSONEncoder.default(self, obj)
 
@@ -173,23 +180,23 @@ class JSONSummaryResponseMixin(SummaryMixin):
     http_method_names = ['get']
 
     def no_attribute_response(self, request):
-        return HttpResponse(json.dumps({'error':'Summary database has no attributes..'}, cls=MyEncoder), mimetype='application/json')
+        return HttpResponse(json.dumps({'error': 'Summary database has no attributes..'}, cls=MyEncoder),
+                            mimetype='application/json')
 
     def get(self, request, *args, **kwargs):
+        data, select_str, table, where = self.get_summary_data(request, *args, **kwargs)
 
-        data, select_str, table, where  = self.get_summary_data(request, *args, **kwargs)
-
-        annotated_data = [{'d':i,'shot':i[0]} for i in data][::-1]
+        annotated_data = [{'d': i, 'shot': i[0]} for i in data][::-1]
 
         d = {
-            'timestamp':str(datetime.datetime.now().isoformat()),
-            'attributes':select_str.split(','),
-            'data':annotated_data,
-            }
+            'timestamp': str(datetime.datetime.now().isoformat()),
+            'attributes': select_str.split(','),
+            'data': annotated_data,
+        }
         return HttpResponse(json.dumps(d, cls=MyEncoder), mimetype='application/json')
 
-class HTMLSummaryResponseMixin(SummaryMixin):
 
+class HTMLSummaryResponseMixin(SummaryMixin):
     http_method_names = ['get']
 
     def no_attribute_response(self, request):
@@ -209,13 +216,14 @@ class HTMLSummaryResponseMixin(SummaryMixin):
         summary_data = self.get_summary_data(request, *args, **kwargs)
 
         try:
-            (data, select_str, table, where)  = summary_data
+            (data, select_str, table, where) = summary_data
         except ValueError:
             # TODO: fix this hack!
             return summary_data
 
         attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
-        excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug', flat=True)
+        excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug',
+                                                                                                          flat=True)
 
 
         # This seems a bit messy, but  it's not clear to me how to refer
@@ -225,19 +233,19 @@ class HTMLSummaryResponseMixin(SummaryMixin):
         new_data = []
         data_headers = select_str.split(',')
         for d in data:
-            new_row = [(j,data_headers[j_i]) for j_i,j in enumerate(d)]
+            new_row = [(j, data_headers[j_i]) for j_i, j in enumerate(d)]
             new_data.append(new_row)
 
         # should we poll server for shot updates?
         poll_server = 'last' in shot_str
 
         return render_to_response('h1ds_summary/summary_table.html',
-                                  {'data':new_data, 'data_headers':data_headers,
+                                  {'data': new_data, 'data_headers': data_headers,
                                    # TODO: use an API provided by h1ds to get latest shot...
-                                   'latest_shot':0,#get_latest_shot(),
-                                   'included_attrs':attribute_slugs,
-                                   'poll_server':poll_server,
-                                   'excluded_attrs':excluded_attribute_slugs},
+                                   'latest_shot': 0, #get_latest_shot(),
+                                   'included_attrs': attribute_slugs,
+                                   'poll_server': poll_server,
+                                   'excluded_attrs': excluded_attribute_slugs},
                                   context_instance=RequestContext(request))
 
 
@@ -245,9 +253,9 @@ class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMix
     """Dispatch to requested representation."""
 
     representations = {
-        "html":HTMLSummaryResponseMixin,
-        "json":JSONSummaryResponseMixin,
-        }
+        "html": HTMLSummaryResponseMixin,
+        "json": JSONSummaryResponseMixin,
+    }
 
     def dispatch(self, request, *args, **kwargs):
         # Try to dispatch to the right method for requested representation;
@@ -290,12 +298,9 @@ class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMix
         except NoShotException:
             return rep_class.no_shot_response(self, request)
 
-            
-
 
 class SummaryView(MultiSummaryResponseMixin, View):
     pass
-
 
 
 class RecomputeSummaryView(View):
@@ -314,13 +319,12 @@ class RecomputeSummaryView(View):
     def post(self, request, *args, **kwargs):
         return_path = request.POST.get("return_path")
         if request.POST.has_key("shot"):
-            shot = [int(request.POST.get("shot")),]
+            shot = [int(request.POST.get("shot")), ]
             populate_summary_table_task.delay(shot)
         elif request.POST.has_key("attribute"):
             attribute = request.POST.get("attribute")
             populate_attribute_task.delay(attribute)
         return HttpResponseRedirect(return_path)
-
 
 
 class AddSummaryAttribiteView(View):
@@ -339,7 +343,7 @@ class AddSummaryAttribiteView(View):
         else:
             return render_to_response('h1ds_summary/form.html',
                                       {'form': summary_attribute_form,
-                                       'submit_url':reverse('add-summary-attribute')},
+                                       'submit_url': reverse('add-summary-attribute')},
                                       context_instance=RequestContext(request))
 
 
@@ -371,10 +375,10 @@ def get_summary_attribute_form_from_url(request):
 
     # Get the django view function corresponding to the URL path
     view, args, kwargs = resolve(parsed_url_list[2])
-    
+
     node_ancestry = kwargs['nodepath'].split("/")
     node = Node.datatree.get_node_from_ancestry(node_ancestry)
-    
+
     #url_processor = URLProcessor(url=kwargs['url'])
     # Create a  new query  dict from the  queries in the  requested URL,
     # i.e. data filters, etc...
@@ -384,7 +388,7 @@ def get_summary_attribute_form_from_url(request):
     request.GET = new_query
 
     # use HTTP GET, not POST
-    request.method="GET"
+    request.method = "GET"
     request.POST = None
 
     # ...and use this request to call the view function and get the data
@@ -401,7 +405,7 @@ def get_summary_attribute_form_from_url(request):
     general_url = attr_url_json.replace(str(node.shot.number), "__shot__")
 
     # Create a SummaryAttributeForm with URL and data type entries pre-filled
-    summary_attribute_form = SummaryAttributeForm(initial={'source':general_url})
+    summary_attribute_form = SummaryAttributeForm(initial={'source': general_url})
 
     # If the request is from AJAX, return form in JSON format
     # TODO: provide ajax / sidebar attribute adding.
@@ -409,12 +413,12 @@ def get_summary_attribute_form_from_url(request):
 
     # Otherwise, forward user to form entry page
     return render_to_response('h1ds_summary/form.html',
-                              {'form': summary_attribute_form, 'submit_url':reverse('add-summary-attribute')},
+                              {'form': summary_attribute_form, 'submit_url': reverse('add-summary-attribute')},
                               context_instance=RequestContext(request))
+
 
 def go_to_source(request, slug, shot):
     """Go to the H1DS web interface corresponding to the summary data."""
-
 
     attr = SummaryAttribute.objects.get(slug__iexact=slug)
     if attr.source.startswith('http://'):
@@ -450,13 +454,14 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
     if request.method == 'POST':
         form = RawSqlForm(request.POST)
         if form.is_valid():
-            cursor=connection.cursor()
+            cursor = connection.cursor()
             select_list = [i.strip() for i in form.cleaned_data['select'].split(',')]
             if select_list[0] != 'shot':
                 _select_list = ['shot']
                 _select_list.extend(select_list)
                 select_list = _select_list
-            cursor.execute("SELECT %s FROM %s WHERE %s" %(','.join(select_list), tablename, form.cleaned_data['where']))
+            cursor.execute(
+                "SELECT %s FROM %s WHERE %s" % (','.join(select_list), tablename, form.cleaned_data['where']))
             data = cursor.fetchall()
 
             new_data = []
@@ -468,8 +473,9 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
                 new_data.append(new_row)
 
             return render_to_response('h1ds_summary/summary_table.html',
-                                      {'data':new_data, 'data_headers':data_headers, 'select':','.join(select_list), 'where':form.cleaned_data['where']},
-                                       context_instance=RequestContext(request))
+                                      {'data': new_data, 'data_headers': data_headers, 'select': ','.join(select_list),
+                                       'where': form.cleaned_data['where']},
+                                      context_instance=RequestContext(request))
 
     if request.method == 'GET':
         return HttpResponseRedirect("/")
