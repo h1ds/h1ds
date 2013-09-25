@@ -26,10 +26,11 @@ backend_shot_manager = get_backend_shot_manager()
 sync_timedelta = timedelta(minutes=1)
 #sync_timedelta = timedelta(seconds=10)
 
+
 def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
     import h1ds_summary.models
-    cursor=connection.cursor()
-    if attributes=='all':
+    cursor = connection.cursor()
+    if attributes == 'all':
         attributes = h1ds_summary.models.SummaryAttribute.objects.all()
     if len(attributes) > 0:
         attr_names = tuple(a.slug for a in attributes)
