@@ -215,12 +215,22 @@ LOGGING = {
     'loggers': {
         'default': {
             'handlers': ['default'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': True,
         },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
+            'propagate': True,
+        },
+        'h1ds': {
+            'handlers': ['default'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['default'],
+            'level': 'INFO',
             'propagate': True,
         },
     }
