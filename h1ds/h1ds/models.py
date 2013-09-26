@@ -160,18 +160,13 @@ class Shot(models.Model):
         # TODO: don't set timestamp if it's already there.
         self.timestamp = Shot.backend.get_timestamp_for_shot(self.number)
         super(Shot, self).save(*args, **kwargs)
-        if populate_tree:
-            task_args = {'args': [self]}
-            if set_as_latest:
-                # TODO: by calling set_as_latest_shot() we execute the method here rather than
-                # as the callback function, probably we should pass the method but not call it
-                # but I need to test that 1) it will be called after task is finished, 2) that
-                # if any exceptions are raised then these are handled appropriately and the callback
-                # function is still run.
-                task_args['link'] = self.set_as_latest_shot()
-            tasks.populate_tree.apply_async(**task_args)
-        elif set_as_latest:
+        if set_as_latest:
             self.set_as_latest_shot()
+        if populate_tree:
+            task_kwargs = {'args': [self]}
+            # actually - we should set as latest shot straight away,
+            # and have another parameter which keeps the state of tree cacheing.
+            tasks.populate_tree.apply_async(**task_kwargs)
 
     def set_as_latest_shot(self, *args, **kwargs):
         # allow args, kwargs as this is being used as
