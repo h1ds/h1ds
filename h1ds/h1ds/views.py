@@ -14,7 +14,7 @@ from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequ
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, MultipleObjectsReturned
 from django import forms
 from django.views.generic import View, ListView, DetailView, RedirectView
 from django.utils.decorators import method_decorator
@@ -534,6 +534,14 @@ class DeviceListView(ListAPIView):
 
     def get_template_names(self):
         return ("h1ds/device_list.html", )
+
+    def get(self, request, *args, **kwargs):
+        # If there is only one device, then show the device detail view rather than list devices.
+        try:
+            return redirect(self.queryset.get())
+        except (Device.DoesNotExist, MultipleObjectsReturned):
+            # TODO: we should treat Device.DoesNotExist separately with a message to create a device.
+            return self.list(request, *args, **kwargs)
 
 
 class DeviceDetailView(APIView):

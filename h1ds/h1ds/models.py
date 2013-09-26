@@ -126,6 +126,9 @@ class Device(models.Model):
     # We set null=True so that we can set up devices before we have shots and datasets set up.
     latest_shot = models.ForeignKey("Shot", null=True, blank=True, related_name="+")
 
+    def get_absolute_url(self):
+        return reverse("device-detail", kwargs={"device": self.slug})
+
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Device, self).save(*args, **kwargs)
