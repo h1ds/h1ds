@@ -150,7 +150,7 @@ class BaseDataTreeManager(models.Manager):
         Returns None if node doesn't exist.
         """
         try:
-            shot_root_node = self.model.objects.get(path=str(shot), level=0)
+            shot_root_node = self.model.objects.get(path=str(shot), parent=None)
         except self.model.DoesNotExist:
             shot_root_node = None
         return shot_root_node
@@ -179,7 +179,7 @@ class BaseDataTreeManager(models.Manager):
 
         # Now we have nothing for the shot, let's build it again.
 
-        shot_root_node = self.model(path=str(shot), level=0)
+        shot_root_node = self.model(path=str(shot), parent=None)
         shot_root_node.save()
 
         self.populate_shot(shot_root_node)
@@ -188,7 +188,7 @@ class BaseDataTreeManager(models.Manager):
         pass
 
     def get_node_from_ancestry(self, ancestry):
-        shot_node = self.model.objects.get(path=ancestry[0], level=0)
+        shot_node = self.model.objects.get(path=ancestry[0], parent=None)
         if len(ancestry) == 1:
             return shot_node
             # get top of tree

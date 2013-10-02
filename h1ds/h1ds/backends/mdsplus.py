@@ -30,7 +30,7 @@ class NodeData(BaseNodeData):
         mds_tree = str(node_ancestors[0].path)
         mds_path = ""
         if len(node_ancestors) > 1:
-            mds_path = ".".join([n.path for n in node_ancestors[1:]])
+            mds_path = ".".join([str(n.path) for n in node_ancestors[1:]])
         return self.shot.number, mds_tree, mds_path
 
     def _get_mds_node(self):
@@ -56,7 +56,7 @@ class NodeData(BaseNodeData):
         return str(node)
 
     def get_value(self):
-        if self.level == 0:
+        if not self.parent:
             return None
         mds_node = self._get_mds_node()
         try:
@@ -72,7 +72,7 @@ class NodeData(BaseNodeData):
 
     def get_dimension(self):
         """Get dimension of raw data (i.e. no filters)."""
-        if self.level == 0:
+        if not self.parent:  # top level
             return []  # np.array([])
         mds_node = self._get_mds_node()
         try:
@@ -97,7 +97,7 @@ class NodeData(BaseNodeData):
         return units
 
     def get_dimension_units(self):
-        if self.level == 0:
+        if not self.parent:
             return np.array([])
         mds_node = self._get_mds_node()
         try:

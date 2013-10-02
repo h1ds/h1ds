@@ -16,8 +16,6 @@ from django.utils.importlib import import_module
 from django.template.defaultfilters import slugify
 
 from python_field.fields import PythonCodeField
-from mptt.models import MPTTModel, TreeForeignKey
-from mptt.managers import TreeManager
 
 from h1ds import tasks
 from h1ds.filters import BaseFilter, excluded_filters
@@ -146,7 +144,7 @@ class Shot(models.Model):
     backend = get_backend_shot_manager()()
 
     def _get_root_nodes(self):
-        return Node.objects.filter(level=0, shot=self)
+        return Node.objects.filter(parent=None, shot=self)
 
     root_nodes = property(_get_root_nodes)
 
@@ -163,10 +161,14 @@ class Shot(models.Model):
         if set_as_latest:
             self.set_as_latest_shot()
         if populate_tree:
-            task_kwargs = {'args': [self]}
-            # actually - we should set as latest shot straight away,
-            # and have another parameter which keeps the state of tree cacheing.
-            tasks.populate_tree.apply_async(**task_kwargs)
+            self.populate_tree()
+
+    def populate_tree(self):
+        task_kwargs = {'args': [self]}
+        # actually - we should set as latest shot straight away,
+        # and have another parameter which keeps the state of tree cacheing.
+        # TODO: what if shot is already populated?
+        tasks.populate_tree.apply_async(**task_kwargs)
 
     def set_as_latest_shot(self, *args, **kwargs):
         # allow args, kwargs as this is being used as
@@ -179,7 +181,7 @@ class Shot(models.Model):
 filter_manager = FilterManager()
 
 
-class Node(MPTTModel, backend_module.NodeData):
+class Node(models.Model, backend_module.NodeData):
     """Node of a data tree.
 
     A single data tree represents one shot.
@@ -202,7 +204,7 @@ class Node(MPTTModel, backend_module.NodeData):
     shot = models.ForeignKey(Shot)
 
     path = models.CharField(max_length=256)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
     slug = models.SlugField()
     has_data = models.BooleanField(default=True)
     n_dimensions = models.PositiveSmallIntegerField(blank=True, null=True)
@@ -233,6 +235,15 @@ class Node(MPTTModel, backend_module.NodeData):
     #primary_dim = None
     #primary_labels = None
 
+    def get_ancestors(self, include_self=False):
+        if self.parent:
+            ancestors = self.parent.get_ancestors(include_self=True)
+        else:
+            ancestors = []
+        if include_self:
+            ancestors.append(self)
+        return ancestors
+
     # TODO: rename so that path, nodepath are intuitive
     def _get_node_path(self):
         ancestry = self.get_ancestors(include_self=True)
@@ -242,7 +253,7 @@ class Node(MPTTModel, backend_module.NodeData):
 
     # I'm not sure  why we need to  do this explicitly, but  if we don't
     # then .objects becomes DataTreeManager()
-    objects = TreeManager()
+    objects = models.Manager()
     datatree = backend_module.DataTreeManager()
 
     def get_data(self):

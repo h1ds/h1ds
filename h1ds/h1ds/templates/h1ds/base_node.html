@@ -93,7 +93,7 @@ HTML tables. -->
 	  <ul>
 	    <li><span class="current"><a href="{% if track_latest_shot %}{{ a.get_absolute_url_for_latest_shot }}{% else %}{{node.get_absolute_url}}{% endif %}">{{node.path|lower}}</a></span>
 	      <ul>
-		{% for c in node.get_children|dictsort:"path" %}
+		{% for c in node.children.all|dictsort:"path" %}
 		<li><a href="{% if track_latest_shot%}{{ c.get_absolute_url_for_latest_shot }}{% else %}{{c.get_absolute_url}}{% endif %}">{{c.path|lower}}</a>
 		  {% endfor %}
 	      </ul>
