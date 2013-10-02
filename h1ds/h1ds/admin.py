@@ -67,7 +67,7 @@ admin.site.register(FilterDim, FilterDimAdmin)
 
 
 class ShotAdmin(admin.ModelAdmin):
-    pass
+    actions = ['delete_selected']
 
 
 admin.site.register(Shot, ShotAdmin)
