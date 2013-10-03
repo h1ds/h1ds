@@ -71,6 +71,7 @@ def discretise_array(arr, eps=0, bits=0, maxcount=0, delta_encode=False):
 
 #    return(ans.update({'count':count})) # need to add in count
 
+
 def try_discretise_array(arr, eps=0, bits=0, deltar=None, delta_encode=False):
     """
     Return an integer array and scales etc in a dictionary 

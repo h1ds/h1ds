@@ -321,9 +321,7 @@ class Node(models.Model, backend_module.NodeData):
     def get_node_for_shot(self, shot_number):
         """Get same node in different shot tree, if it exists."""
 
-        node_ancestry = [i.slug for i in self.get_ancestors(include_self=True)]
-        node_ancestry[0] = str(shot_number)
-        return Node.datatree.get_node_from_ancestry(node_ancestry)
+        return Node.objects.get(path_checksum=self.path_checksum, shot__number=shot_number)
 
     def get_node_for_previous_shot(self):
         previous_shot = Shot.backend.get_previous_shot_number(self.shot.number)
