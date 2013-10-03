@@ -175,7 +175,7 @@ class ShotSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Shot
-        fields = ('number', 'timestamp', 'root_nodes', )
+        fields = ('number', 'timestamp', 'root_nodes', 'device')
 
     def get_root_nodes(self, obj):
         return [{'path': n.path, 'url': n.get_absolute_url()} for n in obj.root_nodes]
@@ -190,3 +190,6 @@ class DeviceSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Device
         fields = ('name', 'description', 'slug', 'latest_shot')
+
+# Set the device field here, after DeviceSerializer has been defined.
+ShotSerializer.base_fields['device'] = DeviceSerializer()

@@ -125,7 +125,7 @@ class Device(models.Model):
     latest_shot = models.ForeignKey("Shot", null=True, blank=True, related_name="+")
 
     def get_absolute_url(self):
-        return reverse("device-detail", kwargs={"device": self.slug})
+        return reverse("device-detail", kwargs={"slug": self.slug})
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
@@ -152,7 +152,7 @@ class Shot(models.Model):
         return unicode(self.number)
 
     def get_absolute_url(self):
-        return reverse('shot-detail', kwargs={'shot': self.number})
+        return reverse('shot-detail', kwargs={'device': self.device.slug, 'shot': self.number})
 
     def save(self, set_as_latest=False, populate_tree=True, *args, **kwargs):
         # TODO: don't set timestamp if it's already there.

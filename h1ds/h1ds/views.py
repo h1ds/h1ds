@@ -365,7 +365,7 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.renderers import JSONRenderer
 from rest_framework.renderers import YAMLRenderer
 from rest_framework.renderers import XMLRenderer
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer
 
 ## for JSONNumpyEncoder
@@ -471,8 +471,10 @@ class ShotListView(ListAPIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     # TODO: make this customisable.
     paginate_by = 25
-    queryset = Shot.objects.all()
     serializer_class = ShotSerializer
+
+    def get_queryset(self):
+        return Shot.objects.filter(device__slug=self.kwargs['slug']).order_by("-timestamp")
 
     def get_template_names(self):
         return ("h1ds/shot_list.html", )
@@ -544,18 +546,12 @@ class DeviceListView(ListAPIView):
             return self.list(request, *args, **kwargs)
 
 
-class DeviceDetailView(APIView):
+class DeviceDetailView(RetrieveAPIView):
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
     serializer_class = DeviceSerializer
-
-    def get_object(self):
-        device = Device.objects.get(slug=self.kwargs["device"])
-        return device
+    lookup_field = 'slug'
+    model = Device
 
     def get_template_names(self):
         return ("h1ds/device_detail.html", )
 
-    def get(self, request, device, format=None):
-        device = self.get_object()
-        serializer = self.serializer_class(device)
-        return Response(serializer.data)

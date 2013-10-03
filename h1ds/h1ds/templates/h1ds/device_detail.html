@@ -10,5 +10,6 @@
 {% else %}
 <p>latest shot not set for {{name}}.</p>
 {% endif %}
-<p>[run days]</p>
+
+<a href="{% url 'device-shot-list' slug=slug%}">Recent shots</a>
 {% endblock content %}

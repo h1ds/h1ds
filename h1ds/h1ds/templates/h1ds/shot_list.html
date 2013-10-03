@@ -4,7 +4,7 @@
 <li class="first{% if not previous %} inactive{% endif%}">{% if previous %}<a href="{{previous}}">previous</a>{% else %}previous{% endif %}
 <li class="{% if not next %}inactive{% endif%}">{% if next %}<a href="{{next}}">next</a>{% else %}next{% endif %}
 <li>
-  <form id="h1ds-go-to-shot" class="inline-form" action="{% url "h1ds-request-shot" %}" method="post">{% csrf_token %}
+  <form id="h1ds-go-to-shot" class="inline-form" action="{% url 'h1ds-request-shot' %}" method="post">{% csrf_token %}
     <input type="hidden" name="reqpath" value="{{request.get_full_path|safe}}">
     <input type="text" id="requested-shot" name="go_to_shot" placeholder="shot #" size="8">
   </form>
@@ -17,7 +17,7 @@
 <div class="shot-list">
 <ul>
 {% for shot in results %}
-<li><a href="{% url 'shot-detail' shot=shot.number %}">{{shot.number}}</a>
+<li><a href="{% url 'shot-detail' device=shot.device.slug shot=shot.number %}">{{shot.number}}</a>
 {% endfor %}
 </ul>
 </div>

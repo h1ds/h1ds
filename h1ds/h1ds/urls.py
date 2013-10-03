@@ -54,7 +54,7 @@ from h1ds.views import UserSignalCreateView, UserSignalDeleteView
 from h1ds.views import UserSignalUpdateView, ShotStreamView
 from h1ds.views import AJAXShotRequestURL, AJAXLatestShotView, NodeView
 from h1ds.views import RequestShotView, request_url, ShotDetailView
-from h1ds.views import DeviceListView, DeviceDetailView
+from h1ds.views import DeviceListView, DeviceDetailView, ShotListView
 
 
 admin.autodiscover()
@@ -123,8 +123,8 @@ internal_patterns = patterns('',
 ## Data modules
 data_patterns = patterns('',
                          url(r'^$', DeviceListView.as_view(), name="device-list"),
-                         url(r'^(?P<device>[-\w]+)/$', DeviceDetailView.as_view(), name="device-detail"),
-                         #url(r'^$', ShotListView.as_view(), name="shot-list"),
+                         url(r'^(?P<slug>[-\w]+)/$', DeviceDetailView.as_view(), name="device-detail"),
+                         url(r'^(?P<slug>[-\w]+)/shots/$', ShotListView.as_view(), name="device-shot-list"),
                          url(r'^(?P<device>[-\w]+)/(?P<shot>\d+|latest)/$', ShotDetailView.as_view(),
                              name="shot-detail"),
                          url(r'^(?P<device>[-\w]+)/(?P<shot>\d+|latest)/(?P<nodepath>.+)/$', NodeView.as_view(),
