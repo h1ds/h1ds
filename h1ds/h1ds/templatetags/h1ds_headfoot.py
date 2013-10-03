@@ -1,6 +1,8 @@
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from h1ds import version as h1ds_version
+
 
 register = template.Library()
 
@@ -68,20 +70,14 @@ def do_h1ds_header(parser, token):
 
 class H1DSFooterNode(template.Node):
     def render(self, context):
-        app_string = ('<a href="%s"><strong>%s</strong></a> %s '
-                      '[<a href="%s">bug/feature request</a>]')
-        app_strings = []
-        for installed_app in h1ds_installed_apps:
-            try:
-                version_mod = '.'.join([installed_app, 'version'])
-                app_module = __import__(version_mod, globals(), locals(), [])
-                app_urls = app_module.version.get_module_urls()
-                app_version = app_module.version.get_version()
-                app_strings.append(app_string % (app_urls[0], installed_app,
-                                                 app_version, app_urls[1]))
-            except ImportError:
-                app_strings.append("<strong>%s</strong>" % installed_app)
-        return '<p>%s</p>' % " &middot; ".join(app_strings)
+        return ("<p>"
+                "<strong>H1DS</strong>"
+                "<br/>"
+                "version: {}"
+                "<br/>"
+                "<a href='https://github.com/h1ds/h1ds/issues'>issue tracker</a>"
+                "</p>".format(h1ds_version.get_version()))
+
 
 
 def do_h1ds_footer(parser, token):
