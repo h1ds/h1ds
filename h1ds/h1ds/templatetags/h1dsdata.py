@@ -145,10 +145,10 @@ def show_info(context, data_node):
 
 
 @register.simple_tag(takes_context=True)
-def get_url_for_shot(context, url, new_shot):
-    #input_shot = shot_regex.findall(url)[0]
-    print "temp hack - not working"
-    return url  # url.replace(str(input_shot), str(new_shot))
+def get_usersignal_url_for_shot(context, usersignal, shot):
+    t = template.Template(usersignal.url)
+    c = template.Context({"shot": int(shot)})
+    return t.render(c)
 
 
 class GetAbsoluteUriNode(template.Node):

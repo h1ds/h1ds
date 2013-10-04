@@ -79,7 +79,6 @@ class H1DSFooterNode(template.Node):
                 "</p>".format(h1ds_version.get_version()))
 
 
-
 def do_h1ds_footer(parser, token):
     """Populate the H1DS footer.
 

@@ -21,7 +21,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import TemplateView
 
-from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device
+from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device, UserSignalUpdateForm
 from h1ds.utils import get_backend_shot_manager
 from h1ds.base import get_filter_list
 
@@ -231,6 +231,7 @@ class RemoveFilterView(RedirectView):
 
 class UserSignalCreateView(CreateView):
     form_class = UserSignalForm
+    template_name = "h1ds/usersignal_form.html"
 
     def get_success_url(self):
         return self.request.POST.get('url', "/")
@@ -246,6 +247,8 @@ class UserSignalCreateView(CreateView):
 
 class UserSignalUpdateView(UpdateView):
     model = UserSignal
+    form_class = UserSignalUpdateForm
+    template_name = "h1ds/usersignal_update_form.html"
 
     def get_success_url(self):
         return self.request.POST.get('redirect_url', "/")
@@ -462,7 +465,12 @@ class NodeView(APIView):
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"
-            return Response({'node': node, 'track_latest_shot': track_latest_shot}, template_name='h1ds/' + template)
+            user_signals = UserSignal.objects.filter(user=request.user)
+            return Response({'node': node,
+                             'track_latest_shot': track_latest_shot,
+                             'user_signal_form': UserSignalForm(),
+                             'user_signals': user_signals},
+                            template_name='h1ds/' + template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)
 

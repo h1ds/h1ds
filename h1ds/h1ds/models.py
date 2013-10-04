@@ -496,11 +496,15 @@ class UserSignal(models.Model):
     # TODO: unique together user, name
 
     user = models.ForeignKey(User, editable=False)
-    url = models.URLField(max_length=2048)
+    url = models.URLField(max_length=2048, help_text=("URL of the signal. "
+                                                      "If you want the signal to show the currently viewed shot, "
+                                                      "then replace the shot number with {{shot}}. "
+                                                      "The URL is parsed as a Django template, so standard template "
+                                                      "filters can be used, such as {{shot|add:'-1'}} or"
+                                                      "{{shot|add:'1'}} to show the previous and next shots, "
+                                                      "respectively."))
     name = models.CharField(max_length=1024)
     ordering = models.IntegerField(blank=True)
-    is_fixed_to_shot = models.BooleanField(default=True)
-    shot = models.IntegerField(blank=True, null=True)
 
     def __unicode__(self):
         return unicode("%s" % self.name)
@@ -509,4 +513,9 @@ class UserSignal(models.Model):
 class UserSignalForm(ModelForm):
     class Meta:
         model = UserSignal
-        fields = ('name', 'is_fixed_to_shot',)
+        fields = ('name', )
+
+
+class UserSignalUpdateForm(ModelForm):
+    class Meta:
+        model = UserSignal

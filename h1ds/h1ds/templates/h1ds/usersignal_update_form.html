@@ -1,6 +1,6 @@
 {% extends "h1ds/base.html" %}
 {% block content %}
-<form action="{% url 'h1ds-create-user-signal' %}" method="post">{% csrf_token %}
+<form action="" method="post">{% csrf_token %}
 {{ form.as_p }}
 <input type="hidden" id="redirect_url" name="redirect_url" value="{{ redirect_url }}">
 <input type="submit" value="Submit" />
