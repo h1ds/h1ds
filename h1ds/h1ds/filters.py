@@ -138,6 +138,7 @@ binary_powers = 2 ** np.arange(30)
 ## signal -> scalar                                                   ##
 ########################################################################
 
+
 class FirstPulse(Array1DimNumericBaseFilter):
     """Return value of dim when the signal is greater than threshold.
 
@@ -162,7 +163,7 @@ class FirstPulse(Array1DimNumericBaseFilter):
         node.data.dimension = []
         node.data.value_units = None
         node.data.dimension_units = None
-        node.data.value_dtype = 'int' # TODO: should we use dtypes rather than strings?
+        node.data.value_dtype = 'int'  # TODO: should we use dtypes rather than strings?
         node.data.dimension_dtype = None
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = 'first_pulse(%s, %s)' % (node.data.value_labels[0], self.kwargs["threshold"])
@@ -909,4 +910,3 @@ class Exponent(BaseFilter):
 ##         cast_dtype = getattr(np, self.kwargs["dtype"])
 ##         node.data = cast_dtype(node.data)
 ##         node.dim = cast_dtype(node.dim)
-
