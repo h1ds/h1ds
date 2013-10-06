@@ -13,6 +13,6 @@ class SummaryAttributeAdmin(admin.ModelAdmin):
     list_display = ('slug', 'name', 'is_default', 'source', 'display_order')
     list_display_links = ('slug',)
     list_editable = ('name', 'is_default', 'source', 'display_order')
-
+    actions = ['delete_selected']
 
 admin.site.register(SummaryAttribute, SummaryAttributeAdmin)
