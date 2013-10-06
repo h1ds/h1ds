@@ -42,7 +42,12 @@ DATABASES = {
         'HOST': '',
         # Set to empty string for default. Not used with sqlite3.
         'PORT': '',
+    },
+        'summarydb': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(VENV_DIR, 'db', 'summary.db')
     }
+
 }
 
 CACHES = {

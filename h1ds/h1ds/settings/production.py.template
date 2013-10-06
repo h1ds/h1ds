@@ -4,12 +4,10 @@ DEBUG = False
 
 SECRET_KEY = '***ChangeMeToSomethingUnique***'
 
-DATABASES = {
-    'default': {
+DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(DJANGO_PROJECT_DIR, 'db', 'h1ds_production.db')
             }
-    }
 
 VERBOSE=0
 

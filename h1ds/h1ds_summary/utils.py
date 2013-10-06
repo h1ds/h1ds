@@ -2,7 +2,7 @@
 from datetime import datetime, MINYEAR
 from colorsys import hsv_to_rgb
 
-from django.db import connection, transaction
+from django.db import connections, transaction
 from django.db.utils import DatabaseError
 from django.conf import settings
 from django.core.cache import cache
@@ -22,7 +22,7 @@ except AttributeError:
 
 
 def drop_summary_table(table=SUMMARY_TABLE_NAME):
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
     cursor.execute("DROP TABLE %s" % table)
 
 
@@ -41,7 +41,7 @@ def generate_base_summary_table(cursor, table=SUMMARY_TABLE_NAME):
 
 
 def get_latest_shot_from_summary_table(table=SUMMARY_TABLE_NAME):
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
     try:
         cursor.execute("SELECT MAX(shot) FROM %(table)s" % {'table': table})
     except DatabaseError:
@@ -154,7 +154,7 @@ def parse_filter_str(filter_str):
 
 
 def delete_attr_from_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
     try:
         cursor.execute("ALTER TABLE %(table)s DROP COLUMN %(col)s" % {'table': table, 'col': attr_slug})
         cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)
@@ -170,7 +170,7 @@ def RGBToHTMLColor(rgb_tuple):
 
 def time_since_last_summary_table_modification(table=SUMMARY_TABLE_NAME):
     """Return timedelta since last modification of summary table."""
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
     #print datetime.now()
     try:
         cursor.execute("SELECT max(timestamp) FROM %(table)s" % {'table': table})
@@ -208,7 +208,7 @@ def get_attr_list(cursor, table=SUMMARY_TABLE_NAME):
 def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     import h1ds_summary.models
     # TODO: need to get dtype from data source...
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
 
     ## check if attribute already exists.
     attr_list = get_attr_list(cursor, table)
@@ -233,7 +233,7 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
 
 
 def update_single_entry(attribute, shot, value, table=SUMMARY_TABLE_NAME):
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
     cursor.execute("UPDATE %s SET %s=%s WHERE shot=%d" % (table, attribute, str(value), shot))
     transaction.commit_unless_managed()
     cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)
