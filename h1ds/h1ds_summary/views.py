@@ -376,10 +376,10 @@ def get_summary_attribute_form_from_url(request):
     # Get the django view function corresponding to the URL path
     view, args, kwargs = resolve(parsed_url_list[2])
 
-    node_ancestry = kwargs['nodepath'].split("/")
-    node = Node.datatree.get_node_from_ancestry(node_ancestry)
+    shot_str = kwargs["shot"]
 
     #url_processor = URLProcessor(url=kwargs['url'])
+
     # Create a  new query  dict from the  queries in the  requested URL,
     # i.e. data filters, etc...
     new_query = QueryDict(parsed_url_list[4]).copy()
@@ -402,7 +402,7 @@ def get_summary_attribute_form_from_url(request):
 
     # Now we generalise the URL  for any shot, replacing the shot number
     # with __shot__
-    general_url = attr_url_json.replace(str(node.shot.number), "__shot__")
+    general_url = attr_url_json.replace(shot_str, "__shot__")
 
     # Create a SummaryAttributeForm with URL and data type entries pre-filled
     summary_attribute_form = SummaryAttributeForm(initial={'source': general_url})
