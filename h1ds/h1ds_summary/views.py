@@ -398,7 +398,7 @@ def get_summary_attribute_form_from_url(request):
 
     # url_response content is a string, let's convert it to a dictionary
     # using the json parser.
-    json_data = json.loads(url_response.content)
+    # json_data = json.loads(url_response.content)
 
     # Now we generalise the URL  for any shot, replacing the shot number
     # with __shot__
