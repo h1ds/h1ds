@@ -7,8 +7,11 @@ import xml.etree.ElementTree as etree
 import json
 import time
 import hashlib
+import datetime
+import decimal
 from urlparse import urlparse
 
+from django.utils.functional import Promise
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseBadRequest
@@ -23,9 +26,20 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import TemplateView
 from django.core.urlresolvers import resolve, reverse
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.renderers import JSONRenderer
+from rest_framework.renderers import YAMLRenderer
+from rest_framework.renderers import XMLRenderer
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.compat import timezone, force_text
+
+from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer
 from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device, UserSignalUpdateForm
 from h1ds.utils import get_backend_shot_manager
 from h1ds.base import get_filter_list
+
 
 backend_shot_manager = get_backend_shot_manager()
 
@@ -386,20 +400,8 @@ def request_url(request):
                         mimetype='text/xml; charset=utf-8')
 
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.renderers import TemplateHTMLRenderer
-from rest_framework.renderers import JSONRenderer
-from rest_framework.renderers import YAMLRenderer
-from rest_framework.renderers import XMLRenderer
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer
 
-## for JSONNumpyEncoder
-from django.utils.functional import Promise
-import datetime
-import decimal
-from rest_framework.compat import timezone, force_text
+
 
 
 class JSONNumpyEncoder(json.JSONEncoder):
