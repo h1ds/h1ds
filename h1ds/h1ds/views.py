@@ -7,6 +7,7 @@ import xml.etree.ElementTree as etree
 import json
 import time
 import hashlib
+from urlparse import urlparse
 
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
@@ -20,6 +21,7 @@ from django.views.generic import View, ListView, DetailView, RedirectView
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import TemplateView
+from django.core.urlresolvers import resolve
 
 from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device, UserSignalUpdateForm
 from h1ds.utils import get_backend_shot_manager
@@ -288,16 +290,21 @@ class RequestShotView(RedirectView):
 
 
 class AJAXShotRequestURL(View):
-    """Return URL modified for requested shot"""
+    """Return URL modified for requested shot
+
+    TODO: make views work for any format, not just json.
+    """
 
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
         input_path = request.GET.get('input_path')
-        shot = int(request.GET.get('shot'))
-        url_processor = URLProcessor(url=input_path)
-        url_processor.shot = shot
-        new_url = url_processor.get_url()
+        shot = request.GET.get('shot')
+        # TODO: create a reusable function in utils.py to do this lookup
+        # so we don't pollute all the code with specific refs to
+        # urls (e.g. kwargs['shot'] here.
+        view, args, kwargs = resolve(urlparse(input_path)[2])
+        new_url = input_path.replace(kwargs['shot'], shot)
         output_json = '{"new_url": "%s"}' % new_url
         return HttpResponse(output_json, 'application/javascript')
 
