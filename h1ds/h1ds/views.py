@@ -408,6 +408,8 @@ class JSONNumpyEncoder(json.JSONEncoder):
     decimal types, and generators.
 
     trivial rewite of rest_framework class to allow numpy types.
+    TODO: the change has been submitted and patched upstream, so when
+    a new version of django rest framwork comes out we can drop this.
     """
 
     def default(self, o):
