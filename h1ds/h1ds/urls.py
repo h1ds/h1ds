@@ -113,10 +113,10 @@ internal_patterns = patterns('',
                              url(r'^request_shot/$', RequestShotView.as_view(), name="h1ds-request-shot"),
                              url(r'^url_for_shot/$', AJAXShotRequestURL.as_view(), name="h1ds-shot-request-url"),
                              # TODO:  should  not  have separate  AJAX  views. e.g. call with ?format=json
-                             url(r'^latest_shot/$', AJAXLatestShotView.as_view(),
-                                 name="h1ds-latest-shot-for-default-tree"),
-                             url(r'^latest_shot/(?P<tree_name>[^/]+)/$', AJAXLatestShotView.as_view(),
+                             url(r'^(?P<device>[-\w]+)/latest_shot/$', AJAXLatestShotView.as_view(),
                                  name="h1ds-latest-shot"),
+                             url(r'^latest_shot/$', AJAXLatestShotView.as_view(),
+                                 name="h1ds-latest-shot-for-default-device"),
                              url(r'^request_url/$', request_url, name="h1ds-request-url"),
 )
 

@@ -323,7 +323,7 @@ class AJAXShotRequestURL(View):
         return HttpResponse(output_json, 'application/javascript')
 
 
-def xml_latest_shot(request):
+def xml_latest_shot(request, latest_shot):
     """Hack...
 
     TODO: Hack to get IDL client working again - this should be merged
@@ -331,13 +331,12 @@ def xml_latest_shot(request):
 
     """
 
-    shot = str(get_latest_shot())
     # TODO - get URI from settings, don't hardwire h1svr
     response_xml = etree.Element('{http://h1svr.anu.edu.au/data}dataurlmap',
                                  attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
 
     shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
-    shot_number.text = shot
+    shot_number.text = str(latest_shot)
     return HttpResponse(etree.tostring(response_xml),
                         mimetype='text/xml; charset=utf-8')
 
@@ -349,9 +348,17 @@ class AJAXLatestShotView(View):
 
     def get(self, request, *args, **kwargs):
         format_ = get_format(request, default='json')
+
+        device_slug = self.kwargs.get('device', None)
+        if device_slug:
+            device = Device.objects.get(slug=device_slug)
+        else:
+            device = Device.objects.get(is_default=True)
+        latest_shot = device.latest_shot.number
+
         if format_.lower() == 'xml':
-            return xml_latest_shot(request)
-        latest_shot = get_latest_shot()
+            return xml_latest_shot(request, latest_shot)
+
         return HttpResponse('{"latest_shot":"%s"}' % latest_shot,
                             'application/javascript')
 
