@@ -21,7 +21,7 @@ from django.views.generic import View, ListView, DetailView, RedirectView
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import TemplateView
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve, reverse
 
 from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device, UserSignalUpdateForm
 from h1ds.utils import get_backend_shot_manager
@@ -343,11 +343,19 @@ class AJAXLatestShotView(View):
 
 
 def request_url(request):
-    """Return the URL for the requested parameters."""
+    """Return the URL for the requested parameters.
+
+
+    TODO: generalise view to all data formats, not just xml.
+
+    """
 
     shot = request.GET['shot']
     path = request.GET['path']
     tree = request.GET['tree']
+    # TODO: add setting for defauly device - e.g. Device.objects.get_default()
+    # either extend the default manager or create a new one.
+    device = request.GET.get('device', Device.objects.all()[0].slug)
 
     xml_elmt = '{http://h1svr.anu.edu.au/}dataurlmap'
     lang_attr = {'{http://www.w3.org/XML/1998/namespace}lang': 'en'}
@@ -359,9 +367,18 @@ def request_url(request):
     data_path.text = path
     data_tree = etree.SubElement(url_xml, 'tree', attrib={})
     data_tree.text = tree
+    device_elmt = etree.SubElement(url_xml, 'device', attrib={})
+    device_elmt.text = device
 
-    url_processor = URLProcessor(shot=int(shot), tree=tree, path=path)
-    url = url_processor.get_url()
+    if path:
+        nodepath = '/'.join([tree, path])
+    else:
+        nodepath = tree
+    url = reverse('node-detail', kwargs={'device': device,
+                                         'shot': shot,
+                                         'nodepath': nodepath
+                                         })
+
     url_el = etree.SubElement(url_xml, 'url', attrib={})
     url_el.text = url
 
