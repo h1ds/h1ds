@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from celery.decorators import task, periodic_task
 from celery.task.schedules import crontab
 from django.core.cache import cache
-from django.db import connection, transaction
+from django.db import connections, transaction
 from django.conf import settings
 
 from h1ds.utils import get_backend_shot_manager
@@ -27,7 +27,7 @@ sync_timedelta = timedelta(minutes=1)
 def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
     import h1ds_summary.models
 
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
     if attributes == 'all':
         attributes = h1ds_summary.models.SummaryAttribute.objects.all()
     if len(attributes) > 0:
@@ -97,7 +97,7 @@ def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
     # get summary instance
     attr_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
     # get shot list
-    cursor = connection.cursor()
+    cursor = connections['summarydb'].cursor()
     cursor.execute("SELECT shot from %(table)s GROUP BY -shot" % {'table': table})
     shot_list = [int(i[0]) for i in cursor.fetchall()]
     for shot in shot_list:
