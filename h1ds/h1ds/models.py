@@ -124,12 +124,18 @@ class Device(models.Model):
     # We set null=True so that we can set up devices before we have shots and datasets set up.
     latest_shot = models.ForeignKey("Shot", null=True, blank=True, related_name="+")
 
+    is_default = models.BooleanField(default=True, help_text="Set this as the default device.")
+
     def get_absolute_url(self):
         return reverse("device-detail", kwargs={"slug": self.slug})
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Device, self).save(*args, **kwargs)
+        if self.is_default:
+            for device in Device.objects.exclude(pk=self.pk).filter(is_default=True):
+                device.is_default = False
+                device.save()
 
     def __unicode__(self):
         return self.name
