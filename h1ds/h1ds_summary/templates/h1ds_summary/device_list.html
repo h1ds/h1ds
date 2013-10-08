@@ -1,0 +1,10 @@
+{% extends "h1ds_summary/summary_base.html" %}
+{% block content %}
+
+<h1>Experimental datasets</h1>
+<ul class="device-list">
+{% for device in results %}
+ <li><a href="{% url 'h1ds-summary-device-homepage' slug=device.slug %}">{{device.name}}</a>
+{% endfor %}
+</ul>
+{% endblock content %}
