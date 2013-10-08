@@ -211,7 +211,8 @@ class HTMLSummaryResponseMixin(SummaryMixin):
 
     def get(self, request, *args, **kwargs):
         shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
-
+        device = Device.objects.get(slug=kwargs.get("slug"))
+        latest_shot = device.latest_shot.number
         q = self.get_summary_data(request, *args, **kwargs)
 
         # TODO need to fix get_summary_data so it doesn't return REsponse object...
@@ -226,8 +227,6 @@ class HTMLSummaryResponseMixin(SummaryMixin):
         attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
         excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug',
                                                                                                           flat=True)
-
-
         # This seems a bit messy, but  it's not clear to me how to refer
         # to a summary data value's  attribute slug name from within the
         # template, so let's attach it here...
@@ -243,8 +242,7 @@ class HTMLSummaryResponseMixin(SummaryMixin):
 
         return render_to_response('h1ds_summary/summary_table.html',
                                   {'data': new_data, 'data_headers': data_headers,
-                                   # TODO: use an API provided by h1ds to get latest shot...
-                                   'latest_shot': 0, #get_latest_shot(),
+                                   'latest_shot': latest_shot,
                                    'included_attrs': attribute_slugs,
                                    'poll_server': poll_server,
                                    'excluded_attrs': excluded_attribute_slugs},
