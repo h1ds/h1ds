@@ -1,24 +1,15 @@
 """Various utility functions, kept here to keep models.py and views.py tidy."""
 from datetime import datetime, MINYEAR
-from colorsys import hsv_to_rgb
 
 from django.db import connections, transaction
 from django.db.utils import DatabaseError
-from django.conf import settings
 from django.core.cache import cache
-
-import numpy
 
 from h1ds_summary import SUMMARY_TABLE_NAME
 
 CACHE_UPDATE_TIMEOUT = 60 * 60 * 24 * 365
 
 SIGNAL_LENGTH = 2 ** 16
-
-try:
-    canonical_shot = settings.H1DS_SUMMARY_CANONICAL_SHOT
-except AttributeError:
-    canonical_shot = 0
 
 
 def drop_summary_table(table=SUMMARY_TABLE_NAME):
@@ -213,7 +204,8 @@ def update_attribute_in_summary_table(attr_slug, table=SUMMARY_TABLE_NAME):
     ## check if attribute already exists.
     attr_list = get_attr_list(cursor, table)
     attribute_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
-    attr_dtype = attribute_instance.get_value(canonical_shot)[1]
+    shot = attribute_instance.device.latest_shot.number
+    attr_dtype = attribute_instance.get_value(shot)[1]
 
     attr_exists = False
     correct_dtype = False
