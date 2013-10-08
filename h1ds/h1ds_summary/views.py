@@ -107,12 +107,14 @@ class SummaryMixin(object):
             else:
                 new_attr_str = '+'.join(attribute_slugs)
             if filter_str:
-                # TODO: might work for html only - either pass get query(to get format value - html, json etc) or use per-format method
+                # TODO: might work for html only - either pass get
+                # query(to get format value - html, json etc) or use per-format method
                 return HttpResponseRedirect(reverse('sdfsummary',
                                                     kwargs={'shot_str': shot_str, 'attr_str': new_attr_str,
                                                             'filter_str': filter_str}))
             else:
-                # TODO: might work for html only - either pass get query(to get format value - html, json etc) or use per-format method
+                # TODO: might work for html only - either pass get
+                # query(to get format value - html, json etc) or use per-format method
                 return HttpResponseRedirect(
                     reverse('sdsummary', kwargs={'shot_str': shot_str, 'attr_str': new_attr_str}))
 
@@ -125,7 +127,7 @@ class SummaryMixin(object):
             #return self.no_shot_response(request)
             raise NoShotException
 
-        if filter_str == None:
+        if filter_str is None:
             where = shot_where
         else:
             filter_where = parse_filter_str(filter_str)

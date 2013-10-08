@@ -71,11 +71,11 @@ class SummaryAttribute(models.Model):
                 response = json.loads(urllib2.urlopen(request).read())
                 value = response['data']
                 dtype = response['meta']['summary_dtype']
-                if value == None:
+                if value is None:
                     value = 'NULL'
-                return (value, dtype)
+                return value, dtype
             except:
-                return ('NULL', 'NULL')
+                return 'NULL', 'NULL'
         else:
             # assume source is inside a module in h1ds_summary.attributes
             try:
@@ -88,6 +88,4 @@ class SummaryAttribute(models.Model):
                 source_class = source_module.__getattribute__(class_name)
                 return source_class(shot_number).do_script()
             except:
-                return ('NULL', 'NULL')
-
-
+                return 'NULL', 'NULL'

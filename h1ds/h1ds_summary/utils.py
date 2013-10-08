@@ -46,6 +46,7 @@ def get_latest_shot_from_summary_table(table=SUMMARY_TABLE_NAME):
 ## URL path parsers for summary database                              ##
 ########################################################################
 
+
 def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
     """Parse the URL path component corresponding to the requested shots."""
 
@@ -55,7 +56,7 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
     if 'last' in shot_str:
         # Only touch the database if we need to...
         latest_shot = get_latest_shot_from_summary_table(table=table)
-        if latest_shot == None:
+        if latest_shot is None:
             return None
         else:
             latest_shot = int(get_latest_shot_from_summary_table(table=table))
@@ -92,8 +93,6 @@ def parse_shot_str(shot_str, table=SUMMARY_TABLE_NAME):
 
 
 def parse_attr_str(attr_str):
-    import h1ds_summary.models
-
     """Parse URL component corresponding to selected attributes.
 
     If attr_str is:
@@ -103,6 +102,7 @@ def parse_attr_str(attr_str):
 
     Return a list of attribute slug names.
     """
+    import h1ds_summary.models
     if 'all' in attr_str.lower():
         return list(h1ds_summary.models.SummaryAttribute.objects.values_list('slug', flat=True))
 
@@ -169,7 +169,7 @@ def time_since_last_summary_table_modification(table=SUMMARY_TABLE_NAME):
     except DatabaseError:
         generate_base_summary_table(cursor)
         latest_timestamp = None
-    if latest_timestamp == None:
+    if latest_timestamp is None:
         # There are no entries in the summary table...
         latest_timestamp = datetime(MINYEAR, 1, 1)
     try:

@@ -8,5 +8,3 @@ class SummaryAttributeForm(ModelForm):
         # The device is determined by the data URL, so don't give user the
         # option to modify it.
         exclude = ('device', )
-
-
