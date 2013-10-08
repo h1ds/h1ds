@@ -1,9 +1,17 @@
 from django.contrib import admin
+from django.forms import models
 from h1ds.models import H1DSSignal, H1DSSignalInstance, Worksheet, Shot
 from h1ds.models import UserSignal, Node, Filter, FilterDtype, FilterDim, Device
 
 
+class DeviceAdminForm(models.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(DeviceAdminForm, self).__init__(*args, **kwargs)
+        self.fields['latest_shot'].queryset = Shot.objects.filter(device=self.instance)
+
+
 class DeviceAdmin(admin.ModelAdmin):
+    form = DeviceAdminForm
     prepopulated_fields = {"slug": ("name",)}
 
 

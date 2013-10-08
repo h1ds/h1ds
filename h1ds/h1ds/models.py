@@ -122,6 +122,9 @@ class Device(models.Model):
     # Using "+" for related_name tells Django not to create a backwards relation.
     # In this case, we don't want a backwards relation as it would clash with Shot.device.
     # We set null=True so that we can set up devices before we have shots and datasets set up.
+    # TODO: restrict this foreign key to shots which belong to the device instance. This has been
+    # done for the admin form, but should be done in general. The obvious approach would be to use
+    # the limit_choices_to kwarg, but I can't see how to include the Device instance with that.
     latest_shot = models.ForeignKey("Shot", null=True, blank=True, related_name="+")
 
     is_default = models.BooleanField(default=True, help_text="Set this as the default device.")
