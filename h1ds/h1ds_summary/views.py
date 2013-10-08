@@ -335,15 +335,18 @@ class AddSummaryAttribiteView(View):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
+        device = Device.objects.get(slug=kwargs['device_slug'])
         summary_attribute_form = SummaryAttributeForm(request.POST)
         if summary_attribute_form.is_valid():
-            summary_attribute_form.save()
+            summary_attribute = summary_attribute_form.save(commit=False)
+            summary_attribute.device = device
+            summary_attribute.save()
             return_url = request.POST.get('return_url', reverse("h1ds-summary-homepage"))
             return HttpResponseRedirect(return_url)
         else:
             return render_to_response('h1ds_summary/form.html',
                                       {'form': summary_attribute_form,
-                                       'submit_url': reverse('add-summary-attribute')},
+                                       'submit_url': reverse('add-summary-attribute', args=args, kwargs=kwargs)},
                                       context_instance=RequestContext(request))
 
 
@@ -377,6 +380,7 @@ def get_summary_attribute_form_from_url(request):
     view, args, kwargs = resolve(parsed_url_list[2])
 
     shot_str = kwargs["shot"]
+    device = Device.objects.get(slug=kwargs['device'])
 
     # Create a  new query  dict from the  queries in the  requested URL,
     # i.e. data filters, etc...
@@ -411,7 +415,7 @@ def get_summary_attribute_form_from_url(request):
 
     # Otherwise, forward user to form entry page
     return render_to_response('h1ds_summary/form.html',
-                              {'form': summary_attribute_form, 'submit_url': reverse('add-summary-attribute')},
+                              {'form': summary_attribute_form, 'submit_url': reverse('add-summary-attribute', kwargs={'device_slug': device.slug})},
                               context_instance=RequestContext(request))
 
 
