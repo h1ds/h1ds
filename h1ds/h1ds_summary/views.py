@@ -378,8 +378,6 @@ def get_summary_attribute_form_from_url(request):
 
     shot_str = kwargs["shot"]
 
-    #url_processor = URLProcessor(url=kwargs['url'])
-
     # Create a  new query  dict from the  queries in the  requested URL,
     # i.e. data filters, etc...
     new_query = QueryDict(parsed_url_list[4]).copy()

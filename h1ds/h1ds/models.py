@@ -383,7 +383,7 @@ class Node(models.Model, backend_module.NodeData):
         # TODO: should filters.http_arg be put here instead?
         for key, val in kwargs.iteritems():
             if isinstance(val, str) and "__shot__" in val:
-                shot_str = str(self.url_processor.shot)
+                shot_str = str(self.shot.number)
                 kwargs[key] = val.replace("__shot__", shot_str)
         return kwargs
 
