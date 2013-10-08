@@ -2,6 +2,7 @@ import urllib2
 import json
 
 from django.db import models
+from h1ds.models import Device
 from h1ds_summary.utils import delete_attr_from_summary_table
 from h1ds_summary.utils import update_attribute_in_summary_table
 from h1ds_summary.tasks import populate_attribute_task
@@ -39,6 +40,7 @@ class SummaryAttribute(models.Model):
     format_string = models.CharField(max_length=64,
                                      blank=True,
                                      help_text=sa_help_text['format_string'])
+    device = models.ForeignKey(Device, on_delete=models.PROTECT)
 
     class Meta:
         ordering = ["display_order", "slug"]
