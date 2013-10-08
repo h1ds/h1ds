@@ -407,10 +407,6 @@ def request_url(request):
                         mimetype='text/xml; charset=utf-8')
 
 
-
-
-
-
 class JSONNumpyEncoder(json.JSONEncoder):
     """
     JSONEncoder subclass that knows how to encode date/time/timedelta,

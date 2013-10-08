@@ -16,10 +16,13 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import View
 from django.utils.importlib import import_module
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned
 
 #from h1ds.base import get_latest_shot_function
 from h1ds.models import Node
 
+from h1ds.views import DeviceListView
+from h1ds.models import Device
 from h1ds_summary import SUMMARY_TABLE_NAME
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
@@ -80,7 +83,6 @@ class SummaryMixin(object):
     def get_attr_slugs(self, request, *args, **kwargs):
         attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
         return parse_attr_str(attr_str)
-
 
     def get_summary_data(self, request, *args, **kwargs):
         shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
@@ -477,3 +479,16 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
 
     if request.method == 'GET':
         return HttpResponseRedirect("/")
+
+
+class SummaryDeviceListView(DeviceListView):
+    def get_template_names(self):
+        return ("h1ds_summary/device_list.html", )
+
+    def get(self, request, *args, **kwargs):
+        # If there is only one device, then show the device detail view rather than list devices.
+        try:
+            return redirect('h1ds-summary-device-homepage', slug=self.queryset.get().slug)
+        except (Device.DoesNotExist, MultipleObjectsReturned):
+            # TODO: we should treat Device.DoesNotExist separately with a message to create a device.
+            return self.list(request, *args, **kwargs)
