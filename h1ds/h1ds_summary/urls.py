@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 from h1ds_summary.views import raw_sql, get_summary_attribute_form_from_url, go_to_source
 from h1ds_summary.views import SummaryView, AddSummaryAttribiteView, RecomputeSummaryView
@@ -22,7 +22,7 @@ urlpatterns = patterns('',
                        url(r'^_/raw_sql/$', raw_sql, name="raw-sql"),
                        url(r'^_/recompute/$',
                            RecomputeSummaryView.as_view(), name="summary-recompute"),
-)
+                       )
 
 urlpatterns += patterns('',
                         url(r'^$',
@@ -33,4 +33,4 @@ urlpatterns += patterns('',
                             SummaryView.as_view(), name="sdsummary"),
                         url(r'^(?P<shot_str>[^/]+)/(?P<attr_str>[^/]+)/(?P<filter_str>[^/]+)/$',
                             SummaryView.as_view(), name="sdfsummary"),
-)
+                        )
