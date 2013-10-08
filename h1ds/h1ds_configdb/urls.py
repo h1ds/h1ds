@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 
 from h1ds_configdb.views import HomeView
 
@@ -18,5 +18,4 @@ urlpatterns = patterns('',
                            HomeView.as_view(), name="h1ds-configdb-filetypes"),
                        url(r'^(?P<filetype_str>[^/]+)/(?P<filter_str>[^/]+)/$',
                            HomeView.as_view(), name="h1ds-configdb-filtered")
-)
-
+                       )
