@@ -7,19 +7,11 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.core.urlresolvers import resolve, reverse
 from django.db import connection
-from django.db.models import Max
 from django.http import QueryDict, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
-from django.utils import simplejson
-from django.views.decorators.cache import never_cache
 from django.views.generic import View
-from django.utils.importlib import import_module
-from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
-
-#from h1ds.base import get_latest_shot_function
-from h1ds.models import Node
 
 from h1ds.views import DeviceListView
 from h1ds.models import Device
