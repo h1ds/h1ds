@@ -111,7 +111,7 @@ class UserMainView(ListView):
 
 
 class WorksheetView(DetailView):
-    def get_object(self):
+    def get_object(self, queryset=None):
         w = get_object_or_404(Worksheet,
                               user__username=self.kwargs['username'],
                               slug=self.kwargs['worksheet'])
