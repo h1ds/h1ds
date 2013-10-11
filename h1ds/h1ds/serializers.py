@@ -58,8 +58,6 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
 
         
         """
-        lookup_field = getattr(obj, self.lookup_field)
-        # kwargs = {self.lookup_field: lookup_field}
         kwargs = custom_kwargs
         try:
             return reverse(view_name, kwargs=kwargs, request=request, format=format)

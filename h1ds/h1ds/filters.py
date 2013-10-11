@@ -67,7 +67,7 @@ def http_arg(arg):
 
 
 class BaseFilterMetaclass(type):
-    def __new__(cls, name, bases, dct):
+    def __new__(mcs, name, bases, dct):
         # assert  some classmethods  which  simplify the  API, so  users
         # don't  have  to  put  @classmethod in  front  of  each  filter
         # subclass
@@ -75,7 +75,7 @@ class BaseFilterMetaclass(type):
         for cm in classmethods:
             if dct.has_key(cm):
                 dct[cm] = classmethod(dct[cm])
-        return type.__new__(cls, name, bases, dct)
+        return type.__new__(mcs, name, bases, dct)
 
 
 @exclude_filter
