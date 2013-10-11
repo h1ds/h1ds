@@ -420,13 +420,13 @@ class PrlLpn(Array1DimNumericBaseFilter):
         Handle  only the  signal,  not  the data  wrapper.  Also, we  assume
         arguments have already been cast to numeric types.
         """
-        N = int(0.5 + 0.5 / (dim[1] - dim[0]) / f0)
+        n = int(0.5 + 0.5 / (dim[1] - dim[0]) / f0)
         a = np.cumsum(signal)
         if order > 1:
             return self._do_prl_lpn(
                 self._do_prl_lpn(signal, dim, f0, order - 1), dim, f0, 1)
         else:
-            return (a[N:] - a[:-N]) / float(N)
+            return (a[n:] - a[:-n]) / float(n)
 
     def apply(self, node):
         _f0 = float(self.kwargs["f0"])

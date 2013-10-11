@@ -3,7 +3,7 @@
 TODO: most of the  response mixins do a check for  ndim etc, we should
 be able to refactor code to remove duplication..
 """
-import xml.etree.ElementTree as etree
+from xml.etree import ElementTree
 import json
 import time
 import hashlib
@@ -332,12 +332,12 @@ def xml_latest_shot(request, latest_shot):
     """
 
     # TODO - get URI from settings, don't hardwire h1svr
-    response_xml = etree.Element('{http://h1svr.anu.edu.au/data}dataurlmap',
+    response_xml = ElementTree.Element('{http://h1svr.anu.edu.au/data}dataurlmap',
                                  attrib={'{http://www.w3.org/XML/1998/namespace}lang': 'en'})
 
-    shot_number = etree.SubElement(response_xml, 'shot_number', attrib={})
+    shot_number = ElementTree.SubElement(response_xml, 'shot_number', attrib={})
     shot_number.text = str(latest_shot)
-    return HttpResponse(etree.tostring(response_xml),
+    return HttpResponse(ElementTree.tostring(response_xml),
                         mimetype='text/xml; charset=utf-8')
 
 
@@ -380,15 +380,15 @@ def request_url(request):
 
     xml_elmt = '{http://h1svr.anu.edu.au/}dataurlmap'
     lang_attr = {'{http://www.w3.org/XML/1998/namespace}lang': 'en'}
-    url_xml = etree.Element(xml_elmt, attrib=lang_attr)
+    url_xml = ElementTree.Element(xml_elmt, attrib=lang_attr)
 
-    shot_number = etree.SubElement(url_xml, 'shot_number', attrib={})
+    shot_number = ElementTree.SubElement(url_xml, 'shot_number', attrib={})
     shot_number.text = shot
-    data_path = etree.SubElement(url_xml, 'path', attrib={})
+    data_path = ElementTree.SubElement(url_xml, 'path', attrib={})
     data_path.text = path
-    data_tree = etree.SubElement(url_xml, 'tree', attrib={})
+    data_tree = ElementTree.SubElement(url_xml, 'tree', attrib={})
     data_tree.text = tree
-    device_elmt = etree.SubElement(url_xml, 'device', attrib={})
+    device_elmt = ElementTree.SubElement(url_xml, 'device', attrib={})
     device_elmt.text = device
 
     if path:
@@ -400,10 +400,10 @@ def request_url(request):
                                          'nodepath': nodepath
                                          })
 
-    url_el = etree.SubElement(url_xml, 'url', attrib={})
+    url_el = ElementTree.SubElement(url_xml, 'url', attrib={})
     url_el.text = url
 
-    return HttpResponse(etree.tostring(url_xml),
+    return HttpResponse(ElementTree.tostring(url_xml),
                         mimetype='text/xml; charset=utf-8')
 
 
