@@ -75,6 +75,8 @@ class H1DSFooterNode(template.Node):
                 "<br/>"
                 "version: {}"
                 "<br/>"
+                "<a href='http://h1ds.readthedocs.org/en/latest/'>Documentation</a>"
+                "<br/>"
                 "<a href='https://github.com/h1ds/h1ds/issues'>issue tracker</a>"
                 "</p>".format(h1ds_version.get_version()))
 
