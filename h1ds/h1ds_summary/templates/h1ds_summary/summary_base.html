@@ -8,7 +8,7 @@
   <div class="portlet" id="summary-portlet-data">
     <div class="portlet-header">summary data</div>
     <div class="portlet-content">
-      {% block summarycontent%}{% endblock summarycontent %}
+      {% block summarycontent %}{% endblock summarycontent %}
     </div>
   </div>
 </div>
@@ -18,7 +18,7 @@
     <div class="portlet-content">
       <div class="sidebarcontent">
 	<table width="100%" class="side-table">
-	  {% colsorttable item excluded_attrs 2 %}
+	  {% colsorttable item inactive_attributes 2 %}
 	  {% if table.startrow %}
 	  {% if table.oddrow %}
 	  <tr class="highlight">
@@ -32,7 +32,7 @@
 	    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
 	      {% endif %}
 	      <div class="options displayNone"></div>
-	      <a href="?show_attr={{item}}">{{item}}</a>
+	      <a href="{{item.url}}" title="{{ item.name }}: {{ item.description }}">{{item.slug}}</a>
 	    </td>
 	    {% if table.endrow %}
 	  </tr>
@@ -48,7 +48,7 @@
     <div class="portlet-content">
       <div class="sidebarcontent">
 	<table width="100%" class="side-table">
-	  {% table item included_attrs 2 %}
+	  {% table item active_attributes 2 %}
 	  {% if table.startrow %}
 	  {% if table.oddrow %}
 	  <tr class="highlight">
@@ -62,7 +62,7 @@
 	    <td class="{% if table.oddrow %}highlightableCell {% endif %}left cellAutoAdjust">
 	      {% endif %}
 	      <div class="options displayNone"></div>
-	      <a href="?hide_attr={{item}}">{{item}}</a>
+	      <a href="{{item.url}}" title="{{ item.name }}: {{ item.description }}">{{item.slug}}</a>
 	    </td>
 	    {% if table.endrow %}
 	  </tr>
@@ -78,6 +78,10 @@
     <div class="portlet-content">
       <div class="sidebarcontent fullform">
 	<form action="{% url "raw-sql" %}" method="post">{% csrf_token %}
+        {% comment %}
+        TODO: use standard django form display rather than hardcode form html.
+        This will also bring in the device field which is currently missing.
+        {% endcomment %}
 	  <span class="left">select</span>
 	  <INPUT style="width:100%" type="text" id="select" name="select" value="{{select}}"/>
 	  <span class="left">where</span>
@@ -90,4 +94,3 @@
 {% endif %}
 </div>
 {% endblock content %}
-

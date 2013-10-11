@@ -500,7 +500,8 @@ class NodeView(APIView):
             return Response({'node': node,
                              'track_latest_shot': track_latest_shot,
                              'user_signal_form': UserSignalForm(),
-                             'user_signals': user_signals},
+                             'user_signals': user_signals,
+                             'device': device},
                             template_name='h1ds/' + template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)

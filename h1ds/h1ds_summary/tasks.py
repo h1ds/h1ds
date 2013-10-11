@@ -1,125 +1,80 @@
-from datetime import datetime, timedelta
-
-from celery.decorators import task, periodic_task
-from celery.task.schedules import crontab
-from django.core.cache import cache
-from django.db import connections, transaction
-from django.conf import settings
+from celery import task, chain
+from django.db import transaction
 
 from h1ds.utils import get_backend_shot_manager
-from h1ds_summary.utils import get_latest_shot_from_summary_table, time_since_last_summary_table_modification
-from h1ds_summary.utils import CACHE_UPDATE_TIMEOUT
-from h1ds_summary import SUMMARY_TABLE_NAME
+from h1ds_summary import TABLE_NAME_TEMPLATE
+from h1ds_summary.utils import get_summary_cursor
 
-try:
-    MINIMUM_SUMMARY_TABLE_SHOT = settings.MINIMUM_SUMMARY_TABLE_SHOT
-except AttributeError:
-    MINIMUM_SUMMARY_TABLE_SHOT = 1
-
-#get_latest_shot = get_latest_shot_function()
 backend_shot_manager = get_backend_shot_manager()
 
-# Time between summary table synchronisations
-sync_timedelta = timedelta(minutes=1)
-#sync_timedelta = timedelta(seconds=10)
-
-
-def populate_summary_table(shots, attributes='all', table=SUMMARY_TABLE_NAME):
-    import h1ds_summary.models
-
-    cursor = connections['summarydb'].cursor()
-    if attributes == 'all':
-        attributes = h1ds_summary.models.SummaryAttribute.objects.all()
-    if len(attributes) > 0:
-        attr_names = tuple(a.slug for a in attributes)
-        attr_name_str = '(' + ','.join(['shot', ','.join((a.slug for a in attributes))]) + ')'
-        for shot in shots:
-            values = tuple(str(a.get_value(shot)[0]) for a in attributes)
-            values_str = '(' + ','.join([str(shot), ','.join(values)]) + ')'
-            update_str = ','.join(('%s=%s' % (a, values[ai]) for ai, a in enumerate(attr_names)))
-            # TODO: can we use INSERT OR UPDATE to avoid duplication?
-            cursor.execute("INSERT OR IGNORE INTO %(table)s %(attrs)s VALUES %(vals)s" % {'table': table,
-                                                                                          'attrs': attr_name_str,
-                                                                                          'vals': values_str,
-            })
-            update_str = update_str + ",timestamp=datetime('now')"
-            cursor.execute("UPDATE %(table)s SET %(update)s WHERE shot=%(shot)d" % {'table': table,
-                                                                                    'update': update_str,
-                                                                                    'shot': shot,
-            })
-            transaction.commit_unless_managed()
-            cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)
-
 
 @task()
-def populate_summary_table_task(shots, attributes='all', table=SUMMARY_TABLE_NAME):
-    populate_summary_table(shots, attributes=attributes, table=table)
+def get_summary_attribute_data(device_slug, shot_number, attribute_slug):
+    """Get data for summary attribute for a given shot.
 
+    Arguments:
+        device_slug (str) - slug for a h1ds.models.Device instance
+        shot_number (int) - shot number to get data for.
+        attribute_slug (str) - slug for an instance of h1ds.models.SummaryAttribute which belongs to the device.
 
-def get_sync_info():
-    sync_info = {'do_sync': False,
-                 'latest_h1ds_shot': None,
-                 'latest_sql_shot': None,
-                 'time_since_last_mod': None,
-    }
-    # get time since last summary table modification...
-    sync_info['time_since_last_mod'] = time_since_last_summary_table_modification()
-    #print sync_info['time_since_last_mod']
-    shot_manager = backend_shot_manager()
-    if sync_info['time_since_last_mod'] > sync_timedelta:
-        # Check if the latest summary table shot is up to date.
-        sync_info['latest_h1ds_shot'] = shot_manager.get_latest_shot()
-        sync_info['latest_sql_shot'] = max(get_latest_shot_from_summary_table(), MINIMUM_SUMMARY_TABLE_SHOT)
-        if sync_info['latest_sql_shot'] < sync_info['latest_h1ds_shot']:
-            sync_info['do_sync'] = True
-    return sync_info
+    Returns:
+        (attr_slug, data)
 
-# need to run celery in beat mode for periodic tasks (-B), e.g. /manage.py celeryd -v 2 -B -s celery -E -l INFO
-@periodic_task(run_every=sync_timedelta)
-def sync_summary_table():
-    """Check that the summary table is up to date.
-
-    If the summary table has not been altered since the last sync, check
-    that  the latest  shot in  the summary  database matches  the latest
-    H1DS data shot. If  not, backfill  the  summary table  from the  most
-    recent h1ds shot.
     """
-    sync_info = get_sync_info()
-    if sync_info['do_sync']:
-        shot_range = range(sync_info['latest_sql_shot'], sync_info['latest_h1ds_shot'] + 1)
-        shot_range.reverse()
-        populate_summary_table(shot_range)
+    # TODO: Can the imports be rearranged so we don't have to import here?
+    from h1ds_summary.models import SummaryAttribute
 
-
-def populate_attribute(attr_slug, table=SUMMARY_TABLE_NAME):
-    """Update the column for all shots in the summary database."""
-    import h1ds_summary.models
-    # get summary instance
-    attr_instance = h1ds_summary.models.SummaryAttribute.objects.get(slug=attr_slug)
-    # get shot list
-    cursor = connections['summarydb'].cursor()
-    cursor.execute("SELECT shot from %(table)s GROUP BY -shot" % {'table': table})
-    shot_list = [int(i[0]) for i in cursor.fetchall()]
-    for shot in shot_list:
-        value = attr_instance.get_value(shot)[0]
-        cursor.execute("UPDATE %(table)s SET %(attr)s=%(val)s WHERE shot=%(shot)d" % {'table': table,
-                                                                                      'attr': attr_slug,
-                                                                                      'val': value,
-                                                                                      'shot': shot})
-        transaction.commit_unless_managed()
-        cache.set('last_summarydb_update', datetime.now(), CACHE_UPDATE_TIMEOUT)
+    attribute = SummaryAttribute.objects.get(slug=attribute_slug, device__slug=device_slug)
+    try:
+        data = attribute.get_value(shot_number)
+    except:  # TODO: be more sensible about exception handling
+        data = None
+    return attribute_slug, data
 
 
 @task()
-def populate_attribute_task(attr_slug, table=SUMMARY_TABLE_NAME):
-    populate_attribute(attr_slug, table=table)
+def write_attributes_to_table(*args, **kwargs):
+    """Write attributes to summary database.
+
+    Keyword arguments:
+       table_name (str) - name of SQLite table to write to
+       shot_number (int) - shot number
+    Arguments
+       *args - remaining args should be (attr, data) pairs
+
+    e.g. write_attributes_to_table('my_table', 12345, ('dens',10), ('Ti',9))
+
+    """
+    # We use **kwargs because celery chaining pushes previous results to the
+    # first argument of successive tasks, and kwargs let us set up a partial
+    # where not arguments are not interchangeable (here, table_name and shot_number)
+    table_name = kwargs.get("table_name")
+    shot_number = kwargs.get("shot_number")
+
+    attr_str = "shot"
+    value_str = str(shot_number)
+    for attr in args:
+        attr_str += ",{}".format(attr[0])
+        if attr[1] is None:
+            value_str += ",NULL"
+        else:
+            value_str += ",{}".format(attr[1])
+
+    cursor = get_summary_cursor()
+    cursor.execute("INSERT OR REPLACE INTO {} ({}) VALUES ({})".format(table_name, attr_str, value_str))
+    transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
 
-#from h1ds_summary.tasks import generate_shot
+@task()
+def write_single_attribute_to_table(device_slug, shot_number, attribute_slug):
+    """Get a data for a single summary attribute and write it to the table.
 
-#def new_shot_callback(sender, **kwargs):
-#    """generate new shot when new_shot_signal is received."""
-#    result = generate_shot.delay(kwargs['shot'])
+    Arguments:
+        device slug (str) - slug for device
+        shot_number (int) - shot number
+        attribute_slug (str) - slug for SummaryAttribute for device.
 
-## TODO: hook up to h1ds_signal - where to specify h1ds_signal name? should we have a dedicated new shot signal?
-#new_shot_signal.connect(new_shot_callback)
+    """
+    table_name = TABLE_NAME_TEMPLATE.format(device_slug)
+    chain(get_summary_attribute_data.s(device_slug, shot_number, attribute_slug),
+          write_attributes_to_table.s(table_name=table_name, shot_number=shot_number)).apply_async()

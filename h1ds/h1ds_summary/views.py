@@ -1,5 +1,3 @@
-import json
-import datetime
 from urlparse import urlparse, urlunparse
 
 from django import forms
@@ -13,13 +11,20 @@ from django.template import RequestContext
 from django.views.generic import View
 from django.core.exceptions import MultipleObjectsReturned
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.renderers import TemplateHTMLRenderer
+from h1ds.views import JSONNumpyRenderer
+from rest_framework.renderers import YAMLRenderer
+from rest_framework.renderers import XMLRenderer
+from rest_framework import serializers
+
 from h1ds.views import DeviceListView
 from h1ds.models import Device
-from h1ds_summary import SUMMARY_TABLE_NAME
+from h1ds_summary.db import SummaryTable
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
-from h1ds_summary.utils import parse_shot_str, parse_attr_str, parse_filter_str, get_latest_shot_from_summary_table
-from h1ds_summary.tasks import populate_summary_table_task, populate_attribute_task
+from h1ds_summary.parsers import get_attribute_variants
 
 
 DEFAULT_SHOT_REGEX = "last30"
@@ -53,7 +58,10 @@ class AJAXLatestSummaryShotView(View):
     http_method_names = ['get']
 
     def get(self, request, *args, **kwargs):
-        latest_shot = get_latest_shot_from_summary_table()
+        device = Device.objects.get(slug=kwargs['device'])
+        #latest_shot = get_latest_shot_from_summary_table(device)
+        table = SummaryTable(device)
+        latest_shot = table.get_latest_shot()
         return HttpResponse('{"latest_shot":"%s"}' % latest_shot, 'application/javascript')
 
 
@@ -71,254 +79,30 @@ class AJAXLastUpdateTimeView(View):
             return HttpResponse('{"last_update":"null"}', 'application/javascript')
 
 
-class SummaryMixin(object):
-    def get_attr_slugs(self, request, *args, **kwargs):
-        attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
-        return parse_attr_str(attr_str)
-
-    def get_summary_data(self, request, *args, **kwargs):
-        shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
-        attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
-        filter_str = kwargs.get("filter_str", DEFAULT_FILTER)
-        table = kwargs.get("table", SUMMARY_TABLE_NAME)
-
-        # If there are no summary attributes, then tell the user
-        if SummaryAttribute.objects.count() == 0:
-            raise NoAttributeException
-            #return self.no_attribute_response(request)
-
-        attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
-
-        show_attrs = request.GET.get('show_attr', None)
-        hide_attrs = request.GET.get('hide_attr', None)
-
-        if show_attrs or hide_attrs:
-            if show_attrs:
-                new_attrs = show_attrs.split('+')
-                attribute_slugs.extend(new_attrs)
-            if hide_attrs:
-                for a in hide_attrs.split('+'):
-                    try:
-                        attribute_slugs.remove(a)
-                    except ValueError:
-                        pass
-            if len(attribute_slugs) == 0:
-                new_attr_str = "default"
-            else:
-                new_attr_str = '+'.join(attribute_slugs)
-            if filter_str:
-                # TODO: might work for html only - either pass get
-                # query(to get format value - html, json etc) or use per-format method
-                return HttpResponseRedirect(reverse('sdfsummary',
-                                                    kwargs={'shot_str': shot_str, 'attr_str': new_attr_str,
-                                                            'filter_str': filter_str}))
-            else:
-                # TODO: might work for html only - either pass get
-                # query(to get format value - html, json etc) or use per-format method
-                return HttpResponseRedirect(
-                    reverse('sdsummary', kwargs={'shot_str': shot_str, 'attr_str': new_attr_str}))
-
-        select_list = ['shot']
-        select_list.extend(attribute_slugs)
-        select_str = ','.join(select_list)
-
-        shot_where = parse_shot_str(shot_str)
-        if shot_where == None:
-            #return self.no_shot_response(request)
-            raise NoShotException
-
-        if filter_str is None:
-            where = shot_where
-        else:
-            filter_where = parse_filter_str(filter_str)
-            where = ' AND '.join([shot_where, filter_where])
-
-        cursor = connection.cursor()
-        cursor.execute(
-            "SELECT %(select)s FROM %(table)s WHERE %(where)s ORDER BY -shot" % {'table': table, 'select': select_str,
-                                                                                 'where': where})
-        data = cursor.fetchall()
-
-        # Format data as specified in SummaryAttribute
-        # TODO: should make this optional
-
-        # Make a dict of format strings for summary attributes so we don't
-        # have to look them up inside the loop.
-        format_strings = {}
-        for att in SummaryAttribute.objects.all():
-            format_strings[att.slug] = att.format_string
-
-        new_data = []
-        data_headers = select_str.split(',')
-        for d in data:
-            new_row = []
-            for j_i, j in enumerate(d):
-                fstr = format_strings.get(data_headers[j_i], None)
-                try:
-                    val = fstr % j
-                except TypeError:
-                    val = j
-                new_row.append(val)
-            new_data.append(new_row)
-
-        return (new_data, select_str, table, where)
-
-
-class MyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime.datetime):
-            return obj.strftime('%Y-%m-%d %H:%M:%S')
-
-        return json.JSONEncoder.default(self, obj)
-
-
-class JSONSummaryResponseMixin(SummaryMixin):
-    http_method_names = ['get']
-
-    def no_attribute_response(self, request):
-        return HttpResponse(json.dumps({'error': 'Summary database has no attributes..'}, cls=MyEncoder),
-                            mimetype='application/json')
-
-    def get(self, request, *args, **kwargs):
-        data, select_str, table, where = self.get_summary_data(request, *args, **kwargs)
-
-        annotated_data = [{'d': i, 'shot': i[0]} for i in data][::-1]
-
-        d = {
-            'timestamp': str(datetime.datetime.now().isoformat()),
-            'attributes': select_str.split(','),
-            'data': annotated_data,
-        }
-        return HttpResponse(json.dumps(d, cls=MyEncoder), mimetype='application/json')
-
-
-class HTMLSummaryResponseMixin(SummaryMixin):
-    http_method_names = ['get']
-
-    def no_attribute_response(self, request):
-        return render_to_response('h1ds_summary/no_attributes.html', {},
-                                  context_instance=RequestContext(request))
-
-    def no_shot_response(self, request):
-        return render_to_response('h1ds_summary/no_shots.html', {},
-                                  context_instance=RequestContext(request))
-
-    def get(self, request, *args, **kwargs):
-        shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
-        device = Device.objects.get(slug=kwargs.get("slug"))
-        latest_shot = device.latest_shot.number
-        q = self.get_summary_data(request, *args, **kwargs)
-
-        # TODO need to fix get_summary_data so it doesn't return REsponse object...
-        summary_data = self.get_summary_data(request, *args, **kwargs)
-
-        try:
-            (data, select_str, table, where) = summary_data
-        except ValueError:
-            # TODO: fix this hack!
-            return summary_data
-
-        attribute_slugs = self.get_attr_slugs(request, *args, **kwargs)
-        excluded_attribute_slugs = SummaryAttribute.objects.exclude(slug__in=attribute_slugs).values_list('slug',
-                                                                                                          flat=True)
-        # This seems a bit messy, but  it's not clear to me how to refer
-        # to a summary data value's  attribute slug name from within the
-        # template, so let's attach it here...
-
-        new_data = []
-        data_headers = select_str.split(',')
-        for d in data:
-            new_row = [(j, data_headers[j_i]) for j_i, j in enumerate(d)]
-            new_data.append(new_row)
-
-        # should we poll server for shot updates?
-        poll_server = 'last' in shot_str
-
-        return render_to_response('h1ds_summary/summary_table.html',
-                                  {'data': new_data, 'data_headers': data_headers,
-                                   'latest_shot': latest_shot,
-                                   'included_attrs': attribute_slugs,
-                                   'poll_server': poll_server,
-                                   'excluded_attrs': excluded_attribute_slugs},
-                                  context_instance=RequestContext(request))
-
-
-class MultiSummaryResponseMixin(JSONSummaryResponseMixin, HTMLSummaryResponseMixin):
-    """Dispatch to requested representation."""
-
-    representations = {
-        "html": HTMLSummaryResponseMixin,
-        "json": JSONSummaryResponseMixin,
-    }
-
-    def dispatch(self, request, *args, **kwargs):
-        # Try to dispatch to the right method for requested representation;
-        # if a method doesn't exist, defer to the error handler.
-        # Also defer to the error handler if the request method isn't on the approved list.
-
-        # TODO: for now, we only support GET and POST, as we are using the query string to
-        # determing which representation should be used, and the querydict is only available
-        # for GET and POST. Need to bone up on whether query strings even make sense on other
-        # HTTP verbs. Probably, we should use HTTP headers to figure out which content type should be
-        # returned - also, we might be able to support both URI and header based content type selection.
-        # http://stackoverflow.com/questions/381568/rest-content-type-should-it-be-based-on-extension-or-accept-header
-        # http://www.xml.com/pub/a/2004/08/11/rest.html
-
-        if request.method == 'GET':
-            requested_representation = get_format(request).lower()
-        elif request.method == 'POST':
-            requested_representation = get_format(request)
-        else:
-            # until we figure out how to determine appropriate content type
-            return self.http_method_not_allowed(request, *args, **kwargs)
-
-        if not requested_representation in self.representations:
-            # TODO: should handle this and let user know? rather than ignore?
-            requested_representation = 'html'
-
-        rep_class = self.representations[requested_representation]
-
-        if request.method.lower() in rep_class.http_method_names:
-            handler = getattr(rep_class, request.method.lower(), self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
-        try:
-            return handler(self, request, *args, **kwargs)
-        except NoAttributeException:
-            return rep_class.no_attribute_response(self, request)
-        except NoShotException:
-            return rep_class.no_shot_response(self, request)
-
-
-class SummaryView(MultiSummaryResponseMixin, View):
-    pass
-
-
-class RecomputeSummaryView(View):
-    """Recompute requested subset of summary database.
-
-    Require a HTTP POST with two key-value pairs: 'return_path and either 'shot' or 'attribute'.
-       return_path - URL to be redirected to after we submit the processing task to the job queue.
-       shot - a single shot number, for which all attributes are recomputed.
-       attribute - name (slug) of an attribute to be recomputed for all shots.
-
-    If both shot and attribute are provided, the shot number will be processed and the attribute ignored.
-    """
-
-    http_method_names = ['post']
-
-    def post(self, request, *args, **kwargs):
-        return_path = request.POST.get("return_path")
-        if request.POST.has_key("shot"):
-            shot = [int(request.POST.get("shot")), ]
-            populate_summary_table_task.delay(shot)
-        elif request.POST.has_key("attribute"):
-            attribute = request.POST.get("attribute")
-            populate_attribute_task.delay(attribute)
-        return HttpResponseRedirect(return_path)
+# TODO: bring this back to life
+#class RecomputeSummaryView(View):
+#    """Recompute requested subset of summary database.
+#
+#    Require a HTTP POST with two key-value pairs: 'return_path and either 'shot' or 'attribute'.
+#       return_path - URL to be redirected to after we submit the processing task to the job queue.
+#       shot - a single shot number, for which all attributes are recomputed.
+#       attribute - name (slug) of an attribute to be recomputed for all shots.
+#
+#    If both shot and attribute are provided, the shot number will be processed and the attribute ignored.
+#    """
+#
+#    http_method_names = ['post']
+#
+#    def post(self, request, *args, **kwargs):
+#        return_path = request.POST.get("return_path")
+#        device = Device.objects.get(slug=kwargs['device'])
+#        if request.POST.has_key("shot"):
+#            shot = [int(request.POST.get("shot")), ]
+#            populate_summary_table_task.delay(device, shot)
+#        elif request.POST.has_key("attribute"):
+#            attribute = request.POST.get("attribute")
+#            populate_attribute_task.delay(device, attribute)
+#        return HttpResponseRedirect(return_path)
 
 
 class AddSummaryAttribiteView(View):
@@ -329,7 +113,7 @@ class AddSummaryAttribiteView(View):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
-        device = Device.objects.get(slug=kwargs['device_slug'])
+        device = Device.objects.get(slug=kwargs['device'])
         summary_attribute_form = SummaryAttributeForm(request.POST)
         if summary_attribute_form.is_valid():
             summary_attribute = summary_attribute_form.save(commit=False)
@@ -340,6 +124,7 @@ class AddSummaryAttribiteView(View):
         else:
             return render_to_response('h1ds_summary/form.html',
                                       {'form': summary_attribute_form,
+                                       'device': device,
                                        'submit_url': reverse('add-summary-attribute', args=args, kwargs=kwargs)},
                                       context_instance=RequestContext(request))
 
@@ -354,6 +139,7 @@ def get_summary_attribute_form_from_url(request):
     We first call the URL and check what datatype is returned so we know
     which SQL datatype to use, then we pre-fill a form to be complete by
     the user.
+
     """
     # Get the requested URL from the POST data
     attr_url = request.POST['url']
@@ -409,14 +195,16 @@ def get_summary_attribute_form_from_url(request):
 
     # Otherwise, forward user to form entry page
     return render_to_response('h1ds_summary/form.html',
-                              {'form': summary_attribute_form, 'submit_url': reverse('add-summary-attribute', kwargs={'device_slug': device.slug})},
+                              {'form': summary_attribute_form,
+                               'device': device,
+                               'submit_url': reverse('add-summary-attribute', kwargs={'device': device.slug})},
                               context_instance=RequestContext(request))
 
 
-def go_to_source(request, slug, shot):
+def go_to_source(request, device, slug, shot):
     """Go to the H1DS web interface corresponding to the summary data."""
 
-    attr = SummaryAttribute.objects.get(slug__iexact=slug)
+    attr = SummaryAttribute.objects.get(slug__iexact=slug, device__slug=device)
     if attr.source.startswith('http://'):
         source_url = attr.source.replace('__shot__', str(shot))
 
@@ -435,11 +223,13 @@ def go_to_source(request, slug, shot):
 
 
 class RawSqlForm(forms.Form):
+    DEVICE_CHOICES = tuple((d.slug, d.name) for d in Device.objects.all())
+    device = forms.ChoiceField(widget=forms.Select, choices=DEVICE_CHOICES)
     select = forms.CharField(widget=forms.Textarea)
     where = forms.CharField(widget=forms.Textarea)
 
 
-def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
+def raw_sql(request):
     """Provide a form for users to request a raw SQL query and display the results.
 
     """
@@ -451,6 +241,10 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
         form = RawSqlForm(request.POST)
         if form.is_valid():
             cursor = connection.cursor()
+            device = Device.objects.get(slug=form.cleaned_data['device'])
+            #tablename = get_tablename(device)
+            table = SummaryTable(device)
+            tablename = table.table_name
             select_list = [i.strip() for i in form.cleaned_data['select'].split(',')]
             if select_list[0] != 'shot':
                 _select_list = ['shot']
@@ -470,11 +264,96 @@ def raw_sql(request, tablename=SUMMARY_TABLE_NAME):
 
             return render_to_response('h1ds_summary/summary_table.html',
                                       {'data': new_data, 'data_headers': data_headers, 'select': ','.join(select_list),
-                                       'where': form.cleaned_data['where']},
+                                       'where': form.cleaned_data['where'],
+                                       'device': device},
                                       context_instance=RequestContext(request))
 
     if request.method == 'GET':
         return HttpResponseRedirect("/")
+
+##########################################################
+## New Django REST Framework based views
+##########################################################
+
+
+class SimpleSerializer(serializers.Serializer):
+    def to_native(self, obj):
+        return obj
+
+
+class SummaryView(APIView):
+    renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
+
+    def get_attribute_links(self, request, *args, **kwargs):
+        """Get links and info about attributes which can be added or removed from the current table.
+
+        Returns:
+            showable_attributes, hideable_attributes - both are lists of dicts
+
+        Both showable_attributes and hideableattributes have the format [attr_a, attr_b, ...], where attr_x is
+        {slug:, url:, name:, description:}
+
+        """
+        # TODO: remove duplication here, we already have grabbed the device in self.get()
+        device = Device.objects.get(slug=kwargs.get("device"))
+        table = SummaryTable(device)
+        all_attrs = table.get_attributes_from_table(filter_initial_attributes=True)
+        shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
+        attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
+        filter_str = kwargs.get("filter_str", DEFAULT_FILTER)
+        attr_variants = get_attribute_variants(device=device, all_attrs=all_attrs, attr_str=attr_str)
+
+        showable_attribute = []
+        hideable_attributes = []
+
+        for attr in attr_variants:
+            attr_instance = SummaryAttribute.objects.get(device=device, slug=attr['slug'])
+            if filter_str:
+                attr_url = reverse('sdfsummary', kwargs={'device': device.slug, 'shot_str': shot_str,
+                                                         'attr_str': attr['attr_str'],
+                                                         'filter_str': filter_str})
+            else:
+                attr_url = reverse('sdsummary', kwargs={'device': device.slug, 'shot_str': shot_str, 'attr_str': attr['attr_str']})
+
+            attr_dict = {'slug': attr['slug'], 'url': attr_url,
+                         'name': attr_instance.name, 'description': attr_instance.description}
+            if attr['is_active']:
+                hideable_attributes.append(attr_dict)
+            else:
+                showable_attribute.append(attr_dict)
+
+        return showable_attribute, hideable_attributes
+
+    def get(self, request, *args, **kwargs):
+
+        device_slug = kwargs.get("device")
+
+        shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
+        attr_str = kwargs.get("attr_str", DEFAULT_ATTR_STR)
+        filter_str = kwargs.get("filter_str", DEFAULT_FILTER)
+
+        device = Device.objects.get(slug=device_slug)
+        table = SummaryTable(device)
+
+        results = table.do_query_from_path_components(shot_str, attr_str, filter_str)
+        # TODO: HTML version w/ templates...
+
+        if request.accepted_renderer.format == 'html':
+            if not results:
+                return Response(template_name='h1ds_summary/no_data.html')
+            data_headers = results[0].keys()
+
+            inactive_attributes, active_attributes = self.get_attribute_links(request, *args, **kwargs)
+
+            return Response({'data': results,
+                             #'data_headers': data_headers, # -- replaced by active_attributes
+                             'device': device,
+                             'inactive_attributes': inactive_attributes,
+                             'active_attributes': active_attributes},
+                            template_name='h1ds_summary/summary_table.html')
+
+        serializer = SimpleSerializer(results)
+        return Response(serializer.data)
 
 
 class SummaryDeviceListView(DeviceListView):
@@ -484,7 +363,7 @@ class SummaryDeviceListView(DeviceListView):
     def get(self, request, *args, **kwargs):
         # If there is only one device, then show the device detail view rather than list devices.
         try:
-            return redirect('h1ds-summary-device-homepage', slug=self.queryset.get().slug)
+            return redirect('h1ds-summary-device-homepage', device=self.queryset.get().slug)
         except (Device.DoesNotExist, MultipleObjectsReturned):
             # TODO: we should treat Device.DoesNotExist separately with a message to create a device.
             return self.list(request, *args, **kwargs)

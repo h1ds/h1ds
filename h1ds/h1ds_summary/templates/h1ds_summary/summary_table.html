@@ -4,15 +4,15 @@
 
 {% block summarycontent%}
 <table class="main-table">
-  <thead><tr>{% for dh in data_headers %}<th><span class="toggleVertical">{{dh}}</span> {% if not forloop.first %} <span class="right"><a href="?hide_attr={{dh}}">&#x00d7;</a></span> {% if perms.h1ds_summary.recompute_summaryattribute %}<form class="inline right" action="{% url "summary-recompute" %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="attribute" value="{{dh}}"><input type="submit" value="&#x27F3;"/></form>{% endif %}{% endif %}</th>{% endfor %}</tr></thead>
+  <thead><tr><th>shot</th>{% for dh in active_attributes %}<th><span class="toggleVertical" title="{{ dh.name }}: {{ dh.description }}">{{dh.slug}}</span> <span class="right"><a href="{{ dh.url }}">&#x00d7;</a></span> {% if perms.h1ds_summary.recompute_summaryattribute %}<form class="inline right" action="{# {% url "summary-recompute" %} #}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="attribute" value="{{dh.slug}}"><input type="submit" value="&#x27F3;"/></form>{% endif %}</th>{% endfor %}</tr></thead>
 <tbody>{% if poll_server %}<!-- table filled in with js -->{% else %}
-{% for drow in data %}
+{% for row in data %}
 <tr>
-{% for d in drow %}
+{% for key, value in row.iteritems %}
 {% if forloop.first %}
-<td>{{d.0}} {% if perms.h1ds_summary.recompute_summaryattribute %} <form class="inline right" action="{% url "summary-recompute" %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="shot" value="{{d.0}}"><input type="submit" value="&#x27F3;"/></form> {% endif %}</td>
+<td>{{value}} {% if perms.h1ds_summary.recompute_summaryattribute %} <form class="inline right" action="{# {% url "summary-recompute" %} #}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="shot" value="{{value}}"><input type="submit" value="&#x27F3;"/></form> {% endif %}</td>
 {% else %}
-<td><a href="{% url "summary-go-to-source" d.1 drow.0.0 %}">{{d.0}}</a></td>
+<td><a href="{% url "summary-go-to-source" device=device.slug slug=key shot=row.shot %}">{{value}}</a></td>
 {% endif %}
 {% endfor %}
 </tr>  
