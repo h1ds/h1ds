@@ -14,7 +14,7 @@ from celery import chord, group
 from h1ds.models import Shot
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary.tasks import get_summary_attribute_data, write_attributes_to_table, write_single_attribute_to_table
-from h1ds_summary.utils import get_summary_cursor
+from h1ds_summary import get_summary_cursor
 from h1ds_summary.parsers import parse_shot_str, parse_attr_str, parse_filter_str
 
 

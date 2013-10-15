@@ -3,7 +3,7 @@ from django.db import transaction
 
 from h1ds.utils import get_backend_shot_manager
 from h1ds_summary import TABLE_NAME_TEMPLATE
-from h1ds_summary.utils import get_summary_cursor
+from h1ds_summary import get_summary_cursor
 
 backend_shot_manager = get_backend_shot_manager()
 
