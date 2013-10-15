@@ -341,12 +341,10 @@ class SummaryView(APIView):
         if request.accepted_renderer.format == 'html':
             if not results:
                 return Response(template_name='h1ds_summary/no_data.html')
-            data_headers = results[0].keys()
 
             inactive_attributes, active_attributes = self.get_attribute_links(request, *args, **kwargs)
 
             return Response({'data': results,
-                             #'data_headers': data_headers, # -- replaced by active_attributes
                              'device': device,
                              'inactive_attributes': inactive_attributes,
                              'active_attributes': active_attributes},

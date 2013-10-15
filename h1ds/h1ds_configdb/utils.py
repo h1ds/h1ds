@@ -66,7 +66,7 @@ def scan_configdb_dir(configdb_dir, force_overwrite):
 
             for (k, v) in metadata.items():
                 value_type = value_type_mapping.get(type(v))
-                if (value_type != None) and (k not in ['filename', 'filetype']):
+                if (value_type is not None) and (k not in ['filename', 'filetype']):
                     pt_inst, pt_c = ConfigDBPropertyType.objects.get_or_create(
                         name=k,
                         value_type=value_type,

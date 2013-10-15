@@ -1,12 +1,9 @@
-from django.shortcuts import render_to_response
 from django.http import Http404
-from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
 from django import forms
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.http import HttpResponseRedirect
-from django.contrib.contenttypes.models import ContentType
 
 from h1ds_configdb.models import ConfigDBFileType, ConfigDBFile, ConfigDBPropertyType
 
@@ -107,7 +104,7 @@ class HomeView(FormView):
         for k, v in form.cleaned_data.items():
             if k.startswith("filetype_") and v == True:
                 filetypes.append(k[9:])
-            elif k.startswith("property_") and v != None:
+            elif k.startswith("property_") and v is not None:
                 property_name = k[13:]
                 filter_type = k[9:12]
                 if not properties.has_key(property_name):

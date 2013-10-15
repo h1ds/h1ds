@@ -2,7 +2,6 @@
 
 from datetime import datetime
 
-import os
 import MDSplus
 from h1ds_summary.attributes import AttributeScript
 
@@ -58,7 +57,7 @@ class KappaH(Kappa):
             kappa = float(coil_data[2]) / float(coil_data[4])
         except:
             kappa = float(self.t.getNode('.OPERATIONS:K_H').data())
-        return (kappa, 'FLOAT')
+        return kappa, 'FLOAT'
 
 
 class KappaV(Kappa):
@@ -68,7 +67,7 @@ class KappaV(Kappa):
             kappa = float(coil_data[0]) / float(coil_data[4])
         except:
             kappa = float(self.t.getNode('.OPERATIONS:K_OVF').data())
-        return (kappa, 'FLOAT')
+        return kappa, 'FLOAT'
 
 
 class KappaI(Kappa):
@@ -78,7 +77,7 @@ class KappaI(Kappa):
             kappa = float(coil_data[1]) / float(coil_data[4])
         except:
             kappa = float(self.t.getNode('.OPERATIONS:K_I').data())
-        return (kappa, 'FLOAT')
+        return kappa, 'FLOAT'
 
 
 class GetTime(H1DataAttributeScript):
@@ -105,12 +104,12 @@ class GasFlow(H1DataAttributeScript):
             mds_node = self.t.getNode('.operations.magnetsupply.lcu:setup_main:i2') #sign if it has been logged.
             if mds_node.dtype == 211: # Gas flow data not stored in setup, get from log instead.
                 gas_node = self.t.getNode(".LOG.MACHINE:GAS%d_FLOW" % gas_number)
-                return (gas_node.data(), 'FLOAT')
+                return gas_node.data(), 'FLOAT'
             else:
                 gas_node = self.t.getNode('.operations.magnetsupply.lcu:log:gas%d_set' % gas_number)
                 return (0.01 * gas_node.data(), 'FLOAT')
         except:
-            return ('null', 'FLOAT')
+            return 'null', 'FLOAT'
 
 
 class Gas1Flow(GasFlow):

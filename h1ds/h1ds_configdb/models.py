@@ -102,10 +102,10 @@ class ConfigDBProperty(models.Model):
         appropriate_value_type = 'value_' + self.configdb_propertytype.get_value_type_display().lower()
         for attr in [i for i in dir(self) if i.startswith('value_')]:
             if attr == appropriate_value_type:
-                if getattr(self, attr) == None:
+                if getattr(self, attr) is None:
                     raise ValidationError
         else:
-            if getattr(self, attr) != None:
+            if getattr(self, attr) is not None:
                 raise ValidationError
         super(ConfigDBProperty, self).save(*args, **kwargs)
 

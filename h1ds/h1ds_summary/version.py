@@ -59,7 +59,7 @@ def get_version(form='short'):
 
     # Short
     v = branch
-    if (tertiary or final):
+    if tertiary or final:
         v += "." + str(tertiary)
     if not final:
         v += firsts
