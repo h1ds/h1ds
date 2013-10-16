@@ -11,10 +11,9 @@ from MDSplus._treeshr import TreeNoDataException, TreeException
 
 # TODO: base vs models - it's not intuitive what should be where...
 from h1ds.base import BaseNodeData
-from h1ds.base import BaseDataTreeManager
 from h1ds.base import BaseBackendShotManager
 # Load MDS trees into environment
-for config_tree in settings.EXTRA_MDS_TREES:
+for config_tree in settings.DATA_TREES['h1']:
     os.environ[config_tree[0] + "_path"] = config_tree[1]
 
 
@@ -145,26 +144,5 @@ class NodeData(BaseNodeData):
         return node_names
 
 
-class DataTreeManager(BaseDataTreeManager):
-    def get_trees(self):
-        # TODO: no longer support  getting trees from environment, use
-        # explicit definitions in settings file.
-        # TODO: rename EXTRA_MDS_TREES to something like MDSPLUS_TREES
-        tree_names = [i[0] for i in settings.EXTRA_MDS_TREES]
-        return tree_names
-
-    def populate_shot(self, shot_root_node):
-        for tree_name in self.get_trees():
-            node = self.model(path=tree_name, parent=shot_root_node)
-            node.save()
-            node.populate_child_nodes()
-
-
 class MDSPlusShotManager(BaseBackendShotManager):
-    tree_manager = DataTreeManager()
-
-    def get_latest_shot(self):
-        default_tree = self.tree_manager.get_trees()[0]
-        mds_tree = MDSplus.Tree()
-        latest_shot = mds_tree.getCurrent(default_tree)
-        return latest_shot
+    pass

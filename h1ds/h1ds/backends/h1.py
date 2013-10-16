@@ -9,10 +9,6 @@ class NodeData(mdsplus.NodeData):
     pass
 
 
-class DataTreeManager(mdsplus.DataTreeManager):
-    pass
-
-
 class H1ShotManager(mdsplus.MDSPlusShotManager):
     def get_timestamp_for_shot(self, shot):
 

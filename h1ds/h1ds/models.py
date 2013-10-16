@@ -143,6 +143,12 @@ class Device(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_trees(self):
+        try:
+            return [t[0] for t in settings.DATA_TREES[self.slug]]
+        except KeyError:
+            return []
+
 
 class Shot(models.Model):
     number = models.PositiveIntegerField(primary_key=True)
@@ -259,11 +265,6 @@ class Node(models.Model, backend_module.NodeData):
         return "/".join([n.slug for n in ancestry])
 
     nodepath = property(_get_node_path)
-
-    # I'm not sure  why we need to  do this explicitly, but  if we don't
-    # then .objects becomes DataTreeManager()
-    objects = models.Manager()
-    datatree = backend_module.DataTreeManager()
 
     def get_data(self):
         if not hasattr(self, 'data'):

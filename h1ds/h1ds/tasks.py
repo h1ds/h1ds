@@ -7,7 +7,7 @@ def populate_tree(shot):
     # Import here to avoid circular imports.
     from h1ds.models import Node
 
-    for tree in Node.datatree.get_trees():
+    for tree in shot.device.get_trees():
         node = Node(path=tree, shot=shot)
         node.save()
         node.populate_child_nodes()

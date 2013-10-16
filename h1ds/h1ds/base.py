@@ -143,61 +143,6 @@ class BaseNodeData(object):
         pass
 
 
-class BaseDataTreeManager(models.Manager):
-    def get_shot_root_node(self, shot):
-        """Get root node of shot tree.
-
-        Returns None if node doesn't exist.
-        """
-        try:
-            shot_root_node = self.model.objects.get(path=str(shot), parent=None)
-        except self.model.DoesNotExist:
-            shot_root_node = None
-        return shot_root_node
-
-    def get_trees(self):
-        """Get a list of available data trees.
-
-        Override this with backend subclass.
-
-        """
-        pass
-
-    def add_shot(self, shot, overwrite=False):
-
-        shot_root_node = self.get_shot_root_node(shot)
-
-        if shot_root_node:
-            if overwrite:
-                # delete existing
-                shot_nodes = self.model.objects.filter(tree_id=shot_root_node.tree_id)
-                shot_nodes.delete()
-            else:
-                # We have  an exisiting shot  root node, and  we don't
-                # want to overwrite, so we're done.
-                return None
-
-        # Now we have nothing for the shot, let's build it again.
-
-        shot_root_node = self.model(path=str(shot), parent=None)
-        shot_root_node.save()
-
-        self.populate_shot(shot_root_node)
-
-    def populate_shot(self, shot_root_node):
-        pass
-
-    def get_node_from_ancestry(self, ancestry):
-        shot_node = self.model.objects.get(path=ancestry[0], parent=None)
-        if len(ancestry) == 1:
-            return shot_node
-            # get top of tree
-        node = self.model.objects.get(parent=shot_node, slug=ancestry[1])
-        for child in ancestry[2:]:
-            node = self.model.objects.get(parent=node, slug__iexact=child)
-        return node
-
-
 class FilterManager(object):
     """Get available filters for given data.
 

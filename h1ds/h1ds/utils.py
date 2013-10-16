@@ -171,16 +171,6 @@ def try_discretise_array(arr, eps=0, bits=0, deltar=None, delta_encode=False):
     return ret_value
 
 
-## from h1ds.models import Node
-## def add_shot(shot_number):
-##     new_shot = Node(path=str(shot_number),
-##                     parent=None,
-##                     has_data=False,
-##                     dimension=None,
-##                     dtype="")
-##     new_shot.save()
-##     Node.datatree.populate_shot(new_shot)
-
 def find_subclasses(module, requested_class):
     subclasses = []
     for name, class_ in inspect.getmembers(module):
