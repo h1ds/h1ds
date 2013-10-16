@@ -241,6 +241,8 @@ LOGGING = {
     }
 }
 
+CELERYD_HIJACK_ROOT_LOGGER = False
+
 djcelery.setup_loader()
 
 # Any MDSPlus nodes to ignore (e.g. if they crash the server...)
