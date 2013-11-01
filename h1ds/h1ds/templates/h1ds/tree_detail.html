@@ -1,0 +1,16 @@
+{% extends "h1ds/base.html" %}
+
+{% block content %}
+
+<h1>Tree: {{tree.name}}</h1>
+    <h2>(shot {{ shot.number }})</h2>
+<ul>
+{% for node in root_nodes %}
+    {% if track_latest_shot %}
+<li><a href="{% url 'node-detail' device=shot.device.slug shot='latest' tree=tree.slug nodepath=node.node_path.path %}">{{node.node_path.get_node_name}}</a>
+    {% else %}
+<li><a href="{% url 'node-detail' device=shot.device.slug shot=shot.number tree=tree.slug nodepath=node.node_path.path %}">{{node.node_path.get_node_name}}</a>
+    {% endif %}
+{% endfor %}
+</ul>
+{% endblock content%}

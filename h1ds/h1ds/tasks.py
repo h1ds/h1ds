@@ -1,13 +1,14 @@
 from celery import task
 
+from django.utils.importlib import import_module
+from django.conf import settings
+
+backend_module = import_module(settings.H1DS_DATA_BACKEND)
+
 
 @task()
-def populate_tree(shot):
+def populate_tree(shot, tree):
     """Asynchronously populate a data tree."""
-    # Import here to avoid circular imports.
-    from h1ds.models import Node
-
-    for tree in shot.device.get_trees():
-        node = Node(path=tree, shot=shot)
-        node.save()
-        node.populate_child_nodes()
+    empty_path = []
+    node_data = backend_module.DataInterface(shot=shot.number, tree=tree, path=empty_path)
+    node = node_data.get_node()

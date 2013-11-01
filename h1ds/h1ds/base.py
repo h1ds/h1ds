@@ -3,7 +3,7 @@
 """
 import inspect
 import datetime
-
+import hashlib
 import re
 import numpy as np
 from django.db import models
@@ -11,8 +11,6 @@ from django.conf import settings
 from django.utils.importlib import import_module
 from h1ds.filters import BaseFilter, excluded_filters
 
-
-#data_module = import_module(settings.H1DS_DATA_MODULE)
 
 # Match strings "f(fid)_name", where fid is the filter ID
 filter_name_regex = re.compile('^f(?P<fid>\d+?)')
@@ -95,9 +93,98 @@ class Data(object):
             return len(self.value[0])
 
 
-class BaseNodeData(object):
-    def get_child_names_from_primary_source(self):
-        """Override this"""
+def has_data(value):
+    result = False
+    if hasattr(value, "__iter__"):
+        for v in value:
+            if v is not None:
+                result = True
+                break
+    else:
+        if value is not None:
+            result = True
+    return result
+
+
+class BaseDataInterface(object):
+    """Base interface class for backend data sources.
+
+    This class essentially sets out the API, with the subclass expected to overwrite most methods.
+
+    """
+    def __init__(self, shot, tree, path):
+        """
+        Args:
+            shot (int) - shot number
+            tree (h1ds.models.Tree) - tree instance
+            path (list) - list of path components
+        """
+        self.shot = shot
+        self.tree = tree
+        self.path = [p.lower() for p in path]
+
+        self.tree.load()
+
+    def generate_hash(self, has_data=False, n_dimensions=0, dtype="", n_channels=0, child_nodes=[]):
+        hash_val = ""
+        for field in [has_data, n_dimensions, dtype, n_channels]:
+            hash_val += hashlib.sha1(unicode(field)).hexdigest()
+        for child in sorted(child_nodes, key=lambda x: x.subtree.subtree_hash):
+            hash_val += child.subtree.subtree_hash
+        return hashlib.sha1(hash_val).hexdigest()
+
+    def get_node(self):
+        """If Node instance exits, return it, otherwise generate node and subtree"""
+        from h1ds.models import SubTree, NodePath, Shot, Node
+
+
+        child_nodes = self.get_child_nodes()
+        data = self.read_primary_data()
+        node_has_data = has_data(data.value)
+        n_dimensions = data.get_n_dimensions()
+        dtype = data.value_dtype
+        n_channels = data.get_n_channels()
+        hash = self.generate_hash(has_data=node_has_data, n_dimensions=n_dimensions, dtype=dtype, n_channels=n_channels, child_nodes=child_nodes)
+        try:
+            subtree = SubTree.objects.get(subtree_hash=hash)
+        except SubTree.DoesNotExist:
+            subtree = SubTree(has_data=node_has_data, n_dimensions=n_dimensions, dtype=dtype, n_channels=n_channels, subtree_hash=hash)
+            subtree.save()
+            subtree.children.add(*(c.subtree for c in child_nodes))
+
+        shot, shot_created = Shot.objects.get_or_create(number=self.shot)  # TODO: need device here.
+
+        parent_nodepath = self.get_parent_nodepath(self.path, self.tree)
+        fullpath = self.get_fullpath()
+        nodepath, nodepath_created = NodePath.objects.get_or_create(path=fullpath, tree=self.tree, defaults={'parent': parent_nodepath})
+
+        node = Node(node_path=nodepath, shot=shot, subtree=subtree)
+        node.save()
+
+        return node
+
+    def get_fullpath(self):
+        return "/".join([str(p) for p in self.path])
+
+    def get_parent_nodepath(self, path, tree):
+        from h1ds.models import NodePath
+        if len(path) == 0:
+            return None
+        elif len(path) == 1:
+            # TODO: creating the top node should be done somwehere more visible - probably during Tree.load()
+            nodepath, created = NodePath.objects.get_or_create(path=NodePath.TOP_PATH, tree=tree, defaults={'parent': None})
+            return nodepath
+        else:
+            grandparent_nodepath = self.get_parent_nodepath(path=path[:-1], tree=tree)
+            fullpath = "/".join([str(p) for p in path[:-1]])
+            nodepath, nodepath_created = NodePath.objects.get_or_create(path=fullpath, tree=tree, defaults={'parent':grandparent_nodepath})
+            return nodepath
+
+    def get_child_nodes(self):
+        return [child.get_node() for child in self.get_children()]
+
+    def get_children(self):
+        """Return Datainterface instances for each child"""
         pass
 
     def get_name(self):
@@ -249,3 +336,11 @@ class BaseBackendShotManager(models.Manager):
         previous_shot = self.model.objects.filter(number__lt=shot_number).aggregate(models.Max('number'))['number__max']
         return previous_shot
 
+
+class BaseTreeLoader(object):
+    """Load any settings for Tree object, e.g. env variables."""
+
+
+    def load(self, tree):
+        """override in backend."""
+        pass

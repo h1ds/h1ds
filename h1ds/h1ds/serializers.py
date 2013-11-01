@@ -3,7 +3,7 @@ import numpy as np
 
 from rest_framework import serializers
 from rest_framework.reverse import reverse
-from h1ds.models import Node, Shot, Device
+from h1ds.models import SubTree, Shot, Device, Node, Tree
 from django.core.urlresolvers import NoReverseMatch
 from types import NoneType
 
@@ -17,7 +17,7 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
         request = self.context.get('request', None)
         format = self.context.get('format', None)
         view_name = self.view_name or self.parent.opts.view_name
-        kwargs = {'device': obj.shot.device.slug, 'shot': obj.shot.number, 'nodepath': obj.nodepath}
+        kwargs = {'device': obj.shot.device.slug, 'shot': obj.shot.number, 'tree': obj.node_path.tree.slug, 'nodepath': obj.node_path.path}
 
         if request is None:
             warnings.warn("Using `HyperlinkedIdentityField` without including the "
@@ -104,8 +104,8 @@ class NodeHyperlinkedField(serializers.HyperlinkedRelatedField):
         shot = view_kwargs['shot']
         nodepath = view_kwargs['nodepath']
         checksum = hashlib.sha1(nodepath).hexdigest()
-        node = Node.objects.get(shot__number=shot, path_checksum=checksum)
-        return node
+        subtree = SubTree.objects.get(shot__number=shot, path_checksum=checksum)
+        return subtree
 
 
 class DataField(serializers.WritableField):
@@ -147,7 +147,7 @@ class DataSerializer(serializers.Serializer):
     metadata = serializers.WritableField()
 
 
-class NodeSerializer(serializers.HyperlinkedModelSerializer):
+class SubTreeSerializer(serializers.HyperlinkedModelSerializer):
     # slug ?
     # data (optional depending on ?show_data query string
     path = serializers.CharField()
@@ -158,8 +158,24 @@ class NodeSerializer(serializers.HyperlinkedModelSerializer):
     url = NodeHyperlinkedIdentityField(view_name="node-detail", slug_field="nodepath")
 
     class Meta:
-        model = Node
+        model = SubTree
         fields = ('path', 'parent', 'children', 'data', 'url')
+
+
+class NodeSerializer(serializers.HyperlinkedModelSerializer):
+    url = NodeHyperlinkedIdentityField(view_name="node-detail", slug_field="nodepath")
+    data = DataSerializer(source='get_data')
+
+    class Meta:
+        model = Node
+        fields = ('url', 'data')
+
+
+class PathMapSerializer(serializers.Serializer):
+    """Serializer for a PathMap instance.
+
+    """
+    pass
 
 
 class FilterSerializer(serializers.Serializer):
@@ -169,15 +185,32 @@ class FilterSerializer(serializers.Serializer):
 class ShotSerializer(serializers.HyperlinkedModelSerializer):
     number = serializers.IntegerField()
     timestamp = serializers.DateTimeField()
-    root_nodes = serializers.SerializerMethodField('get_root_nodes')
+    #root_pathmaps = serializers.SerializerMethodField('get_root_pathmaps')
 
     class Meta:
         model = Shot
-        fields = ('number', 'timestamp', 'root_nodes', 'device')
+        fields = ('number', 'timestamp', 'device')
 
-    def get_root_nodes(self, obj):
-        return [{'path': n.path, 'url': n.get_absolute_url()} for n in obj.root_nodes]
+    #def get_root_pathmaps(self, obj):
+    #    return [{'path': pm.node_path.get_node_name(), 'url': pm.get_absolute_url()} for pm in obj.root_pathmaps]
 
+
+class TreeSerializer(serializers.HyperlinkedModelSerializer):
+    """Serialise a tree instance.
+
+    TODO - include root nodes, shot etc...
+
+    If a shot instance is passed as extra context, then the root nodes for that shot will be included.
+
+    """
+
+    name = serializers.CharField()
+    #shot = ShotSerializer()
+    #root_nodes = NodeSerializer(many=True)
+
+    class Meta:
+        model = Tree
+        fields = ('name', )
 
 class DeviceSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField()

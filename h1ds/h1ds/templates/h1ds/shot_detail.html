@@ -3,13 +3,13 @@
 {% block content %}
 <h1>Shot {{shot.number}}</h1>
 <h2>{{shot.timestamp}}</h2>
-<h3>Root nodes</h3>
+<h3>Active trees for this shot</h3>
 <ul>
-{% for node in shot.root_nodes %}
+{% for tree in shot.get_active_trees %}
     {% if track_latest_shot %}
-<li><a href="{% url 'node-detail' device=shot.device.slug shot='latest' nodepath=node.nodepath %}">{{node.path}}</a>
+<li><a href="{% url 'tree-detail' device=shot.device.slug shot='latest' tree=tree.slug %}">{{tree.name}}</a>
     {% else %}
-<li><a href="{{node.get_absolute_url}}">{{node.path}}</a>
+<li><a href="{% url 'tree-detail' device=shot.device.slug shot=shot.number tree=tree.slug %}">{{tree.name}}</a>
     {% endif %}
 {% endfor %}
 </ul>

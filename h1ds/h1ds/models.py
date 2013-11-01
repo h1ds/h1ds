@@ -100,14 +100,14 @@ class FilterManager(object):
         self.filters = get_all_filters()
         self.cache = {}
 
-    def get_filters(self, data):
+    def get_filters(self, subtree):
         """Get available processing filters for data object provided."""
 
-        data_type = (data.get_n_dimensions(), data.value_dtype)
+        data_type = (subtree.n_dimensions, subtree.dtype)
         if not data_type in self.cache:
             data_filters = {}
             for fname, filter_ in self.filters.iteritems():
-                if filter_.is_filterable(data):
+                if filter_.is_filterable(subtree):
                     data_filters[fname] = filter_
             self.cache[data_type] = data_filters
         return self.cache[data_type]
@@ -150,6 +150,58 @@ class Device(models.Model):
             return []
 
 
+class ShotRange(models.Model):
+    min_shot = models.IntegerField(null=True, blank=True)
+    max_shot = models.IntegerField(null=True, blank=True)
+
+    def is_number_in_range(self, number):
+        if self.min_shot is None and self.max_shot is None:
+            return True
+        elif self.min_shot is None:
+            if number <= self.max_shot:
+                return True
+        elif self.max_shot is None:
+            if number >= self.min_shot:
+                return True
+        elif self.min_shot <= number <= self.max_shot:
+            return True
+        else:
+            return False
+
+
+    def __unicode__(self):
+        return "{} - {}".format(self.min_shot, self.max_shot)
+
+
+class Tree(models.Model):
+    """Configuration for a data tree.
+
+    TODO: have backend (e.g. mdsplus) a property of Tree.
+          - property would either be a string with module path
+          or we would have a separate model class for backends.
+
+    """
+    name = models.CharField(max_length=64)
+    slug = models.SlugField()
+    device = models.ForeignKey(Device)
+    configuration = models.TextField(blank=True)
+    shot_ranges = models.ManyToManyField(ShotRange, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(Tree, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return self.slug
+
+    def load(self):
+        loader = backend_module.TreeLoader()
+        loader.load(self)
+
+    def get_root_nodes_for_shot(self, shot_number):
+        return Node.objects.filter(shot__number=shot_number, node_path__tree=self, node_path__parent__path=NodePath.TOP_PATH).exclude(node_path__path="").order_by('node_path__path')
+
+
 class Shot(models.Model):
     number = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
@@ -158,10 +210,26 @@ class Shot(models.Model):
     objects = models.Manager()
     backend = get_backend_shot_manager()()
 
-    def _get_root_nodes(self):
-        return Node.objects.filter(parent=None, shot=self)
+    def _get_root_pathmaps(self):
+        return Node.objects.filter(shot=self, node_path__parent=None)
 
-    root_nodes = property(_get_root_nodes)
+    def get_active_trees(self):
+        active_trees = []
+        for tree in Tree.objects.filter(device=self.device):
+            if tree.shot_ranges.count() == 0:
+                active_trees.append(tree)
+            else:
+                is_active = False
+                for shot_range in tree.shot_ranges:
+                    if shot_range.is_number_in_range(self.number):
+                        is_active = True
+                if is_active:
+                    active_trees.append(tree)
+        return active_trees
+
+
+
+    root_pathmaps = property(_get_root_pathmaps)
 
     def __unicode__(self):
         return unicode(self.number)
@@ -179,11 +247,11 @@ class Shot(models.Model):
             self.populate_tree()
 
     def populate_tree(self):
-        task_kwargs = {'args': [self]}
         # actually - we should set as latest shot straight away,
         # and have another parameter which keeps the state of tree cacheing.
         # TODO: what if shot is already populated?
-        tasks.populate_tree.apply_async(**task_kwargs)
+        for tree in self.get_active_trees():
+            tasks.populate_tree.apply_async(args=[self, tree])
 
     def set_as_latest_shot(self, *args, **kwargs):
         # allow args, kwargs as this is being used as
@@ -196,35 +264,167 @@ class Shot(models.Model):
 filter_manager = FilterManager()
 
 
-class Node(models.Model, backend_module.NodeData):
-    """Node of a data tree.
+class NodePath(models.Model):
 
-    A single data tree represents one shot.
-    The root node has path = str(shot_number).
-    """
+    TOP_PATH = "__NODEPATH_TOP__"
+
+    parent = models.ForeignKey('self', null=True, blank=True)
+    # path component, as appears in url, except for tree..
+    path = models.CharField(max_length=1024)
+    tree = models.ForeignKey(Tree)
+    # do we need hash anymore?
+    #path_hash = models.CharField(max_length=40)
+    nodes = models.ManyToManyField('SubTree', through='Node')
+
+    class Meta:
+        unique_together = ("path", "tree")
+
+    # deprecated: use reverse lookup unstead
+    #def get_fullpath(self):
+    #    return "/".join([self.tree.slug, self.path])
+
+    def __unicode__(self):
+        return self.path
+
+    def get_path_components(self):
+        return self.path.split("/")
+
+    def get_node_name(self):
+        split_path = self.path.split("/")
+        if len(split_path) > 0:
+            return split_path[-1]
+        else:
+            return ""
+
+
+class Node(models.Model):
 
     def __init__(self, *args, **kwargs):
         super(Node, self).__init__(*args, **kwargs)
+        self.data_interface = None
+        self.data = None
         self.filter_history = []
 
-    # While it may be overkill to link to a shot for every node in the
-    # tree, it allows  us to more easily search  nodes irrespective of
-    # their tree  - for  example if we  want to find  all data  with a
-    # specific dtype in  a range of shots, then we  don't want to have
-    # to first  find the  tree from  the shot  number and  then search
-    # nodes...
-    # Previously, the  shot number was  stored only for the  root tree
-    # node, but the code to find the  shot for a given node was rather
-    # cumbersome.
+    node_path = models.ForeignKey(NodePath)
+    subtree = models.ForeignKey('SubTree')
     shot = models.ForeignKey(Shot)
 
-    path = models.CharField(max_length=256)
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='children')
-    slug = models.SlugField()
+    def __unicode__(self):
+        return "{}: {}".format(self.shot.number, self.node_path.path)
+
+    def get_absolute_url(self):
+
+        kwargs = {'device': self.shot.device,
+                  'shot': self.shot.number,
+                  'tree': self.node_path.tree.slug}
+
+        if self.node_path.path is NodePath.TOP_PATH:
+            url_name = "tree-detail"
+        else:
+            url_name = "node-detail"
+            kwargs['nodepath'] = self.node_path.path
+
+        return reverse(url_name, kwargs=kwargs)
+
+    def get_data_interface(self):
+        if self.data_interface is None and self.subtree.has_data:
+            self.data_interface = backend_module.DataInterface(shot=self.shot.number,
+                                                               tree=self.node_path.tree,
+                                                               path=self.node_path.get_path_components())
+        return self.data_interface
+
+    def get_data(self):
+        if self.data is None and self.subtree.has_data:
+            data_interface = self.get_data_interface()
+            self.data = data_interface.read_primary_data()
+        return self.data
+
+    def apply_filters(self, request):
+        self.get_data()
+        for fid, name, kwargs in get_filter_list(request):
+            self.apply_filter(fid, name, **kwargs)
+
+    def preprocess_filter_kwargs(self, kwargs):
+        # TODO: should filters.http_arg be put here instead?
+        for key, val in kwargs.iteritems():
+            if isinstance(val, str) and "__shot__" in val:
+                shot_str = str(self.shot.number)
+                kwargs[key] = val.replace("__shot__", shot_str)
+        return kwargs
+
+    def apply_filter(self, fid, name, **kwargs):
+        f_kwargs = self.preprocess_filter_kwargs(kwargs)
+        filter_class = filter_manager.filters[name](**f_kwargs)
+        filter_class.apply(self)
+        self.filter_history.append((fid, filter_class, kwargs))
+
+    def get_absolute_url_for_latest_shot(self):
+        kwargs = {'device': self.shot.device,
+                  'shot': 'latest',
+                  'tree': self.node_path.tree.slug}
+
+        if self.node_path.path is NodePath.TOP_PATH:
+            url_name = "tree-detail"
+        else:
+            url_name = "node-detail"
+            kwargs['nodepath'] = self.node_path.path
+
+        return reverse(url_name, kwargs=kwargs)
+
+    def get_node_for_shot(self, shot_number):
+        """Get same node in different shot tree, if it exists."""
+
+        return Node.objects.get(node_path=self.node_path,
+                                shot__number=shot_number)
+
+    def get_node_for_previous_shot(self):
+        previous_shot = Shot.backend.get_previous_shot_number(self.shot.number)
+        return self.get_node_for_shot(previous_shot)
+
+    def get_node_for_next_shot(self):
+        next_shot = Shot.backend.get_next_shot_number(self.shot.number)
+        return self.get_node_for_shot(next_shot)
+
+    def get_parent(self):
+        try:
+            return Node.objects.get(node_path=self.node_path.parent, shot=self.shot)
+        except Node.DoesNotExist:
+            return None
+
+    def get_ancestors(self, include_self=False):
+        parent = self.get_parent()
+        if parent:
+            ancestors = parent.get_ancestors(include_self=True)
+        else:
+            ancestors = []
+        if include_self:
+            ancestors.append(self)
+        return ancestors
+
+    def get_children(self):
+        return Node.objects.filter(node_path__parent=self.node_path, shot=self.shot).order_by('node_path__path')
+
+
+class SubTree(models.Model):
+    """Node of a data tree.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(SubTree, self).__init__(*args, **kwargs)
+        self.filter_history = []
+
+    #shots = models.ManyToManyField(Shot)
+
+    #path = models.CharField(max_length=256)
+    children = models.ManyToManyField('self')
+    #slug = models.SlugField()
     has_data = models.BooleanField(default=True)
     n_dimensions = models.PositiveSmallIntegerField(blank=True, null=True)
     dtype = models.CharField(max_length=16, blank=True)
     n_channels = models.PositiveSmallIntegerField(blank=True, null=True)
+
+    subtree_hash = models.CharField(max_length=40, unique=True)
 
     # This is effectively a  fixed-length string unique identifier for
     # a  node, allowing  us  to find  the same  node  for other  shots
@@ -232,7 +432,7 @@ class Node(models.Model, backend_module.NodeData):
     # (variable length,  possibly very long)  full tree path  for each
     # node. The  SHA1 is simply generated  from the full tree  path of
     # the node when the node is saved.
-    path_checksum = models.CharField(max_length=40)
+    #path_checksum = models.CharField(max_length=40)
 
     ## TODO:
     ## have n_channels
@@ -243,28 +443,22 @@ class Node(models.Model, backend_module.NodeData):
     ## for now, consider channels as indep, can later share info.
 
     primary_data = None
-    #filtered_data = []
-    #dim = None
-    #labels = None
-    #primary_data = None
-    #primary_dim = None
-    #primary_labels = None
 
-    def get_ancestors(self, include_self=False):
-        if self.parent:
-            ancestors = self.parent.get_ancestors(include_self=True)
-        else:
-            ancestors = []
-        if include_self:
-            ancestors.append(self)
-        return ancestors
+    #def get_ancestors(self, include_self=False):
+    #    if self.parent:
+    #        ancestors = self.parent.get_ancestors(include_self=True)
+    #    else:
+    #        ancestors = []
+    #    if include_self:
+    #        ancestors.append(self)
+    #    return ancestors
 
-    # TODO: rename so that path, nodepath are intuitive
-    def _get_node_path(self):
-        ancestry = self.get_ancestors(include_self=True)
-        return "/".join([n.slug for n in ancestry])
+    ## TODO: rename so that path, nodepath are intuitive
+    #def _get_node_path(self):
+    #    ancestry = self.get_ancestors(include_self=True)
+    #    return "/".join([n.slug for n in ancestry])
 
-    nodepath = property(_get_node_path)
+    #nodepath = property(_get_node_path)
 
     def get_data(self):
         if not hasattr(self, 'data'):
@@ -283,42 +477,57 @@ class Node(models.Model, backend_module.NodeData):
         return self.get_absolute_url(use_latest_shot=True)
 
     def get_available_filters(self):
-        return filter_manager.get_filters(self.data)
+        return filter_manager.get_filters(self)
 
     def _get_sha1(self):
         nodepath = self._get_node_path()
         return hashlib.sha1(nodepath).hexdigest()
 
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.path)
-        super(Node, self).save(*args, **kwargs)
-        # TODO: only single channel...
-        self.primary_data = self.read_primary_data()
-        if not self.primary_data:
-            self.has_data = False
-        else:
-            self.has_data = True
-            self.n_dimensions = self.primary_data.get_n_dimensions()
-            self.dtype = self.primary_data.value_dtype
-            # TODO: shouldn't need try/except here
-            try:
-                self.n_channels = len(self.primary_data.value)
-            except:
-                self.n_channels = 0
+    #def save(self, *args, **kwargs):
+    #    self.slug = slugify(self.path)
+    #    for child in self.get_child_nodes():
+    #        self.children.add(child)
+    #
+    #    #super(Node, self).save(*args, **kwargs)
+    #    # TODO: only single channel...
+    #    self.primary_data = self.read_primary_data()
+    #    if not self.primary_data:
+    #        self.has_data = False
+    #    else:
+    #        self.has_data = True
+    #        self.n_dimensions = self.primary_data.get_n_dimensions()
+    #        self.dtype = self.primary_data.value_dtype
+    #        # TODO: shouldn't need try/except here
+    #        try:
+    #            self.n_channels = len(self.primary_data.value)
+    #        except (AttributeError, TypeError):
+    #            self.n_channels = 0
+    #
+    #    self.path_checksum = self._get_sha1()
+    #    self.subtree_hash = self.generate_subtree_hash()
+    #    super(Node, self).save()  # update_fields=['path_checksum'])
+    #    # TODO: if the node name changes then we also need to regenerate
+    #    # sha1 keys for all descendents...
 
-        self.path_checksum = self._get_sha1()
-        super(Node, self).save()  # update_fields=['path_checksum'])
-        # TODO: if the node name changes then we also need to regenerate
-        # sha1 keys for all descendents...
+    def generate_subtree_hash(self):
+        hash_fields = ('has_data', 'n_dimensions', 'dtype', 'n_channels')
+        hash_val = ""
+        for field in hash_fields:
+            hash_val += hashlib.sha1(unicode(getattr(self, field))).hexdigest()
+        for child in self.children.all():
+            # can we access children before model is saved?
+            hash_val += child.subtree_hash
+        return hashlib.sha1(hash_val).hexdigest()
 
     def __unicode__(self):
-        ancestry = self.get_ancestors(include_self=True)
-        unicode_val = unicode(ancestry[0].path)
-        if len(ancestry) > 1:
-            unicode_val += unicode(":")
-            unicode_val += u'\u2192'.join(
-                [unicode(n.path) for n in ancestry[1:]])
-        return unicode_val
+        #ancestry = self.get_ancestors(include_self=True)
+        #unicode_val = unicode(ancestry[0].path)
+        #if len(ancestry) > 1:
+        #    unicode_val += unicode(":")
+        #    unicode_val += u'\u2192'.join(
+        #        [unicode(n.path) for n in ancestry[1:]])
+        #return unicode_val
+        return self.subtree_hash
 
     ## def get_shot(self):
     ##     if self.level==0:
@@ -328,25 +537,12 @@ class Node(models.Model, backend_module.NodeData):
     ##         shot = int(root_node.path)
     ##     return shot
 
-    def get_node_for_shot(self, shot_number):
-        """Get same node in different shot tree, if it exists."""
-
-        return Node.objects.get(path_checksum=self.path_checksum, shot__number=shot_number)
-
-    def get_node_for_previous_shot(self):
-        previous_shot = Shot.backend.get_previous_shot_number(self.shot.number)
-        return self.get_node_for_shot(previous_shot)
-
-    def get_node_for_next_shot(self):
-        next_shot = Shot.backend.get_next_shot_number(self.shot.number)
-        return self.get_node_for_shot(next_shot)
-
     def populate_child_nodes(self):
         """Use primary data source to populate child nodes."""
 
         child_names = self.get_child_names_from_primary_source()
         for child in child_names:
-            node = Node(path=child, parent=self, shot=self.shot)
+            node = SubTree(path=child, parent=self, shot=self.shot)
             # TODO: can we delay the save and write in bulk?
             node.save()
             node.populate_child_nodes()
@@ -366,19 +562,6 @@ class Node(models.Model, backend_module.NodeData):
         #self.labels = self.primary_labels
         for fid, name, kwargs in get_filter_list(request):
             self.apply_filter(fid, name, **kwargs)
-
-    def get_alternative_format_urls(self, request, alternative_formats):
-        # alternative_formats = ['json', 'xml', etc...]
-        self.alternative_format_urls = {}
-        query_dict = request.GET.copy()
-        try:
-            query_dict.pop('format')
-        except KeyError:
-            pass
-        for fmt in alternative_formats:
-            query_dict.update({'format': fmt})
-            self.alternative_format_urls[fmt] = request.build_absolute_uri(request.path) + "?" + query_dict.urlencode()
-            query_dict.pop('format')
 
     def preprocess_filter_kwargs(self, kwargs):
         # TODO: should filters.http_arg be put here instead?

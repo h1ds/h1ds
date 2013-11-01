@@ -20,6 +20,8 @@ class Command(BaseCommand):
         else:
             device = Device.objects.get(is_default=True)
         for shot_number in map(int, args):
-            s = Shot(number=shot_number, device=device)
-            s.save()
-            self.stdout.write('Successfully added shot %d' % shot_number)
+            shot, created = Shot.objects.get_or_create(number=shot_number, device=device)
+            if created:
+                self.stdout.write('Successfully added shot %d' % shot_number)
+            else:
+                self.stdout.write('Shot %d exists, ignoring.' % shot_number)

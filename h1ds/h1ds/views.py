@@ -35,13 +35,28 @@ from rest_framework.renderers import XMLRenderer
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.compat import timezone, force_text
 
-from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer
-from h1ds.models import UserSignal, UserSignalForm, Worksheet, Node, Shot, Device, UserSignalUpdateForm
+from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer, TreeSerializer
+from h1ds.models import UserSignal, UserSignalForm, Worksheet, SubTree, Shot, Device, UserSignalUpdateForm, Tree, Node
 from h1ds.utils import get_backend_shot_manager
 from h1ds.base import get_filter_list
 
 
 backend_shot_manager = get_backend_shot_manager()
+
+
+def get_alternative_format_urls(request, alternative_formats):
+    # alternative_formats = ['json', 'xml', etc...]
+    alternative_format_urls = {}
+    query_dict = request.GET.copy()
+    try:
+        query_dict.pop('format')
+    except KeyError:
+        pass
+    for fmt in alternative_formats:
+        query_dict.update({'format': fmt})
+        alternative_format_urls[fmt] = request.build_absolute_uri(request.path) + "?" + query_dict.urlencode()
+        query_dict.pop('format')
+    return alternative_format_urls
 
 
 def get_shot_stream_generator():
@@ -295,10 +310,11 @@ class RequestShotView(RedirectView):
     http_method_names = ['post']
 
     def get_redirect_url(self, **kwargs):
+        # TODO: this should use url resolver to get keywords otherwise the split_path[ ] is fragile if url api changes.
         shot = self.request.POST['go_to_shot']
         input_path = self.request.POST['reqpath']
         split_path = input_path.split("/")
-        split_path[2] = str(shot)
+        split_path[3] = str(shot)
         new_path = "/".join(split_path)
         return new_path
 
@@ -457,7 +473,7 @@ class JSONNumpyRenderer(JSONRenderer):
 class NodeView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
 
-    def get_object(self, shot, nodepath):
+    def get_object(self, shot, nodepath, tree):
         """Get node object for request.
 
         TODO:  this  method  does  a   lookup  for  each  level  of  the
@@ -470,29 +486,33 @@ class NodeView(APIView):
         parent nodes.
         
         """
-        checksum = hashlib.sha1(nodepath).hexdigest()
+        #checksum = hashlib.sha1(nodepath).hexdigest()
 
-        node = Node.objects.get(shot=shot, path_checksum=checksum)
-        node.data = node.read_primary_data()
+        #node = SubTree.objects.get(shot=shot, path_checksum=checksum)
+        #node.data = node.read_primary_data()
+        #node.apply_filters(self.request)
+        node = Node.objects.get(shot=shot, node_path__path=nodepath, node_path__tree=tree)
         node.apply_filters(self.request)
         return node
 
-    def get(self, request, device, shot, nodepath, format=None):
+    def get(self, request, device, shot, tree, nodepath, format=None):
+        nodepath = nodepath.lower()
+        device_instance = Device.objects.get(slug=device)
         if shot == 'latest':
-            device_instance = Device.objects.get(slug=device)
             shot_instance = device_instance.latest_shot
             track_latest_shot = True
         else:
             shot_instance = Shot.objects.get(number=shot)
             track_latest_shot = False
 
-        node = self.get_object(shot_instance, nodepath)
+        tree_instance = Tree.objects.get(slug=tree, device=device_instance)
+        node = self.get_object(shot_instance, nodepath, tree_instance)
         # TODO: yaml not working yet
         # TODO: format list shoudl be maintained elsewhere... probably in settings.
-        node.get_alternative_format_urls(self.request, ["html", "json", "xml"])
+        alt_format_urls = get_alternative_format_urls(self.request, ["html", "json", "xml"])
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
-            if not node.has_data:
+            if not node.subtree.has_data:
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"
@@ -501,7 +521,8 @@ class NodeView(APIView):
                              'track_latest_shot': track_latest_shot,
                              'user_signal_form': UserSignalForm(),
                              'user_signals': user_signals,
-                             'device': device},
+                             'device': device,
+                             'alt_format_urls': alt_format_urls},
                             template_name='h1ds/' + template)
         serializer = NodeSerializer(node)
         return Response(serializer.data)
@@ -560,6 +581,27 @@ class ShotDetailView(APIView):
                 #shot, created  = Shot.objects.get_or_create(device=device, number=xxxx)
                 # update shot (async, )
                 # device.latest_shot = shot (when done)
+
+
+class TreeDetailView(APIView):
+    renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
+    serializer_class = TreeSerializer
+
+    def get_object(self):
+        tree = Tree.objects.get(device__slug=self.kwargs['device'], slug=self.kwargs['tree'])
+        return tree
+
+    def get_template_names(self):
+        return ("h1ds/tree_detail.html", )
+
+    def get(self, request, device, shot, tree, format=None):
+        tree = self.get_object()
+        shot = Shot.objects.get(device__slug=device, number=shot)
+        # TODO: if shot is not active for this shot, raise an error
+        if request.accepted_renderer.format == 'html':
+            return Response({'tree': tree, 'shot': shot, 'root_nodes': tree.get_root_nodes_for_shot(shot.number)})
+        serializer = self.serializer_class(tree, context={'shot': shot})
+        return Response(serializer.data)
 
 
 class TextTemplateView(TemplateView):

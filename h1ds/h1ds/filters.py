@@ -31,14 +31,9 @@ def exclude_filter(original_class):
     return original_class
 
 
-def is_numeric(cls, obj):
-    attrs = ['__add__', '__sub__', '__mul__', '__div__', '__pow__']
-    # numpy string_ have these attrs, do any others?
-    is_numpy_str = type(obj) in [np.string_, ]
-    return all(hasattr(obj, attr) for attr in attrs) and not is_numpy_str
-
-
-is_string = lambda cls, d: isinstance(d, basestring)
+# TODO: cover complete numpy dtypes.
+is_string = lambda cls, d: 'str' in d.lower()
+is_numeric = lambda cls, d: not is_string(cls, d)
 
 
 def http_arg(arg):
@@ -92,8 +87,8 @@ class BaseFilter:
         return cls.ndim == "any" or n_dim == cls.ndim
 
     @classmethod
-    def is_filterable(cls, data):
-        return cls.valid_ndim(data.get_n_dimensions()) and cls.valid_dtype(data.value)
+    def is_filterable(cls, subtree):
+        return cls.valid_ndim(subtree.n_dimensions) and cls.valid_dtype(subtree.dtype)
 
     @classmethod
     def get_slug(cls):

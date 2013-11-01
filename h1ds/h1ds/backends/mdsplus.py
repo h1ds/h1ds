@@ -10,27 +10,24 @@ from MDSplus import TdiException
 from MDSplus._treeshr import TreeNoDataException, TreeException
 
 # TODO: base vs models - it's not intuitive what should be where...
-from h1ds.base import BaseNodeData
-from h1ds.base import BaseBackendShotManager
-# Load MDS trees into environment
-for config_tree in settings.DATA_TREES['h1']:
-    os.environ[config_tree[0] + "_path"] = config_tree[1]
+from h1ds.base import BaseDataInterface
+from h1ds.base import BaseBackendShotManager, BaseTreeLoader
 
 
-class NodeData(BaseNodeData):
+class TreeLoader(BaseTreeLoader):
+
+    def load(self, tree):
+        os.environ[tree.name + "_path"] = tree.configuration
+
+
+class DataInterface(BaseDataInterface):
+
     def _get_mds_node_info(self):
         """Get MDS path for node.
 
-        Node ancestry is [tree, node0, node1, ...].
         """
-        node_ancestors = list(self.get_ancestors(include_self=True))
-        # force str rather than unicode. unicode hits mds bug?
-        # not tested since refactor, so casting to str may not be required.
-        mds_tree = str(node_ancestors[0].path)
-        mds_path = ""
-        if len(node_ancestors) > 1:
-            mds_path = ".".join([str(n.path) for n in node_ancestors[1:]])
-        return self.shot.number, mds_tree, mds_path
+        mds_path = ".".join([str(p) for p in self.path])
+        return self.shot, str(self.tree.name), mds_path
 
     def _get_mds_node(self):
         """Get the corresponding MDSplus node for this H1DS tree node."""
@@ -55,8 +52,8 @@ class NodeData(BaseNodeData):
         return str(node)
 
     def get_value(self):
-        if not self.parent:
-            return None
+        #if not self.parent:
+        #    return None
         mds_node = self._get_mds_node()
         try:
             primary_data = mds_node.getData().data()
@@ -71,8 +68,8 @@ class NodeData(BaseNodeData):
 
     def get_dimension(self):
         """Get dimension of raw data (i.e. no filters)."""
-        if not self.parent:  # top level
-            return []  # np.array([])
+        #if not self.parent:  # top level
+        #    return []  # np.array([])
         mds_node = self._get_mds_node()
         try:
             shape = mds_node.getShape()
@@ -96,8 +93,8 @@ class NodeData(BaseNodeData):
         return units
 
     def get_dimension_units(self):
-        if not self.parent:
-            return np.array([])
+        #if not self.parent:
+        #    return np.array([])
         mds_node = self._get_mds_node()
         try:
             shape = mds_node.getShape()
@@ -131,7 +128,7 @@ class NodeData(BaseNodeData):
     def get_metadata(self):
         return {}
 
-    def get_child_names_from_primary_source(self):
+    def get_children(self):
         try:
             mds_node = self._get_mds_node()
         except ObjectDoesNotExist:
@@ -141,7 +138,10 @@ class NodeData(BaseNodeData):
             node_names = []
         else:
             node_names = [n.getNodeName() for n in mds_descendants]
-        return node_names
+        children = []
+        for child_name in node_names:
+            children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [child_name]))
+        return children
 
 
 class MDSPlusShotManager(BaseBackendShotManager):

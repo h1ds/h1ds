@@ -123,7 +123,7 @@ def get_filter(context, f_class, is_active=False, f_id=None, f_data=None):
 def show_filters(context, data_node):
     # TODO: HACK
     filters = ""
-    for n, f in data_node.get_available_filters().iteritems():
+    for n, f in data_node.subtree.get_available_filters().iteritems():
         filters += get_filter(context, f)
     return filters
 
