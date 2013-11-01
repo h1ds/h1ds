@@ -125,7 +125,7 @@ class Device(models.Model):
     # TODO: restrict this foreign key to shots which belong to the device instance. This has been
     # done for the admin form, but should be done in general. The obvious approach would be to use
     # the limit_choices_to kwarg, but I can't see how to include the Device instance with that.
-    latest_shot = models.ForeignKey("Shot", null=True, blank=True, related_name="+")
+    latest_shot = models.ForeignKey("Shot", null=True, blank=True, related_name="+", on_delete=models.SET_NULL)
 
     is_default = models.BooleanField(default=True, help_text="Set this as the default device.")
 
@@ -205,7 +205,7 @@ class Tree(models.Model):
 class Shot(models.Model):
     number = models.PositiveIntegerField(primary_key=True)
     timestamp = models.DateTimeField()
-    device = models.ForeignKey(Device, on_delete=models.PROTECT)
+    device = models.ForeignKey(Device)
 
     objects = models.Manager()
     backend = get_backend_shot_manager()()
