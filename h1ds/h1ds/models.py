@@ -246,6 +246,11 @@ class Shot(models.Model):
         if populate_tree:
             self.populate_tree()
 
+        if not self.device.latest_shot:
+            self.device.latest_shot = self
+            self.device.save()
+
+
     def populate_tree(self):
         # actually - we should set as latest shot straight away,
         # and have another parameter which keeps the state of tree cacheing.
