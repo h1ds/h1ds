@@ -1,14 +1,15 @@
 from django.conf.urls import *
 
-from h1ds_summary.views import raw_sql, get_summary_attribute_form_from_url, go_to_source
+from h1ds_summary.views import get_summary_attribute_form_from_url, go_to_source
 from h1ds_summary.views import SummaryView, AddSummaryAttribiteView  #, RecomputeSummaryView
 from h1ds_summary.views import AJAXLatestSummaryShotView, AJAXLastUpdateTimeView, SummaryDeviceListView
+from h1ds_summary.views import RawSQLView
 
 internal_patterns = patterns('',
                              url(r'^get_summary_attribute_form_from_url/$',
                                  get_summary_attribute_form_from_url,
                                  name="get-summary-attribute-form-from-url"),
-                             url(r'^raw_sql/$', raw_sql, name="raw-sql"),
+                             url(r'^raw_sql/$', RawSQLView.as_view(), name="raw-sql"),
                              )
 
 device_internal_patterns = patterns('',

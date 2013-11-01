@@ -4,7 +4,6 @@ from django import forms
 from django.contrib import messages
 from django.core.cache import cache
 from django.core.urlresolvers import resolve, reverse
-from django.db import connection
 from django.http import QueryDict, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
@@ -25,6 +24,8 @@ from h1ds_summary.db import SummaryTable
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.parsers import get_attribute_variants
+from django.contrib.auth.decorators import permission_required
+from django.utils.decorators import method_decorator
 
 
 DEFAULT_SHOT_REGEX = "last30"
@@ -229,51 +230,41 @@ class RawSqlForm(forms.Form):
     where = forms.CharField(widget=forms.Textarea)
 
 
-def raw_sql(request):
-    """Provide a form for users to request a raw SQL query and display the results.
-
-    """
-    # to protect against SQL injection attacks, only allow users with permissions to do raw SQL queries.
-    if not request.user.has_perm('h1ds_summary.raw_sql_query_summaryattribute'):
-        return HttpResponseRedirect("/")
-
-    if request.method == 'POST':
-        form = RawSqlForm(request.POST)
-        if form.is_valid():
-            cursor = connection.cursor()
-            device = Device.objects.get(slug=form.cleaned_data['device'])
-            #tablename = get_tablename(device)
-            table = SummaryTable(device)
-            tablename = table.table_name
-            select_list = [i.strip() for i in form.cleaned_data['select'].split(',')]
-            if select_list[0] != 'shot':
-                _select_list = ['shot']
-                _select_list.extend(select_list)
-                select_list = _select_list
-            cursor.execute(
-                "SELECT %s FROM %s WHERE %s" % (','.join(select_list), tablename, form.cleaned_data['where']))
-            data = cursor.fetchall()
-
-            new_data = []
-            data_headers = select_list
-            for d in data:
-                new_row = []
-                for j_i, j in enumerate(d):
-                    new_row.append((j, data_headers[j_i]))
-                new_data.append(new_row)
-
-            return render_to_response('h1ds_summary/summary_table.html',
-                                      {'data': new_data, 'data_headers': data_headers, 'select': ','.join(select_list),
-                                       'where': form.cleaned_data['where'],
-                                       'device': device},
-                                      context_instance=RequestContext(request))
-
-    if request.method == 'GET':
-        return HttpResponseRedirect("/")
-
 ##########################################################
 ## New Django REST Framework based views
 ##########################################################
+
+
+class RawSQLView(APIView):
+    renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
+
+    # to protect against SQL injection attacks, only allow users with permissions to do raw SQL queries.
+    @method_decorator(permission_required('h1ds_summary.raw_sql_query_summaryattribute'))
+    def dispatch(self, *args, **kwargs):
+        return super(RawSQLView, self).dispatch(*args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect("/")
+
+    def post(self, request, *args, **kwargs):
+        form = RawSqlForm(request.POST)
+        if form.is_valid():
+            device = Device.objects.get(slug=form.cleaned_data['device'])
+            table = SummaryTable(device)
+            select_list = [i.strip() for i in form.cleaned_data['select'].split(',')]
+            if not 'shot' in select_list:
+                select_list.insert(0, 'shot')
+            results = table.do_query(select=select_list, where=form.cleaned_data['where'])
+            # TODO: non html
+            return Response({'data': results,
+                             'device': device,
+                             'inactive_attributes': [],
+                             'active_attributes': [],
+                             'sql_form': form},
+                            template_name='h1ds_summary/summary_table.html')
+        else:  # invalid form
+            # TODO: proper handling here
+            return HttpResponseRedirect("/")
 
 
 class SimpleSerializer(serializers.Serializer):
@@ -343,11 +334,12 @@ class SummaryView(APIView):
                 return Response(template_name='h1ds_summary/no_data.html')
 
             inactive_attributes, active_attributes = self.get_attribute_links(request, *args, **kwargs)
-
+            sql_form = RawSqlForm(initial={'device': device.slug})
             return Response({'data': results,
                              'device': device,
                              'inactive_attributes': inactive_attributes,
-                             'active_attributes': active_attributes},
+                             'active_attributes': active_attributes,
+                             'sql_form': sql_form},
                             template_name='h1ds_summary/summary_table.html')
 
         serializer = SimpleSerializer(results)

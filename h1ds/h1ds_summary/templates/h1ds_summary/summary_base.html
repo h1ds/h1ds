@@ -72,20 +72,13 @@
       </div>
     </div>
   </div>
-{% if perms.h1ds_summary.raw_sql_query_summaryattribute %}
+{% if perms.h1ds_summary.raw_sql_query_summaryattribute and sql_form %}
   <div class="portlet" id="summary-portlet-sql">
     <div class="portlet-header">SQL query</div>
     <div class="portlet-content">
       <div class="sidebarcontent fullform">
 	<form action="{% url "raw-sql" %}" method="post">{% csrf_token %}
-        {% comment %}
-        TODO: use standard django form display rather than hardcode form html.
-        This will also bring in the device field which is currently missing.
-        {% endcomment %}
-	  <span class="left">select</span>
-	  <INPUT style="width:100%" type="text" id="select" name="select" value="{{select}}"/>
-	  <span class="left">where</span>
-	  <textarea style="width:100%" id="where" name="where">{{where}}</textarea>
+        {{ sql_form.as_p }}
 	  <INPUT title="submit query" type="submit" value="&#x21b5;" />
 	</form>
       </div>

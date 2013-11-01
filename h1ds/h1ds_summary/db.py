@@ -274,6 +274,31 @@ class SummaryTable:
         result = cursor.fetchone()[0]
         return result
 
+    def do_query(self, select=['shot'], where=None, as_dict=True):
+        """Simple interface to SQL for given select and where statements
+
+        Keywork arguments:
+            select (list)  - list of attributes to select
+            where (str)    - optional SQL where statement
+            as_dict (bool) - if true then the responses will be returned as list of dicts: [{'attr':value, }, ]
+
+        Returns:
+            list of dicts (if as_dict is True)
+            raw response from sqlite (if as_dict is False)
+
+        """
+        select_str = ",".join(select)
+        cursor = get_summary_cursor()
+        cursor.execute(
+            "SELECT {} FROM {} WHERE {} ORDER BY -shot".format(select_str, self.table_name, where)
+        )
+
+        data = cursor.fetchall()
+        if as_dict:
+            return [OrderedDict(zip(select, row)) for row in data]
+        else:
+            return data
+
     def do_query_from_path_components(self, shot_str, attr_str, filter_str, as_dict=True):
         """Do SQL query from the URL API path components.
 
@@ -298,21 +323,11 @@ class SummaryTable:
         filter_where = parse_filter_str(filter_str)
 
         attr_list.insert(0, "shot")
-        select = ",".join(attr_list)
 
         if filter_where is None:
             where = shot_where
         else:
             where = ' AND '.join([shot_where, filter_where])
 
-        cursor = get_summary_cursor()
-        cursor.execute(
-            "SELECT {} FROM {} WHERE {} ORDER BY -shot".format(select, self.table_name, where)
-        )
+        return self.do_query(select=attr_list, where=where, as_dict=as_dict)
 
-        data = cursor.fetchall()
-
-        if as_dict:
-            return [OrderedDict(zip(attr_list, row)) for row in data]
-        else:
-            return data
