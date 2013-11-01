@@ -250,13 +250,17 @@ class Shot(models.Model):
             self.device.latest_shot = self
             self.device.save()
 
-
     def populate_tree(self):
         # actually - we should set as latest shot straight away,
         # and have another parameter which keeps the state of tree cacheing.
         # TODO: what if shot is already populated?
         for tree in self.get_active_trees():
-            tasks.populate_tree.apply_async(args=[self, tree])
+            # HACK: callback is a new task so we can use celery's task_sent signal when populate_tree is finished.
+            # A better way would be to use a task_success signal, but I've had problems with specifying the sender
+            # in signal.connect(), so currently we have this hack job using task_send.
+            tasks.populate_tree.apply_async(args=[self, tree],
+                                            link=tasks.populate_tree_success.s())
+
 
     def set_as_latest_shot(self, *args, **kwargs):
         # allow args, kwargs as this is being used as

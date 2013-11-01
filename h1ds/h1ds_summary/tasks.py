@@ -5,6 +5,8 @@ from h1ds.utils import get_backend_shot_manager
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary import get_summary_cursor
 
+from celery.signals import task_success, task_sent
+
 backend_shot_manager = get_backend_shot_manager()
 
 
@@ -40,7 +42,7 @@ def write_attributes_to_table(*args, **kwargs):
        table_name (str) - name of SQLite table to write to
        shot_number (int) - shot number
     Arguments
-       *args - remaining args should be (attr, data) pairs
+       *args - remaining args should be (attr, data) pairs  (TODO: BUG: currently all implementations provide args=(((a, d), (a, d)),) )
 
     e.g. write_attributes_to_table('my_table', 12345, ('dens',10), ('Ti',9))
 
@@ -53,7 +55,7 @@ def write_attributes_to_table(*args, **kwargs):
 
     attr_str = "shot"
     value_str = str(shot_number)
-    for attr in args:
+    for attr in args[0]:  # TODO taking zeroth elemt is yuk - can we fix how this func is called?
         attr_str += ",{}".format(attr[0])
         if attr[1] is None:
             value_str += ",NULL"
@@ -78,3 +80,15 @@ def write_single_attribute_to_table(device_slug, shot_number, attribute_slug):
     table_name = TABLE_NAME_TEMPLATE.format(device_slug)
     chain(get_summary_attribute_data.s(device_slug, shot_number, attribute_slug),
           write_attributes_to_table.s(table_name=table_name, shot_number=shot_number)).apply_async()
+
+
+@task_sent.connect  #(sender='h1ds.tasks.populate_tree_success')
+def test_signal(sender=None, task_id=None, task=None, args=None, kwargs=None, **kwds):
+    if sender == 'h1ds.tasks.populate_tree_success':  #TODO should be able to put this in connect - but not working?
+        from h1ds.models import Device
+        from h1ds_summary.db import SummaryTable
+        device_slug, shot_number, tree = args[0]
+        # TODO: should this be a celery task?
+        device = Device(slug=device_slug)
+        db = SummaryTable(device)
+        db.update_shot(shot_number)

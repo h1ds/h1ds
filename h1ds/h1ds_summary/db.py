@@ -11,7 +11,7 @@ from django.db import transaction
 
 from celery import chord, group
 
-from h1ds.models import Shot
+from h1ds.models import Shot, Device
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary.tasks import get_summary_attribute_data, write_attributes_to_table, write_single_attribute_to_table
 from h1ds_summary import get_summary_cursor
@@ -119,6 +119,18 @@ class SummaryTable:
 
         raise NotImplementedError
 
+    def delete_shot(self, shot_number):
+        """Delete shot from summary table.
+
+        Arguments:
+            shot_number (int) - shot number.
+
+        """
+
+        cursor = get_summary_cursor()
+        cursor.execute("DELETE FROM {} WHERE shot={}".format(self.table_name,  shot_number))
+        transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
+
     def get_attributes_from_table(self, filter_initial_attributes=False):
         """Get the attributes of the summary table.
 
@@ -151,10 +163,15 @@ class SummaryTable:
     def regenerate_table(self):
         pass
 
-    def update_shot(self):
-        """... update or replace ..."""
+    def update_shot(self, shot_number):
+        """Update a shot in the table.
 
-        pass
+
+        TODO: update rather than delete and add. (This is just a placeholder for a sensible method.)
+        """
+
+        self.delete_shot(shot_number)
+        self.add_shot(shot_number)
 
     def update_table(self, check_all_shots=False):
         """Add missing shots to summary table.
