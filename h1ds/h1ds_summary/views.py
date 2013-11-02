@@ -98,18 +98,11 @@ class RecomputeSummaryView(View):
         return_path = request.POST.get("return_path")
         device = Device.objects.get(slug=kwargs['device'])
         table = SummaryTable(device)
-        print request.POST
         if 'shot' in request.POST:
-            print "INSIDE SHOT"
-            #shot = [int(request.POST.get("shot")), ]
-            #populate_summary_table_task.delay(device, shot)
             table.update_shot(int(request.POST.get("shot")))
         elif 'attribute' in request.POST:
-            print "INSIDE ATTR"
             attribute = request.POST.get("attribute")
-            #populate_attribute_task.delay(device, attribute)
             table.update_attribute(attribute)
-        print "DONE"
         return HttpResponseRedirect(return_path)
 
 
