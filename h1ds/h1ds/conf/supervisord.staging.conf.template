@@ -15,13 +15,13 @@ autorestart=true
 [program:moin]
 directory = %(here)s/../
 ; user = __user__
-command = %(here)s/../moin.staging.sh
+command = %(here)s/../../moin.staging.sh
 stdout_logfile = %(here)s/../../log/moin.out.log
 stderr_logfile = %(here)s/../../log/moin.err.log
 autorestart=true
 
 [program:celery]
-command=%(here)s/../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO --settings=h1ds.settings_staging
+command=%(here)s/../../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO --settings=h1ds.settings_staging
 directory=%(here)s/../../
 ; user=nobody
 numprocs=1
