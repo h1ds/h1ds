@@ -5,18 +5,18 @@ server {
     error_log /var/log/nginx/h1ds.error.log;
     rewrite ^/mdsplus/(.*)$ http://h1ds.anu.edu.au/data/$1 permanent;
 
-    pagespeed on;
-    pagespeed FileCachePath /var/ngx_pagespeed_cache;
+    #pagespeed on;
+    #pagespeed FileCachePath /var/ngx_pagespeed_cache;
 
     # enable compression
     gzip on;
     gzip_types text/plain application/xml application/json;
 
-    location ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+" { add_header "" ""; }
-    location ~ "^/ngx_pagespeed_static/" { }
-    location ~ "^/ngx_pagespeed_beacon$" { }
-    location /ngx_pagespeed_statistics { allow 127.0.0.1; deny all; }
-    location /ngx_pagespeed_message { allow 127.0.0.1; deny all; }
+    #location ~ "\.pagespeed\.([a-z]\.)?[a-z]{2}\.[^.]{10}\.[^.]+" { add_header "" ""; }
+    #location ~ "^/ngx_pagespeed_static/" { }
+    #location ~ "^/ngx_pagespeed_beacon$" { }
+    #location /ngx_pagespeed_statistics { allow 127.0.0.1; deny all; }
+    #location /ngx_pagespeed_message { allow 127.0.0.1; deny all; }
 
 
     # https://docs.djangoproject.com/en/dev/howto/static-files/#serving-static-files-in-production
