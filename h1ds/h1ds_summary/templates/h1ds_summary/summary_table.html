@@ -5,7 +5,7 @@
 {% block summarycontent%}
 <table class="main-table">
 
-{% if active_attributes %}<thead><tr><th>shot</th>{% for dh in active_attributes %}<th><span class="toggleVertical" title="{{ dh.name }}: {{ dh.description }}">{{dh.slug}}</span> <span class="right"><a href="{{ dh.url }}">&#x00d7;</a></span> {% if perms.h1ds_summary.recompute_summaryattribute %}<form class="inline right" action="{% url "summary-recompute" device=device %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="attribute" value="{{dh.slug}}"><input type="submit" value="&#x27F3;"/></form>{% endif %}</th>{% endfor %}</tr></thead>
+{% if active_attributes %}<thead><tr><th>shot</th><th>timestamp</th>{% for dh in active_attributes %}<th><span class="toggleVertical" title="{{ dh.name }}: {{ dh.description }}">{{dh.slug}}</span> <span class="right"><a href="{{ dh.url }}">&#x00d7;</a></span> {% if perms.h1ds_summary.recompute_summaryattribute %}<form class="inline right" action="{% url "summary-recompute" device=device %}" method="post">{% csrf_token %}<input type="hidden" name="return_path" value="{{ request.get_full_path }}"><INPUT type="hidden" name="attribute" value="{{dh.slug}}"><input type="submit" value="&#x27F3;"/></form>{% endif %}</th>{% endfor %}</tr></thead>
     {% else %}<thead><tr>{% for key, value in data.0.iteritems %}<th>{{ key }}</th>{% endfor %}</tr></thead>
 {% endif %}
 <tbody>{% if poll_server %}<!-- table filled in with js -->{% else %}

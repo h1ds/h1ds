@@ -2,6 +2,7 @@ from celery import task, chord
 from django.db import transaction
 
 from h1ds.utils import get_backend_shot_manager
+from h1ds.models import Shot
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary import get_summary_cursor
 
@@ -41,8 +42,9 @@ def insert_table_attributes(attribute_data, **kwargs):
     Keyword arguments:
        table_name (str) - name of SQLite table to write to
        shot_number (int) - shot number
+       shot_timestamp
     Arguments
-       *args - remaining args should be (attr, data) pairs  (TODO: BUG: currently all implementations provide args=(((a, d), (a, d)),) )
+       *args - remaining args should be (attr, data) pairs
 
     e.g. write_attributes_to_table('my_table', 12345, ('dens',10), ('Ti',9))
 
@@ -50,20 +52,22 @@ def insert_table_attributes(attribute_data, **kwargs):
     # We use **kwargs because celery chaining pushes previous results to the
     # first argument of successive tasks, and kwargs let us set up a partial
     # where not arguments are not interchangeable (here, table_name and shot_number)
-    table_name = kwargs.get("table_name")
-    shot_number = kwargs.get("shot_number")
+    table_name = kwargs.get('table_name')
+    shot_number = kwargs.get('shot_number')
+    shot_timestamp = kwargs.get('shot_timestamp')
+
 
     cursor = get_summary_cursor()
-    attr_str = "shot"
-    value_str = str(shot_number)
+    attr_str = 'shot,timestamp'
+    value_str = "{},'{}'".format(shot_number, shot_timestamp)
     for attr in attribute_data:
-        attr_str += ",{}".format(attr[0])
+        attr_str += ',{}'.format(attr[0])
         if attr[1] is None:
-            value_str += ",NULL"
+            value_str += ',NULL'
         else:
-            value_str += ",{}".format(attr[1])
+            value_str += ',{}'.format(attr[1])
 
-    cursor.execute("INSERT OR REPLACE INTO {} ({}) VALUES ({})".format(table_name, attr_str, value_str))
+    cursor.execute('INSERT OR REPLACE INTO {} ({}) VALUES ({})'.format(table_name, attr_str, value_str))
     transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
 @task()
@@ -73,6 +77,7 @@ def update_table_attributes(attribute_data, **kwargs):
     Keyword arguments:
        table_name (str) - name of SQLite table to write to
        shot_number (int) - shot number
+       shot_timestamp
     Arguments
        *args - remaining args should be (attr, data) pairs  (TODO: BUG: currently all implementations provide args=(((a, d), (a, d)),) )
 
@@ -84,10 +89,12 @@ def update_table_attributes(attribute_data, **kwargs):
     # where not arguments are not interchangeable (here, table_name and shot_number)
     table_name = kwargs.get("table_name")
     shot_number = kwargs.get("shot_number")
+    shot_timestamp = kwargs.get("shot_timestamp")
 
     cursor = get_summary_cursor()
+    attribute_data += (("timestamp", "'{}'".format(shot_timestamp)), )
 
-    set_str = ",".join("{}=NULL".format(a[0]) if (a[1] is None) else "{}={}".format(a[0],a[1]) for a in attribute_data)
+    set_str = ",".join("{}=NULL".format(a[0]) if (a[1] is None) else "{}={}".format(a[0], a[1]) for a in attribute_data)
 
     cursor.execute("UPDATE {} SET {} WHERE shot={}".format(table_name, set_str, shot_number))
     transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
@@ -95,7 +102,7 @@ def update_table_attributes(attribute_data, **kwargs):
 
 
 @task()
-def insert_single_table_attribute(device_slug, shot_number, attribute_slug):
+def insert_single_table_attribute(device_slug, shot_number, shot_timestamp, attribute_slug):
     """Get a data for a single summary attribute and write it to the table.
 
     Arguments:
@@ -106,10 +113,10 @@ def insert_single_table_attribute(device_slug, shot_number, attribute_slug):
     """
     table_name = TABLE_NAME_TEMPLATE.format(device_slug)
     chord([get_summary_attribute_data.s(device_slug, shot_number, attribute_slug)],
-          insert_table_attributes.s(table_name=table_name, shot_number=shot_number)).apply_async()
+          insert_table_attributes.s(table_name=table_name, shot_number=shot_number, shot_timestamp=shot_timestamp)).apply_async()
 
 @task()
-def update_single_table_attribute(device_slug, shot_number, attribute_slug):
+def update_single_table_attribute(device_slug, shot_number, shot_timestamp, attribute_slug):
     """Get a data for a single summary attribute and write it to the table.
 
     Arguments:
@@ -120,7 +127,7 @@ def update_single_table_attribute(device_slug, shot_number, attribute_slug):
     """
     table_name = TABLE_NAME_TEMPLATE.format(device_slug)
     chord([get_summary_attribute_data.s(device_slug, shot_number, attribute_slug)],
-          update_table_attributes.s(table_name=table_name, shot_number=shot_number)).apply_async()
+          update_table_attributes.s(table_name=table_name, shot_number=shot_number,shot_timestamp=shot_timestamp)).apply_async()
 
 
 @task_sent.connect  #(sender='h1ds.tasks.populate_tree_success')

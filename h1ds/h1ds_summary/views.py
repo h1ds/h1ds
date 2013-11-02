@@ -19,7 +19,7 @@ from rest_framework.renderers import XMLRenderer
 from rest_framework import serializers
 
 from h1ds.views import DeviceListView
-from h1ds.models import Device
+from h1ds.models import Device, Shot
 from h1ds_summary.db import SummaryTable
 from h1ds_summary.forms import SummaryAttributeForm
 from h1ds_summary.models import SummaryAttribute
@@ -99,7 +99,8 @@ class RecomputeSummaryView(View):
         device = Device.objects.get(slug=kwargs['device'])
         table = SummaryTable(device)
         if 'shot' in request.POST:
-            table.update_shot(int(request.POST.get("shot")))
+            shot_instance = Shot(number=int(request.POST.get("shot")), device=device)
+            table.update_shot(shot_instance)
         elif 'attribute' in request.POST:
             attribute = request.POST.get("attribute")
             table.update_attribute(attribute)

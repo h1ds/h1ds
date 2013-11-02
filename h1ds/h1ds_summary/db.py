@@ -5,6 +5,9 @@ summary attributes. This is possible because SQLite uses dynamic typing, and
 simplifies the codebase. It may be desirable to use the optional type specification in
 the table columns -- this would be a field in the SummaryAttribute.
 
+timestamp hack - the timestamp attribute of shot instances often return None, and I'm not sure why, so
+the workaround is to grab from backend until I solve the problem
+
 """
 from collections import OrderedDict
 from django.db import transaction
@@ -163,11 +166,11 @@ class SummaryTable:
     def regenerate_table(self):
         pass
 
-    def update_shot(self, shot_number):
+    def update_shot(self, shot):
         """Update a shot in the table.
 
         """
-        return self.add_shot(shot_number, update=True)
+        return self.add_shot(shot, update=True)
 
     def update_table(self, check_all_shots=False):
         """Add missing shots to summary table.
@@ -188,27 +191,19 @@ class SummaryTable:
     def add_shot(self, shot, update=False):
         """Add shot to summary database.
 
-
-
-
         Arguments:
-            shot - either an instance of h1ds.models.Shot or an integer (shot number)
+            shot (h1ds.models.Shot or shot number)
 
         Keyword arguments:
             force_overwrite - if False: If the shot already exists then this will do nothing.
                             - if True - overwrite any existing entries for shot
 
         """
-        # While we could use 'INSERT OR IGNORE' rather than explicity checking
-        # if the shot exists, we don't want to go and fetch all the attribute
-        # data if the shot already exists.
+        if not isinstance(shot, Shot):
+            shot = Shot(number=shot, device=self.device)
         new_shot = not self.shot_exists(shot)
         if not update and not new_shot:
             return
-        try:
-            shot_number = shot.number
-        except AttributeError:
-            shot_number = shot
 
         table_attributes = self.get_attributes_from_table(filter_initial_attributes=True)
 
@@ -217,9 +212,11 @@ class SummaryTable:
         else:
             task_name = update_table_attributes
 
+        # Hack workaround - see notes at top of file
+        shot_timestamp = Shot.backend.get_timestamp_for_shot(shot.number)
         chord(
-            (get_summary_attribute_data.s(self.device.slug, shot_number, a) for a in table_attributes),
-            task_name.s(table_name=self.table_name, shot_number=shot_number)
+            (get_summary_attribute_data.s(self.device.slug, shot.number, a) for a in table_attributes),
+            task_name.s(table_name=self.table_name, shot_number=shot.number, shot_timestamp=str(shot_timestamp))
         ).apply_async()
 
     def shot_exists(self, shot):
@@ -260,8 +257,9 @@ class SummaryTable:
         else:
             task_name = insert_single_table_attribute
 
+        shot_timestamp = Shot.backend.get_timestamp_for_shot(shot.number)
         group(
-            (task_name.s(self.device.slug, shot.number, attr_slug) for shot in shot_queryset),
+            (task_name.s(self.device.slug, shot.number, shot_timestamp, attr_slug) for shot in shot_queryset),
         ).apply_async()
 
     def update_attribute(self, summary_attribute):
@@ -289,7 +287,7 @@ class SummaryTable:
         result = cursor.fetchone()[0]
         return result
 
-    def do_query(self, select=['shot'], where=None, as_dict=True):
+    def do_query(self, select=['shot', 'timestamp'], where=None, as_dict=True):
         """Simple interface to SQL for given select and where statements
 
         Keywork arguments:
@@ -337,7 +335,9 @@ class SummaryTable:
         attr_list = parse_attr_str(self.device, attr_str)
         filter_where = parse_filter_str(filter_str)
 
-        attr_list.insert(0, "shot")
+        for special_attr in ['timestamp', 'shot']:
+            if not special_attr in attr_list:
+                attr_list.insert(0, special_attr)
 
         if filter_where is None:
             where = shot_where
