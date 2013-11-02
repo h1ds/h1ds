@@ -1,4 +1,4 @@
-from celery import task, chain
+from celery import task, chord
 from django.db import transaction
 
 from h1ds.utils import get_backend_shot_manager
@@ -35,7 +35,7 @@ def get_summary_attribute_data(device_slug, shot_number, attribute_slug):
 
 
 @task()
-def write_attributes_to_table(*args, **kwargs):
+def insert_table_attributes(attribute_data, **kwargs):
     """Write attributes to summary database.
 
     Keyword arguments:
@@ -53,22 +53,49 @@ def write_attributes_to_table(*args, **kwargs):
     table_name = kwargs.get("table_name")
     shot_number = kwargs.get("shot_number")
 
+    cursor = get_summary_cursor()
     attr_str = "shot"
     value_str = str(shot_number)
-    for attr in args[0]:  # TODO taking zeroth elemt is yuk - can we fix how this func is called?
+    for attr in attribute_data:
         attr_str += ",{}".format(attr[0])
         if attr[1] is None:
             value_str += ",NULL"
         else:
             value_str += ",{}".format(attr[1])
 
-    cursor = get_summary_cursor()
     cursor.execute("INSERT OR REPLACE INTO {} ({}) VALUES ({})".format(table_name, attr_str, value_str))
     transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
+@task()
+def update_table_attributes(attribute_data, **kwargs):
+    """Write attributes to summary database.
+
+    Keyword arguments:
+       table_name (str) - name of SQLite table to write to
+       shot_number (int) - shot number
+    Arguments
+       *args - remaining args should be (attr, data) pairs  (TODO: BUG: currently all implementations provide args=(((a, d), (a, d)),) )
+
+    e.g. write_attributes_to_table('my_table', 12345, ('dens',10), ('Ti',9))
+
+    """
+    # We use **kwargs because celery chaining pushes previous results to the
+    # first argument of successive tasks, and kwargs let us set up a partial
+    # where not arguments are not interchangeable (here, table_name and shot_number)
+    table_name = kwargs.get("table_name")
+    shot_number = kwargs.get("shot_number")
+
+    cursor = get_summary_cursor()
+
+    set_str = ",".join("{}=NULL".format(a[0]) if (a[1] is None) else "{}={}".format(a[0],a[1]) for a in attribute_data)
+
+    cursor.execute("UPDATE {} SET {} WHERE shot={}".format(table_name, set_str, shot_number))
+    transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
+
+
 
 @task()
-def write_single_attribute_to_table(device_slug, shot_number, attribute_slug):
+def insert_single_table_attribute(device_slug, shot_number, attribute_slug):
     """Get a data for a single summary attribute and write it to the table.
 
     Arguments:
@@ -78,8 +105,22 @@ def write_single_attribute_to_table(device_slug, shot_number, attribute_slug):
 
     """
     table_name = TABLE_NAME_TEMPLATE.format(device_slug)
-    chain(get_summary_attribute_data.s(device_slug, shot_number, attribute_slug),
-          write_attributes_to_table.s(table_name=table_name, shot_number=shot_number)).apply_async()
+    chord([get_summary_attribute_data.s(device_slug, shot_number, attribute_slug)],
+          insert_table_attributes.s(table_name=table_name, shot_number=shot_number)).apply_async()
+
+@task()
+def update_single_table_attribute(device_slug, shot_number, attribute_slug):
+    """Get a data for a single summary attribute and write it to the table.
+
+    Arguments:
+        device slug (str) - slug for device
+        shot_number (int) - shot number
+        attribute_slug (str) - slug for SummaryAttribute for device.
+
+    """
+    table_name = TABLE_NAME_TEMPLATE.format(device_slug)
+    chord([get_summary_attribute_data.s(device_slug, shot_number, attribute_slug)],
+          update_table_attributes.s(table_name=table_name, shot_number=shot_number)).apply_async()
 
 
 @task_sent.connect  #(sender='h1ds.tasks.populate_tree_success')

@@ -13,7 +13,7 @@ from celery import chord, group
 
 from h1ds.models import Shot, Device
 from h1ds_summary import TABLE_NAME_TEMPLATE
-from h1ds_summary.tasks import get_summary_attribute_data, write_attributes_to_table, write_single_attribute_to_table
+from h1ds_summary.tasks import get_summary_attribute_data, insert_table_attributes, insert_single_table_attribute, update_table_attributes, update_single_table_attribute
 from h1ds_summary import get_summary_cursor
 from h1ds_summary.parsers import parse_shot_str, parse_attr_str, parse_filter_str
 
@@ -167,7 +167,7 @@ class SummaryTable:
         """Update a shot in the table.
 
         """
-        return self.add_shot(shot_number, force_overwrite=True)
+        return self.add_shot(shot_number, update=True)
 
     def update_table(self, check_all_shots=False):
         """Add missing shots to summary table.
@@ -185,7 +185,7 @@ class SummaryTable:
 
         #TODO, complete
 
-    def add_shot(self, shot, force_overwrite=False):
+    def add_shot(self, shot, update=False):
         """Add shot to summary database.
 
 
@@ -202,7 +202,8 @@ class SummaryTable:
         # While we could use 'INSERT OR IGNORE' rather than explicity checking
         # if the shot exists, we don't want to go and fetch all the attribute
         # data if the shot already exists.
-        if not force_overwrite and self.shot_exists(shot):
+        new_shot = not self.shot_exists(shot)
+        if not update and not new_shot:
             return
         try:
             shot_number = shot.number
@@ -211,9 +212,14 @@ class SummaryTable:
 
         table_attributes = self.get_attributes_from_table(filter_initial_attributes=True)
 
+        if new_shot or not update:
+            task_name = insert_table_attributes
+        else:
+            task_name = update_table_attributes
+
         chord(
             (get_summary_attribute_data.s(self.device.slug, shot_number, a) for a in table_attributes),
-            write_attributes_to_table.s(table_name=self.table_name, shot_number=shot_number)
+            task_name.s(table_name=self.table_name, shot_number=shot_number)
         ).apply_async()
 
     def shot_exists(self, shot):
@@ -235,7 +241,7 @@ class SummaryTable:
         cursor.execute("SELECT shot from {} WHERE shot={}".format(self.table_name, shot_number))
         return bool(cursor.fetchone())
 
-    def populate_attribute(self, summary_attribute):
+    def populate_attribute(self, summary_attribute, update=True):
         """Populate all instances of summary_attribute in table.
 
         Arguments:
@@ -249,8 +255,13 @@ class SummaryTable:
 
         shot_queryset = Shot.objects.filter(device=self.device, number__lte=self.device.latest_shot.number)
 
+        if update:
+            task_name = update_single_table_attribute
+        else:
+            task_name = insert_single_table_attribute
+
         group(
-            (write_single_attribute_to_table.s(self.device.slug, shot.number, attr_slug) for shot in shot_queryset),
+            (task_name.s(self.device.slug, shot.number, attr_slug) for shot in shot_queryset),
         ).apply_async()
 
     def update_attribute(self, summary_attribute):
