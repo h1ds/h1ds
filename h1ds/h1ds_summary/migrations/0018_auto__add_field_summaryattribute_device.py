@@ -9,7 +9,10 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding field 'SummaryAttribute.device'
-        default_device_pk = orm['h1ds.Device'].objects.get(is_default=True).pk
+        if not db.dry_run:
+            default_device_pk = orm['h1ds.Device'].objects.get(is_default=True).pk
+        else:
+            default_device_pk = 0
         db.add_column(u'h1ds_summary_summaryattribute', 'device',
                       self.gf('django.db.models.fields.related.ForeignKey')(default=default_device_pk, to=orm['h1ds.Device'], on_delete=models.PROTECT),
                       keep_default=False)
