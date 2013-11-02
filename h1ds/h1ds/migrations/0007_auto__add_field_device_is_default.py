@@ -13,13 +13,14 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=True),
                       keep_default=False)
         # make sure we have a device with is_default=True.
-        try:
-            default_device = orm.Device.objects.all()[0]
-            default_device.is_default = True
-            default_device.save()
-        except IndexError:
-            default_device = orm.Device(name="Default device", slug="default", is_default=True)
-            default_device.save()
+        if not db.dry_run:
+            try:
+                default_device = orm.Device.objects.all()[0]
+                default_device.is_default = True
+                default_device.save()
+            except IndexError:
+                default_device = orm.Device(name="Default device", slug="default", is_default=True)
+                default_device.save()
 
 
 
