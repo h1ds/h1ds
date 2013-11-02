@@ -1,7 +1,7 @@
 from django.conf.urls import *
 
 from h1ds_summary.views import get_summary_attribute_form_from_url, go_to_source
-from h1ds_summary.views import SummaryView, AddSummaryAttribiteView  #, RecomputeSummaryView
+from h1ds_summary.views import SummaryView, AddSummaryAttribiteView, RecomputeSummaryView
 from h1ds_summary.views import AJAXLatestSummaryShotView, AJAXLastUpdateTimeView, SummaryDeviceListView
 from h1ds_summary.views import RawSQLView
 
@@ -24,8 +24,8 @@ device_internal_patterns = patterns('',
                                     url(r'^get_last_update_time/$',
                                     AJAXLastUpdateTimeView.as_view(),
                                     name="summary-get-last-update-time"),
-                                    #url(r'^recompute/$',
-                                    #RecomputeSummaryView.as_view(), name="summary-recompute"),
+                                    url(r'^recompute/$',
+                                    RecomputeSummaryView.as_view(), name="summary-recompute"),
                                     )
 
 device_summary_patterns = patterns('',

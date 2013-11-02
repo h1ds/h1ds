@@ -166,12 +166,8 @@ class SummaryTable:
     def update_shot(self, shot_number):
         """Update a shot in the table.
 
-
-        TODO: update rather than delete and add. (This is just a placeholder for a sensible method.)
         """
-
-        self.delete_shot(shot_number)
-        self.add_shot(shot_number)
+        return self.add_shot(shot_number, force_overwrite=True)
 
     def update_table(self, check_all_shots=False):
         """Add missing shots to summary table.
@@ -189,19 +185,24 @@ class SummaryTable:
 
         #TODO, complete
 
-    def add_shot(self, shot):
+    def add_shot(self, shot, force_overwrite=False):
         """Add shot to summary database.
 
-        If the shot already exists then this will do nothing.
+
+
 
         Arguments:
             shot - either an instance of h1ds.models.Shot or an integer (shot number)
+
+        Keyword arguments:
+            force_overwrite - if False: If the shot already exists then this will do nothing.
+                            - if True - overwrite any existing entries for shot
 
         """
         # While we could use 'INSERT OR IGNORE' rather than explicity checking
         # if the shot exists, we don't want to go and fetch all the attribute
         # data if the shot already exists.
-        if self.shot_exists(shot):
+        if not force_overwrite and self.shot_exists(shot):
             return
         try:
             shot_number = shot.number
@@ -246,11 +247,14 @@ class SummaryTable:
         except AttributeError:
             attr_slug = summary_attribute
 
-        shot_querystring = Shot.objects.filter(device=self.device, number__lte=self.device.latest_shot.number)
+        shot_queryset = Shot.objects.filter(device=self.device, number__lte=self.device.latest_shot.number)
 
         group(
-            (write_single_attribute_to_table.s(self.device.slug, shot.number, attr_slug) for shot in shot_querystring),
+            (write_single_attribute_to_table.s(self.device.slug, shot.number, attr_slug) for shot in shot_queryset),
         ).apply_async()
+
+    def update_attribute(self, summary_attribute):
+        return self.populate_attribute(summary_attribute)
 
     def get_latest_shot(self):
         """Get the min of self.device.latest_shot and the max shot number in table.

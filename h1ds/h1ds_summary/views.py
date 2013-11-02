@@ -81,29 +81,36 @@ class AJAXLastUpdateTimeView(View):
 
 
 # TODO: bring this back to life
-#class RecomputeSummaryView(View):
-#    """Recompute requested subset of summary database.
-#
-#    Require a HTTP POST with two key-value pairs: 'return_path and either 'shot' or 'attribute'.
-#       return_path - URL to be redirected to after we submit the processing task to the job queue.
-#       shot - a single shot number, for which all attributes are recomputed.
-#       attribute - name (slug) of an attribute to be recomputed for all shots.
-#
-#    If both shot and attribute are provided, the shot number will be processed and the attribute ignored.
-#    """
-#
-#    http_method_names = ['post']
-#
-#    def post(self, request, *args, **kwargs):
-#        return_path = request.POST.get("return_path")
-#        device = Device.objects.get(slug=kwargs['device'])
-#        if request.POST.has_key("shot"):
-#            shot = [int(request.POST.get("shot")), ]
-#            populate_summary_table_task.delay(device, shot)
-#        elif request.POST.has_key("attribute"):
-#            attribute = request.POST.get("attribute")
-#            populate_attribute_task.delay(device, attribute)
-#        return HttpResponseRedirect(return_path)
+class RecomputeSummaryView(View):
+    """Recompute requested subset of summary database.
+
+    Require a HTTP POST with two key-value pairs: 'return_path and either 'shot' or 'attribute'.
+       return_path - URL to be redirected to after we submit the processing task to the job queue.
+       shot - a single shot number, for which all attributes are recomputed.
+       attribute - name (slug) of an attribute to be recomputed for all shots.
+
+    If both shot and attribute are provided, the shot number will be processed and the attribute ignored.
+    """
+
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        return_path = request.POST.get("return_path")
+        device = Device.objects.get(slug=kwargs['device'])
+        table = SummaryTable(device)
+        print request.POST
+        if 'shot' in request.POST:
+            print "INSIDE SHOT"
+            #shot = [int(request.POST.get("shot")), ]
+            #populate_summary_table_task.delay(device, shot)
+            table.update_shot(int(request.POST.get("shot")))
+        elif 'attribute' in request.POST:
+            print "INSIDE ATTR"
+            attribute = request.POST.get("attribute")
+            #populate_attribute_task.delay(device, attribute)
+            table.update_attribute(attribute)
+        print "DONE"
+        return HttpResponseRedirect(return_path)
 
 
 class AddSummaryAttribiteView(View):
