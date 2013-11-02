@@ -22,7 +22,7 @@ autorestart=true
 
 [program:celery]
 environment=DJANGO_SETTINGS_MODULE='h1ds.settings.staging',PYTHONPATH='__venv_dir__/h1ds/h1ds'
-command=__venv_dir__/bin/django-admin.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO
+command=__venv_dir__/bin/django-admin.py celeryd -v 2 -B --loglevel=INFO
 directory=%(here)s/../../
 ; user=nobody
 numprocs=1
