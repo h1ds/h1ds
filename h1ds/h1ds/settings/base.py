@@ -45,7 +45,7 @@ DATABASES = {
     },
         'summarydb': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(VENV_DIR, 'db', 'summary.db')
+        'NAME': os.path.join(DJANGO_PROJECT_DIR, 'db', 'summary.db')
     }
 
 }
