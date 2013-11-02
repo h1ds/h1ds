@@ -21,7 +21,8 @@ stderr_logfile = %(here)s/../../log/moin.err.log
 autorestart=true
 
 [program:celery]
-command=%(here)s/../../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO --settings=h1ds.settings_staging
+environment=DJANGO_SETTINGS_MODULE='h1ds.settings.development',PYTHONPATH='__venv_dir__/h1ds/h1ds'
+command=%(here)s/../../manage.py celeryd -v 2 -B --concurrency=1 --loglevel=INFO
 directory=%(here)s/../../
 ; user=nobody
 numprocs=1
