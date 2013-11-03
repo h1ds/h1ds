@@ -627,7 +627,7 @@ class Multiply(BaseFilter):
         _factor = float_or_array(self.kwargs["factor"])
 
         node.data.name = "(%s)*%s" % (self.kwargs["factor"], node.data.name)
-        node.data.value = _factor * node.data.value
+        node.data.value = [_factor * v for v in node.data.value]
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "(%s)*%s" % (self.kwargs["factor"], node.data.value_labels[0])
         else:
@@ -646,7 +646,7 @@ class Divide(BaseFilter):
         _factor = float(self.kwargs["factor"])
 
         node.data.name = "(%s)/%s" % (node.data.name, self.kwargs["factor"])
-        node.data.value /= _factor
+        node.data.value = [v/_factor for v in node.data.value]
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "(%s)/%s" % (node.data.value_labels[0], self.kwargs["factor"])
         else:
@@ -666,7 +666,7 @@ class Subtract(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data.name = "%s - %s" % (node.data.name, self.kwargs["value"])
-        node.data.value -= _value
+        node.data.value = [v - _value for v in node.data.value]
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "%s - %s" % (node.data.value_labels[0], self.kwargs["value"])
         else:
@@ -686,7 +686,7 @@ class Add(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data.name = "%s + %s" % (node.data.name, self.kwargs["value"])
-        node.data.value += _value
+        node.data.value = [v + _value for v in node.data.value]
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "%s + %s" % (node.data.value_labels[0], self.kwargs["value"])
         else:
@@ -705,7 +705,7 @@ class Exponent(BaseFilter):
         _value = float(self.kwargs["value"])
 
         node.data.name = "(%s)^%s" % (node.data.name, self.kwargs["value"])
-        node.data.value **= _value
+        node.data.value = [v**_value for v in node.data.value]
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "(%s)^%s" % (node.data.value_labels[0], self.kwargs["value"])
         else:
