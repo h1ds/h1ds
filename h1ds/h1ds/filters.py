@@ -154,7 +154,7 @@ class FirstPulse(Array1DimNumericBaseFilter):
         first_element = np.where(node.data.value[0] > _threshold)[0][0]
 
         node.data.name = 'first_pulse(%s, %s)' % (node.data.name, self.kwargs["threshold"])
-        node.data.value = node.data.dimension[0][first_element]
+        node.data.value = [node.data.dimension[0][first_element]]
         node.data.dimension = []
         node.data.value_units = None
         node.data.dimension_units = None
@@ -191,7 +191,7 @@ class PulseWidth(Array1DimNumericBaseFilter):
 
         if use_size > 0:         # TODO: tell the user what's going on...
             node.data.name = "pulse_width(%s, %s)" % (node.data.name, self.kwargs["threshold"])
-            node.data.value = np.min(end1[:use_size] - t[:use_size])
+            node.data.value = [np.min(end1[:use_size] - t[:use_size])]
             node.data.dimension = []
             node.data.value_units = None
             node.data.dimension_units = None
@@ -229,7 +229,7 @@ class PulseNumber(Array1DimNumericBaseFilter):
         # it   is  somehow   different   to  the   numpy.int32  in   the
         # dtype_mapping key.
         node.data.name = "pulse_number(%s, %s)" % (node.data.name, self.kwargs["threshold"])
-        node.data.value = np.int32(np.min([t.shape[0], end1.shape[0]]))
+        node.data.value = [np.int32(np.min([t.shape[0], end1.shape[0]]))]
         node.data.dimension = []
         node.data.value_units = None
         node.data.dimension_units = []
@@ -248,7 +248,7 @@ class Max(Array1DimNumericBaseFilter):
 
     def apply(self, node):
         node.data.name = "max(%s)" % node.data.name
-        node.data.value = np.max(node.data.value)
+        node.data.value = [np.max(node.data.value)]
         # value_units, value_dtype unchanged
         node.data.dimension = []
         node.data.dimension_units = []
@@ -276,7 +276,7 @@ class MaxOf(Array1DimNumericBaseFilter):
         if isinstance(node.data.value[0], np.ndarray):
             node.data.value[0][node.data.value[0] < _value] = _value
         else:
-            node.data.value = np.max([node.data.value[0], _value])
+            node.data.value = [np.max([node.data.value[0], _value])]
 
         node.data.name = "max_of(%s, %s)" % (node.data.name, self.kwargs["value"])
         if len(node.data.value_labels) > 0:
@@ -295,7 +295,7 @@ class DimOfMaxVal(Array1DimNumericBaseFilter):
 
     def apply(self, node):
         node.data.name = "dim_of_max(%s)" % node.data.name
-        node.data.value = node.data.dimension[0][np.argmax(node.data.value[0])]
+        node.data.value = [node.data.dimension[0][np.argmax(node.data.value[0])]]
         node.data.value_dtype = node.data.dimension_dtype
         node.data.value_units = node.data.dimension_units
         node.data.dimension = []
@@ -315,7 +315,7 @@ class Mean(Array1DimNumericBaseFilter):
     def apply(self, node):
 
         node.data.name = "mean(%s)" % node.data.name
-        node.data.value = np.mean(node.data.value[0])
+        node.data.value = [np.mean(node.data.value[0])]
         node.data.dimension = []
         node.data.dimension_dtype = None
         node.data.dimension_units = None
@@ -338,7 +338,7 @@ class Element(Array1DimNumericBaseFilter):
     def apply(self, node):
         _index = int(self.kwargs["index"])
         node.data.name = "index(%s, %s)" % (node.data.name, self.kwargs["index"])
-        node.data.value = node.data.value[0][_index]
+        node.data.value = [node.data.value[0][_index]]
         node.data.dimension = []
         node.data.dimension_dtype = None
         node.data.dimension_units = None
@@ -357,7 +357,7 @@ class PeakToPeak(Array1DimNumericBaseFilter):
 
     def apply(self, node):
         node.data.name = "peak_to_peak(%s)" % node.data.name
-        node.data.value = max(node.data.value[0]) - min(node.data.value[0])
+        node.data.value = [max(node.data.value[0]) - min(node.data.value[0])]
         node.data.dimension = []
         node.data.dimension_dtype = None
         node.data.dimension_units = None
