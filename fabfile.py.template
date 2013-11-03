@@ -17,9 +17,11 @@ from __future__ import with_statement
 import os
 import tempfile
 import time
+from contextlib import contextmanager
+
 from fabric.api import *
 from fabric.contrib.files import exists
-from contextlib import contextmanager
+
 
 ########################################################################
 ## Settings
@@ -52,21 +54,24 @@ PRODUCTION_MONITOR = 'supervisord'
 
 env.project = "h1ds"
 env.git_url = "https://github.com/h1ds/h1ds.git"
+
+
 def dev():
     """Django development on localhost."""
     env.environment = 'development'
-    env.venv = "%(project)s_%(environment)s" %env
+    env.venv = "%(project)s_%(environment)s" % env
     env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.hosts = ["localhost"]
     env.server_user = os.getuid()
     env.server_group = os.getgid()
     env.webserver = "development" # django dev webserver
     env.monitor = None
-    
+
+
 def staging():
     """Staging server."""
     env.environment = 'staging'
-    env.venv = "%(project)s_%(environment)s" %env
+    env.venv = "%(project)s_%(environment)s" % env
     env.user = STAGING_USER
     env.hosts = [STAGING_HOST]
     env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
@@ -75,10 +80,11 @@ def staging():
     env.webserver = STAGING_WEBSERVER
     env.monitor = STAGING_MONITOR
 
+
 def production():
     """Production server."""
     env.environment = 'production'
-    env.venv = "%(project)s_%(environment)s" %env
+    env.venv = "%(project)s_%(environment)s" % env
     env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.user = PRODUCTION_USER
     env.hosts = [PRODUCTION_HOST]
@@ -87,29 +93,33 @@ def production():
     env.webserver = PRODUCTION_WEBSERVER
     env.monitor = PRODUCTION_MONITOR
 
+
 @contextmanager
 def shell_env(**env_vars):
     orig_shell = env['shell']
     env_vars_str = ' '.join('{0}={1}'.format(key, value)
                             for key, value in env_vars.items())
-    env['shell']='{0} {1}'.format(env_vars_str, orig_shell)
+    env['shell'] = '{0} {1}'.format(env_vars_str, orig_shell)
     yield
-    env['shell']= orig_shell
-    
+    env['shell'] = orig_shell
+
+
 def start_supervisord():
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
-        run('supervisord -c h1ds/h1ds/h1ds/conf/supervisord.%(environment)s.conf' %env, pty=False)
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
+        run('supervisord -c h1ds/h1ds/h1ds/conf/supervisord.%(environment)s.conf' % env, pty=False)
+
 
 def stop_supervisord():
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
         pid_filename = os.path.join('h1ds', 'h1ds', 'pid', 'supervisord.pid')
         if exists(pid_filename):
-            pid = int(run('cat %s' %pid_filename))
-            run('kill %d' %pid)
+            pid = int(run('cat %s' % pid_filename))
+            run('kill %d' % pid)
             print("waiting for supervisord to shut down")
             while exists(pid_filename):
                 time.sleep(1)
             print "done"
+
 
 def restart_upstart():
     pass
@@ -137,7 +147,7 @@ def update_dir_structure():
     server_perms = (
         ('wiki',),
         ('serverfiles',),
-        )
+    )
     dirs = (
         ('wiki', 'data', 'plugin', 'theme'),
         ('wiki', 'data', 'pages'),
@@ -148,34 +158,34 @@ def update_dir_structure():
         ('db',),
         ('pid',),
         ('serverfiles',),
-        )
+    )
     touch = (
         ('wiki', 'data', 'plugin', '__init__.py'),
         ('wiki', 'data', 'plugin', 'theme', '__init__.py'),
-        )
+    )
 
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
         ## Grab the dir so we can use sudo without workon
         env_dir = run('echo $PWD')
-	repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
-	django_project_dir = os.path.join(repository_dir, "h1ds")
+        repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
+        django_project_dir = os.path.join(repository_dir, "h1ds")
 
     with cd(django_project_dir):
         server_perm_paths = map(lambda x: os.path.join(*x), server_perms)
         if env.webserver == "apache":
             for sp in server_perm_paths:
                 if exists(sp):
-                    sudo('chown -R --reference=$PWD %s' %sp)
+                    sudo('chown -R --reference=$PWD %s' % sp)
 
     with cd(django_project_dir):
         d_paths = map(lambda x: os.path.join(*x), dirs)
         t_paths = map(lambda x: os.path.join(*x), touch)
         for d in d_paths:
             if not exists(d):
-                run('mkdir -p %s' %d)
+                run('mkdir -p %s' % d)
         for t in t_paths:
             if not exists(t):
-                run('touch %s' %t)
+                run('touch %s' % t)
 
     with cd(django_project_dir):
         with cd("static"):
@@ -187,7 +197,8 @@ def update_dir_structure():
         if env.webserver == "apache":
             for sp in server_perm_paths:
                 if exists(sp):
-                    sudo('chown -R %s:%s %s' %(env.server_user, env.server_group, sp))
+                    sudo('chown -R %s:%s %s' % (env.server_user, env.server_group, sp))
+
 
 def setup():
     """To be run once only. Non-idempotent.
@@ -198,7 +209,7 @@ def setup():
 
     run('%(mkvirtualenv)s %(venv)s' % env)
 
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
         run('git clone %(git_url)s %(project)s' % env)
         run('pip install fabric')
     update_dir_structure()
@@ -209,22 +220,24 @@ def update_upstart_conf():
 
 
 def update_supervisord_conf():
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
         env_dir = run('echo $PWD')
-    template_fn = 'h1ds/h1ds/conf/supervisord.%s.conf.template' %(env.environment)
-    conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" %(env.environment)
+    template_fn = 'h1ds/h1ds/conf/supervisord.%s.conf.template' % (env.environment)
+    conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" % (
+    env.environment)
     with open(template_fn) as conf_template:
         conf_text = conf_header + conf_template.read()
     conf_text = conf_text.replace("__venv_dir__", env_dir)
-    conf_text = conf_text.replace("__user__", "%(server_user)s" %env)
+    conf_text = conf_text.replace("__user__", "%(server_user)s" % env)
     with tempfile.NamedTemporaryFile() as new_config_file:
         new_config_file.write(conf_text)
         new_config_file.flush()
-        remote_name = '%s/h1ds/h1ds/h1ds/conf/supervisord.%s.conf' %(env_dir, env.environment)
+        remote_name = '%s/h1ds/h1ds/h1ds/conf/supervisord.%s.conf' % (env_dir, env.environment)
         put(new_config_file.name, remote_name)
 
+
 def update_gunicorn_sh():
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
         env_dir = run('echo $PWD')
     template_fn = 'h1ds/h1ds/gunicorn.sh.template'
     #conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" %(env.environment)
@@ -234,17 +247,18 @@ def update_gunicorn_sh():
         conf_text = conf_template.read()
     conf_text = conf_text.replace("__venv_dir__", env_dir)
     conf_text = conf_text.replace("__venv__", env.environment)
-    conf_text = conf_text.replace("__user__", "%(server_user)s" %env)
-    conf_text = conf_text.replace("__group__", "%(server_group)s" %env)
+    conf_text = conf_text.replace("__user__", "%(server_user)s" % env)
+    conf_text = conf_text.replace("__group__", "%(server_group)s" % env)
     with tempfile.NamedTemporaryFile() as new_config_file:
         new_config_file.write(conf_text)
         new_config_file.flush()
-        remote_name = '%s/h1ds/h1ds/h1ds/gunicorn.%s.sh' %(env_dir, env.environment)
+        remote_name = '%s/h1ds/h1ds/h1ds/gunicorn.%s.sh' % (env_dir, env.environment)
         put(new_config_file.name, remote_name)
-    run('chmod a+x '+remote_name)
+    run('chmod a+x ' + remote_name)
+
 
 def update_moin_sh():
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
         env_dir = run('echo $PWD')
     template_fn = 'h1ds/h1ds/moin.sh.template'
     #conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" %(env.environment)
@@ -254,14 +268,15 @@ def update_moin_sh():
         conf_text = conf_template.read()
     conf_text = conf_text.replace("__venv_dir__", env_dir)
     conf_text = conf_text.replace("__venv__", env.environment)
-    conf_text = conf_text.replace("__user__", "%(server_user)s" %env)
-    conf_text = conf_text.replace("__group__", "%(server_group)s" %env)
+    conf_text = conf_text.replace("__user__", "%(server_user)s" % env)
+    conf_text = conf_text.replace("__group__", "%(server_group)s" % env)
     with tempfile.NamedTemporaryFile() as new_config_file:
         new_config_file.write(conf_text)
         new_config_file.flush()
-        remote_name = '%s/h1ds/h1ds/moin.%s.sh' %(env_dir, env.environment)
+        remote_name = '%s/h1ds/h1ds/moin.%s.sh' % (env_dir, env.environment)
         put(new_config_file.name, remote_name)
-    run('chmod a+x '+remote_name)
+    run('chmod a+x ' + remote_name)
+
 
 def update():
     """Can be run multiple times. Idempotent."""
@@ -269,10 +284,10 @@ def update():
     update_dir_structure()
     env.settings = '%(project)s.settings.%(environment)s' % env
 
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
         env_dir = run('echo $PWD')
-	repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
-	django_project_dir = os.path.join(repository_dir, "h1ds")
+        repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
+        django_project_dir = os.path.join(repository_dir, "h1ds")
     h1ds_app_dir = os.path.join(django_project_dir, "h1ds")
     remote_settings_dir = os.path.join(h1ds_app_dir, "settings")
     this_dir = os.path.abspath(os.path.dirname(__file__))
@@ -285,32 +300,32 @@ def update():
     # environment,  and that  it exists  in the  same directory  as this
     # file.  We'll  attempt to copy  it to the virtual  environment, and
     # abort if the copy fails.
-    settings_filename = "%(environment)s.py" %env
+    settings_filename = "%(environment)s.py" % env
     with cd(remote_settings_dir):
         try:
-            env_settings_md5 = run("md5sum "+settings_filename)
+            env_settings_md5 = run("md5sum " + settings_filename)
         except:
             env_settings_md5 = "dummy_checksum"
     with lcd(local_settings_dir):
-        local_settings_md5 = local("md5sum "+settings_filename, capture=True)
+        local_settings_md5 = local("md5sum " + settings_filename, capture=True)
         if env_settings_md5 != local_settings_md5:
             try:
                 put(settings_filename, remote_settings_dir)
             except ValueError:
-                print "Cannot copy settings file [%s] to environment. " %settings_filename
+                print "Cannot copy settings file [%s] to environment. " % settings_filename
                 print "Please make sure the file exists."
                 return False
 
     # update the h1ds dir from the repository.
     with cd(repository_dir):
         run("git pull")
-    
+
     # set up / refresh wiki directories.
     with cd(django_project_dir):
         sudo('cp -r h1ds/moin/underlay wiki')
         sudo('cp h1ds/conf/h1ds.py wiki/data/plugin/theme')
         if env.webserver == "apache":
-            sudo('chown -R %(server_user)s:%(server_group)s wiki' %env)
+            sudo('chown -R %(server_user)s:%(server_group)s wiki' % env)
         sudo('chmod -R ug+rwX wiki')
         sudo('chmod -R o-rwX wiki')
 
@@ -326,8 +341,8 @@ def update():
             sudo('chown -R --reference=$PWD db')
             sudo('chown -R --reference=$PWD serverfiles')
 
-    with prefix('workon %(venv)s && cdvirtualenv' %env):
-        with prefix('cd %(project)s' %env):
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
+        with prefix('cd %(project)s' % env):
             run("pip install -r requirements/requirements.txt")
             # the recalcitrant_requirements file contains packages which
             # needs   those   in    requirements.txt   installed   first
@@ -335,23 +350,24 @@ def update():
             run("pip install -r requirements/recalcitrant_requirements.txt")
             if env.webserver == "nginx":
                 run("pip install -r requirements/requirements_nginx.txt")
-            # need server perms to run db through webserver, so use sudo to
-            # modify db and make sure we chown the db after to be sure.
-    with prefix('workon %(venv)s' %env):
+    
+    # need server perms to run db through webserver, so use sudo to
+    # modify db and make sure we chown the db after to be sure.
+    with prefix('workon %(venv)s' % env):
         with cd(django_project_dir):
-            with shell_env(PYTHONPATH=django_project_dir, DJANGO_SETTINGS_MODULE="%(settings)s" %env):
+            with shell_env(PYTHONPATH=django_project_dir, DJANGO_SETTINGS_MODULE="%(settings)s" % env):
                 run("django-admin.py syncdb")
                 run("django-admin.py collectstatic --noinput")
                 run("django-admin.py migrate")
                 #run("django-admin.py createtree %(test_mds_dir)s" % env)
-    
+
     # Now that we  have finished making changes to  the database, change
     # the permissions back to those appropriate for the server.
     if env.webserver == "apache":
         with cd(env_dir):
-            sudo('chown -R %(server_user)s:%(server_group)s db' %env)
-            sudo('chown -R %(server_user)s:%(server_group)s serverfiles' %env)
-    
+            sudo('chown -R %(server_user)s:%(server_group)s db' % env)
+            sudo('chown -R %(server_user)s:%(server_group)s serverfiles' % env)
+
     if env.webserver != "development":
         if env.monitor == 'supervisord':
             update_supervisord_conf()
@@ -359,50 +375,53 @@ def update():
             update_upstart_conf()
         update_gunicorn_sh()
         update_moin_sh()
-    
+
     # Now, set up webserver
     if env.webserver == "apache":
         # Create Apache config from template
-        conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" %(env.environment)
-        with open('conf/apache/h1ds_%s.conf.template' %(env.environment)) as conf_template:
+        conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" % (
+        env.environment)
+        with open('conf/apache/h1ds_%s.conf.template' % (env.environment)) as conf_template:
             conf_text = conf_header + conf_template.read()
         conf_text = conf_text.replace("__venv_dir__", env_dir)
         with tempfile.NamedTemporaryFile() as new_config_file:
             new_config_file.write(conf_text)
             new_config_file.flush()
-            remote_name = '%s/h1ds/conf/apache/h1ds_%s.conf' %(env_dir, env.environment)
+            remote_name = '%s/h1ds/conf/apache/h1ds_%s.conf' % (env_dir, env.environment)
             put(new_config_file.name, remote_name)
 
         # check if we already have a symlink to apache conf
         h1ds_apache_conf = '/etc/apache2/sites-available/h1ds'
         if not exists(h1ds_apache_conf):
-            sudo("ln -s %s/h1ds/conf/apache/h1ds_%s.conf %s" %(env_dir, env.environment, h1ds_apache_conf))
+            sudo("ln -s %s/h1ds/conf/apache/h1ds_%s.conf %s" % (env_dir, env.environment, h1ds_apache_conf))
             sudo("a2ensite h1ds")
         sudo('/etc/init.d/apache2 reload')
 
     elif env.webserver == "nginx":
         # Create nginx config from template
-        conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" %(env.environment)
-        with open('h1ds/h1ds/conf/nginx/h1ds_%s.conf.template' %(env.environment)) as conf_template:
+        conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" % (
+        env.environment)
+        with open('h1ds/h1ds/conf/nginx/h1ds_%s.conf.template' % (env.environment)) as conf_template:
             conf_text = conf_header + conf_template.read()
         conf_text = conf_text.replace("__venv_dir__", env_dir)
         with tempfile.NamedTemporaryFile() as new_config_file:
             new_config_file.write(conf_text)
             new_config_file.flush()
-            remote_name = '%s/h1ds/h1ds/h1ds/conf/nginx/h1ds_%s.conf' %(env_dir, env.environment)
+            remote_name = '%s/h1ds/h1ds/h1ds/conf/nginx/h1ds_%s.conf' % (env_dir, env.environment)
             put(new_config_file.name, remote_name)
 
-        
-            
+
+
         # check if we already have a symlink to nginx conf
         h1ds_nginx_conf = '/etc/nginx/sites-enabled/h1ds'
         if not exists(h1ds_nginx_conf):
-            sudo("ln -s %s/h1ds/h1ds/h1ds/conf/nginx/h1ds_%s.conf %s" %(env_dir, env.environment, h1ds_nginx_conf))
+            sudo("ln -s %s/h1ds/h1ds/h1ds/conf/nginx/h1ds_%s.conf %s" % (env_dir, env.environment, h1ds_nginx_conf))
+
         # clear the pagespeed cache
         sudo('/etc/init.d/nginx stop')
         sudo('rm -rf /var/ngx_pagespeed_cache/*')
         sudo('/etc/init.d/nginx start')
-        
+
     if env.monitor == 'supervisord':
         restart_supervisord()
     elif env.monitor == 'upstart':
