@@ -14,7 +14,9 @@ https://bugs.launchpad.net/ubuntu/+source/virtualenvwrapper/+bug/870097
 """
 
 from __future__ import with_statement
-import os, platform, tempfile, time, stat
+import os
+import tempfile
+import time
 from fabric.api import *
 from fabric.contrib.files import exists
 from contextlib import contextmanager
@@ -31,7 +33,8 @@ STAGING_USER = "username"
 STAGING_HOST = "192.168.56.101"
 # Either "nginx" or "apache"
 STAGING_WEBSERVER = "nginx"
-
+# Options: 'supervisord', 'upstart'
+STAGING_MONITOR = 'supervisord'
 ## Production server
 
 # Username on production server
@@ -40,6 +43,8 @@ PRODUCTION_USER = "username"
 PRODUCTION_HOST = "server.com"
 # Either "nginx" or "apache"
 PRODUCTION_WEBSERVER = "nginx"
+# Options: 'supervisord', 'upstart'
+PRODUCTION_MONITOR = 'supervisord'
 
 ########################################################################
 ### You should not need to change anything below this line
@@ -56,6 +61,7 @@ def dev():
     env.server_user = os.getuid()
     env.server_group = os.getgid()
     env.webserver = "development" # django dev webserver
+    env.monitor = None
     
 def staging():
     """Staging server."""
@@ -67,6 +73,7 @@ def staging():
     env.server_user = 'www-data'
     env.server_group = 'www-data'
     env.webserver = STAGING_WEBSERVER
+    env.monitor = STAGING_MONITOR
 
 def production():
     """Production server."""
@@ -78,6 +85,7 @@ def production():
     env.server_user = 'www-data'
     env.server_group = 'www-data'
     env.webserver = PRODUCTION_WEBSERVER
+    env.monitor = PRODUCTION_MONITOR
 
 @contextmanager
 def shell_env(**env_vars):
@@ -102,6 +110,10 @@ def stop_supervisord():
             while exists(pid_filename):
                 time.sleep(1)
             print "done"
+
+def restart_upstart():
+    pass
+
 
 def restart_supervisord():
     """Restart supervisord.
@@ -191,6 +203,11 @@ def setup():
         run('pip install fabric')
     update_dir_structure()
 
+
+def update_upstart_conf():
+    pass
+
+
 def update_supervisord_conf():
     with prefix('workon %(venv)s && cdvirtualenv' %env):
         env_dir = run('echo $PWD')
@@ -260,6 +277,7 @@ def update():
     remote_settings_dir = os.path.join(h1ds_app_dir, "settings")
     this_dir = os.path.abspath(os.path.dirname(__file__))
     local_settings_dir = os.path.join(this_dir, 'h1ds', 'h1ds', 'settings')
+
     # TODO: provide test data for non-mds sources
     env.test_mds_dir = os.path.join(env_dir, 'test_mds_data')
 
@@ -335,7 +353,10 @@ def update():
             sudo('chown -R %(server_user)s:%(server_group)s serverfiles' %env)
     
     if env.webserver != "development":
-        update_supervisord_conf()
+        if env.monitor == 'supervisord':
+            update_supervisord_conf()
+        elif env.monitor == 'upstart':
+            update_upstart_conf()
         update_gunicorn_sh()
         update_moin_sh()
     
@@ -382,5 +403,7 @@ def update():
         sudo('rm -rf /var/ngx_pagespeed_cache/*')
         sudo('/etc/init.d/nginx start')
         
-    if env.webserver != "development":
+    if env.monitor == 'supervisord':
         restart_supervisord()
+    elif env.monitor == 'upstart':
+        restart_upstart()
