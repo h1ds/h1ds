@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+LOGFILE=${log_dir}/h1ds.gunicorn.log
+N_CORES=`grep -c ^processor /proc/cpuinfo`
+NUM_WORKERS=$$(( 2 * $$N_CORES + 1 ))
+ADDRESS=unix:/tmp/h1ds.gunicorn.sock
+export DJANGO_SETTINGS_MODULE=h1ds.settings.$environment
+cd $virtualenv_dir
+source bin/activate
+export PYTHONPATH=${django_project_dir}:$$PYTHONPATH
+exec bin/gunicorn h1ds.wsgi:application -w $$NUM_WORKERS \
+    --log-level=info --bind=$$ADDRESS -k gevent \
+    --log-file=$$LOGFILE 2>>$$LOGFILE

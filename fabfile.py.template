@@ -18,6 +18,7 @@ import os
 import tempfile
 import time
 from contextlib import contextmanager
+from string import Template
 
 from fabric.api import *
 from fabric.contrib.files import exists
@@ -29,24 +30,26 @@ from fabric.contrib.files import exists
 
 ## Staging server.
 
-# Username on staging server
+# Project user and group name
 STAGING_USER = "username"
+STAGING_GROUP = 'groupname'
 # Hostname or IP address of staging server
 STAGING_HOST = "192.168.56.101"
 # Either "nginx" or "apache"
 STAGING_WEBSERVER = "nginx"
 # Options: 'supervisord', 'upstart'
-STAGING_MONITOR = 'supervisord'
+STAGING_MONITOR = 'upstart'
 ## Production server
 
 # Username on production server
 PRODUCTION_USER = "username"
+PRODUCTION_GROUP = 'groupname'
 # Hostname or IP address of production server
 PRODUCTION_HOST = "server.com"
 # Either "nginx" or "apache"
 PRODUCTION_WEBSERVER = "nginx"
 # Options: 'supervisord', 'upstart'
-PRODUCTION_MONITOR = 'supervisord'
+PRODUCTION_MONITOR = 'upstart'
 
 ########################################################################
 ### You should not need to change anything below this line
@@ -54,6 +57,10 @@ PRODUCTION_MONITOR = 'supervisord'
 
 env.project = "h1ds"
 env.git_url = "https://github.com/h1ds/h1ds.git"
+env.has_directories = False
+
+UPSTART_FILES = ['h1ds.conf', 'h1ds-tasks.conf', 'h1ds-wiki.conf']
+UPSTART_CONF_DIR = '/etc/init'
 
 
 def dev():
@@ -73,6 +80,7 @@ def staging():
     env.environment = 'staging'
     env.venv = "%(project)s_%(environment)s" % env
     env.user = STAGING_USER
+    env.group = STAGING_GROUP
     env.hosts = [STAGING_HOST]
     env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.server_user = 'www-data'
@@ -87,6 +95,7 @@ def production():
     env.venv = "%(project)s_%(environment)s" % env
     env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
     env.user = PRODUCTION_USER
+    env.group = PRODUCTION_GROUP
     env.hosts = [PRODUCTION_HOST]
     env.server_user = 'www-data'
     env.server_group = 'www-data'
@@ -102,6 +111,33 @@ def shell_env(**env_vars):
     env['shell'] = '{0} {1}'.format(env_vars_str, orig_shell)
     yield
     env['shell'] = orig_shell
+
+
+def get_dirs():
+    """Get local and remote directories."""
+    dirs = dict()
+
+    dirs['local_repository_dir'] = os.path.abspath(os.path.dirname(__file__))
+    dirs['local_virtualenv_dir'] = os.path.dirname(dirs['local_repository_dir'])
+    dirs['local_django_project_dir'] = os.path.join(dirs['local_repository_dir'], 'h1ds')
+    dirs['local_deployment_dir'] = os.path.join(dirs['local_django_project_dir'], 'deployment')
+    dirs['local_log_dir'] = os.path.join(dirs['local_django_project_dir'], 'log')
+
+    with prefix('workon %(venv)s && cdvirtualenv' % env):
+        dirs['virtualenv_dir'] = run('echo $PWD')
+    dirs['repository_dir'] = os.path.join(dirs['virtualenv_dir'], env.project)
+    dirs['django_project_dir'] = os.path.join(dirs['repository_dir'], 'h1ds')
+    dirs['deployment_dir'] = os.path.join(dirs['django_project_dir'], 'deployment')
+    dirs['log_dir'] = os.path.join(dirs['django_project_dir'], 'log')
+
+    return dirs
+
+
+def update_env_dirs():
+    """Update the dirs in env."""
+    if not env.has_directories:
+        env.update(get_dirs())
+        env.has_directories = True
 
 
 def start_supervisord():
@@ -121,10 +157,18 @@ def stop_supervisord():
             print "done"
 
 
-def restart_upstart():
-    pass
+def run_upstart_command(command_name):
+    upstart_job_names = [n.rpartition('.')[0] for n in UPSTART_FILES]
+    for upstart_job in upstart_job_names:
+        sudo('{} {}'.format(command_name, upstart_job), warn_only=True)
+    
 
+def stop_upstart_jobs():
+    run_upstart_command('stop')
 
+def start_upstart_jobs():
+    run_upstart_command('start')
+         
 def restart_supervisord():
     """Restart supervisord.
 
@@ -167,7 +211,7 @@ def update_dir_structure():
     with prefix('workon %(venv)s && cdvirtualenv' % env):
         ## Grab the dir so we can use sudo without workon
         env_dir = run('echo $PWD')
-        repository_dir = os.path.join(env_dir, "h1ds") # should get this from __file__ ?
+        repository_dir = os.path.join(env_dir, "h1ds")
         django_project_dir = os.path.join(repository_dir, "h1ds")
 
     with cd(django_project_dir):
@@ -216,7 +260,18 @@ def setup():
 
 
 def update_upstart_conf():
-    pass
+    update_env_dirs()
+    upstart_template_dir = os.path.join(env.local_deployment_dir, 'management', 'upstart')
+    for upstart_file in UPSTART_FILES:
+        upstart_template_file = os.path.join(upstart_template_dir, upstart_file+'.template')
+        with open(upstart_template_file) as f:
+            upstart_template = Template(f.read())
+        with tempfile.NamedTemporaryFile() as new_config_file:
+            new_config_file.write(upstart_template.substitute(env))
+            new_config_file.flush()
+            remote_name = os.path.join(UPSTART_CONF_DIR, upstart_file)
+            put(new_config_file.name, remote_name, use_sudo=True)
+
 
 
 def update_supervisord_conf():
@@ -236,46 +291,36 @@ def update_supervisord_conf():
         put(new_config_file.name, remote_name)
 
 
-def update_gunicorn_sh():
-    with prefix('workon %(venv)s && cdvirtualenv' % env):
-        env_dir = run('echo $PWD')
-    template_fn = 'h1ds/h1ds/gunicorn.sh.template'
-    #conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" %(env.environment)
-    #with open(template_fn) as conf_template:
-    #    conf_text = conf_header + conf_template.read()
-    with open(template_fn) as conf_template:
-        conf_text = conf_template.read()
-    conf_text = conf_text.replace("__venv_dir__", env_dir)
-    conf_text = conf_text.replace("__venv__", env.environment)
-    conf_text = conf_text.replace("__user__", "%(server_user)s" % env)
-    conf_text = conf_text.replace("__group__", "%(server_group)s" % env)
-    with tempfile.NamedTemporaryFile() as new_config_file:
-        new_config_file.write(conf_text)
-        new_config_file.flush()
-        remote_name = '%s/h1ds/h1ds/h1ds/gunicorn.%s.sh' % (env_dir, env.environment)
-        put(new_config_file.name, remote_name)
-    run('chmod a+x ' + remote_name)
+def update_deployment_scripts():
+    """Generate deployment scripts and put them on the server.
 
+    This generates scripts for:
+        - The main h1ds wsgi server (using gunicorn)
+        - The wiki wsgi server (using gunicorn)
+        - The asyncronous task server (celery)
 
-def update_moin_sh():
-    with prefix('workon %(venv)s && cdvirtualenv' % env):
-        env_dir = run('echo $PWD')
-    template_fn = 'h1ds/h1ds/moin.sh.template'
-    #conf_header = "# DO NOT EDIT THIS FILE DIRECTLY, MAKE CHANGES TO THE TEMPLATE FILE AND RUN fab %s update\n" %(env.environment)
-    #with open(template_fn) as conf_template:
-    #    conf_text = conf_header + conf_template.read()
-    with open(template_fn) as conf_template:
-        conf_text = conf_template.read()
-    conf_text = conf_text.replace("__venv_dir__", env_dir)
-    conf_text = conf_text.replace("__venv__", env.environment)
-    conf_text = conf_text.replace("__user__", "%(server_user)s" % env)
-    conf_text = conf_text.replace("__group__", "%(server_group)s" % env)
-    with tempfile.NamedTemporaryFile() as new_config_file:
-        new_config_file.write(conf_text)
-        new_config_file.flush()
-        remote_name = '%s/h1ds/h1ds/moin.%s.sh' % (env_dir, env.environment)
-        put(new_config_file.name, remote_name)
-    run('chmod a+x ' + remote_name)
+    Script templates exist in the deployment directory. The template
+    variables are populated and the scripts are saved in the same
+    directory with the .template sufix removed from the filename.
+
+    """
+    update_env_dirs()
+    deployment_scripts = [
+        os.path.join('gunicorn', 'h1ds.sh'),
+        os.path.join('gunicorn', 'wiki.sh'),
+        os.path.join('tasks', 'tasks.sh')
+    ]
+
+    for deployment_script in deployment_scripts:
+        template_filename = os.path.join(env.local_deployment_dir, deployment_script+'.template')
+        target_filename = os.path.join(env.deployment_dir, deployment_script)
+        with open(template_filename) as f:
+            script_template = Template(f.read())
+        with tempfile.NamedTemporaryFile() as new_deployment_script:
+            new_deployment_script.write(script_template.substitute(env))
+            new_deployment_script.flush()
+            put(new_deployment_script.name, target_filename)
+        run('chmod a+x ' + target_filename)
 
 
 def update():
@@ -350,9 +395,8 @@ def update():
             run("pip install -r requirements/recalcitrant_requirements.txt")
             if env.webserver == "nginx":
                 run("pip install -r requirements/requirements_nginx.txt")
-    
-    # need server perms to run db through webserver, so use sudo to
-    # modify db and make sure we chown the db after to be sure.
+                # need server perms to run db through webserver, so use sudo to
+                # modify db and make sure we chown the db after to be sure.
     with prefix('workon %(venv)s' % env):
         with cd(django_project_dir):
             with shell_env(PYTHONPATH=django_project_dir, DJANGO_SETTINGS_MODULE="%(settings)s" % env):
@@ -373,8 +417,7 @@ def update():
             update_supervisord_conf()
         elif env.monitor == 'upstart':
             update_upstart_conf()
-        update_gunicorn_sh()
-        update_moin_sh()
+        update_deployment_scripts()
 
     # Now, set up webserver
     if env.webserver == "apache":
@@ -416,8 +459,7 @@ def update():
         h1ds_nginx_conf = '/etc/nginx/sites-enabled/h1ds'
         if not exists(h1ds_nginx_conf):
             sudo("ln -s %s/h1ds/h1ds/h1ds/conf/nginx/h1ds_%s.conf %s" % (env_dir, env.environment, h1ds_nginx_conf))
-
-        # clear the pagespeed cache
+            # clear the pagespeed cache
         sudo('/etc/init.d/nginx stop')
         sudo('rm -rf /var/ngx_pagespeed_cache/*')
         sudo('/etc/init.d/nginx start')
@@ -425,4 +467,11 @@ def update():
     if env.monitor == 'supervisord':
         restart_supervisord()
     elif env.monitor == 'upstart':
-        restart_upstart()
+        # We do separate stop and start rather than restart. With
+        # restart, if the job is not currently running, then it won't be
+        # started. Stopping and starting also loads any new
+        # configuration, whereas restart doesn't.
+        stop_upstart_jobs()
+        start_upstart_jobs()
+
+

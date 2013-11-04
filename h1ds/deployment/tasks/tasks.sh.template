@@ -1,0 +1,7 @@
+#!/bin/bash
+LOGFILE=${log_dir}/celeryd.log
+export DJANGO_SETTINGS_MODULE=h1ds.settings.$environment
+cd $virtualenv_dir
+source bin/activate
+export PYTHONPATH=${django_project_dir}:$$PYTHONPATH
+exec bin/django-admin.py celeryd -v 2 -B --loglevel=INFO -f $$LOGFILE

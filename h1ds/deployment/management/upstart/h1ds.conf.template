@@ -1,0 +1,11 @@
+description "h1ds"
+
+start on (filesystem)
+stop on runlevel [016]
+
+respawn
+console log
+setuid $user
+setgid $group
+
+exec ${deployment_dir}/gunicorn/h1ds.sh

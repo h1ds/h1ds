@@ -1,0 +1,12 @@
+#!/bin/bash
+set -e
+LOGFILE=${log_dir}/wiki.gunicorn.log
+NUM_WORKERS=3
+ADDRESS=unix:/tmp/moin.gunicorn.sock
+export DJANGO_SETTINGS_MODULE=h1ds.settings.$environment
+cd $virtualenv_dir
+source bin/activate
+export PYTHONPATH=${django_project_dir}:$$PYTHONPATH
+exec bin/gunicorn h1ds.wsgi_moin:application -w $$NUM_WORKERS \
+    --log-level=info --bind=$$ADDRESS \
+    --log-file=$$LOGFILE 2>>$$LOGFILE
