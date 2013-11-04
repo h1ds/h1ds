@@ -31,7 +31,7 @@ from fabric.contrib.files import exists
 ## Staging server.
 
 # Project user and group name
-STAGING_USER = "username"
+STAGING_USER = 'username'
 STAGING_GROUP = 'groupname'
 # Hostname or IP address of staging server
 STAGING_HOST = "192.168.56.101"
@@ -112,7 +112,17 @@ def shell_env(**env_vars):
     yield
     env['shell'] = orig_shell
 
+def display_maintenance_page():
+    update_env_dirs()
+    put(os.path.join(env.local_deployment_dir, 'maintenance.html'),
+        os.path.join(env.static_dir, 'maintenance.html'))
 
+def remove_maintenance_page():
+    update_env_dirs()
+    maintenance_page = os.path.join(env.static_dir, 'maintenance.html')
+    run('rm {}'.format(maintenance_page)        
+
+    
 def get_dirs():
     """Get local and remote directories."""
     dirs = dict()
@@ -122,6 +132,7 @@ def get_dirs():
     dirs['local_django_project_dir'] = os.path.join(dirs['local_repository_dir'], 'h1ds')
     dirs['local_deployment_dir'] = os.path.join(dirs['local_django_project_dir'], 'deployment')
     dirs['local_log_dir'] = os.path.join(dirs['local_django_project_dir'], 'log')
+    dirs['local_static_dir'] = os.path.join(dirs['local_django_project_dir'], 'static')
 
     with prefix('workon %(venv)s && cdvirtualenv' % env):
         dirs['virtualenv_dir'] = run('echo $PWD')
@@ -129,6 +140,7 @@ def get_dirs():
     dirs['django_project_dir'] = os.path.join(dirs['repository_dir'], 'h1ds')
     dirs['deployment_dir'] = os.path.join(dirs['django_project_dir'], 'deployment')
     dirs['log_dir'] = os.path.join(dirs['django_project_dir'], 'log')
+    dirs['static_dir'] = os.path.join(dirs['django_project_dir'], 'static')
 
     return dirs
 

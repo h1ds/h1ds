@@ -18,6 +18,12 @@ server {
     #location /ngx_pagespeed_statistics { allow 127.0.0.1; deny all; }
     #location /ngx_pagespeed_message { allow 127.0.0.1; deny all; }
 
+    location / {
+        if (-f __venv_dir__/h1ds/h1ds/static/maintenance.html) {
+                return 503;
+        }
+    }
+
 
     # https://docs.djangoproject.com/en/dev/howto/static-files/#serving-static-files-in-production
     location /static/ { # STATIC_URL
@@ -60,4 +66,10 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
+
+    error_page 503 @maintenance;
+    location @maintenance {
+        rewrite ^(.*)$ /static/maintenance.html break;
+    }
+
 }
