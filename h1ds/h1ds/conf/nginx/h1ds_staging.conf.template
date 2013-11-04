@@ -18,11 +18,10 @@ server {
     #location /ngx_pagespeed_statistics { allow 127.0.0.1; deny all; }
     #location /ngx_pagespeed_message { allow 127.0.0.1; deny all; }
 
-    location / {
-        if (-f __venv_dir__/h1ds/h1ds/static/maintenance.html) {
-                return 503;
-        }
+    if (-f __venv_dir__/h1ds/h1ds/static/maintenance.html) {
+        return 503;
     }
+
 
 
     # https://docs.djangoproject.com/en/dev/howto/static-files/#serving-static-files-in-production
@@ -69,7 +68,8 @@ server {
 
     error_page 503 @maintenance;
     location @maintenance {
-        rewrite ^(.*)$ /static/maintenance.html break;
+        root /home/dave/v/h1ds_staging/h1ds/h1ds/static;
+        rewrite ^(.*)$ /maintenance.html break;
     }
 
 }
