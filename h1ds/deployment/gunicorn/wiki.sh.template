@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 LOGFILE=${log_dir}/wiki.gunicorn.log
-NUM_WORKERS=3
+N_CORES=`grep -c ^processor /proc/cpuinfo`
+NUM_WORKERS=$$(( 2 * $$N_CORES + 1 ))
 ADDRESS=unix:/tmp/moin.gunicorn.sock
 export DJANGO_SETTINGS_MODULE=h1ds.settings.$environment
 cd $virtualenv_dir
