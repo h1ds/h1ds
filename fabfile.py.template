@@ -120,7 +120,7 @@ def display_maintenance_page():
 def remove_maintenance_page():
     update_env_dirs()
     maintenance_page = os.path.join(env.static_dir, 'maintenance.html')
-    run('rm {}'.format(maintenance_page)        
+    run('rm {}'.format(maintenance_page))
 
     
 def get_dirs():
