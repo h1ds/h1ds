@@ -8,7 +8,7 @@ from django.http import QueryDict, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic import View
-from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -276,6 +276,12 @@ class SimpleSerializer(serializers.Serializer):
 class SummaryView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
 
+    def dispatch(self, request, *args, **kwargs):
+        device_instance = Device.objects.get(slug=kwargs['device'])
+        if not device_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        return super(SummaryView, self).dispatch(request, *args, **kwargs)
+
     def get_attribute_links(self, request, *args, **kwargs):
         """Get links and info about attributes which can be added or removed from the current table.
 
@@ -351,10 +357,24 @@ class SummaryDeviceListView(DeviceListView):
     def get_template_names(self):
         return ("h1ds_summary/device_list.html", )
 
+    def get_queryset(self):
+        # TODO: this is a total hack which performs excess lookups just
+        # so we can generate a queryset which is filtered by the user
+        # is_allowed method. This needs to be cleaned up (but shouldn't
+        # be a huge performance hit as there won't be many device. The
+        # user should probably see separate list of public vs private
+        # devices.
+        allowed_device_pks = []
+        for device in Device.objects.all():
+            if device.user_is_allowed(self.request.user):
+                allowed_device_pks.append(device.pk)
+        return Device.objects.filter(pk__in=allowed_device_pks)
+
+
     def get(self, request, *args, **kwargs):
         # If there is only one device, then show the device detail view rather than list devices.
         try:
-            return redirect('h1ds-summary-device-homepage', device=self.queryset.get().slug)
+            return redirect('h1ds-summary-device-homepage', device=self.get_queryset().get().slug)
         except (Device.DoesNotExist, MultipleObjectsReturned):
             # TODO: we should treat Device.DoesNotExist separately with a message to create a device.
             return self.list(request, *args, **kwargs)

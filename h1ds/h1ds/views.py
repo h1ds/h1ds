@@ -473,6 +473,15 @@ class JSONNumpyRenderer(JSONRenderer):
 class NodeView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
 
+    def dispatch(self, request, *args, **kwargs):
+        device_instance = Device.objects.get(slug=kwargs['device'])
+        if not device_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        tree_instance = Tree.objects.get(slug=kwargs['tree'])
+        if not tree_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        return super(NodeView, self).dispatch(request, *args, **kwargs)
+
     def get_object(self, shot, nodepath, tree):
         """Get node object for request.
 
@@ -496,8 +505,9 @@ class NodeView(APIView):
         return node
 
     def get(self, request, device, shot, tree, nodepath, format=None):
-        nodepath = nodepath.lower()
         device_instance = Device.objects.get(slug=device)
+        tree_instance = Tree.objects.get(slug=tree, device=device_instance)
+        nodepath = nodepath.lower()
         if shot == 'latest':
             shot_instance = device_instance.latest_shot
             track_latest_shot = True
@@ -505,7 +515,6 @@ class NodeView(APIView):
             shot_instance = Shot.objects.get(number=shot)
             track_latest_shot = False
 
-        tree_instance = Tree.objects.get(slug=tree, device=device_instance)
         node = self.get_object(shot_instance, nodepath, tree_instance)
         # TODO: yaml not working yet
         # TODO: format list shoudl be maintained elsewhere... probably in settings.
@@ -534,6 +543,12 @@ class ShotListView(ListAPIView):
     paginate_by = 25
     serializer_class = ShotSerializer
 
+    def dispatch(self, request, *args, **kwargs):
+        device_instance = Device.objects.get(slug=kwargs['slug'])
+        if not device_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        return super(ShotListView, self).dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return Shot.objects.filter(device__slug=self.kwargs['slug']).order_by("-timestamp")
 
@@ -544,6 +559,12 @@ class ShotListView(ListAPIView):
 class ShotDetailView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     serializer_class = ShotSerializer
+
+    def dispatch(self, request, *args, **kwargs):
+        device_instance = Device.objects.get(slug=kwargs['device'])
+        if not device_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        return super(ShotDetailView, self).dispatch(request, *args, **kwargs)
 
     def get_object(self):
         device = Device.objects.get(slug=self.kwargs['device'])
@@ -559,11 +580,14 @@ class ShotDetailView(APIView):
         return ("h1ds/shot_detail.html", )
 
     def get(self, request, device, shot, format=None):
+        device = Device.objects.get(slug=device)
         shot_number = shot
         shot = self.get_object()
         if request.accepted_renderer.format == 'html':
             track_latest_shot = (shot_number == 'latest')
-            return Response({'shot': shot, 'track_latest_shot': track_latest_shot})
+            return Response({'shot': shot,
+                             'track_latest_shot': track_latest_shot,
+                             'trees': shot.get_allowed_trees(request.user)})
         serializer = self.serializer_class(shot)
         return Response(serializer.data)
 
@@ -586,6 +610,16 @@ class ShotDetailView(APIView):
 class TreeDetailView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     serializer_class = TreeSerializer
+
+    def dispatch(self, request, *args, **kwargs):
+        device_instance = Device.objects.get(slug=kwargs['device'])
+        if not device_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        tree_instance = Tree.objects.get(slug=kwargs['tree'])
+        if not tree_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        return super(TreeDetailView, self).dispatch(request, *args, **kwargs)
+
 
     def get_object(self):
         tree = Tree.objects.get(device__slug=self.kwargs['device'], slug=self.kwargs['tree'])
@@ -612,9 +646,21 @@ class TextTemplateView(TemplateView):
 
 class DeviceListView(ListAPIView):
     renderer_classes = (TemplateHTMLRenderer, JSONRenderer, YAMLRenderer, XMLRenderer,)
-    queryset = Device.objects.all()
     serializer_class = DeviceSerializer
     paginate_by = 25
+
+    def get_queryset(self):
+        # TODO: this is a total hack which performs excess lookups just
+        # so we can generate a queryset which is filtered by the user
+        # is_allowed method. This needs to be cleaned up (but shouldn't
+        # be a huge performance hit as there won't be many device. The
+        # user should probably see separate list of public vs private
+        # devices.
+        allowed_device_pks = []
+        for device in Device.objects.all():
+            if device.user_is_allowed(self.request.user):
+                allowed_device_pks.append(device.pk)
+        return Device.objects.filter(pk__in=allowed_device_pks)
 
     def get_template_names(self):
         return ("h1ds/device_list.html", )
@@ -622,7 +668,7 @@ class DeviceListView(ListAPIView):
     def get(self, request, *args, **kwargs):
         # If there is only one device, then show the device detail view rather than list devices.
         try:
-            return redirect(self.queryset.get())
+            return redirect(self.get_queryset().get())
         except (Device.DoesNotExist, MultipleObjectsReturned):
             # TODO: we should treat Device.DoesNotExist separately with a message to create a device.
             return self.list(request, *args, **kwargs)
@@ -633,6 +679,12 @@ class DeviceDetailView(RetrieveAPIView):
     serializer_class = DeviceSerializer
     lookup_field = 'slug'
     model = Device
+
+    def dispatch(self, request, *args, **kwargs):
+        device_instance = Device.objects.get(slug=kwargs['slug'])
+        if not device_instance.user_is_allowed(request.user):
+            raise PermissionDenied
+        return super(DeviceDetailView, self).dispatch(request, *args, **kwargs)
 
     def get_template_names(self):
         return ("h1ds/device_detail.html", )

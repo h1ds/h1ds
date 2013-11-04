@@ -14,7 +14,7 @@ class DeviceAdminForm(models.ModelForm):
 class DeviceAdmin(admin.ModelAdmin):
     form = DeviceAdminForm
     prepopulated_fields = {"slug": ("name",)}
-
+    filter_horizontal = ('allowed_users', )
 
 admin.site.register(Device, DeviceAdmin)
 
@@ -31,20 +31,25 @@ class NodeAdmin(admin.ModelAdmin):
 
 admin.site.register(Node, NodeAdmin)
 
+
 class NodePathAdmin(admin.ModelAdmin):
     pass
 
 admin.site.register(NodePath, NodePathAdmin)
 
+
 class TreeAdmin(admin.ModelAdmin):
-    pass
+    filter_horizontal = ('allowed_users', )
+
 
 admin.site.register(Tree, TreeAdmin)
+
 
 class ShotRangeAdmin(admin.ModelAdmin):
     pass
 
 admin.site.register(ShotRange, ShotRangeAdmin)
+
 
 class H1DSSignalInstanceAdmin(admin.ModelAdmin):
     pass

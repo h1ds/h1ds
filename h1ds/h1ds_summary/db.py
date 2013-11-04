@@ -56,7 +56,8 @@ class SummaryTable:
 
         summary_attr_arg = ",".join(summary_attrs)
 
-        table_attrs = ",".join([table_attrs, summary_attr_arg])
+        if summary_attr_arg:
+            table_attrs = ",".join([table_attrs, summary_attr_arg])
 
         cursor.execute("CREATE TABLE %(table)s (%(attrs)s)" % {'table': self.table_name, 'attrs': table_attrs})
         transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6

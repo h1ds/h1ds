@@ -129,6 +129,15 @@ class Device(models.Model):
 
     is_default = models.BooleanField(default=True, help_text="Set this as the default device.")
 
+    is_public = models.BooleanField(default=True,
+                                    help_text="If true, the device will be visible to all users, and the general public.")
+
+    allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this device if it is not public")
+
+    def user_is_allowed(self, user):
+        is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
+        return is_allowed
+
     def get_absolute_url(self):
         return reverse("device-detail", kwargs={"slug": self.slug})
 
@@ -168,7 +177,6 @@ class ShotRange(models.Model):
         else:
             return False
 
-
     def __unicode__(self):
         return "{} - {}".format(self.min_shot, self.max_shot)
 
@@ -186,6 +194,15 @@ class Tree(models.Model):
     device = models.ForeignKey(Device)
     configuration = models.TextField(blank=True)
     shot_ranges = models.ManyToManyField(ShotRange, blank=True)
+
+    is_public = models.BooleanField(default=True,
+                                    help_text="If true, the tree will be visible to all users, and the general public.")
+
+    allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this tree if it is not public")
+
+    def user_is_allowed(self, user):
+        is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
+        return is_allowed
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
@@ -212,6 +229,13 @@ class Shot(models.Model):
 
     def _get_root_pathmaps(self):
         return Node.objects.filter(shot=self, node_path__parent=None)
+
+    def get_allowed_trees(self, user):
+        allowed_trees = []
+        for t in self.get_active_trees():
+            if t.user_is_allowed(user):
+                allowed_trees.append(t)
+        return allowed_trees
 
     def get_active_trees(self):
         active_trees = []

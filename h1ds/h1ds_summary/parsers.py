@@ -32,6 +32,12 @@ def parse_shot_str(device, shot_str):
 
     for shot_comp in shot_components:
         if shot_comp.startswith("last"):
+            try:
+                latest_shot = device.latest_shot.number
+            except AttributeError:
+                # device has no latest shot
+                # TODO: fallback to maximum shot
+                return None
             shot_ranges.append((device.latest_shot.number, device.latest_shot.number - int(shot_comp[4:])))
         elif '-' in shot_comp:
             shot_ranges.append(map(int, shot_comp.split('-')))

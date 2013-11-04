@@ -5,7 +5,7 @@
 <h2>{{shot.timestamp}}</h2>
 <h3>Active trees for this shot</h3>
 <ul>
-{% for tree in shot.get_active_trees %}
+{% for tree in trees %}
     {% if track_latest_shot %}
 <li><a href="{% url 'tree-detail' device=shot.device.slug shot='latest' tree=tree.slug %}">{{tree.name}}</a>
     {% else %}
