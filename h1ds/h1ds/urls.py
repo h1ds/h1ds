@@ -43,6 +43,7 @@ files (settings.MEDIA_ROOT) are served under '^media/'
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.conf import settings
+from django.views.generic import TemplateView
 
 from h1ds import AVAILABLE_H1DS_MODULES
 from h1ds.views import TextTemplateView
@@ -161,3 +162,10 @@ if settings.DEBUG:
                             }
                             ),
     )
+
+    
+handler404 = TemplateView.as_view(template_name="errors/404.html")
+handler500 = TemplateView.as_view(template_name="errors/500.html")
+handler403 = TemplateView.as_view(template_name="errors/403.html")
+# coming in django 1.6
+# handler400 = TemplateView.as_view(template_name="400.html")
