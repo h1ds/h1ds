@@ -50,3 +50,5 @@ h1ds/test_mds_data/
 h1ds/serverfiles/
 
 h1ds/deployment/gunicorn/h1ds.sh
+h1ds/deployment/gunicorn/wiki.sh
+h1ds/deployment/tasks/tasks.sh
