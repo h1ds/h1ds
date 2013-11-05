@@ -94,6 +94,12 @@ class BaseFilter:
     def get_slug(cls):
         return cls.slug
 
+    def do_filter(self, node):
+        if node.data:
+            return self.apply(node)
+        else:
+            return node
+
 
 @exclude_filter
 class ScalarNumericBaseFilter(BaseFilter):
@@ -542,7 +548,8 @@ class DimRange(Array1DimNumericBaseFilter):
 
         if len(node.data.value_labels) > 0:
             node.data.value_labels[0] = "dim_range(%s, %s, %s)" % (
-                node.data.value_labels[0], self.kwargs["min"], self.kwargs["max"])
+                node.data.value_labels[0], self.kwargs["min"], self.kwargs["max"]
+            )
         else:
             node.data.value_labels = [node.data.name]
 

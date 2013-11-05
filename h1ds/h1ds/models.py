@@ -451,7 +451,7 @@ class Node(models.Model):
     def apply_filter(self, fid, name, **kwargs):
         f_kwargs = self.preprocess_filter_kwargs(kwargs)
         filter_class = filter_manager.filters[name](**f_kwargs)
-        filter_class.apply(self)
+        filter_class.do_filter(self)
         self.filter_history.append((fid, filter_class, kwargs))
 
     def get_absolute_url_for_latest_shot(self):
