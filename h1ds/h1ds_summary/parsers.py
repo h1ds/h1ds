@@ -4,13 +4,14 @@
 # this should be well documented...
 
 #from h1ds_summary.db import SummaryTable
+import itertools
+from h1ds.models import Shot
 
-
-def parse_shot_str(device, shot_str):
+def get_ranges_from_shot_slug(device, shot_slug):
     """Parse the URL path component corresponding to the requested shots."""
 
     # Put the shot string into lower case so we can easily match 'last'
-    shot_str = shot_str.lower()
+    shot_str = shot_slug.lower()
 
     #if 'last' in shot_str:
     #    # Only touch the database if we need to...
@@ -43,7 +44,23 @@ def parse_shot_str(device, shot_str):
             shot_ranges.append(map(int, shot_comp.split('-')))
         else:
             individual_shots.append(shot_comp)
+    return shot_ranges, individual_shots
 
+
+def parse_shot_slug(device, shot_str):
+    if shot_str.lower == 'all':
+        return Shot.objects.filter(device=device).values_list('number', flat=True).order_by('-number')
+    shot_ranges, individual_shots = get_ranges_from_shot_slug(device, shot_str)
+    collected_shots = [range(i[0], i[1]+1) for i in shot_ranges]
+    collected_shots.extend(individual_shots)
+    # use set to remove duplicates
+    return sorted(set(itertools.chain(*collected_shots)), reverse=True)
+
+
+
+def get_where_from_shot_slug(device, shot_str):
+
+    shot_ranges, individual_shots = get_ranges_from_shot_slug(device, shot_str)
     # Note that the SQL BETWEEN  operator requires the first argument to
     # be smaller than the second
     shot_where = " OR ".join("shot BETWEEN %d and %d" % (min(i), max(i)) for i in shot_ranges)

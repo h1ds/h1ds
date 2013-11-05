@@ -3,7 +3,7 @@ from django.conf.urls import *
 from h1ds_summary.views import get_summary_attribute_form_from_url, go_to_source
 from h1ds_summary.views import SummaryView, AddSummaryAttribiteView, RecomputeSummaryView
 from h1ds_summary.views import AJAXLatestSummaryShotView, AJAXLastUpdateTimeView, SummaryDeviceListView
-from h1ds_summary.views import RawSQLView
+from h1ds_summary.views import RawSQLView, ControlPanelView
 
 internal_patterns = patterns('',
                              url(r'^get_summary_attribute_form_from_url/$',
@@ -31,6 +31,7 @@ device_internal_patterns = patterns('',
 device_summary_patterns = patterns('',
                                    url(r'^$',
                                        SummaryView.as_view(), name="h1ds-summary-device-homepage"),
+                                   url('^control_panel/$', ControlPanelView.as_view(), name='summary-control-panel'),
                                    (r'^_/', include(device_internal_patterns)),
                                    url(r'^(?P<shot_str>[^/]+)/$',
                                        SummaryView.as_view(), name="shotoverview"),

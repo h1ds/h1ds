@@ -1,14 +1,15 @@
 from urlparse import urlparse, urlunparse
-
-from django import forms
+import itertools
 from django.contrib import messages
 from django.core.cache import cache
 from django.core.urlresolvers import resolve, reverse
 from django.http import QueryDict, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
-from django.views.generic import View
+from django.views.generic import View, FormView
 from django.core.exceptions import MultipleObjectsReturned, PermissionDenied
+
+from celery import group
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -21,11 +22,13 @@ from rest_framework import serializers
 from h1ds.views import DeviceListView
 from h1ds.models import Device, Shot
 from h1ds_summary.db import SummaryTable
-from h1ds_summary.forms import SummaryAttributeForm
+from h1ds_summary.forms import SummaryAttributeForm, ControlPanelForm, RawSqlForm
 from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.parsers import get_attribute_variants
+from h1ds_summary.tasks import update_single_table_attribute
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
+
 
 
 DEFAULT_SHOT_REGEX = "last30"
@@ -224,13 +227,6 @@ def go_to_source(request, device, slug, shot):
     return HttpResponseRedirect(source_html_url)
 
 
-class RawSqlForm(forms.Form):
-    DEVICE_CHOICES = tuple((d.slug, d.name) for d in Device.objects.all())
-    device = forms.ChoiceField(widget=forms.Select, choices=DEVICE_CHOICES)
-    select = forms.CharField(widget=forms.Textarea)
-    where = forms.CharField(widget=forms.Textarea)
-
-
 ##########################################################
 ## New Django REST Framework based views
 ##########################################################
@@ -357,20 +353,6 @@ class SummaryDeviceListView(DeviceListView):
     def get_template_names(self):
         return ("h1ds_summary/device_list.html", )
 
-    def get_queryset(self):
-        # TODO: this is a total hack which performs excess lookups just
-        # so we can generate a queryset which is filtered by the user
-        # is_allowed method. This needs to be cleaned up (but shouldn't
-        # be a huge performance hit as there won't be many device. The
-        # user should probably see separate list of public vs private
-        # devices.
-        allowed_device_pks = []
-        for device in Device.objects.all():
-            if device.user_is_allowed(self.request.user):
-                allowed_device_pks.append(device.pk)
-        return Device.objects.filter(pk__in=allowed_device_pks)
-
-
     def get(self, request, *args, **kwargs):
         # If there is only one device, then show the device detail view rather than list devices.
         try:
@@ -378,3 +360,41 @@ class SummaryDeviceListView(DeviceListView):
         except (Device.DoesNotExist, MultipleObjectsReturned):
             # TODO: we should treat Device.DoesNotExist separately with a message to create a device.
             return self.list(request, *args, **kwargs)
+
+
+def get_shot_for_device(device):
+    def get_shot(number):
+        try:
+            return Shot.objects.get(number=number, device=device)
+        except Shot.DoesNotExist:
+            return None
+    return get_shot
+
+
+## Non-API view (currenly html-only control panel) - TODO: allow contorl via api
+class ControlPanelView(FormView):
+    template_name = 'h1ds_summary/control_panel.html'
+    form_class = ControlPanelForm
+
+    def get_initial(self):
+        return {'device': self.kwargs['device']}
+
+    @method_decorator(permission_required('h1ds_summary.raw_sql_query_summaryattribute'))
+    def dispatch(self, *args, **kwargs):
+        return super(ControlPanelView, self).dispatch(*args, **kwargs)
+
+    def form_valid(self, form):
+        device = Device.objects.get(slug=self.kwargs['device'])
+        cleaned_data = form.get_cleaned_data_for_device(device)
+
+        shots_with_timestamps = ((s.number, s.timestamp) for s in map(get_shot_for_device(device), cleaned_data['shots']) if s is not None)
+
+        # TODO: doing every (shot, attr) as separate commit - v. v. poor performace. fix this soon.
+        shot_attr_pairs = itertools.product(shots_with_timestamps, cleaned_data['attributes'])
+        g = group(update_single_table_attribute(device.slug, x[0][0], x[0][1], x[1]) for x in shot_attr_pairs)
+        g.apply_async()
+        # TODO: sensible user feedback
+        return HttpResponseRedirect("/")
+
+
+

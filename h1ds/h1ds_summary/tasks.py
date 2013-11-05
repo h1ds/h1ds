@@ -92,9 +92,9 @@ def update_table_attributes(attribute_data, **kwargs):
     shot_timestamp = kwargs.get("shot_timestamp")
 
     cursor = get_summary_cursor()
-    attribute_data += (("timestamp", "'{}'".format(shot_timestamp)), )
+    attribute_data += (("timestamp", ["'{}'".format(shot_timestamp)]), )
 
-    set_str = ",".join("{}=NULL".format(a[0]) if (a[1] is None) else "{}={}".format(a[0], a[1]) for a in attribute_data)
+    set_str = ",".join("{}=NULL".format(a[0]) if (a[1][0] is None) else "{}={}".format(a[0], a[1][0]) for a in attribute_data)
 
     cursor.execute("UPDATE {} SET {} WHERE shot={}".format(table_name, set_str, shot_number))
     transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6

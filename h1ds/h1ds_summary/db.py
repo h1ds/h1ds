@@ -18,7 +18,7 @@ from h1ds.models import Shot, Device
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary.tasks import get_summary_attribute_data, insert_table_attributes, insert_single_table_attribute, update_table_attributes, update_single_table_attribute
 from h1ds_summary import get_summary_cursor
-from h1ds_summary.parsers import parse_shot_str, parse_attr_str, parse_filter_str
+from h1ds_summary.parsers import get_where_from_shot_slug, parse_attr_str, parse_filter_str
 
 
 INITIAL_TABLE_ATTRIBUTES = (
@@ -330,7 +330,7 @@ class SummaryTable:
 
         """
 
-        shot_where = parse_shot_str(self.device, shot_str)
+        shot_where = get_where_from_shot_slug(self.device, shot_str)
         if shot_where is None:
             return []
         attr_list = parse_attr_str(self.device, attr_str)
