@@ -133,10 +133,13 @@ class BaseDataInterface(object):
             hash_val += child.subtree.subtree_hash
         return hashlib.sha1(hash_val).hexdigest()
 
-    def get_node(self):
+    def get_node(self, fallback=False):
         """If Node instance exits, return it, otherwise generate node and subtree"""
         from h1ds.models import SubTree, NodePath, Shot, Node
 
+        if fallback:
+            node = Node.fallback.create_node(shot_number=self.shot, tree=self.tree, nodepath='/'.join(self.path))
+            return node
 
         child_nodes = self.get_child_nodes()
         data = self.read_primary_data()
@@ -180,8 +183,8 @@ class BaseDataInterface(object):
             nodepath, nodepath_created = NodePath.objects.get_or_create(path=fullpath, tree=tree, defaults={'parent':grandparent_nodepath})
             return nodepath
 
-    def get_child_nodes(self):
-        return [child.get_node() for child in self.get_children()]
+    def get_child_nodes(self, fallback=False):
+        return [child.get_node(fallback=fallback) for child in self.get_children()]
 
     def get_children(self):
         """Return Datainterface instances for each child"""

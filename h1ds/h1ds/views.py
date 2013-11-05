@@ -482,7 +482,7 @@ class NodeView(APIView):
             raise PermissionDenied
         return super(NodeView, self).dispatch(request, *args, **kwargs)
 
-    def get_object(self, shot, nodepath, tree):
+    def get_object(self, shot_number, nodepath, tree):
         """Get node object for request.
 
         TODO:  this  method  does  a   lookup  for  each  level  of  the
@@ -495,12 +495,17 @@ class NodeView(APIView):
         parent nodes.
         
         """
-        #checksum = hashlib.sha1(nodepath).hexdigest()
+        try:
+            node = Node.objects.get(shot__number=shot_number, node_path__path=nodepath, node_path__tree=tree)
+        except Node.DoesNotExist:
+            # Node not in database, we'll create an instance but not save it to database.
+            fallback_data = {'shot_number': shot_number,
+                             'tree': tree,
+                             'nodepath': nodepath}
 
-        #node = SubTree.objects.get(shot=shot, path_checksum=checksum)
-        #node.data = node.read_primary_data()
-        #node.apply_filters(self.request)
-        node = Node.objects.get(shot=shot, node_path__path=nodepath, node_path__tree=tree)
+            #node = Node(fallback_data=fallback_data)
+            node = Node.fallback.create_node(**fallback_data)
+
         node.apply_filters(self.request)
         return node
 
@@ -508,20 +513,19 @@ class NodeView(APIView):
         device_instance = Device.objects.get(slug=device)
         tree_instance = Tree.objects.get(slug=tree, device=device_instance)
         nodepath = nodepath.lower()
-        if shot == 'latest':
-            shot_instance = device_instance.latest_shot
-            track_latest_shot = True
+        track_latest_shot = shot is 'latest'
+        if track_latest_shot:
+            shot_number = device_instance.latest_shot.number
         else:
-            shot_instance = Shot.objects.get(number=shot)
-            track_latest_shot = False
+            shot_number = int(shot)
 
-        node = self.get_object(shot_instance, nodepath, tree_instance)
+        node = self.get_object(shot_number, nodepath, tree_instance)
         # TODO: yaml not working yet
         # TODO: format list shoudl be maintained elsewhere... probably in settings.
         alt_format_urls = get_alternative_format_urls(self.request, ["html", "json", "xml"])
         # apply filters here!?
         if request.accepted_renderer.format == 'html':
-            if not node.subtree.has_data:
+            if not node.data:
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"

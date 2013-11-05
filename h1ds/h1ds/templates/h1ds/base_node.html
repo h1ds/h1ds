@@ -99,13 +99,13 @@ HTML tables.
             <div class="portlet-content">
                 {% for a in node.get_ancestors %}
                     <ul>
-                    <li><a href="{% if track_latest_shot %}{{ a.get_absolute_url_for_latest_shot }}{% else %}{{ a.get_absolute_url }}{% endif %}">{{ a.node_path.get_node_name|lower }}</a>
+                    <li><a href="{% if track_latest_shot %}{{ a.get_absolute_url_for_latest_shot }}{% else %}{{ a.get_absolute_url }}{% endif %}">{{ a.get_node_name|lower }}</a>
                 {% endfor %}
                 <ul>
-                    <li><span class="current"><a href="{% if track_latest_shot %}{{ a.get_absolute_url_for_latest_shot }}{% else %}{{ node.get_absolute_url }}{% endif %}">{{ node.node_path.get_node_name|lower }}</a></span>
+                    <li><span class="current"><a href="{% if track_latest_shot %}{{ a.get_absolute_url_for_latest_shot }}{% else %}{{ node.get_absolute_url }}{% endif %}">{{ node.get_node_name|lower }}</a></span>
                         <ul>
                             {% for c in node.get_children %}
-                                <li><a href="{% if track_latest_shot %}{{ c.get_absolute_url_for_latest_shot }}{% else %}{{ c.get_absolute_url }}{% endif %}">{{ c.node_path.get_node_name }}</a>
+                                <li><a href="{% if track_latest_shot %}{{ c.get_absolute_url_for_latest_shot }}{% else %}{{ c.get_absolute_url }}{% endif %}">{{ c.get_node_name|lower }}</a>
                             {% endfor %}
                         </ul>
                 </ul>
@@ -187,7 +187,7 @@ HTML tables.
         </div>
         {# end div.portlet #}
 
-        {% if node.subtree.has_data %}
+        {% if node.data %}
         <!--  List the filters  which can  be applied  to the  (possibly already
           filtered) data -->
         <div class="portlet" id="h1ds-portlet-filters">

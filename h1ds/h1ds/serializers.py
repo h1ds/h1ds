@@ -17,7 +17,11 @@ class NodeHyperlinkedIdentityField(serializers.HyperlinkedIdentityField):
         request = self.context.get('request', None)
         format = self.context.get('format', None)
         view_name = self.view_name or self.parent.opts.view_name
-        kwargs = {'device': obj.shot.device.slug, 'shot': obj.shot.number, 'tree': obj.node_path.tree.slug, 'nodepath': obj.node_path.path}
+        kwargs = {'device': obj.get_device().slug,
+                  'shot': obj.get_shot_number(),
+                  'tree': obj.get_tree(),
+                  'nodepath': obj.get_nodepath()
+                  }
 
         if request is None:
             warnings.warn("Using `HyperlinkedIdentityField` without including the "

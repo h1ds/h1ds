@@ -87,8 +87,8 @@ class BaseFilter:
         return cls.ndim == "any" or n_dim == cls.ndim
 
     @classmethod
-    def is_filterable(cls, subtree):
-        return cls.valid_ndim(subtree.n_dimensions) and cls.valid_dtype(subtree.dtype)
+    def is_filterable(cls, n_dimensions, dtype):
+        return cls.valid_ndim(n_dimensions) and cls.valid_dtype(dtype)
 
     @classmethod
     def get_slug(cls):

@@ -100,14 +100,16 @@ class FilterManager(object):
         self.filters = get_all_filters()
         self.cache = {}
 
-    def get_filters(self, subtree):
+    def get_filters_for_subtree(self, subtree):
         """Get available processing filters for data object provided."""
+        return self.get_filters(subtree.n_dimensions, subtree.dtype)
 
-        data_type = (subtree.n_dimensions, subtree.dtype)
+    def get_filters(self, n_dimensions, dtype):
+        data_type = (n_dimensions, dtype)
         if not data_type in self.cache:
             data_filters = {}
             for fname, filter_ in self.filters.iteritems():
-                if filter_.is_filterable(subtree):
+                if filter_.is_filterable(n_dimensions=n_dimensions, dtype=dtype):
                     data_filters[fname] = filter_
             self.cache[data_type] = data_filters
         return self.cache[data_type]
@@ -329,6 +331,17 @@ class NodePath(models.Model):
         else:
             return ""
 
+class NodeFallbackManager(models.Manager):
+
+    def create_node(self, shot_number, tree,nodepath):
+        node = self.model()
+        node.is_fallback = True
+        node.fallback_data = {'tree': tree,
+                              'shot_number': shot_number,
+                              'nodepath': nodepath
+                              }
+        return node
+
 
 class Node(models.Model):
 
@@ -337,40 +350,90 @@ class Node(models.Model):
         self.data_interface = None
         self.data = None
         self.filter_history = []
+        self.is_fallback = False
 
-    node_path = models.ForeignKey(NodePath)
-    subtree = models.ForeignKey('SubTree')
-    shot = models.ForeignKey(Shot)
+    # we allow blank=True on foreign keys so we can generate fallback Node instances without touching the database.
+    node_path = models.ForeignKey(NodePath, blank=True)
+    subtree = models.ForeignKey('SubTree', blank=True)
+    shot = models.ForeignKey(Shot, blank=True)
+
+    objects = models.Manager()
+    fallback = NodeFallbackManager()
 
     def __unicode__(self):
         return "{}: {}".format(self.shot.number, self.node_path.path)
 
+    def save(self, *args, **kwargs):
+        if not self.is_fallback:
+            super(Node, self).save(*args, **kwargs)
+
     def get_absolute_url(self):
 
-        kwargs = {'device': self.shot.device,
-                  'shot': self.shot.number,
-                  'tree': self.node_path.tree.slug}
+        kwargs = {'device': self.get_device().slug,
+                  'shot': self.get_shot_number(),
+                  'tree': self.get_tree().slug}
 
         if self.node_path.path is NodePath.TOP_PATH:
             url_name = "tree-detail"
         else:
             url_name = "node-detail"
-            kwargs['nodepath'] = self.node_path.path
+            kwargs['nodepath'] = self.get_nodepath()
 
         return reverse(url_name, kwargs=kwargs)
 
+    def get_shot_number(self):
+        """fallback aware shot number getter."""
+        if self.is_fallback:
+            return self.fallback_data['shot_number']
+        else:
+            return self.shot.number
+
+    def get_tree(self):
+        """Fallback aware tree getter."""
+        if self.is_fallback:
+            return self.fallback_data['tree']
+        else:
+            return self.node_path.tree
+
+    def get_nodepath(self):
+        if self.is_fallback:
+            return self.fallback_data['nodepath']
+        else:
+            return self.node_path.path
+
+    def get_path_components(self):
+        """Fallback aware path component getter."""
+        return self.get_nodepath().split('/')
+
     def get_data_interface(self):
-        if self.data_interface is None and self.subtree.has_data:
-            self.data_interface = backend_module.DataInterface(shot=self.shot.number,
-                                                               tree=self.node_path.tree,
-                                                               path=self.node_path.get_path_components())
+        if self.data_interface is None:
+            if self.is_fallback or (not self.is_fallback and self.subtree.has_data):
+                self.data_interface = backend_module.DataInterface(shot=self.get_shot_number(),
+                                                                   tree=self.get_tree(),
+                                                                   path=self.get_path_components())
         return self.data_interface
 
+    def get_device(self):
+        """Fallback aware device getter."""
+        if self.is_fallback:
+            return self.fallback_data['tree'].device
+        else:
+            return self.shot.device
+
     def get_data(self):
-        if self.data is None and self.subtree.has_data:
-            data_interface = self.get_data_interface()
-            self.data = data_interface.read_primary_data()
+        if self.data is None:
+            if self.is_fallback or (not self.is_fallback and self.subtree.has_data):
+                data_interface = self.get_data_interface()
+                self.data = data_interface.read_primary_data()
         return self.data
+
+    def get_available_filters(self):
+        if not self.data:
+            return None
+        if self.is_fallback:
+            return filter_manager.get_filters(self.data.get_n_dimensions(), self.data.value_dtype)
+        else:
+            return self.subtree.get_available_filters()
 
     def apply_filters(self, request):
         self.get_data()
@@ -392,15 +455,15 @@ class Node(models.Model):
         self.filter_history.append((fid, filter_class, kwargs))
 
     def get_absolute_url_for_latest_shot(self):
-        kwargs = {'device': self.shot.device,
+        kwargs = {'device': self.get_device().slug,
                   'shot': 'latest',
-                  'tree': self.node_path.tree.slug}
+                  'tree': self.get_tree().slug}
 
         if self.node_path.path is NodePath.TOP_PATH:
             url_name = "tree-detail"
         else:
             url_name = "node-detail"
-            kwargs['nodepath'] = self.node_path.path
+            kwargs['nodepath'] = self.get_nodepath()
 
         return reverse(url_name, kwargs=kwargs)
 
@@ -419,6 +482,17 @@ class Node(models.Model):
         return self.get_node_for_shot(next_shot)
 
     def get_parent(self):
+        if self.is_fallback:
+            node_path_components = self.get_path_components()
+            if len(node_path_components) <= 1:
+                return None
+            else:
+                parent_path = '/'.join(node_path_components[:-1])
+                node = Node.fallback.create_node(shot_number=self.get_shot_number(),
+                                                 tree=self.get_tree(),
+                                                 nodepath=parent_path
+                                                 )
+                return node
         try:
             return Node.objects.get(node_path=self.node_path.parent, shot=self.shot)
         except Node.DoesNotExist:
@@ -435,8 +509,20 @@ class Node(models.Model):
         return ancestors
 
     def get_children(self):
-        return Node.objects.filter(node_path__parent=self.node_path, shot=self.shot).order_by('node_path__path')
+        if self.is_fallback:
+            if not self.data_interface or not self.data:
+                return []
+            child_nodes = self.data_interface.get_child_nodes(fallback=True)
+            return sorted(child_nodes, key=lambda x: x.get_nodepath())
+        else:
+            return Node.objects.filter(node_path__parent=self.node_path, shot=self.shot).order_by('node_path__path')
 
+    def get_node_name(self):
+        path_components = self.get_path_components()
+        try:
+            return path_components[-1]
+        except IndexError:
+            return ''
 
 class SubTree(models.Model):
     """Node of a data tree.
@@ -510,7 +596,7 @@ class SubTree(models.Model):
         return self.get_absolute_url(use_latest_shot=True)
 
     def get_available_filters(self):
-        return filter_manager.get_filters(self)
+        return filter_manager.get_filters_for_subtree(self)
 
     def _get_sha1(self):
         nodepath = self._get_node_path()
