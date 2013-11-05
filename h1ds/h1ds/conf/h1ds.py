@@ -21,7 +21,8 @@ def login_logout(d):
 from MoinMoin.theme import ThemeBase
 from MoinMoin import wikiutil
 from MoinMoin.Page import Page
-from h1ds.templatetags import h1ds_headfoot
+####
+#from h1ds.templatetags import h1ds_headfoot
 from django.conf import settings as django_settings
 
 
@@ -40,9 +41,9 @@ class Theme(ThemeBase):
         @rtype: unicode
         @return: page header html
         """
-        h1ds_header = h1ds_headfoot.H1DSHeaderNode()
+        ###h1ds_header = h1ds_headfoot.H1DSHeaderNode()
         context = ""
-        h1ds_header_string = unicode(h1ds_header.render(context))
+        ##h1ds_header_string = unicode(h1ds_header.render(context))
 
         html = [
             # Pre header custom html
@@ -54,7 +55,7 @@ class Theme(ThemeBase):
             u'<div class="fixed-centre">',
             login_logout(d),
             self.searchform(d),
-            h1ds_header_string,
+            ##h1ds_header_string,
             u'</div>',
             u'</header>',
             u'<div class="wikibar">',
@@ -106,14 +107,16 @@ class Theme(ThemeBase):
         return u'\n'.join(html)
 
     def h1ds_footer(self, d, **keywords):
-        h1ds_footer = h1ds_headfoot.H1DSFooterNode()
-        context = ""
-        return unicode(h1ds_footer.render(context))
+        return ''
+        #h1ds_footer = h1ds_headfoot.H1DSFooterNode()
+        #context = ""
+        #return unicode(h1ds_footer.render(context))
 
     def google_tracker(self, d, **keywords):
-        tracker = h1ds_headfoot.H1DSGoogleTrackerNode()
-        context = ""
-        return unicode(tracker.render(context))
+        return ''
+        #tracker = h1ds_headfoot.H1DSGoogleTrackerNode()
+        #context = ""
+        #return unicode(tracker.render(context))
 
     def footer(self, d, **keywords):
         """ Assemble wiki footer
@@ -144,7 +147,7 @@ class Theme(ThemeBase):
             #self.credits(d),
             #self.showversion(d, **keywords),
             u'<div id="h1dsfooter">',
-            self.h1ds_footer(d, **keywords),
+            #self.h1ds_footer(d, **keywords),
             u'</div>',
             u'</div>', # close fixed-centre, clearfix
             u'</footer>',
