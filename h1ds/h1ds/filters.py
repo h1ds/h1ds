@@ -56,7 +56,8 @@ def http_arg(arg):
         request = urllib2.Request(attr_url_json)
         response = json.loads(urllib2.urlopen(request).read())
 
-        return response['data']
+        # TODO: this assumes that the URL returns a scalar - need to make this more general
+        return response['data']['value'][0]
     else:
         return arg
 
@@ -81,7 +82,6 @@ class BaseFilter:
 
     def __init__(self, **kwargs):
         self.kwargs = dict((k, http_arg(v)) for k, v in kwargs.iteritems())
-
     @classmethod
     def valid_ndim(cls, n_dim):
         return cls.ndim == "any" or n_dim == cls.ndim
