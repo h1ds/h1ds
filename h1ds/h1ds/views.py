@@ -700,4 +700,4 @@ def http404(request):
     return render_to_response('errors/404.html')
 
 def http500(request):
-    return render_to_response('errors/400.html')
+    return render_to_response('errors/500.html')
