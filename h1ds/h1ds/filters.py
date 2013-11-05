@@ -57,7 +57,11 @@ def http_arg(arg):
         response = json.loads(urllib2.urlopen(request).read())
 
         # TODO: this assumes that the URL returns a scalar - need to make this more general
-        return response['data']['value'][0]
+        response_data = response['data']
+        try:
+            return response_data['value'][0]
+        except:
+            return None
     else:
         return arg
 
