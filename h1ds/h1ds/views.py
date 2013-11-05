@@ -693,3 +693,11 @@ class DeviceDetailView(RetrieveAPIView):
     def get_template_names(self):
         return ("h1ds/device_detail.html", )
 
+def http403(request):
+    return render_to_response('errors/403.html')
+
+def http404(request):
+    return render_to_response('errors/404.html')
+
+def http500(request):
+    return render_to_response('errors/400.html')

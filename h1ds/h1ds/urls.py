@@ -164,8 +164,6 @@ if settings.DEBUG:
     )
 
     
-handler404 = TemplateView.as_view(template_name="errors/404.html")
-handler500 = TemplateView.as_view(template_name="errors/500.html")
-handler403 = TemplateView.as_view(template_name="errors/403.html")
-# coming in django 1.6
-# handler400 = TemplateView.as_view(template_name="400.html")
+handler403 = 'h1ds.views.http403'
+handler404 = 'h1ds.views.http404'
+handler500 = 'h1ds.views.http500'
