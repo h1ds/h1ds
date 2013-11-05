@@ -39,6 +39,13 @@ STAGING_HOST = "192.168.56.101"
 STAGING_WEBSERVER = "nginx"
 # Options: 'supervisord', 'upstart'
 STAGING_MONITOR = 'upstart'
+# Options: 'postgresql', 'mysql'
+# Note, for mysql, run "sudo apt-get build-dep python-mysqldb" on the server before running fab staging update.
+STAGING_DATABASES = ['postgresql']
+# MDSplus base path: None to not install mdsplus, or base path of mds python lib, e.g. /usr/local/mdsplus/mdsobjects/python
+STAGING_MDS_PYTHON_DIR = '/usr/local/mdsplus/mdsobjects/python'
+
+
 ## Production server
 
 # Username on production server
@@ -50,6 +57,11 @@ PRODUCTION_HOST = "server.com"
 PRODUCTION_WEBSERVER = "nginx"
 # Options: 'supervisord', 'upstart'
 PRODUCTION_MONITOR = 'upstart'
+# Options: 'postgresql', 'mysql
+# Note, for mysql, run "sudo apt-get build-dep python-mysqldb" on the server before running fab production update.
+PRODUCTION_DATABASES = ['postgresql']
+# MDSplus base path: None to not install mdsplus, or base path of mds python lib, e.g. /usr/local/mdsplus/mdsobjects/python
+PRODUCTION_MDS_PYTHON_DIR = '/usr/local/mdsplus/mdsobjects/python'
 
 ########################################################################
 ### You should not need to change anything below this line
@@ -62,6 +74,11 @@ env.has_directories = False
 UPSTART_FILES = ['h1ds.conf', 'h1ds-tasks.conf', 'h1ds-wiki.conf']
 UPSTART_CONF_DIR = '/etc/init'
 
+DB_PACKAGES = {
+    'postgresql': 'psycopg2',
+    'mysql': 'MySQL-python'
+    }
+
 
 def dev():
     """Django development on localhost."""
@@ -73,8 +90,9 @@ def dev():
     env.server_group = os.getgid()
     env.webserver = "development" # django dev webserver
     env.monitor = None
-
-
+    env.databases = []
+    env.mds_python_dir = None
+    
 def staging():
     """Staging server."""
     env.environment = 'staging'
@@ -87,7 +105,8 @@ def staging():
     env.server_group = 'www-data'
     env.webserver = STAGING_WEBSERVER
     env.monitor = STAGING_MONITOR
-
+    env.databases = STAGING_DATABASES
+    env.mds_python_dir = STAGING_MDS_PYTHON_DIR
 
 def production():
     """Production server."""
@@ -101,6 +120,8 @@ def production():
     env.server_group = 'www-data'
     env.webserver = PRODUCTION_WEBSERVER
     env.monitor = PRODUCTION_MONITOR
+    env.databases = PRODUCTION_DATABASES
+    env.mds_python_dir = PRODUCTION_MDS_PYTHON_DIR
 
 
 @contextmanager
@@ -173,6 +194,17 @@ def run_upstart_command(command_name):
     upstart_job_names = [n.rpartition('.')[0] for n in UPSTART_FILES]
     for upstart_job in upstart_job_names:
         sudo('{} {}'.format(command_name, upstart_job), warn_only=True)
+    
+
+def install_mdsplus_python_module():
+    update_env_dirs()
+    if env.mds_python_dir:
+        mds_target_dir = os.path.join(env.virtualenv_dir, 'src', 'mdsplus')
+        if not exists(mds_target_dir):
+            run('cp -r {} {}'.format(env.mds_python_dir, mds_target_dir))
+            with prefix('workon %(venv)s' % env):
+                with cd(mds_target_dir): # TODO: join the with statements
+                    run('python setup.py install')
     
 
 def stop_upstart_jobs():
@@ -398,6 +430,8 @@ def update():
             sudo('chown -R --reference=$PWD db')
             sudo('chown -R --reference=$PWD serverfiles')
 
+    install_mdsplus_python_module()
+    
     with prefix('workon %(venv)s && cdvirtualenv' % env):
         with prefix('cd %(project)s' % env):
             run("pip install -r requirements/requirements.txt")
@@ -409,6 +443,10 @@ def update():
                 run("pip install -r requirements/requirements_nginx.txt")
                 # need server perms to run db through webserver, so use sudo to
                 # modify db and make sure we chown the db after to be sure.
+            for db_name, db_package in DB_PACKAGES.iteritems():
+                if db_name in env.databases:
+                    run('pip install {}'.format(db_package))
+    
     with prefix('workon %(venv)s' % env):
         with cd(django_project_dir):
             with shell_env(PYTHONPATH=django_project_dir, DJANGO_SETTINGS_MODULE="%(settings)s" % env):
