@@ -68,7 +68,7 @@ server {
 
     error_page 503 @maintenance;
     location @maintenance {
-        root /home/dave/v/h1ds_staging/h1ds/h1ds/static;
+        root __venv_dir__/h1ds/h1ds/static;
         rewrite ^(.*)$ /maintenance.html break;
     }
 
