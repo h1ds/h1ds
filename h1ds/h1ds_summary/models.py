@@ -69,7 +69,7 @@ class SummaryAttribute(models.Model):
                 fetch_url = self.source.replace('__shot__', str(shot_number))
                 request = urllib2.Request(fetch_url)
                 response = json.loads(urllib2.urlopen(request).read())
-                return response['data']['value']
+                return response['data']['value'][0]
             except:
                 return None
         else:

@@ -11,6 +11,10 @@ from celery.signals import task_success, task_sent
 backend_shot_manager = get_backend_shot_manager()
 
 
+def shot_exists(cursor, table_name, shot_number):
+    cursor.execute('SELECT shot from {} WHERE shot={}'.format(table_name, shot_number))
+    return bool(cursor.fetchone())
+
 @task()
 def get_summary_attribute_data(device_slug, shot_number, attribute_slug):
     """Get data for summary attribute for a given shot.
@@ -92,9 +96,9 @@ def update_table_attributes(attribute_data, **kwargs):
     shot_timestamp = kwargs.get("shot_timestamp")
 
     cursor = get_summary_cursor()
-    attribute_data += (("timestamp", ["'{}'".format(shot_timestamp)]), )
+    attribute_data += (("timestamp", "'{}'".format(shot_timestamp)), )
 
-    set_str = ",".join("{}=NULL".format(a[0]) if (a[1][0] is None) else "{}={}".format(a[0], a[1][0]) for a in attribute_data)
+    set_str = ",".join("{}=NULL".format(a[0]) if (a[1] is None) else "{}={}".format(a[0], a[1]) for a in attribute_data)
 
     cursor.execute("UPDATE {} SET {} WHERE shot={}".format(table_name, set_str, shot_number))
     transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
@@ -129,6 +133,14 @@ def update_single_table_attribute(device_slug, shot_number, shot_timestamp, attr
     chord([get_summary_attribute_data.s(device_slug, shot_number, attribute_slug)],
           update_table_attributes.s(table_name=table_name, shot_number=shot_number,shot_timestamp=shot_timestamp)).apply_async()
 
+@task
+def insert_or_update_single_table_attribute(device_slug, shot_number, shot_timestamp, attribute_slug):
+    cursor = get_summary_cursor()
+    table_name = TABLE_NAME_TEMPLATE.format(device_slug)
+    if shot_exists(cursor, table_name, shot_number):
+        update_single_table_attribute(device_slug, shot_number, shot_timestamp, attribute_slug)
+    else:
+        insert_single_table_attribute(device_slug, shot_number, shot_timestamp, attribute_slug)
 
 @task_sent.connect  #(sender='h1ds.tasks.populate_tree_success')
 def test_signal(sender=None, task_id=None, task=None, args=None, kwargs=None, **kwds):

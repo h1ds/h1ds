@@ -25,7 +25,7 @@ from h1ds_summary.db import SummaryTable
 from h1ds_summary.forms import SummaryAttributeForm, ControlPanelForm, RawSqlForm
 from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.parsers import get_attribute_variants
-from h1ds_summary.tasks import update_single_table_attribute
+from h1ds_summary.tasks import insert_or_update_single_table_attribute
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
 
@@ -391,7 +391,7 @@ class ControlPanelView(FormView):
 
         # TODO: doing every (shot, attr) as separate commit - v. v. poor performace. fix this soon.
         shot_attr_pairs = itertools.product(shots_with_timestamps, cleaned_data['attributes'])
-        g = group(update_single_table_attribute(device.slug, x[0][0], x[0][1], x[1]) for x in shot_attr_pairs)
+        g = group(insert_or_update_single_table_attribute.s(device.slug, x[0][0], x[0][1], x[1]) for x in shot_attr_pairs)
         g.apply_async()
         # TODO: sensible user feedback
         return HttpResponseRedirect("/")
