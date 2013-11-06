@@ -191,3 +191,16 @@ def get_backend_shot_manager(tree):
         msg = "Data backend module {} contains multiple subclasses of BaseBackendShotManager".format(
             data_backend_module)
     raise ImportError(msg)
+
+def get_backend_shot_manager_for_device(device):
+    data_backend_module = device.get_backend_module()
+    candidate_classes = find_subclasses(data_backend_module, BaseBackendShotManager)
+    if len(candidate_classes) == 1:
+        return candidate_classes[0]
+    if len(candidate_classes) == 0:
+        msg = "Data backend module {} does not contain a subclass of BaseBackendShotManager".format(
+            data_backend_module)
+    else:
+        msg = "Data backend module {} contains multiple subclasses of BaseBackendShotManager".format(
+            data_backend_module)
+    raise ImportError(msg)

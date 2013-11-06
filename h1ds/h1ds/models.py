@@ -19,7 +19,7 @@ from python_field.fields import PythonCodeField
 
 from h1ds import tasks
 from h1ds.filters import BaseFilter, excluded_filters
-from h1ds.utils import get_backend_shot_manager
+from h1ds.utils import get_backend_shot_manager_for_device
 
 if hasattr(settings, "WORKSHEETS_PUBLIC_BY_DEFAULT"):
     public_worksheets_default = settings.WORKSHEETS_PUBLIC_BY_DEFAULT
@@ -323,8 +323,8 @@ class Shot(models.Model):
     def save(self, set_as_latest=False, populate_tree=True, *args, **kwargs):
         if not self.is_fallback:
             # TODO: don't set timestamp if it's already there.
-            device_backend_module = self.device.get_backend_module()
-            self.timestamp = device_backend_module.get_timestamp_for_shot(self.number)
+            shot_manager = get_backend_shot_manager_for_device(self.device)
+            self.timestamp = shot_manager.get_timestamp_for_shot(self.number)
             super(Shot, self).save(*args, **kwargs)
             if set_as_latest:
                 self.set_as_latest_shot()
