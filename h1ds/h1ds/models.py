@@ -406,7 +406,7 @@ class Node(models.Model):
                   'shot': self.get_shot_number(),
                   'tree': self.get_tree().slug}
 
-        if self.node_path.path is NodePath.TOP_PATH:
+        if self.get_nodepath() is NodePath.TOP_PATH:
             url_name = "tree-detail"
         else:
             url_name = "node-detail"
@@ -492,7 +492,7 @@ class Node(models.Model):
                   'shot': 'latest',
                   'tree': self.get_tree().slug}
 
-        if self.node_path.path is NodePath.TOP_PATH:
+        if self.get_nodepath() is NodePath.TOP_PATH:
             url_name = "tree-detail"
         else:
             url_name = "node-detail"
