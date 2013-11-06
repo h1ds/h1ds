@@ -171,6 +171,18 @@ INSTALLED_APPS = (
 )
 
 H1DS_DATA_BACKEND = "h1ds.backends.h1"
+
+DATA_BACKENDS = {
+    'mds': {'module': 'h1ds.backends.mdsplus',
+            'name': 'MDSPlus',
+            'description': 'Generic MDSPlus backend'
+            },
+    'h1': {'module': 'h1ds.backends.h1',
+           'name': 'H1 Heliac',
+           'description': 'Customised MDSplus backend for H1 Heliac'
+           },
+    }
+
 H1DS_DATA_PREFIX = r"data"
 
 DATA_FILTER_MODULES = (

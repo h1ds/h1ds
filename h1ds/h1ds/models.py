@@ -32,7 +32,12 @@ filter_name_regex = re.compile('^f(?P<fid>\d+)')
 # Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
 filter_kwarg_regex = re.compile('^f(?P<fid>\d+)_(?P<kwarg>.+)')
 
+# DEPRECATED
 backend_module = import_module(settings.H1DS_DATA_BACKEND)
+
+
+def get_data_backend_choices():
+    return sorted((key, value['name']) for key, value in settings.DATA_BACKENDS.iteritems())
 
 
 def get_filter_list(request):
@@ -191,10 +196,6 @@ class ShotRange(models.Model):
 class Tree(models.Model):
     """Configuration for a data tree.
 
-    TODO: have backend (e.g. mdsplus) a property of Tree.
-          - property would either be a string with module path
-          or we would have a separate model class for backends.
-
     """
     name = models.CharField(max_length=64)
     slug = models.SlugField()
@@ -206,6 +207,8 @@ class Tree(models.Model):
                                     help_text="If true, the tree will be visible to all users, and the general public.")
 
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this tree if it is not public")
+
+    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default='mds')
 
     def user_is_allowed(self, user):
         is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
