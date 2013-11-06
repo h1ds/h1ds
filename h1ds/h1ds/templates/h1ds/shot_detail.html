@@ -2,14 +2,14 @@
 
 {% block content %}
 <h1>Shot {{shot.number}}</h1>
-<h2>{{shot.timestamp}}</h2>
+{%  if shot.timestamp %}<h2>{{shot.timestamp}}</h2>{% endif %}
 <h3>Active trees for this shot</h3>
 <ul>
 {% for tree in trees %}
     {% if track_latest_shot %}
-<li><a href="{% url 'tree-detail' device=shot.device.slug shot='latest' tree=tree.slug %}">{{tree.name}}</a>
+<li><a href="{% url 'tree-detail' device=device_slug shot='latest' tree=tree.slug %}">{{tree.name}}</a>
     {% else %}
-<li><a href="{% url 'tree-detail' device=shot.device.slug shot=shot.number tree=tree.slug %}">{{tree.name}}</a>
+<li><a href="{% url 'tree-detail' device=device_slug shot=shot.number tree=tree.slug %}">{{tree.name}}</a>
     {% endif %}
 {% endfor %}
 </ul>

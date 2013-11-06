@@ -160,6 +160,11 @@ class Device(models.Model):
         except KeyError:
             return []
 
+    def get_allowed_trees_for_user(self, user):
+        if not self.user_is_allowed(user):
+            return []
+        return [tree for tree in Tree.objects.filter(device=self) if tree.user_is_allowed(user)]
+
 
 class ShotRange(models.Model):
     min_shot = models.IntegerField(null=True, blank=True)
@@ -217,17 +222,42 @@ class Tree(models.Model):
         loader = backend_module.TreeLoader()
         loader.load(self)
 
+    def get_fallback_root_nodes_for_shot(self, shot_number):
+        #tree_root_node = Node.fallback.create_node(shot_number, self, '')
+        #return tree_root_node.get_child_nodes(fallback=True)
+        data_interface = backend_module.DataInterface(shot=shot_number, tree=self, path=[])
+        return data_interface.get_child_nodes(fallback=True)
+
     def get_root_nodes_for_shot(self, shot_number):
-        return Node.objects.filter(shot__number=shot_number, node_path__tree=self, node_path__parent__path=NodePath.TOP_PATH).exclude(node_path__path="").order_by('node_path__path')
+        nodes_for_shot = Node.objects.filter(shot__number=shot_number)
+        if nodes_for_shot.count() == 0:
+            return self.get_fallback_root_nodes_for_shot(shot_number)
+        else:
+            return nodes_for_shot.filter(node_path__tree=self, node_path__parent__path=NodePath.TOP_PATH).exclude(node_path__path="").order_by('node_path__path')
+
+
+class ShotFallbackManager(models.Manager):
+
+    def create_shot(self, device, number):
+        shot = self.model(number=number, device=device)
+        shot.is_fallback = True
+        shot.fallback_data = {'device': device,
+                              'number': number}
+        return shot
 
 
 class Shot(models.Model):
+    def __init__(self, *args, **kwargs):
+        super(Shot, self).__init__(*args, **kwargs)
+        self.is_fallback = False
+
     number = models.PositiveIntegerField(primary_key=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(blank=True)
     device = models.ForeignKey(Device)
 
     objects = models.Manager()
     backend = get_backend_shot_manager()()
+    fallback = ShotFallbackManager()
 
     def _get_root_pathmaps(self):
         return Node.objects.filter(shot=self, node_path__parent=None)
@@ -264,19 +294,22 @@ class Shot(models.Model):
         return reverse('shot-detail', kwargs={'device': self.device.slug, 'shot': self.number})
 
     def save(self, set_as_latest=False, populate_tree=True, *args, **kwargs):
-        # TODO: don't set timestamp if it's already there.
-        self.timestamp = Shot.backend.get_timestamp_for_shot(self.number)
-        super(Shot, self).save(*args, **kwargs)
-        if set_as_latest:
-            self.set_as_latest_shot()
-        if populate_tree:
-            self.populate_tree()
+        if not self.is_fallback:
+            # TODO: don't set timestamp if it's already there.
+            self.timestamp = Shot.backend.get_timestamp_for_shot(self.number)
+            super(Shot, self).save(*args, **kwargs)
+            if set_as_latest:
+                self.set_as_latest_shot()
+            if populate_tree:
+                self.populate_tree()
 
-        if not self.device.latest_shot:
-            self.device.latest_shot = self
-            self.device.save()
+            if not self.device.latest_shot:
+                self.device.latest_shot = self
+                self.device.save()
 
     def populate_tree(self):
+        if self.is_fallback:
+            return None
         # actually - we should set as latest shot straight away,
         # and have another parameter which keeps the state of tree cacheing.
         # TODO: what if shot is already populated?

@@ -585,14 +585,20 @@ class ShotDetailView(APIView):
 
     def get(self, request, device, shot, format=None):
         device = Device.objects.get(slug=device)
-        shot_number = shot
-        shot = self.get_object()
+        track_latest_shot = (shot == 'latest')
+        if track_latest_shot:
+            shot_instance = device.latest_shot
+        else:
+            try:
+                shot_instance = Shot.objects.get(number=int(shot), device=device)
+            except Shot.DoesNotExist:
+                shot_instance = Shot.fallback.create_shot(device=device, number=int(shot))
         if request.accepted_renderer.format == 'html':
-            track_latest_shot = (shot_number == 'latest')
-            return Response({'shot': shot,
+            return Response({'shot': shot_instance,
+                             'device_slug': device.slug,
                              'track_latest_shot': track_latest_shot,
-                             'trees': shot.get_allowed_trees(request.user)})
-        serializer = self.serializer_class(shot)
+                             'trees': device.get_allowed_trees_for_user(request.user)})
+        serializer = self.serializer_class(shot_instance)
         return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):
@@ -633,14 +639,13 @@ class TreeDetailView(APIView):
         return ("h1ds/tree_detail.html", )
 
     def get(self, request, device, shot, tree, format=None):
+        shot_number = int(shot)
         tree = self.get_object()
-        shot = Shot.objects.get(device__slug=device, number=shot)
         # TODO: if shot is not active for this shot, raise an error
         if request.accepted_renderer.format == 'html':
-            return Response({'tree': tree, 'shot': shot, 'root_nodes': tree.get_root_nodes_for_shot(shot.number)})
-        serializer = self.serializer_class(tree, context={'shot': shot})
+            return Response({'tree': tree, 'shot_number': shot_number, 'root_nodes': tree.get_root_nodes_for_shot(shot_number)})
+        serializer = self.serializer_class(tree, context={'shot_number': shot_number})
         return Response(serializer.data)
-
 
 class TextTemplateView(TemplateView):
     def render_to_response(self, context, **response_kwargs):
