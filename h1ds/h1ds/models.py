@@ -32,9 +32,6 @@ filter_name_regex = re.compile('^f(?P<fid>\d+)')
 # Match strings "f(fid)_kwarg_(arg name)", where fid is the filter ID
 filter_kwarg_regex = re.compile('^f(?P<fid>\d+)_(?P<kwarg>.+)')
 
-# DEPRECATED
-backend_module = import_module(settings.H1DS_DATA_BACKEND)
-
 
 def get_data_backend_choices():
     return sorted((key, value['name']) for key, value in settings.DATA_BACKENDS.iteritems())
@@ -123,6 +120,10 @@ class FilterManager(object):
 class Device(models.Model):
     """Representation of an experimental device with its own data set."""
 
+    def __init__(self, *args, **kwarg):
+        super(Device, self).__init__(*args, **kwarg)
+        self.backend_module = None
+
     name = models.CharField(max_length=32)
     description = models.TextField()
     slug = models.SlugField()
@@ -141,6 +142,10 @@ class Device(models.Model):
 
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this device if it is not public")
 
+    # data backend for device is used to get shot timestamp.
+    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
+
+
     def user_is_allowed(self, user):
         is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
         return is_allowed
@@ -155,6 +160,12 @@ class Device(models.Model):
             for device in Device.objects.exclude(pk=self.pk).filter(is_default=True):
                 device.is_default = False
                 device.save()
+
+    def get_backend_module(self):
+        if not self.backend_module:
+            module_name = settings.DATA_BACKENDS[self.data_backend]['module']
+            self.backend_module = import_module(module_name)
+        return self.backend_module
 
     def __unicode__(self):
         return self.name
@@ -197,6 +208,10 @@ class Tree(models.Model):
     """Configuration for a data tree.
 
     """
+    def __init__(self, *args, **kwarg):
+        super(Tree, self).__init__(*args, **kwarg)
+        self.backend_module = None
+
     name = models.CharField(max_length=64)
     slug = models.SlugField()
     device = models.ForeignKey(Device)
@@ -208,7 +223,7 @@ class Tree(models.Model):
 
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this tree if it is not public")
 
-    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default='mds')
+    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
 
     def user_is_allowed(self, user):
         is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
@@ -221,13 +236,21 @@ class Tree(models.Model):
     def __unicode__(self):
         return self.slug
 
+    def get_backend_module(self):
+        if not self.backend_module:
+            module_name = settings.DATA_BACKENDS[self.data_backend]['module']
+            self.backend_module = import_module(module_name)
+        return self.backend_module
+
     def load(self):
+        backend_module = self.get_backend_module()
         loader = backend_module.TreeLoader()
         loader.load(self)
 
     def get_fallback_root_nodes_for_shot(self, shot_number):
         #tree_root_node = Node.fallback.create_node(shot_number, self, '')
         #return tree_root_node.get_child_nodes(fallback=True)
+        backend_module = self.get_backend_module()
         data_interface = backend_module.DataInterface(shot=shot_number, tree=self, path=[])
         return data_interface.get_child_nodes(fallback=True)
 
@@ -259,8 +282,9 @@ class Shot(models.Model):
     device = models.ForeignKey(Device)
 
     objects = models.Manager()
-    backend = get_backend_shot_manager()()
+    #backend = get_backend_shot_manager(None)()
     fallback = ShotFallbackManager()
+
 
     def _get_root_pathmaps(self):
         return Node.objects.filter(shot=self, node_path__parent=None)
@@ -299,7 +323,8 @@ class Shot(models.Model):
     def save(self, set_as_latest=False, populate_tree=True, *args, **kwargs):
         if not self.is_fallback:
             # TODO: don't set timestamp if it's already there.
-            self.timestamp = Shot.backend.get_timestamp_for_shot(self.number)
+            device_backend_module = self.device.get_backend_module()
+            self.timestamp = device_backend_module.get_timestamp_for_shot(self.number)
             super(Shot, self).save(*args, **kwargs)
             if set_as_latest:
                 self.set_as_latest_shot()
@@ -444,8 +469,10 @@ class Node(models.Model):
     def get_data_interface(self):
         if self.data_interface is None:
             if self.is_fallback or (not self.is_fallback and self.subtree.has_data):
+                tree = self.get_tree()
+                backend_module = tree.get_backend_module()
                 self.data_interface = backend_module.DataInterface(shot=self.get_shot_number(),
-                                                                   tree=self.get_tree(),
+                                                                   tree=tree,
                                                                    path=self.get_path_components())
         return self.data_interface
 
@@ -510,12 +537,16 @@ class Node(models.Model):
                                 shot__number=shot_number)
 
     def get_node_for_previous_shot(self):
-        previous_shot = Shot.backend.get_previous_shot_number(self.shot.number)
-        return self.get_node_for_shot(previous_shot)
+        # TODO: want users to be able to distinguish between cached and fallback shots
+        #previous_shot = Shot.backend.get_previous_shot_number(self.shot.number)
+        #return self.get_node_for_shot(previous_shot)
+        return self.get_node_for_shot(self.shot.number-1)
 
     def get_node_for_next_shot(self):
-        next_shot = Shot.backend.get_next_shot_number(self.shot.number)
-        return self.get_node_for_shot(next_shot)
+        # TODO: want users to be able to distinguish between cached and fallback shots
+        #next_shot = Shot.backend.get_next_shot_number(self.shot.number)
+        #return self.get_node_for_shot(next_shot)
+        return self.get_node_for_shot(self.shot.number+1)
 
     def get_parent(self):
         if self.is_fallback:

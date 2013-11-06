@@ -183,6 +183,8 @@ DATA_BACKENDS = {
            },
     }
 
+DEFAULT_DATA_BACKEND = 'mds'
+
 H1DS_DATA_PREFIX = r"data"
 
 DATA_FILTER_MODULES = (

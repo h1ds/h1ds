@@ -214,7 +214,8 @@ class SummaryTable:
             task_name = update_table_attributes
 
         # Hack workaround - see notes at top of file
-        shot_timestamp = Shot.backend.get_timestamp_for_shot(shot.number)
+        backend_module = self.device.get_backend_module()
+        shot_timestamp = backend_module.get_timestamp_for_shot(shot.number)
         chord(
             (get_summary_attribute_data.s(self.device.slug, shot.number, a) for a in table_attributes),
             task_name.s(table_name=self.table_name, shot_number=shot.number, shot_timestamp=str(shot_timestamp))
@@ -258,7 +259,8 @@ class SummaryTable:
         else:
             task_name = insert_single_table_attribute
 
-        shot_timestamp = lambda s: Shot.backend.get_timestamp_for_shot(s.number)
+        backend_module = self.device.get_backend_module()
+        shot_timestamp = lambda s: backend_module.get_timestamp_for_shot(s.number)
         group(
             (task_name.s(self.device.slug, shot.number, shot_timestamp(shot), attr_slug) for shot in shot_queryset),
         ).apply_async()

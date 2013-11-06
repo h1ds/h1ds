@@ -37,11 +37,9 @@ from rest_framework.compat import timezone, force_text
 
 from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer, TreeSerializer
 from h1ds.models import UserSignal, UserSignalForm, Worksheet, SubTree, Shot, Device, UserSignalUpdateForm, Tree, Node
-from h1ds.utils import get_backend_shot_manager
 from h1ds.base import get_filter_list
 
 
-backend_shot_manager = get_backend_shot_manager()
 
 
 def get_alternative_format_urls(request, alternative_formats):
@@ -59,14 +57,14 @@ def get_alternative_format_urls(request, alternative_formats):
     return alternative_format_urls
 
 
-def get_shot_stream_generator():
-    shotman = backend_shot_manager()
+# TODO: Use django signals instead (when device.latest_shot changes)
+def get_shot_stream_generator(device):
 
     def new_shot_generator():
-        latest_shot = shotman.get_latest_shot()
+        latest_shot = device.latest_shot.number
         while True:
             time.sleep(1)
-            tmp = shotman.get_latest_shot()
+            tmp = device.latest_shot.number
             if tmp != latest_shot:
                 latest_shot = tmp
                 yield "{}\n".format(latest_shot)
@@ -74,10 +72,8 @@ def get_shot_stream_generator():
     return new_shot_generator
 
 
-new_shot_generator = get_shot_stream_generator()
 
 ### TEMP ###
-#import h1ds.filters
 from h1ds.base import get_all_filters
 ############
 all_filters = get_all_filters()
@@ -300,7 +296,9 @@ class UserSignalDeleteView(DeleteView):
 class ShotStreamView(View):
     http_method_names = ['get']
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, device, **kwargs):
+        device_instance = Device.objects.get(slug=device)
+        new_shot_generator = get_shot_stream_generator(device_instance)
         return StreamingHttpResponse(new_shot_generator())
 
 

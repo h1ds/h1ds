@@ -1,14 +1,11 @@
 from celery import task, chord
 from django.db import transaction
 
-from h1ds.utils import get_backend_shot_manager
-from h1ds.models import Shot
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary import get_summary_cursor
 
-from celery.signals import task_success, task_sent
+from celery.signals import task_sent
 
-backend_shot_manager = get_backend_shot_manager()
 
 
 def shot_exists(cursor, table_name, shot_number):

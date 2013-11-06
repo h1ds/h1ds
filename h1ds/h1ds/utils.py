@@ -179,15 +179,15 @@ def find_subclasses(module, requested_class):
     return subclasses
 
 
-def get_backend_shot_manager():
-    data_backend_module = import_module(settings.H1DS_DATA_BACKEND)
+def get_backend_shot_manager(tree):
+    data_backend_module = tree.get_backend_module()
     candidate_classes = find_subclasses(data_backend_module, BaseBackendShotManager)
     if len(candidate_classes) == 1:
         return candidate_classes[0]
     if len(candidate_classes) == 0:
         msg = "Data backend module {} does not contain a subclass of BaseBackendShotManager".format(
-            settings.H1DS_DATA_BACKEND)
+            data_backend_module)
     else:
         msg = "Data backend module {} contains multiple subclasses of BaseBackendShotManager".format(
-            settings.H1DS_DATA_BACKEND)
+            data_backend_module)
     raise ImportError(msg)
