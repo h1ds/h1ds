@@ -324,11 +324,13 @@ class Shot(models.Model):
         if not self.is_fallback:
             # TODO: don't set timestamp if it's already there.
             shot_manager = get_backend_shot_manager_for_device(self.device)
-            self.timestamp = shot_manager.get_timestamp_for_shot(self.number)
+            self.timestamp = shot_manager().get_timestamp_for_shot(self.number)
             super(Shot, self).save(*args, **kwargs)
             if set_as_latest:
                 self.set_as_latest_shot()
             if populate_tree:
+                # need to set backend_module to None, as the model is not pickleable
+                self.device.backend_module = None
                 self.populate_tree()
 
             if not self.device.latest_shot:
