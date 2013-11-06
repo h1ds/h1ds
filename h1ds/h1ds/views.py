@@ -25,6 +25,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import TemplateView
 from django.core.urlresolvers import resolve, reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -562,6 +563,7 @@ class ShotDetailView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     serializer_class = ShotSerializer
 
+    @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
         device_instance = Device.objects.get(slug=kwargs['device'])
         if not device_instance.user_is_allowed(request.user):
