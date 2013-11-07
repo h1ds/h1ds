@@ -9,5 +9,5 @@ cd $virtualenv_dir
 source bin/activate
 export PYTHONPATH=${django_project_dir}:$$PYTHONPATH
 exec bin/gunicorn h1ds.wsgi:application -w $$NUM_WORKERS \
-    --log-level=info --bind=$$ADDRESS -k gevent \
-    --log-file=$$LOGFILE 2>>$$LOGFILE
+    --log-level=error --bind=$$ADDRESS -k gevent \
+    --log-file=$$LOGFILE

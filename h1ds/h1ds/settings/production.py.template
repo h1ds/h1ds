@@ -21,3 +21,51 @@ WIKI_EDITOR_GROUPS = [u"EditorGroup", ]
 WIKI_SUPERUSERS = [u"MyUsername", ]
 WIKI_ACL_RIGHTS_BEFORE = u"MyUsername:read,write,delete,revert,admin EditorGroup:read,write,delete -All:write,delete,revert,admin"
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'default': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(DJANGO_PROJECT_DIR, 'log', 'django.log'),
+            'maxBytes': 1024 * 1024 * 50, # 50 MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler'
+        }
+    },
+    'loggers': {
+        'default': {
+            'handlers': ['default'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'h1ds': {
+            'handlers': ['default'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['default'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
