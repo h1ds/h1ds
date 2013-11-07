@@ -15,6 +15,7 @@ from django.db import transaction
 from celery import chord, group
 
 from h1ds.models import Shot, Device
+from h1ds.utils import get_backend_shot_manager_for_device
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary.tasks import get_summary_attribute_data, insert_table_attributes, insert_single_table_attribute, update_table_attributes, update_single_table_attribute
 from h1ds_summary import get_summary_cursor
@@ -214,8 +215,9 @@ class SummaryTable:
             task_name = update_table_attributes
 
         # Hack workaround - see notes at top of file
-        backend_module = self.device.get_backend_module()
-        shot_timestamp = backend_module.get_timestamp_for_shot(shot.number)
+        shot_manager = get_backend_shot_manager_for_device(self.device)
+        shot_timestamp = shot_manager().get_timestamp_for_shot(shot.number)
+
         chord(
             (get_summary_attribute_data.s(self.device.slug, shot.number, a) for a in table_attributes),
             task_name.s(table_name=self.table_name, shot_number=shot.number, shot_timestamp=str(shot_timestamp))
@@ -259,8 +261,9 @@ class SummaryTable:
         else:
             task_name = insert_single_table_attribute
 
-        backend_module = self.device.get_backend_module()
-        shot_timestamp = lambda s: backend_module.get_timestamp_for_shot(s.number)
+        shot_manager = get_backend_shot_manager_for_device(self.device)
+        shot_timestamp = shot_manager().get_timestamp_for_shot(s.number)
+
         group(
             (task_name.s(self.device.slug, shot.number, shot_timestamp(shot), attr_slug) for shot in shot_queryset),
         ).apply_async()
@@ -349,3 +352,8 @@ class SummaryTable:
 
         return self.do_query(select=attr_list, where=where, as_dict=as_dict)
 
+    def add_or_update_shot(self, shot_number):
+        if self.shot_exists(shot_number):
+            self.update_shot(shot_number)
+        else:
+            self.add_shot(shot_number)

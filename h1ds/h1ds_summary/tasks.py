@@ -139,6 +139,7 @@ def insert_or_update_single_table_attribute(device_slug, shot_number, shot_times
     else:
         insert_single_table_attribute(device_slug, shot_number, shot_timestamp, attribute_slug)
 
+
 @task_sent.connect  #(sender='h1ds.tasks.populate_tree_success')
 def test_signal(sender=None, task_id=None, task=None, args=None, kwargs=None, **kwds):
     if sender == 'h1ds.tasks.populate_tree_success':  #TODO should be able to put this in connect - but not working?
@@ -148,4 +149,4 @@ def test_signal(sender=None, task_id=None, task=None, args=None, kwargs=None, **
         # TODO: should this be a celery task?
         device = Device(slug=device_slug)
         db = SummaryTable(device)
-        db.update_shot(shot_number)
+        db.add_or_update_shot(shot_number)
