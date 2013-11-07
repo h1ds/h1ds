@@ -25,9 +25,10 @@ from h1ds_summary.db import SummaryTable
 from h1ds_summary.forms import SummaryAttributeForm, ControlPanelForm, RawSqlForm
 from h1ds_summary.models import SummaryAttribute
 from h1ds_summary.parsers import get_attribute_variants
-from h1ds_summary.tasks import insert_or_update_single_table_attribute
+from h1ds_summary.tasks import insert_or_update_single_table_attribute, update_from_shot_slug
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -272,6 +273,7 @@ class SimpleSerializer(serializers.Serializer):
 class SummaryView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
 
+    @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
         device_instance = Device.objects.get(slug=kwargs['device'])
         if not device_instance.user_is_allowed(request.user):
@@ -347,6 +349,13 @@ class SummaryView(APIView):
 
         serializer = SimpleSerializer(results)
         return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        device_slug = kwargs.get("device")
+        shot_str = kwargs.get("shot_str", DEFAULT_SHOT_REGEX)
+        update_from_shot_slug(device_slug, shot_str)
+        # TODO: sensible user feedback
+        return HttpResponseRedirect("/")
 
 
 class SummaryDeviceListView(DeviceListView):

@@ -43,7 +43,7 @@ def get_ranges_from_shot_slug(device, shot_slug):
         elif '-' in shot_comp:
             shot_ranges.append(map(int, shot_comp.split('-')))
         else:
-            individual_shots.append(shot_comp)
+            individual_shots.append([int(shot_comp)])
     return shot_ranges, individual_shots
 
 

@@ -1,9 +1,10 @@
 from celery import task, chord
 from django.db import transaction
 
+from h1ds.models import Device
 from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary import get_summary_cursor
-
+from h1ds_summary.parsers import parse_shot_slug
 from celery.signals import task_sent
 
 
@@ -139,6 +140,14 @@ def insert_or_update_single_table_attribute(device_slug, shot_number, shot_times
     else:
         insert_single_table_attribute(device_slug, shot_number, shot_timestamp, attribute_slug)
 
+
+@task
+def update_from_shot_slug(device_slug, shot_slug):
+    from h1ds_summary.db import SummaryTable
+    device = Device(slug=device_slug)
+    db = SummaryTable(device)
+    for shot in parse_shot_slug(device, shot_slug):
+        db.add_or_update_shot(shot)
 
 @task_sent.connect  #(sender='h1ds.tasks.populate_tree_success')
 def test_signal(sender=None, task_id=None, task=None, args=None, kwargs=None, **kwds):
