@@ -29,7 +29,7 @@ from h1ds_summary.tasks import insert_or_update_single_table_attribute, update_f
 from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-
+from django.shortcuts import get_object_or_404
 
 
 DEFAULT_SHOT_REGEX = "last30"
@@ -275,7 +275,7 @@ class SummaryView(APIView):
 
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
-        device_instance = Device.objects.get(slug=kwargs['device'])
+        device_instance = get_object_or_404(Device, slug=kwargs['device'])
         if not device_instance.user_is_allowed(request.user):
             raise PermissionDenied
         return super(SummaryView, self).dispatch(request, *args, **kwargs)
