@@ -528,7 +528,10 @@ class NodeView(APIView):
                 template = "node_without_data.html"
             else:
                 template = "node_with_data.html"
-            user_signals = UserSignal.objects.filter(user=request.user)
+            if request.user.is_authenticated():
+                user_signals = UserSignal.objects.filter(user=request.user)
+            else:
+                user_signals = []
             return Response({'node': node,
                              'track_latest_shot': track_latest_shot,
                              'user_signal_form': UserSignalForm(),
