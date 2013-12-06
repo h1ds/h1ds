@@ -262,10 +262,10 @@ class SummaryTable:
             task_name = insert_single_table_attribute
 
         shot_manager = get_backend_shot_manager_for_device(self.device)
-        shot_timestamp = shot_manager().get_timestamp_for_shot(s.number)
+        shot_timestamp = shot_manager().get_timestamp_for_shot
 
         group(
-            (task_name.s(self.device.slug, shot.number, shot_timestamp(shot), attr_slug) for shot in shot_queryset),
+            (task_name.s(self.device.slug, shot.number, shot_timestamp(shot.number), attr_slug) for shot in shot_queryset),
         ).apply_async()
 
     def update_attribute(self, summary_attribute):
