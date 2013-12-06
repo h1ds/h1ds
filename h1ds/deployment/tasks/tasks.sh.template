@@ -2,5 +2,9 @@
 export DJANGO_SETTINGS_MODULE=h1ds.settings.$environment
 cd $virtualenv_dir
 source bin/activate
+if [ -e /usr/local/mdsplus/setup.sh ]
+then
+  source /usr/local/mdsplus/setup.sh
+fi
 export PYTHONPATH=${django_project_dir}:$$PYTHONPATH
 exec bin/django-admin.py celeryd -v 2 -B
