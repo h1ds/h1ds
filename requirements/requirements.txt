@@ -8,7 +8,7 @@ django-celery==3.0.23
 python-openid==2.2.5
 django-mptt==0.5
 -e git+https://github.com/h1ds/django-openid-auth.git#egg=django_openid_auth-dev
-moin==1.9.6
+--allow-external moin==1.9.7 
 -e hg+https://bitbucket.org/schinckel/django-python-code-field#egg=python_field
 djangorestframework==2.3.7
 django-crawler==0.1
