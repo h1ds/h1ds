@@ -496,7 +496,7 @@ def update():
         env.environment)
         with open('h1ds/h1ds/conf/nginx/h1ds_%s.conf.template' % (env.environment)) as conf_template:
             conf_text = conf_header + conf_template.read()
-        conf_text = conf_text.replace("__venv_dir__", env_dir)
+        conf_text = conf_text.replace("__venv_dir__", env_dir).replace('__servername__', env.hosts[0])
         with tempfile.NamedTemporaryFile() as new_config_file:
             new_config_file.write(conf_text)
             new_config_file.flush()
