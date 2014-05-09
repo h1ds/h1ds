@@ -274,7 +274,7 @@ def update_dir_structure():
 
     with cd(django_project_dir):
         server_perm_paths = map(lambda x: os.path.join(*x), server_perms)
-        if env.webserver == "apache":
+        if env.webserver in ['apache', 'nginx']:
             for sp in server_perm_paths:
                 if exists(sp):
                     sudo('chown -R --reference=$PWD %s' % sp)
@@ -296,7 +296,7 @@ def update_dir_structure():
 
     with cd(django_project_dir):
         sudo('chmod -R ugo+rwX db')
-        if env.webserver == "apache":
+        if env.webserver in ['apache', 'nginx']:
             for sp in server_perm_paths:
                 if exists(sp):
                     sudo('chown -R %s:%s %s' % (env.server_user, env.server_group, sp))
@@ -439,7 +439,7 @@ def update():
     with cd(django_project_dir):
         sudo('cp -r h1ds/moin/underlay wiki')
         sudo('cp h1ds/conf/h1ds.py wiki/data/plugin/theme')
-        if env.webserver == "apache":
+        if env.webserver in ['apache', 'nginx']:
             sudo('chown -R %(server_user)s:%(server_group)s wiki' % env)
         sudo('chmod -R ug+rwX wiki')
         sudo('chmod -R o-rwX wiki')
@@ -451,7 +451,7 @@ def update():
     # permissions changed  to those of  the root user, which  will cause
     # problems when subsequent commands are run as a normal user.
 
-    if env.webserver == "apache":
+    if env.webserver in ['apache','nginx']:
         with cd(django_project_dir):
             sudo('chown -R --reference=$PWD db')
             sudo('chown -R --reference=$PWD serverfiles')
@@ -483,8 +483,8 @@ def update():
 
     # Now that we  have finished making changes to  the database, change
     # the permissions back to those appropriate for the server.
-    if env.webserver == "apache":
-        with cd(env_dir):
+    if env.webserver in ['apache', 'nginx']:
+        with cd(django_project_dir):
             sudo('chown -R %(server_user)s:%(server_group)s db' % env)
             sudo('chown -R %(server_user)s:%(server_group)s serverfiles' % env)
 
