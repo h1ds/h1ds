@@ -33,30 +33,35 @@ from fabric.contrib.files import exists
 # Project user and group name
 STAGING_USER = 'username'
 STAGING_GROUP = 'groupname'
+STAGING_WEBSERVER_USER = 'www-data'
+STAGING_WEBSERVER_GROUP = 'www-data'
 # Hostname or IP address of staging server
-STAGING_HOST = "192.168.56.101"
+STAGING_HOST = "example.com"
 # Either "nginx" or "apache"
 STAGING_WEBSERVER = "nginx"
-# Options: 'supervisord', 'upstart'
-STAGING_MONITOR = 'upstart'
+# Options: 'systemctl', 'upstart'
+STAGING_MANAGEMENT_DAEMON = 'upstart'
 # Options: 'postgresql', 'mysql'
 # Note, for mysql, run "sudo apt-get build-dep python-mysqldb" on the server before running fab staging update.
 STAGING_DATABASES = ['postgresql']
 # MDSplus base path: None to not install mdsplus, or base path of mds python lib, e.g. /usr/local/mdsplus/mdsobjects/python
 STAGING_MDS_PYTHON_DIR = '/usr/local/mdsplus/mdsobjects/python'
-
+# sets env.key_filename
+STAGING_KEY_FILENAME = '/home/user/.ssh/my.pem'
 
 ## Production server
 
 # Username on production server
 PRODUCTION_USER = "username"
 PRODUCTION_GROUP = 'groupname'
+PRODUCTION_WEBSERVER_USER = 'www-data'
+PRODUCTION_WEBSERVER_GROUP = 'www-data'
 # Hostname or IP address of production server
-PRODUCTION_HOST = "server.com"
+PRODUCTION_HOST = "example.com"
 # Either "nginx" or "apache"
 PRODUCTION_WEBSERVER = "nginx"
 # Options: 'supervisord', 'upstart'
-PRODUCTION_MONITOR = 'upstart'
+PRODUCTION_MANAGEMENT_DAEMON = 'upstart'
 # Options: 'postgresql', 'mysql
 # Note, for mysql, run "sudo apt-get build-dep python-mysqldb" on the server before running fab production update.
 PRODUCTION_DATABASES = ['postgresql']
@@ -68,11 +73,14 @@ PRODUCTION_MDS_PYTHON_DIR = '/usr/local/mdsplus/mdsobjects/python'
 ########################################################################
 
 env.project = "h1ds"
-env.git_url = "https://github.com/h1ds/h1ds.git"
+env.git_url = "https://github.com/stellulata/h1ds.git"
 env.has_directories = False
 
 UPSTART_FILES = ['h1ds.conf', 'h1ds-tasks.conf', 'h1ds-wiki.conf']
 UPSTART_CONF_DIR = '/etc/init'
+
+SYSTEMD_FILES = ['h1ds.service', 'h1ds-tasks.service', 'h1ds-wiki.service']
+SYSTEMD_CONF_DIR = '/usr/lib/systemd/system'
 
 DB_PACKAGES = {
     'postgresql': 'psycopg2',
@@ -84,12 +92,12 @@ def dev():
     """Django development on localhost."""
     env.environment = 'development'
     env.venv = "%(project)s_%(environment)s" % env
-    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p /usr/bin/python2"
     env.hosts = ["localhost"]
     env.server_user = os.getuid()
     env.server_group = os.getgid()
     env.webserver = "development" # django dev webserver
-    env.monitor = None
+    env.management_daemon = None
     env.databases = []
     env.mds_python_dir = None
     
@@ -100,28 +108,35 @@ def staging():
     env.user = STAGING_USER
     env.group = STAGING_GROUP
     env.hosts = [STAGING_HOST]
-    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
-    env.server_user = 'www-data'
-    env.server_group = 'www-data'
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p /usr/bin/python2"
+    env.server_user = STAGING_WEBSERVER_USER
+    env.server_group = STAGING_WEBSERVER_GROUP
     env.webserver = STAGING_WEBSERVER
-    env.monitor = STAGING_MONITOR
+    env.management_daemon = STAGING_MANAGEMENT_DAEMON
     env.databases = STAGING_DATABASES
     env.mds_python_dir = STAGING_MDS_PYTHON_DIR
-
+    env.key_filename = STAGING_KEY_FILENAME
+    # used for systemd scripts
+    env.required_units = STAGING_WEBSERVER+'.service'
+    env.after_units = STAGING_WEBSERVER+'.service'
+    
 def production():
     """Production server."""
     env.environment = 'production'
     env.venv = "%(project)s_%(environment)s" % env
-    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p python2"
+    env.mkvirtualenv = "mkvirtualenv --distribute --no-site-packages -p /usr/bin/python2"
     env.user = PRODUCTION_USER
     env.group = PRODUCTION_GROUP
     env.hosts = [PRODUCTION_HOST]
-    env.server_user = 'www-data'
-    env.server_group = 'www-data'
+    env.server_user = PRODUCTION_WEBSERVER_USER
+    env.server_group = PRODUCTION_WEBSERVER_GROUP
     env.webserver = PRODUCTION_WEBSERVER
-    env.monitor = PRODUCTION_MONITOR
+    env.management_daemon = PRODUCTION_MANAGEMENT_DAEMON
     env.databases = PRODUCTION_DATABASES
     env.mds_python_dir = PRODUCTION_MDS_PYTHON_DIR
+    env.key_filename = PRODUCTION_KEY_FILENAME
+    env.required_units = PRODUCTION_WEBSERVER+'.service'
+    env.after_units = PRODUCTION_WEBSERVER+'.service'
 
 
 @contextmanager
@@ -190,12 +205,17 @@ def stop_supervisord():
             print "done"
 
 
-def run_upstart_command(command_name):
-    upstart_job_names = [n.rpartition('.')[0] for n in UPSTART_FILES]
-    for upstart_job in upstart_job_names:
-        sudo('{} {}'.format(command_name, upstart_job), warn_only=True)
-    
 
+def run_management_daemon_command(command_name):
+    if env.management_daemon == 'upstart':
+        services = [n.rpartition('.')[0] for n in UPSTART_FILES]
+        template = '{command_name} {service}'
+    elif env.management_daemon == 'systemd':
+        services = SYSTEMD_FILES
+        template = 'systemctl {command_name} {service}'
+    for service in services:
+        sudo(template.format(command_name=command_name,service=service), warn_only=True)
+                
 def install_mdsplus_python_module():
     update_env_dirs()
     if env.mds_python_dir:
@@ -207,12 +227,6 @@ def install_mdsplus_python_module():
                     run('python setup.py install')
     
 
-def stop_upstart_jobs():
-    run_upstart_command('stop')
-
-def start_upstart_jobs():
-    run_upstart_command('start')
-         
 def restart_supervisord():
     """Restart supervisord.
 
@@ -316,6 +330,18 @@ def update_upstart_conf():
             remote_name = os.path.join(UPSTART_CONF_DIR, upstart_file)
             put(new_config_file.name, remote_name, use_sudo=True)
 
+def update_systemd_conf():
+    update_env_dirs()
+    systemd_template_dir = os.path.join(env.local_deployment_dir, 'management', 'systemd')
+    for systemd_file in SYSTEMD_FILES:
+        systemd_template_file = os.path.join(systemd_template_dir, systemd_file+'.template')
+        with open(systemd_template_file) as f:
+            systemd_template = Template(f.read())
+        with tempfile.NamedTemporaryFile() as new_config_file:
+            new_config_file.write(systemd_template.substitute(env))
+            new_config_file.flush()
+            remote_name = os.path.join(SYSTEMD_CONF_DIR, systemd_file)
+            put(new_config_file.name, remote_name, use_sudo=True)
 
 
 def update_supervisord_conf():
@@ -430,7 +456,7 @@ def update():
             sudo('chown -R --reference=$PWD db')
             sudo('chown -R --reference=$PWD serverfiles')
 
-    install_mdsplus_python_module()
+    #install_mdsplus_python_module()
     
     with prefix('workon %(venv)s && cdvirtualenv' % env):
         with prefix('cd %(project)s' % env):
@@ -463,10 +489,12 @@ def update():
             sudo('chown -R %(server_user)s:%(server_group)s serverfiles' % env)
 
     if env.webserver != "development":
-        if env.monitor == 'supervisord':
+        if env.management_daemon == 'supervisord':
             update_supervisord_conf()
-        elif env.monitor == 'upstart':
+        elif env.management_daemon == 'upstart':
             update_upstart_conf()
+        elif env.management_daemon == 'systemd':
+            update_systemd_conf()
         update_deployment_scripts()
 
     # Now, set up webserver
@@ -510,18 +538,14 @@ def update():
         if not exists(h1ds_nginx_conf):
             sudo("ln -s %s/h1ds/h1ds/h1ds/conf/nginx/h1ds_%s.conf %s" % (env_dir, env.environment, h1ds_nginx_conf))
             # clear the pagespeed cache
-        sudo('/etc/init.d/nginx stop')
-        sudo('rm -rf /var/ngx_pagespeed_cache/*')
-        sudo('/etc/init.d/nginx start')
+        #sudo('/etc/init.d/nginx stop')
+        ##sudo('rm -rf /var/ngx_pagespeed_cache/*')
+        #sudo('/etc/init.d/nginx start')
+        # do something sensible - let user specify if ubuntu or arch..
+        sudo('systemctl stop nginx')
+        sudo('systemctl start nginx')
 
-    if env.monitor == 'supervisord':
-        restart_supervisord()
-    elif env.monitor == 'upstart':
-        # We do separate stop and start rather than restart. With
-        # restart, if the job is not currently running, then it won't be
-        # started. Stopping and starting also loads any new
-        # configuration, whereas restart doesn't.
-        stop_upstart_jobs()
-        start_upstart_jobs()
+    run_management_daemon_command('stop')
+    run_management_daemon_command('start')
 
 

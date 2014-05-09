@@ -1,0 +1,12 @@
+[Unit]
+Description=H1DS wiki Server
+Requires=${required_units}
+After=${after_units}
+
+[Service]
+User=${user}
+Group=${group}
+ExecStart=${deployment_dir}/gunicorn/wiki.sh
+
+[Install]
+WantedBy=multi-user.target
