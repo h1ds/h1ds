@@ -70,7 +70,6 @@ def insert_table_attributes(attribute_data, **kwargs):
             value_str += ',{}'.format(attr[1])
 
     cursor.execute('INSERT OR REPLACE INTO {} ({}) VALUES ({})'.format(table_name, attr_str, value_str))
-    transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
 @task()
 def update_table_attributes(attribute_data, **kwargs):
@@ -99,7 +98,6 @@ def update_table_attributes(attribute_data, **kwargs):
     set_str = ",".join("{}=NULL".format(a[0]) if (a[1] is None) else "{}={}".format(a[0], a[1]) for a in attribute_data)
 
     cursor.execute("UPDATE {} SET {} WHERE shot={}".format(table_name, set_str, shot_number))
-    transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
 
 
