@@ -1,6 +1,7 @@
 from django.test import TestCase
-
 from h1ds.models import Device
+from h1ds.utils import generate_test_data
+
 class DeviceBackendTestCase(TestCase):
 
     def test_mds_backend(self):
@@ -23,3 +24,8 @@ class DeviceBackendTestCase(TestCase):
                                 data_backend='hdf5')
         device.full_clean()
 
+
+class GenerateTestDataTestCase(TestCase):
+
+    def test_generated_data(self):
+        pass

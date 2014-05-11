@@ -204,3 +204,7 @@ def get_backend_shot_manager_for_device(device):
         msg = "Data backend module {} contains multiple subclasses of BaseBackendShotManager".format(
             data_backend_module)
     raise ImportError(msg)
+
+def generate_test_data():
+    pass
+    

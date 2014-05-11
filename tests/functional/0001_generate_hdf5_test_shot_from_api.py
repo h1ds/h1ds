@@ -8,8 +8,9 @@ Backends:
 
 #from selenium import webdriver
 from django.test import TestCase
+from django.utils import unittest
 from h1ds.models import Device
-from h1ds.utils import generate_test_shots
+from h1ds.utils import generate_test_data
 
 class GenerateHdf5TestShotTest(TestCase):
 
@@ -27,7 +28,7 @@ class GenerateHdf5TestShotTest(TestCase):
                                 description='Test HDF5 Device',
                                 data_backend='hdf5')
         
-        generate_test_shots(device, shot_numbers)
+        generate_test_data(device, shot_numbers)
 
         # check URLs to make sure we can see the data
 
