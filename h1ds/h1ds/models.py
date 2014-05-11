@@ -143,7 +143,7 @@ class Device(models.Model):
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this device if it is not public")
 
     # data backend for device is used to get shot timestamp.
-    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
+    data_backend = models.CharField(max_length=4, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
 
 
     def user_is_allowed(self, user):
