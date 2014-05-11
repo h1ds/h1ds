@@ -46,6 +46,8 @@ class ReadWriteDeviceTest(TestCase):
         response = self.client.put('/data/test_hdf5_device/1/')
         self.assertEqual(response.status_code, 200)
         
+        new_shot = Shot.objects.get(device=device, number=1)
+        
         
         
 class ReadOnlyDeviceTest(TestCase):

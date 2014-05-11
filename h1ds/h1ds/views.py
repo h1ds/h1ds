@@ -624,6 +624,8 @@ class ShotDetailView(APIView):
         if device.read_only:
             return Response(status=405)
         else:
+            shot_number = self.kwargs['shot']
+            Shot.objects.create(device=device, number=shot_number)
             return Response()
     
 class TreeDetailView(APIView):
