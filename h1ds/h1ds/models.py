@@ -900,3 +900,7 @@ class UserSignalForm(ModelForm):
 class UserSignalUpdateForm(ModelForm):
     class Meta:
         model = UserSignal
+
+def generate_test_data(device, shot_numbers):
+    for shot_number in shot_numbers:
+        Shot.objects.create(device=device, number=shot_number)

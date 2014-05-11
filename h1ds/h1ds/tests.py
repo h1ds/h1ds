@@ -1,6 +1,5 @@
 from django.test import TestCase
-from h1ds.models import Device
-from h1ds.utils import generate_test_data
+from h1ds.models import Device, generate_test_data
 
 class DeviceBackendTestCase(TestCase):
 
@@ -28,4 +27,8 @@ class DeviceBackendTestCase(TestCase):
 class GenerateTestDataTestCase(TestCase):
 
     def test_generated_data(self):
-        pass
+        shot_numbers = xrange(1,5)
+        device = Device.objects.create(name='test_hdf5_device',
+                                description='Test HDF5 Device',
+                                data_backend='hdf5')
+        generate_test_data(device, shot_numbers)
