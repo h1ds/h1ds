@@ -33,6 +33,7 @@ class GenerateTestDataTestCase(TestCase):
                                 data_backend='hdf5')
         generate_test_data(device, shot_numbers)
 
+
 class ReadWriteDeviceTest(TestCase):
 
     def test_read_write_device(self):
@@ -41,4 +42,19 @@ class ReadWriteDeviceTest(TestCase):
                                 data_backend='hdf5',
                                 read_only=False)
         device.full_clean()
+
+        response = self.client.put('/data/test_hdf5_device/1/')
+        self.assertEqual(response.status_code, 200)
         
+        
+class ReadOnlyDeviceTest(TestCase):
+    
+    def test_read_write_device(self):
+        # default should be read only
+        device = Device.objects.create(name='test_hdf5_device',
+                                description='Test HDF5 Device',
+                                data_backend='hdf5')
+        device.full_clean()
+
+        response = self.client.put('/data/test_hdf5_device/1/')
+        self.assertEqual(response.status_code, 405)

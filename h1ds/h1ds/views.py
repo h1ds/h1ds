@@ -619,7 +619,13 @@ class ShotDetailView(APIView):
                 # update shot (async, )
                 # device.latest_shot = shot (when done)
 
-
+    def put(self, request, *args, **kwargs):
+        device = Device.objects.get(slug=self.kwargs['device'])
+        if device.read_only:
+            return Response(status=405)
+        else:
+            return Response()
+    
 class TreeDetailView(APIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)
     serializer_class = TreeSerializer
