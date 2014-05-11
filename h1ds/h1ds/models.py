@@ -140,11 +140,13 @@ class Device(models.Model):
     is_public = models.BooleanField(default=True,
                                     help_text="If true, the device will be visible to all users, and the general public.")
 
+    # TODO: We should just use the django permissions API...
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this device if it is not public")
 
     # data backend for device is used to get shot timestamp.
     data_backend = models.CharField(max_length=4, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
 
+    read_only = models.BooleanField(default=True, help_text='If read only, then H1DS will not allow writing back to the primary database.')
 
     def user_is_allowed(self, user):
         is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)

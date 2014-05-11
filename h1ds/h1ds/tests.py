@@ -32,3 +32,13 @@ class GenerateTestDataTestCase(TestCase):
                                 description='Test HDF5 Device',
                                 data_backend='hdf5')
         generate_test_data(device, shot_numbers)
+
+class ReadWriteDeviceTest(TestCase):
+
+    def test_read_write_device(self):
+        device = Device.objects.create(name='test_hdf5_device',
+                                description='Test HDF5 Device',
+                                data_backend='hdf5',
+                                read_only=False)
+        device.full_clean()
+        
