@@ -12,7 +12,7 @@ from django.utils import unittest
 from h1ds.models import Device, Shot, generate_test_data
 
 
-class GenerateHdf5TestShotTest(TestCase):
+class Hdf5BackendTest(TestCase):
 
     def setUp(self):
         #self.browser = webdriver.Firefox()
@@ -38,7 +38,8 @@ class GenerateHdf5TestShotTest(TestCase):
         # make sure the new data appears in html
 
     def test_generate_tree(self):
-        pass
+        response = self.client.put('/data/test_hdf5_device/1/')
+        self.assertEqual(response.status_code, 200)
 
     def test_generate_pathnode(self):
         pass
