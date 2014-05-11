@@ -1,5 +1,5 @@
 from django.test import TestCase
-from h1ds.models import Device, generate_test_data
+from h1ds.models import Device, Shot, generate_test_data
 
 class DeviceBackendTestCase(TestCase):
 
@@ -47,6 +47,7 @@ class ReadWriteDeviceTest(TestCase):
         self.assertEqual(response.status_code, 200)
         
         
+        
 class ReadOnlyDeviceTest(TestCase):
     
     def test_read_write_device(self):
@@ -58,3 +59,7 @@ class ReadOnlyDeviceTest(TestCase):
 
         response = self.client.put('/data/test_hdf5_device/1/')
         self.assertEqual(response.status_code, 405)
+
+        #shot should not appear
+        with self.assertRaises(Shot.DoesNotExist):
+            Shot.objects.get(device=device, number=1)

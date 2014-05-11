@@ -30,7 +30,11 @@ class GenerateHdf5TestShotTest(TestCase):
                                 read_only=False)
 
         # use http post/put to create a new shot
+        response = self.client.put('/data/test_hdf5_device/1/')
+        self.assertEqual(response.status_code, 200)
 
+        new_shot = Shot.objects.get(device=device, number=1)
+        
         # use http post/put to create branches, data etc
 
         # make sure the new data appears in html
