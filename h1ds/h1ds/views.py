@@ -636,9 +636,10 @@ class TreeDetailView(APIView):
         device_instance = Device.objects.get(slug=kwargs['device'])
         if not device_instance.user_is_allowed(request.user):
             raise PermissionDenied
-        tree_instance = Tree.objects.get(slug=kwargs['tree'])
-        if not tree_instance.user_is_allowed(request.user):
-            raise PermissionDenied
+        if request.method in ['GET']:
+            tree_instance = Tree.objects.get(slug=kwargs['tree'])
+            if not tree_instance.user_is_allowed(request.user):
+                raise PermissionDenied
         return super(TreeDetailView, self).dispatch(request, *args, **kwargs)
 
 
@@ -657,6 +658,17 @@ class TreeDetailView(APIView):
             return Response({'tree': tree, 'shot_number': shot_number, 'root_nodes': tree.get_root_nodes_for_shot(shot_number)})
         serializer = self.serializer_class(tree, context={'shot_number': shot_number})
         return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        device = Device.objects.get(slug=self.kwargs['device'])
+        if device.read_only:
+            return Response(status=405)
+        else:
+            shot_number = self.kwargs['shot']
+            shot, created = Shot.objects.get_or_create(device=device, number=shot_number)
+            tree = Tree.objects.create(name=self.kwargs['tree'], device=device)
+            return Response()
+
 
 class TextTemplateView(TemplateView):
     def render_to_response(self, context, **response_kwargs):

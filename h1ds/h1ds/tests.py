@@ -1,5 +1,5 @@
 from django.test import TestCase
-from h1ds.models import Device, Shot
+from h1ds.models import Device, Shot, Tree
 
 class WritableDeviceTestCase(TestCase):
     def setUp(self):
@@ -60,17 +60,28 @@ class WebAPIPutShotTest(WritableDeviceTestCase):
             Shot.objects.get(device=self.readonly_device, number=shot_number)
         
 
-"""
-class WebApiPutTreeTest(TestCase):
 
-    
-    def test_put_tree(self):
-        device = Device.objects.create(name='test_hdf5_device',
-                                description='Test HDF5 Device',
-                                data_backend='hdf5',
-                                read_only=False)
-        device.full_clean()
+class WebApiPutTreeTest(WritableDeviceTestCase):
 
-        response = self.client.put('/data/test_hdf5_device/1/diagnostics/')
+    def test_read_write_device(self):
+        shot_number = 1
+        tree_name = 'diagnostics'
+        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
         self.assertEqual(response.status_code, 200)
-"""
+        
+        new_shot = Shot.objects.get(device=self.readwrite_device, number=shot_number)
+
+        new_tree = Tree.objects.get(device=self.readwrite_device, name=tree_name)
+
+    def test_read_only_device(self):
+        shot_number = 1
+        tree_name = 'diagnostics'
+        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_only'], shot_number, tree_name))
+        self.assertEqual(response.status_code, 405)
+        
+        #shot should not appear
+        with self.assertRaises(Shot.DoesNotExist):
+            Shot.objects.get(device=self.readonly_device, number=shot_number)
+
+        with self.assertRaises(Tree.DoesNotExist):
+            Tree.objects.get(device=self.readonly_device, name=tree_name)
