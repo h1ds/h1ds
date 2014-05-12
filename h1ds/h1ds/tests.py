@@ -65,7 +65,7 @@ class WebApiPutTreeTest(WritableDeviceTestCase):
 
     def test_read_write_device(self):
         shot_number = 1
-        tree_name = 'diagnostics'
+        tree_name = 'test_tree_1'
         response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
         self.assertEqual(response.status_code, 200)
         
@@ -75,7 +75,7 @@ class WebApiPutTreeTest(WritableDeviceTestCase):
 
     def test_read_only_device(self):
         shot_number = 1
-        tree_name = 'diagnostics'
+        tree_name = 'test_tree_1'
         response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_only'], shot_number, tree_name))
         self.assertEqual(response.status_code, 405)
         
