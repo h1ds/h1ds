@@ -670,7 +670,7 @@ class TreeDetailView(APIView):
         else:
             shot_number = self.kwargs['shot']
             shot, created = Shot.objects.get_or_create(device=device, number=shot_number)
-            tree = Tree.objects.create(name=self.kwargs['tree'], device=device)
+            tree = Tree.objects.get_or_create(name=self.kwargs['tree'], device=device)
             return Response()
 
 

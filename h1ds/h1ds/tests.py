@@ -1,3 +1,6 @@
+"""
+Currently only HTTP PUT and GET are tested.
+"""
 import os
 import tempfile
 import uuid
@@ -98,7 +101,17 @@ class WebApiPutHDF5TreeTest(WritableHDF5DeviceTestCase):
         
         new_shot = Shot.objects.get(device=self.readwrite_device, number=shot_number)
 
-        new_tree = Tree.objects.get(device=self.readwrite_device, name=tree_name)
+        tree_a = Tree.objects.get(device=self.readwrite_device, name=tree_name)
+
+        # check that we can get the tree
+        response = self.client.get('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
+        self.assertEqual(response.status_code, 200)
+
+        # check that HTTP PUT is idempotent
+        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
+        self.assertEqual(response.status_code, 200)
+        tree_b = Tree.objects.get(device=self.readwrite_device, name=tree_name)
+        self.assertEqual(tree_a, tree_b)
 
     def test_read_only_device(self):
         shot_number = 1
