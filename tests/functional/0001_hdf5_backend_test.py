@@ -33,7 +33,6 @@ class Hdf5BackendTest(TestCase):
         for f in self.temp_files:
             if os.path.exists(f):
                 os.remove(f)
-        pass
     
     def test_generate_hdf5_test_shot_via_api(self):
 
@@ -53,8 +52,9 @@ class Hdf5BackendTest(TestCase):
         response = self.client.put('/data/test_hdf5_device/1/diagnostics/', data={'description', test_file})
         self.assertEqual(response.status_code, 200)
 
-        # we should now see an hdf5 file with a single shot group
-        h5file = tables.open_file(test_file, mode = "r", title = "test file")
+        # the file should not exist yet - it should only be created when nodepath is included (see docs/backends/hdf5.rst)
+        with self.assertRaises(IOError):
+            h5file = tables.open_file(test_file, mode = "r", title = "test file")
         
 
     def test_generate_pathnode(self):

@@ -1,8 +1,18 @@
+import os
+import tempfile
+import uuid
+
+import tables
 from django.test import TestCase
+
 from h1ds.models import Device, Shot, Tree
+
+def generate_temp_filename():
+    return os.path.join(tempfile.gettempdir(), 'h1ds_'+str(uuid.uuid4().get_hex()[0:12]))
 
 class WritableDeviceTestCase(TestCase):
     def setUp(self):
+        self.temp_files = []
         self.device_names = {'read_only':'readonly_hdf5_device',
                              'read_write':'readwrite_hdf5_device'}
         self.readonly_device = Device.objects.create(name=self.device_names['read_only'],
@@ -18,6 +28,10 @@ class WritableDeviceTestCase(TestCase):
         self.readwrite_device.full_clean()
 
 
+    def tearDown(self):
+        for f in self.temp_files:
+            if os.path.exists(f):
+                os.remove(f)
 
 class DeviceBackendTestCase(TestCase):
 
@@ -85,3 +99,14 @@ class WebApiPutTreeTest(WritableDeviceTestCase):
 
         with self.assertRaises(Tree.DoesNotExist):
             Tree.objects.get(device=self.readonly_device, name=tree_name)
+
+class TestHdf5Tree(WritableDeviceTestCase):
+
+    def test_create_hdf5_tree(self):
+        hdf5_filename = generate_temp_filename()
+        tree = Tree.objects.create(device=self.readwrite_device, name='test_tree', configuration=hdf5_filename, data_backend='hdf5')
+
+        ### tree shouldn't exist if tree created, only touch file when creating data. for tree, the model instance is enough
+        with self.assertRaises(IOError):
+            h5file = tables.open_file(hdf5_filename, mode = "r", title = "test file")
+
