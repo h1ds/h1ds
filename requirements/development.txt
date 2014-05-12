@@ -1,2 +1,3 @@
 ipython
 sphinx
+tables

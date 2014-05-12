@@ -6,16 +6,23 @@ Backends:
 
 """
 
+import os
 #from selenium import webdriver
 from django.test import TestCase
 from django.utils import unittest
 from h1ds.models import Device, Shot
+import tempfile
+import uuid
+import tables
 
+def generate_temp_filename():
+    return os.path.join(tempfile.gettempdir(), 'h1ds_'+str(uuid.uuid4().get_hex()[0:12]))
 
 class Hdf5BackendTest(TestCase):
 
     def setUp(self):
         #self.browser = webdriver.Firefox()
+        self.temp_files = []
         self.device = Device.objects.create(name='test_hdf5_device',
                                     description='Test HDF5 Device',
                                     data_backend='hdf5',
@@ -23,8 +30,11 @@ class Hdf5BackendTest(TestCase):
 
     def tearDown(self):
         #self.browser.quit()
+        for f in self.temp_files:
+            if os.path.exists(f):
+                os.remove(f)
         pass
-
+    
     def test_generate_hdf5_test_shot_via_api(self):
 
         # use http post/put to create a new shot
@@ -38,8 +48,14 @@ class Hdf5BackendTest(TestCase):
         # make sure the new data appears in html
 
     def test_generate_tree(self):
-        response = self.client.put('/data/test_hdf5_device/1/diagnostics')
+        test_file = generate_temp_filename()
+        self.temp_files.append(test_file)
+        response = self.client.put('/data/test_hdf5_device/1/diagnostics/', data={'description', test_file})
         self.assertEqual(response.status_code, 200)
+
+        # we should now see an hdf5 file with a single shot group
+        h5file = tables.open_file(test_file, mode = "r", title = "test file")
+        
 
     def test_generate_pathnode(self):
         pass
