@@ -542,6 +542,10 @@ class NodeView(APIView):
         serializer = NodeSerializer(node)
         return Response(serializer.data)
 
+    def put(self, request, device, shot, tree, nodepath, format=None):
+        # TODO: we shouldn't need to include an empty template here should we?
+        return Response(template_name='h1ds/null.html')
+
 
 class ShotListView(ListAPIView):
     renderer_classes = (TemplateHTMLRenderer, JSONNumpyRenderer, YAMLRenderer, XMLRenderer,)

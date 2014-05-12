@@ -55,10 +55,11 @@ class Hdf5BackendTest(TestCase):
         # the file should not exist yet - it should only be created when nodepath is included (see docs/backends/hdf5.rst)
         with self.assertRaises(IOError):
             h5file = tables.open_file(test_file, mode = "r", title = "test file")
-        
 
-    def test_generate_pathnode(self):
-        pass
+        # Now add a group (url path component)
+        response = self.client.put('/data/test_hdf5_device/1/diagnostics/density/')
+        self.assertEqual(response.status_code, 200)
+        
 
         
 

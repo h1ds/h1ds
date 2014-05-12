@@ -5,12 +5,12 @@ import uuid
 import tables
 from django.test import TestCase
 
-from h1ds.models import Device, Shot, Tree
+from h1ds.models import Device, Shot, Tree, Node
 
 def generate_temp_filename():
     return os.path.join(tempfile.gettempdir(), 'h1ds_'+str(uuid.uuid4().get_hex()[0:12]))
 
-class WritableDeviceTestCase(TestCase):
+class WritableHDF5DeviceTestCase(TestCase):
     def setUp(self):
         self.temp_files = []
         self.device_names = {'read_only':'readonly_hdf5_device',
@@ -55,7 +55,7 @@ class DeviceBackendTestCase(TestCase):
                                 data_backend='hdf5')
         device.full_clean()
 
-class WebAPIPutShotTest(WritableDeviceTestCase):
+class WebAPIPutShotTest(WritableHDF5DeviceTestCase):
 
     def test_read_write_device(self):
         shot_number = 1
@@ -75,7 +75,7 @@ class WebAPIPutShotTest(WritableDeviceTestCase):
         
 
 
-class WebApiPutTreeTest(WritableDeviceTestCase):
+class WebApiPutHDF5TreeTest(WritableHDF5DeviceTestCase):
 
     def test_read_write_device(self):
         shot_number = 1
@@ -100,7 +100,21 @@ class WebApiPutTreeTest(WritableDeviceTestCase):
         with self.assertRaises(Tree.DoesNotExist):
             Tree.objects.get(device=self.readonly_device, name=tree_name)
 
-class TestHdf5Tree(WritableDeviceTestCase):
+class WebApiPutHDF5NodeTest(WritableHDF5DeviceTestCase):
+
+    def test_put_node(self):
+        shot_number = 1
+        tree_name = 'test_tree_1'
+        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
+        self.assertEqual(response.status_code, 200)
+
+        # create a group node (url path component without data)
+        node_name = 'test_group_node_1'
+        response = self.client.put('/data/{}/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name, node_name))
+        self.assertEqual(response.status_code, 200)
+        
+            
+class TestHdf5Tree(WritableHDF5DeviceTestCase):
 
     def test_create_hdf5_tree(self):
         hdf5_filename = generate_temp_filename()
@@ -109,4 +123,5 @@ class TestHdf5Tree(WritableDeviceTestCase):
         ### tree shouldn't exist if tree created, only touch file when creating data. for tree, the model instance is enough
         with self.assertRaises(IOError):
             h5file = tables.open_file(hdf5_filename, mode = "r", title = "test file")
+            
 
