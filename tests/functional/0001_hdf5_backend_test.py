@@ -38,7 +38,7 @@ class Hdf5BackendTest(TestCase):
         # make sure the new data appears in html
 
     def test_generate_tree(self):
-        response = self.client.put('/data/test_hdf5_device/1/')
+        response = self.client.put('/data/test_hdf5_device/1/diagnostics')
         self.assertEqual(response.status_code, 200)
 
     def test_generate_pathnode(self):
