@@ -59,10 +59,23 @@ class WebAPIPutShotTest(WritableHDF5DeviceTestCase):
 
     def test_read_write_device(self):
         shot_number = 1
-        response = self.client.put('/data/{}/{}/'.format(self.device_names['read_write'], shot_number))
+        url_path = '/data/{}/{}/'.format(self.device_names['read_write'], shot_number)
+        response = self.client.put(url_path)
         self.assertEqual(response.status_code, 200)
         
-        new_shot = Shot.objects.get(device=self.readwrite_device, number=shot_number)
+        shot_a = Shot.objects.get(device=self.readwrite_device, number=shot_number)
+
+        response = self.client.get(url_path)
+        self.assertEqual(response.status_code, 200)
+
+        # HTTP PUT is idempotent, so we should get HTTP 200 again if we try to put the shot again.
+        response = self.client.put(url_path)
+        self.assertEqual(response.status_code, 200)
+
+        # check if shot object is the same
+        shot_b = Shot.objects.get(device=self.readwrite_device, number=shot_number)
+        self.assertEqual(shot_a, shot_b)
+        
 
     def test_read_only_device(self):
         shot_number = 1
@@ -102,7 +115,7 @@ class WebApiPutHDF5TreeTest(WritableHDF5DeviceTestCase):
 
 class WebApiPutHDF5NodeTest(WritableHDF5DeviceTestCase):
 
-    def test_put_node(self):
+    def test_read_write_device(self):
         shot_number = 1
         tree_name = 'test_tree_1'
         response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))

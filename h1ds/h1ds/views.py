@@ -629,7 +629,7 @@ class ShotDetailView(APIView):
             return Response(status=405)
         else:
             shot_number = self.kwargs['shot']
-            Shot.objects.create(device=device, number=shot_number)
+            Shot.objects.get_or_create(device=device, number=shot_number)
             return Response()
     
 class TreeDetailView(APIView):
