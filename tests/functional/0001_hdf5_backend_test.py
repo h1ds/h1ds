@@ -9,7 +9,7 @@ Backends:
 #from selenium import webdriver
 from django.test import TestCase
 from django.utils import unittest
-from h1ds.models import Device, Shot, generate_test_data
+from h1ds.models import Device, Shot
 
 
 class Hdf5BackendTest(TestCase):
