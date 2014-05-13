@@ -9,7 +9,7 @@ import uuid
 import tables
 from django.test import TestCase
 
-from h1ds.models import Device, Shot, Tree, Node, ShotRange
+from h1ds.models import Device, Shot, Tree, Node, ShotRange, NodePath
 
 CT_JSON ='application/json'
 
@@ -155,17 +155,24 @@ class WebApiPutHDF5NodeTest(WritableHDF5DeviceTestCase):
         response = self.client.put(url_path, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
 
-        # TODO
-        #response = self.client.get(url_path)
-        #self.assertEqual(response.status_code, 200)
+        # check that corresponding node is created
+        nodepath = NodePath.objects.get(path=node_name)
+        node = Node.objects.get(node_path=nodepath, shot__number=shot_number)
+        self.assertFalse(node.subtree.has_data)
+
+                
+        response = self.client.get(url_path)
+        self.assertEqual(response.status_code, 200)
 
     
         # make sure HTTP PUT is idempotent
         response = self.client.put(url_path, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
         
-            
-class TestHdf5Tree(WritableHDF5DeviceTestCase):
+    def test_datatypes(self):
+        pass
+                    
+class Hdf5TreeTest(WritableHDF5DeviceTestCase):
 
     def test_create_empty_hdf5_tree(self):
         hdf5_filename = generate_temp_filename()
@@ -193,4 +200,7 @@ class TestHdf5Tree(WritableHDF5DeviceTestCase):
         self.assertEqual(len(hdf5_file.list_nodes("/")), 1)
         hdf5_file.close()
 
-        
+class SubTreeTest(WritableHDF5DeviceTestCase):
+    """make sure subtree integrity is maintained if we put data within an existing subtree."""
+    pass
+    

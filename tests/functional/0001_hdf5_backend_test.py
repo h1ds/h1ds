@@ -66,7 +66,7 @@ class Hdf5BackendTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         density = self.client.get('/data/test_hdf5_device/1/diagnostics/density/')
-
+        
         
 
 if __name__ == '__main__':
