@@ -225,10 +225,13 @@ class Tree(models.Model):
 
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this tree if it is not public")
 
-    # TODO: max_length should now be 4
     # TODO: default should be the default for the device.
-    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
+    data_backend = models.CharField(max_length=4, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
 
+    class Meta:
+        unique_together = ("device", "slug")
+
+    
     def user_is_allowed(self, user):
         is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
         return is_allowed
@@ -236,6 +239,8 @@ class Tree(models.Model):
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Tree, self).save(*args, **kwargs)
+        backend_module = self.get_backend_module()
+        backend_module.save_tree(self)
 
     def __unicode__(self):
         return self.slug
@@ -246,6 +251,18 @@ class Tree(models.Model):
             self.backend_module = import_module(module_name)
         return self.backend_module
 
+    def add_shot(self, shot_number):
+        shot_range, created = ShotRange.objects.get_or_create(min_shot=shot_number, max_shot=shot_number)
+        self.shot_ranges.add(shot_range)
+        # call self.consolidate_shot_ranges()
+        pass
+
+    def consolidate_shot_ranges(self):
+        # TODO
+        # if a pair of contiguous shot ranges exist, replace with single shot range.
+        # remove old shot ranges if not used by other trees.
+        pass
+    
     def load(self):
         backend_module = self.get_backend_module()
         loader = backend_module.TreeLoader()

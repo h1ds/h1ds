@@ -1,6 +1,7 @@
 """
 Currently only HTTP PUT and GET are tested.
 """
+import json
 import os
 import tempfile
 import uuid
@@ -8,7 +9,10 @@ import uuid
 import tables
 from django.test import TestCase
 
-from h1ds.models import Device, Shot, Tree, Node
+from h1ds.models import Device, Shot, Tree, Node, ShotRange
+
+CT_JSON ='application/json'
+
 
 def generate_temp_filename():
     return os.path.join(tempfile.gettempdir(), 'h1ds_'+str(uuid.uuid4().get_hex()[0:12]))
@@ -63,7 +67,7 @@ class WebAPIPutShotTest(WritableHDF5DeviceTestCase):
     def test_read_write_device(self):
         shot_number = 1
         url_path = '/data/{}/{}/'.format(self.device_names['read_write'], shot_number)
-        response = self.client.put(url_path)
+        response = self.client.put(url_path, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
         
         shot_a = Shot.objects.get(device=self.readwrite_device, number=shot_number)
@@ -72,7 +76,7 @@ class WebAPIPutShotTest(WritableHDF5DeviceTestCase):
         self.assertEqual(response.status_code, 200)
 
         # HTTP PUT is idempotent, so we should get HTTP 200 again if we try to put the shot again.
-        response = self.client.put(url_path)
+        response = self.client.put(url_path, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
 
         # check if shot object is the same
@@ -82,7 +86,7 @@ class WebAPIPutShotTest(WritableHDF5DeviceTestCase):
 
     def test_read_only_device(self):
         shot_number = 1
-        response = self.client.put('/data/{}/{}/'.format(self.device_names['read_only'], shot_number))
+        response = self.client.put('/data/{}/{}/'.format(self.device_names['read_only'], shot_number), content_type=CT_JSON)
         self.assertEqual(response.status_code, 405)
         
         #shot should not appear
@@ -96,19 +100,26 @@ class WebApiPutHDF5TreeTest(WritableHDF5DeviceTestCase):
     def test_read_write_device(self):
         shot_number = 1
         tree_name = 'test_tree_1'
-        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
+        url_path = '/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name)
+        hdf5_filename = generate_temp_filename()
+        self.temp_files.append(hdf5_filename)
+        json_data = json.dumps({'configuration': hdf5_filename, 'data_backend':'hdf5'})
+        response = self.client.put(url_path, data=json_data, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
         
         new_shot = Shot.objects.get(device=self.readwrite_device, number=shot_number)
 
         tree_a = Tree.objects.get(device=self.readwrite_device, name=tree_name)
 
+        # check that ShotRange is created.
+        self.assertEqual(tree_a.shot_ranges.count(), 1)
+        
         # check that we can get the tree
         response = self.client.get('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
         self.assertEqual(response.status_code, 200)
 
         # check that HTTP PUT is idempotent
-        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
+        response = self.client.put(url_path, data=json_data, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
         tree_b = Tree.objects.get(device=self.readwrite_device, name=tree_name)
         self.assertEqual(tree_a, tree_b)
@@ -116,7 +127,7 @@ class WebApiPutHDF5TreeTest(WritableHDF5DeviceTestCase):
     def test_read_only_device(self):
         shot_number = 1
         tree_name = 'test_tree_1'
-        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_only'], shot_number, tree_name))
+        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_only'], shot_number, tree_name),content_type=CT_JSON)
         self.assertEqual(response.status_code, 405)
         
         #shot should not appear
@@ -131,23 +142,55 @@ class WebApiPutHDF5NodeTest(WritableHDF5DeviceTestCase):
     def test_read_write_device(self):
         shot_number = 1
         tree_name = 'test_tree_1'
-        response = self.client.put('/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name))
+        tree_url_path = '/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name)
+        hdf5_filename = generate_temp_filename()
+        self.temp_files.append(hdf5_filename)
+        json_data = json.dumps({'configuration': hdf5_filename, 'data_backend':'hdf5'})
+        response = self.client.put(tree_url_path, data=json_data, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
 
         # create a group node (url path component without data)
         node_name = 'test_group_node_1'
-        response = self.client.put('/data/{}/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name, node_name))
+        url_path = '/data/{}/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name, node_name)
+        response = self.client.put(url_path, content_type=CT_JSON)
+        self.assertEqual(response.status_code, 200)
+
+        # TODO
+        #response = self.client.get(url_path)
+        #self.assertEqual(response.status_code, 200)
+
+    
+        # make sure HTTP PUT is idempotent
+        response = self.client.put(url_path, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
         
             
 class TestHdf5Tree(WritableHDF5DeviceTestCase):
 
-    def test_create_hdf5_tree(self):
+    def test_create_empty_hdf5_tree(self):
         hdf5_filename = generate_temp_filename()
+        self.temp_files.append(hdf5_filename)
         tree = Tree.objects.create(device=self.readwrite_device, name='test_tree', configuration=hdf5_filename, data_backend='hdf5')
 
-        ### tree shouldn't exist if tree created, only touch file when creating data. for tree, the model instance is enough
-        with self.assertRaises(IOError):
-            h5file = tables.open_file(hdf5_filename, mode = "r", title = "test file")
-            
+        # file should now exist
+        hdf5_file = tables.open_file(hdf5_filename, mode = "r", title = "test file")
+        # without any nodes
+        self.assertEqual(len(hdf5_file.list_nodes("/")), 0)
+        hdf5_file.close()
 
+    def test_create_hdf5_tree(self):
+        hdf5_filename = generate_temp_filename()
+        self.temp_files.append(hdf5_filename)
+        shot_range = ShotRange(min_shot=1, max_shot=1)
+        shot_range.save()
+        tree, created = Tree.objects.get_or_create(device=self.readwrite_device, name='test_tree', configuration=hdf5_filename, data_backend='hdf5')
+        tree.shot_ranges.add(shot_range)
+        tree.save()
+        
+        # file should now exist
+        hdf5_file = tables.open_file(hdf5_filename, mode = "r", title = "test file")
+        # without any nodes
+        self.assertEqual(len(hdf5_file.list_nodes("/")), 1)
+        hdf5_file.close()
+
+        

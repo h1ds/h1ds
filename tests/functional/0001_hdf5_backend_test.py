@@ -7,6 +7,7 @@ Backends:
 """
 
 import os
+import json
 #from selenium import webdriver
 from django.test import TestCase
 from django.utils import unittest
@@ -14,6 +15,8 @@ from h1ds.models import Device, Shot
 import tempfile
 import uuid
 import tables
+
+CT_JSON ='application/json'
 
 def generate_temp_filename():
     return os.path.join(tempfile.gettempdir(), 'h1ds_'+str(uuid.uuid4().get_hex()[0:12]))
@@ -37,7 +40,7 @@ class Hdf5BackendTest(TestCase):
     def test_generate_hdf5_test_shot_via_api(self):
 
         # use http post/put to create a new shot
-        response = self.client.put('/data/test_hdf5_device/1/')
+        response = self.client.put('/data/test_hdf5_device/1/', content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
 
         new_shot = Shot.objects.get(device=self.device, number=1)
@@ -49,17 +52,20 @@ class Hdf5BackendTest(TestCase):
     def test_generate_tree(self):
         test_file = generate_temp_filename()
         self.temp_files.append(test_file)
-        response = self.client.put('/data/test_hdf5_device/1/diagnostics/', data={'description', test_file})
+        json_data = json.dumps({'configuration':test_file})
+        response = self.client.put('/data/test_hdf5_device/1/diagnostics/', data=json_data, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
 
-        # the file should not exist yet - it should only be created when nodepath is included (see docs/backends/hdf5.rst)
-        with self.assertRaises(IOError):
-            h5file = tables.open_file(test_file, mode = "r", title = "test file")
+        # the file should now exist
+        h5file = tables.open_file(test_file, mode = "r", title = "test file")
+
+        # And should have a single empty group for shot 1
 
         # Now add a group (url path component)
-        response = self.client.put('/data/test_hdf5_device/1/diagnostics/density/')
+        response = self.client.put('/data/test_hdf5_device/1/diagnostics/density/', content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
-        
+
+        density = self.client.get('/data/test_hdf5_device/1/diagnostics/density/')
 
         
 

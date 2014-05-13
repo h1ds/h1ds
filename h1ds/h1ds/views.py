@@ -35,6 +35,7 @@ from rest_framework.renderers import YAMLRenderer
 from rest_framework.renderers import XMLRenderer
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.compat import timezone, force_text
+from rest_framework.parsers import JSONParser
 
 from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer, TreeSerializer
 from h1ds.models import UserSignal, UserSignalForm, Worksheet, SubTree, Shot, Device, UserSignalUpdateForm, Tree, Node
@@ -663,6 +664,7 @@ class TreeDetailView(APIView):
         serializer = self.serializer_class(tree, context={'shot_number': shot_number})
         return Response(serializer.data)
 
+    
     def put(self, request, *args, **kwargs):
         device = Device.objects.get(slug=self.kwargs['device'])
         if device.read_only:
@@ -670,7 +672,13 @@ class TreeDetailView(APIView):
         else:
             shot_number = self.kwargs['shot']
             shot, created = Shot.objects.get_or_create(device=device, number=shot_number)
-            tree = Tree.objects.get_or_create(name=self.kwargs['tree'], device=device)
+            data_backend = request.DATA.get('data_backend', device.data_backend)
+            configuration = request.DATA.get('configuration', '')
+            tree, created = Tree.objects.get_or_create(name=self.kwargs['tree'], device=device,
+                                              data_backend=data_backend, configuration=configuration)
+            tree.add_shot(shot_number)
+            # TODO: we should not need this explicit call to save() to update backend ...
+            tree.save()
             return Response()
 
 
