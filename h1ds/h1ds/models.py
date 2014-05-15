@@ -428,7 +428,12 @@ class NodeFallbackManager(models.Manager):
 
 
 class Node(models.Model):
+    """Mapping of data sub-tree to a nodepath.
 
+    Nodes can exist in fallback mode, which means they can present data from the
+    primary data source but not be saved in the H1DS index.
+
+    """
     def __init__(self, *args, **kwargs):
         super(Node, self).__init__(*args, **kwargs)
         self.data_interface = None
@@ -447,9 +452,20 @@ class Node(models.Model):
     def __unicode__(self):
         return "{}: {}".format(self.shot.number, self.node_path.path)
 
+    def save_data(self, data_instance):
+        """Write data instance to data backend.
+
+        TODO: refactor this into self.save()        
+        """
+        self.data = data_instance
+        tree = self.get_tree()
+        backend_module = tree.get_backend_module()
+        backend_module.save_node(self)
+    
     def save(self, *args, **kwargs):
         if not self.is_fallback:
             super(Node, self).save(*args, **kwargs)
+            #self.save_data()
 
     def get_absolute_url(self):
 

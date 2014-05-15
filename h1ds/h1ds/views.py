@@ -37,7 +37,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.compat import timezone, force_text
 from rest_framework.parsers import JSONParser
 
-from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer, TreeSerializer
+from h1ds.serializers import NodeSerializer, ShotSerializer, DeviceSerializer, TreeSerializer, DataSerializer
 from h1ds.models import UserSignal, UserSignalForm, Worksheet, SubTree, Shot, Device, UserSignalUpdateForm, Tree, Node, NodePath
 from h1ds.base import get_filter_list
 
@@ -544,12 +544,15 @@ class NodeView(APIView):
         return Response(serializer.data)
 
     def put(self, request, device, shot, tree, nodepath, format=None):
+        """Create node instance if it doesn't exist, and write to primary database."""
         device_instance = Device.objects.get(slug=device)
         tree_instance = Tree.objects.get(slug=tree, device=device_instance)
         nodepath_instance, created = NodePath.objects.get_or_create(path=nodepath, tree=tree_instance)
         shot_instance, created = Shot.objects.get_or_create(number=shot, device=device_instance)
         subtree, created = SubTree.objects.get_or_create(has_data=False)
         node, created = Node.objects.get_or_create(node_path=nodepath_instance, shot=shot_instance, subtree=subtree)
+        if 'data' in request.DATA:
+            node.save_data(request.DATA['data'])
         return Response(template_name='h1ds/null.html')
 
 

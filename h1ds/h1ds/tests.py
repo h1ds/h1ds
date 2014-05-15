@@ -6,6 +6,8 @@ import os
 import tempfile
 import uuid
 
+import numpy as np
+
 import tables
 from django.test import TestCase
 
@@ -169,9 +171,55 @@ class WebApiPutHDF5NodeTest(WritableHDF5DeviceTestCase):
         response = self.client.put(url_path, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
         
-    def test_datatypes(self):
+class HDF5DataTest(WritableHDF5DeviceTestCase):
+    """Test consistency between data uploaded via API and the HDF5 backend.
+
+    This checks each datatype as scalar, 1d and multichannel.
+
+    For more on H1DS data types, see docs/reference/datatypes.rst
+        
+    """
+    def test_scalar(self):
         pass
-                    
+
+    
+    
+    def test_1d_signal(self):
+        # our test data
+        data = {}
+        data['name'] = 'test_1d_data'
+        data['value'] = [range(100)]
+        data['dimension'] = [range(100)]
+        data['value_units'] = 'volts'
+        data['dimension_units'] = 'seconds'
+        data['value_dtype'] = 'int'
+        data['dimension_dtype'] = 'int'
+        json_data = json.dumps({'data':data})
+        
+        tree_url_path = '/'.join(['', 'data', self.device_names['read_write'], '1', 'diagnostics'])
+        node_url_path = '/'.join([tree_url_path, 'diag1', data['name'], ''])
+
+        hdf5_filename = generate_temp_filename()
+        self.temp_files.append(hdf5_filename)
+        
+        # create tree first
+        response = self.client.put(tree_url_path+'/', data=json.dumps({'configuration': hdf5_filename}), content_type=CT_JSON)
+        # put the node 
+        response = self.client.put(node_url_path, data=json_data, content_type=CT_JSON)
+
+        # NEXT open file and check data is there...
+        f = tables.open_file(hdf5_filename, mode='r',title='test file')
+        self.assertTrue('shot_1' in f.root)
+        self.assertTrue('diag1' in f.root.shot_1)
+        hdf5_node = f.get_node("/shot_1/diag1", data['name'])
+        #self.assertEqual(hdf5_node.name, data['name'])
+        self.assertTrue(np.array_equal(hdf5_node.value.read(), data['value']))
+        self.assertTrue(np.array_equal(hdf5_node.dimension.read(), data['dimension']))
+        
+        f.close()
+        
+
+                            
 class Hdf5TreeTest(WritableHDF5DeviceTestCase):
 
     def test_create_empty_hdf5_tree(self):
@@ -204,3 +252,4 @@ class SubTreeTest(WritableHDF5DeviceTestCase):
     """make sure subtree integrity is maintained if we put data within an existing subtree."""
     pass
     
+

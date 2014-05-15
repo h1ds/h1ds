@@ -65,9 +65,27 @@ class Hdf5BackendTest(TestCase):
         response = self.client.put('/data/test_hdf5_device/1/diagnostics/density/', content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
 
-        density = self.client.get('/data/test_hdf5_device/1/diagnostics/density/')
-        
-        
+        response = self.client.get('/data/test_hdf5_device/1/diagnostics/density/')
 
+        # now let's put some data in.
+
+        data = {}
+        data['name'] = 'Test_density_data'
+        data['value'] = [range(100), range(100)]
+        data['dimension'] = [range(100)]
+        url_path = '/data/test_hdf5_device/1/diagnostics/density/test_signal/'
+        json_data = json.dumps({'data':data})
+        response = self.client.put(url_path, data=json_data, content_type=CT_JSON)
+
+        response = self.client.get(url_path)
+
+        self.assertTrue(data['name'] in response)
+        
+    def test_read_only_tree(self):
+        # create a writeable device
+        # create a read only tree
+        # make sure that we can't PUT to the tree.
+        pass
+        
 if __name__ == '__main__':
     unittest.main()
