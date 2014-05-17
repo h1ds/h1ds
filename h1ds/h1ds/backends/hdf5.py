@@ -54,14 +54,52 @@ class Hdf5ShotManager(BaseBackendShotManager):
 
 class DataInterface(BaseDataInterface):
 
-    def _get_hdf5_file(self):
-        return tables.open_file(self.tree.configuration, mode='r', title=self.tree.name)
-    
+    def _load_hdf5_file(self):
+        self.hdf5_file = tables.open_file(self.tree.configuration, mode='r', title=self.tree.name)
+
+    def _close_hdf5_file(self):
+        self.hdf5_file.close()
+
+            
     def get_children(self):
-        f = self._get_hdf5_file()
-        result = f.list_nodes("/"+shot_group(self.shot), *self.path)
-        f.close()
+        self._load_hdf5_file()
+        result = self.hdf5_file.list_nodes("/"+shot_group(self.shot), *self.path)
+        self._close_hdf5_file()
         return result
+
+    def read_primary_data(self):
+        self._load_hdf5_file()
+        self.node_group = self.hdf5_file.get_node("/"+shot_group(self.shot)+'/' + '/'.join(self.path))
+        result = super(DataInterface, self).read_primary_data()
+        self._close_hdf5_file()
+        return result
+
+    def get_name(self):
+        return self.path[-1]
+
+    def get_value(self):
+        node = self.hdf5_file.get_node(self.node_group, 'value')
+        return node.read()
+
+    def get_dimension(self):
+        node = self.hdf5_file.get_node(self.node_group, 'dimension')
+        return node.read()
+
+    def get_value_units(self):
+        return ""
+
+    def get_dimension_units(self):
+        return ""
+
+    def get_value_dtype(self):
+        return ""
+
+    def get_dimension_dtype(self):
+        return ""
+
+    def get_metadata(self):
+        return {}
+
 
 class TreeLoader(BaseTreeLoader):
     pass

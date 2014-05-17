@@ -295,9 +295,11 @@ class Hdf5GetTest(WritableHDF5DeviceTestCase):
 
         response = self.client.get(node_url_path+'?format=json')
         returned_data = json.loads(response.content)['data']
-        # we should get some data...
-        self.assertFalse(returned_data is None)
-        raise Exception(returned_data)
+        
+        # we should get the same data that we put in.
+        self.assertEqual(returned_data['name'], data['name'])
+        self.assertEqual(returned_data['value'], data['value'])
+        self.assertEqual(returned_data['dimension'], data['dimension'])
         
                             
 class Hdf5TreeTest(WritableHDF5DeviceTestCase):
