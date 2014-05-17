@@ -58,7 +58,7 @@ class Hdf5BackendTest(TestCase):
 
         # the file should now exist
         h5file = tables.open_file(test_file, mode = "r", title = "test file")
-
+        h5file.close()
         # And should have a single empty group for shot 1
 
         # Now add a group (url path component)
@@ -78,8 +78,8 @@ class Hdf5BackendTest(TestCase):
         response = self.client.put(url_path, data=json_data, content_type=CT_JSON)
 
         response = self.client.get(url_path)
-
-        self.assertTrue(data['name'] in response)
+        raise Exception(str(response))
+        self.assertTrue(data['name'] in response.content)
         
     def test_read_only_tree(self):
         # create a writeable device

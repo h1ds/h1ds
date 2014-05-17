@@ -734,6 +734,7 @@ class SubTree(models.Model):
     #    # TODO: if the node name changes then we also need to regenerate
     #    # sha1 keys for all descendents...
 
+    
     def generate_subtree_hash(self):
         hash_fields = ('has_data', 'n_dimensions', 'dtype', 'n_channels')
         hash_val = ""

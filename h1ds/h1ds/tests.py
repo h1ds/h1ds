@@ -20,6 +20,9 @@ def generate_temp_filename():
     return os.path.join(tempfile.gettempdir(), 'h1ds_'+str(uuid.uuid4().get_hex()[0:12]))
 
 class WritableHDF5DeviceTestCase(TestCase):
+    """Simple base class which adds devices and clears temp files."""
+
+    
     def setUp(self):
         self.temp_files = []
         self.device_names = {'read_only':'readonly_hdf5_device',
@@ -43,6 +46,7 @@ class WritableHDF5DeviceTestCase(TestCase):
                 os.remove(f)
 
 class DeviceBackendTestCase(TestCase):
+    """Make sure we can create a device for each backend."""
 
     def test_mds_backend(self):
         device = Device.objects.create(name='test_mds_device',
@@ -64,8 +68,13 @@ class DeviceBackendTestCase(TestCase):
                                 data_backend='hdf5')
         device.full_clean()
 
+############################################################
+## HDF5 tests
+############################################################
+        
 class WebAPIPutShotTest(WritableHDF5DeviceTestCase):
-
+    """Test we can add a shot to a writable device but not a read-only one."""
+    
     def test_read_write_device(self):
         shot_number = 1
         url_path = '/data/{}/{}/'.format(self.device_names['read_write'], shot_number)
@@ -141,7 +150,7 @@ class WebApiPutHDF5TreeTest(WritableHDF5DeviceTestCase):
 
 class WebApiPutHDF5NodeTest(WritableHDF5DeviceTestCase):
 
-    def test_read_write_device(self):
+    def test_node_without_data(self):
         shot_number = 1
         tree_name = 'test_tree_1'
         tree_url_path = '/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name)
@@ -162,15 +171,53 @@ class WebApiPutHDF5NodeTest(WritableHDF5DeviceTestCase):
         node = Node.objects.get(node_path=nodepath, shot__number=shot_number)
         self.assertFalse(node.subtree.has_data)
 
-                
         response = self.client.get(url_path)
         self.assertEqual(response.status_code, 200)
 
-    
         # make sure HTTP PUT is idempotent
         response = self.client.put(url_path, content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
+
+    def test_node_with_data(self):
+        # our test data
+        data = {}
+        data['name'] = 'test_1d_data'
+        data['value'] = [range(100)]
+        data['dimension'] = [range(100)]
+        data['value_units'] = 'volts'
+        data['dimension_units'] = 'seconds'
+        data['value_dtype'] = 'int'
+        data['dimension_dtype'] = 'int'
+        json_node_data = json.dumps({'data':data})
         
+        shot_number = 1
+        tree_name = 'test_tree_2'
+        tree_url_path = '/data/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name)
+        hdf5_filename = generate_temp_filename()
+        self.temp_files.append(hdf5_filename)
+        json_data = json.dumps({'configuration': hdf5_filename, 'data_backend':'hdf5'})
+        response = self.client.put(tree_url_path, data=json_data, content_type=CT_JSON)
+        self.assertEqual(response.status_code, 200)
+
+        # create a group node (url path component without data)
+        node_name = 'test_group_node_1'
+        url_path = '/data/{}/{}/{}/{}/'.format(self.device_names['read_write'], shot_number, tree_name, node_name)
+        response = self.client.put(url_path, data=json_node_data, content_type=CT_JSON)
+        self.assertEqual(response.status_code, 200)
+
+        # check that corresponding node is created
+        nodepath = NodePath.objects.get(path=node_name)
+        node = Node.objects.get(node_path=nodepath, shot__number=shot_number)
+        self.assertTrue(node.subtree.has_data)
+
+        response = self.client.get(url_path)
+        self.assertEqual(response.status_code, 200)
+
+        # make sure HTTP PUT is idempotent
+        response = self.client.put(url_path, content_type=CT_JSON)
+        self.assertEqual(response.status_code, 200)
+
+                
 class HDF5DataTest(WritableHDF5DeviceTestCase):
     """Test consistency between data uploaded via API and the HDF5 backend.
 
@@ -218,7 +265,40 @@ class HDF5DataTest(WritableHDF5DeviceTestCase):
         
         f.close()
         
+class Hdf5GetTest(WritableHDF5DeviceTestCase):
+    """Make sure we can read data from HDF5 tree via HTTP GET."""
 
+    def test_1d_signal(self):
+        """
+        TODO: refactor: lots of duplicated between here and Hdf5DataTest.
+        """
+        data = {}
+        data['name'] = 'test_1d_data'
+        data['value'] = [range(100)]
+        data['dimension'] = [range(100)]
+        data['value_units'] = 'volts'
+        data['dimension_units'] = 'seconds'
+        data['value_dtype'] = 'int'
+        data['dimension_dtype'] = 'int'
+        json_data = json.dumps({'data':data})
+        
+        tree_url_path = '/'.join(['', 'data', self.device_names['read_write'], '1', 'diagnostics'])
+        node_url_path = '/'.join([tree_url_path, 'diag1', data['name'], ''])
+
+        hdf5_filename = generate_temp_filename()
+        self.temp_files.append(hdf5_filename)
+        
+        # create tree first
+        response = self.client.put(tree_url_path+'/', data=json.dumps({'configuration': hdf5_filename}), content_type=CT_JSON)
+        # put the node 
+        response = self.client.put(node_url_path, data=json_data, content_type=CT_JSON)
+
+        response = self.client.get(node_url_path+'?format=json')
+        returned_data = json.loads(response.content)['data']
+        # we should get some data...
+        self.assertFalse(returned_data is None)
+        raise Exception(returned_data)
+        
                             
 class Hdf5TreeTest(WritableHDF5DeviceTestCase):
 
