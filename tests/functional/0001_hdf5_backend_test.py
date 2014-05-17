@@ -1,4 +1,4 @@
-"""Test that a user can create a device via the admin interface for each backend.
+"""
 
 Backends:
  - MDSPlus
@@ -73,13 +73,27 @@ class Hdf5BackendTest(TestCase):
         data['name'] = 'Test_density_data'
         data['value'] = [range(100), range(100)]
         data['dimension'] = [range(100)]
+        data['metadata'] = {'tag_a': True, 'tag_b': 'a_string', 'tag_c':42}
+        data['value_labels'] = ['Channel A', 'Channel B']
+        data['dimension_labels'] = ['Time']
+        data['value_units'] = ['Volts', 'Volts']
+        data['dimension_units'] = ['Seconds']
         url_path = '/data/test_hdf5_device/1/diagnostics/density/test_signal/'
         json_data = json.dumps({'data':data})
         response = self.client.put(url_path, data=json_data, content_type=CT_JSON)
 
-        response = self.client.get(url_path)
-        raise Exception(str(response))
-        self.assertTrue(data['name'] in response.content)
+        response = self.client.get(url_path+'?format=json')
+        response_data = json.loads(response.content)['data']
+
+        self.assertEqual(data['name'], response_data['name'])
+        self.assertEqual(data['value'], response_data['value'])
+        self.assertEqual(data['dimension'], response_data['dimension'])
+        self.assertEqual(data['metadata'], response_data['metadata'])
+        self.assertEqual(data['value_labels'], response_data['value_labels'])
+        self.assertEqual(data['dimension_labels'], response_data['dimension_labels'])
+        self.assertEqual(data['value_units'], response_data['value_units'])
+        self.assertEqual(data['dimension_units'], response_data['dimension_units'])
+        
         
     def test_read_only_tree(self):
         # create a writeable device
