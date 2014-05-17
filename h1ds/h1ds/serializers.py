@@ -149,6 +149,8 @@ class DataSerializer(serializers.Serializer):
     value_dtype = serializers.CharField()
     dimension_dtype = serializers.CharField()
     metadata = serializers.WritableField()
+    value_labels = serializers.WritableField()
+    dimension_labels = serializers.WritableField()
 
 
 class SubTreeSerializer(serializers.HyperlinkedModelSerializer):

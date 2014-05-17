@@ -280,10 +280,13 @@ class Hdf5GetTest(WritableHDF5DeviceTestCase):
         data['dimension_units'] = 'seconds'
         data['value_dtype'] = 'int'
         data['dimension_dtype'] = 'int'
+        data['value_labels'] = ['Channel A']
+        data['dimension_labels'] = ['Channel A']
+        data['metadata'] = {'tag_a': True, 'tag_b': 'some_string', 'tag_c': 42}
         json_data = json.dumps({'data':data})
         
         tree_url_path = '/'.join(['', 'data', self.device_names['read_write'], '1', 'diagnostics'])
-        node_url_path = '/'.join([tree_url_path, 'diag1', data['name'], ''])
+        node_url_path = '/'.join([tree_url_path, 'diag1', 'test_data_node', ''])
 
         hdf5_filename = generate_temp_filename()
         self.temp_files.append(hdf5_filename)
@@ -300,6 +303,13 @@ class Hdf5GetTest(WritableHDF5DeviceTestCase):
         self.assertEqual(returned_data['name'], data['name'])
         self.assertEqual(returned_data['value'], data['value'])
         self.assertEqual(returned_data['dimension'], data['dimension'])
+        self.assertEqual(returned_data['value_units'], data['value_units'])
+        self.assertEqual(returned_data['dimension_units'], data['dimension_units'])
+        self.assertEqual(returned_data['value_dtype'], data['value_dtype'])
+        self.assertEqual(returned_data['dimension_dtype'], data['dimension_dtype'])
+        self.assertEqual(returned_data['value_labels'], data['value_labels'])
+        self.assertEqual(returned_data['dimension_labels'], data['dimension_labels'])
+        self.assertEqual(returned_data['metadata'], data['metadata'])
         
                             
 class Hdf5TreeTest(WritableHDF5DeviceTestCase):

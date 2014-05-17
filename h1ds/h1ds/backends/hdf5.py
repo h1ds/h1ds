@@ -47,6 +47,11 @@ def save_node(node):
     node_group = f.create_group(node_group_path, node_name, createparents=True)
     f.create_array(node_group, 'value', np.array(node.data['value']), 'data value')
     f.create_array(node_group, 'dimension', np.array(node.data['dimension']), 'data dimension')
+
+    for attr_name in ('name', 'value_units', 'dimension_units', 'value_dtype', 'dimension_dtype', 'value_labels', 'dimension_labels', 'metadata'):
+        value = node.data.get(attr_name)
+        setattr(node_group._v_attrs, attr_name, value)
+
     f.close()
 
 class Hdf5ShotManager(BaseBackendShotManager):
@@ -74,8 +79,11 @@ class DataInterface(BaseDataInterface):
         self._close_hdf5_file()
         return result
 
+    def get_hdf5_attr(self, attr_name):
+        return getattr(self.node_group._v_attrs, attr_name)
+
     def get_name(self):
-        return self.path[-1]
+        return self.get_hdf5_attr('name')
 
     def get_value(self):
         node = self.hdf5_file.get_node(self.node_group, 'value')
@@ -86,19 +94,26 @@ class DataInterface(BaseDataInterface):
         return node.read()
 
     def get_value_units(self):
-        return ""
+        return self.get_hdf5_attr('value_units')
+
 
     def get_dimension_units(self):
-        return ""
+        return self.get_hdf5_attr('dimension_units')
 
     def get_value_dtype(self):
-        return ""
+        return self.get_hdf5_attr('value_dtype')
 
     def get_dimension_dtype(self):
-        return ""
+        return self.get_hdf5_attr('dimension_dtype')
+
+    def get_value_labels(self):
+        return self.get_hdf5_attr('value_labels')
+    
+    def get_dimension_labels(self):
+        return self.get_hdf5_attr('dimension_labels')
 
     def get_metadata(self):
-        return {}
+        return self.get_hdf5_attr('metadata')
 
 
 class TreeLoader(BaseTreeLoader):

@@ -211,6 +211,12 @@ class BaseDataInterface(object):
     def get_dimension_dtype(self):
         return ""
 
+    def get_value_labels(self):
+        return []
+
+    def get_dimension_labels(self):
+        return []
+    
     def get_metadata(self):
         return {}
 
@@ -223,9 +229,12 @@ class BaseDataInterface(object):
         value_dtype = self.get_value_dtype()
         dimension_dtype = self.get_dimension_dtype()
         metadata = self.get_metadata()
+        value_labels = self.get_value_labels()
+        dimension_labels = self.get_dimension_labels()
         data = Data(name=name, value=value, dimension=dimension, value_units=value_units,
                     dimension_units=dimension_units, value_dtype=value_dtype,
-                    dimension_dtype=dimension_dtype, metadata=metadata)
+                    dimension_dtype=dimension_dtype, value_labels=value_labels,
+                    dimension_labels=dimension_labels, metadata=metadata)
 
         return data
 
