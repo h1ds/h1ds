@@ -43,7 +43,8 @@ class Hdf5BackendTest(TestCase):
         response = self.client.put('/data/test_hdf5_device/1/', content_type=CT_JSON)
         self.assertEqual(response.status_code, 200)
 
-        new_shot = Shot.objects.get(device=self.device, number=1)
+        matching_shots = Shot.objects.filter(device=self.device, number=1)
+        self.assertEqual(matching_shots.count(), 1)
 
         # use http post/put to create branches, data etc
 
