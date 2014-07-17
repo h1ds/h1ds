@@ -68,7 +68,7 @@ def get_where_from_shot_slug(device, shot_str):
     if len(individual_shots) > 0:
         if shot_where != '':
             shot_where += " OR "
-        shot_where += "shot IN (%s)" % (','.join(i for i in individual_shots))
+        shot_where += "shot IN (%s)" % (','.join(str(i[0]) for i in individual_shots))
 
     return shot_where
 

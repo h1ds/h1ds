@@ -457,8 +457,8 @@ def update():
 
     # Now that we  have finished making changes to  the database, change
     # the permissions back to those appropriate for the server.
-    if env.webserver == "apache":
-        with cd(env_dir):
+    if env.webserver in ['apache', 'nginx']:
+        with cd(django_project_dir):
             sudo('chown -R %(server_user)s:%(server_group)s db' % env)
             sudo('chown -R %(server_user)s:%(server_group)s serverfiles' % env)
 
