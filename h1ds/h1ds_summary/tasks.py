@@ -6,6 +6,7 @@ from h1ds_summary import TABLE_NAME_TEMPLATE
 from h1ds_summary import get_summary_cursor
 from h1ds_summary.parsers import parse_shot_slug
 from celery.signals import task_sent
+from numpy import isnan
 
 
 
@@ -34,6 +35,13 @@ def get_summary_attribute_data(device_slug, shot_number, attribute_slug):
         data = attribute.get_value(shot_number)
     except:  # TODO: be more sensible about exception handling
         data = None
+    if isinstance(data, list):
+        data = data[0]
+    try:
+        if isnan(data):
+            data = None
+    except:
+        pass
     return attribute_slug, data
 
 
