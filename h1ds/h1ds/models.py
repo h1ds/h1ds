@@ -140,11 +140,13 @@ class Device(models.Model):
     is_public = models.BooleanField(default=True,
                                     help_text="If true, the device will be visible to all users, and the general public.")
 
+    # TODO: We should just use the django permissions API...
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this device if it is not public")
 
     # data backend for device is used to get shot timestamp.
-    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
+    data_backend = models.CharField(max_length=4, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
 
+    read_only = models.BooleanField(default=True, help_text='If read only, then H1DS will not allow writing back to the primary database.')
 
     def user_is_allowed(self, user):
         is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
@@ -223,8 +225,13 @@ class Tree(models.Model):
 
     allowed_users = models.ManyToManyField(User, blank=True, help_text="Users who can access this tree if it is not public")
 
-    data_backend = models.CharField(max_length=3, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
+    # TODO: default should be the default for the device.
+    data_backend = models.CharField(max_length=4, choices=get_data_backend_choices(), default=settings.DEFAULT_DATA_BACKEND)
 
+    class Meta:
+        unique_together = ("device", "slug")
+
+    
     def user_is_allowed(self, user):
         is_allowed = self.is_public or self.allowed_users.filter(pk=user.pk)
         return is_allowed
@@ -232,6 +239,8 @@ class Tree(models.Model):
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Tree, self).save(*args, **kwargs)
+        backend_module = self.get_backend_module()
+        backend_module.save_tree(self)
 
     def __unicode__(self):
         return self.slug
@@ -242,6 +251,18 @@ class Tree(models.Model):
             self.backend_module = import_module(module_name)
         return self.backend_module
 
+    def add_shot(self, shot_number):
+        shot_range, created = ShotRange.objects.get_or_create(min_shot=shot_number, max_shot=shot_number)
+        self.shot_ranges.add(shot_range)
+        # call self.consolidate_shot_ranges()
+        pass
+
+    def consolidate_shot_ranges(self):
+        # TODO
+        # if a pair of contiguous shot ranges exist, replace with single shot range.
+        # remove old shot ranges if not used by other trees.
+        pass
+    
     def load(self):
         backend_module = self.get_backend_module()
         loader = backend_module.TreeLoader()
@@ -407,7 +428,12 @@ class NodeFallbackManager(models.Manager):
 
 
 class Node(models.Model):
+    """Mapping of data sub-tree to a nodepath.
 
+    Nodes can exist in fallback mode, which means they can present data from the
+    primary data source but not be saved in the H1DS index.
+
+    """
     def __init__(self, *args, **kwargs):
         super(Node, self).__init__(*args, **kwargs)
         self.data_interface = None
@@ -426,9 +452,20 @@ class Node(models.Model):
     def __unicode__(self):
         return "{}: {}".format(self.shot.number, self.node_path.path)
 
+    def save_data(self, data_instance):
+        """Write data instance to data backend.
+
+        TODO: refactor this into self.save()        
+        """
+        self.data = data_instance
+        tree = self.get_tree()
+        backend_module = tree.get_backend_module()
+        backend_module.save_node(self)
+    
     def save(self, *args, **kwargs):
         if not self.is_fallback:
             super(Node, self).save(*args, **kwargs)
+            #self.save_data()
 
     def get_absolute_url(self):
 
@@ -697,6 +734,7 @@ class SubTree(models.Model):
     #    # TODO: if the node name changes then we also need to regenerate
     #    # sha1 keys for all descendents...
 
+    
     def generate_subtree_hash(self):
         hash_fields = ('has_data', 'n_dimensions', 'dtype', 'n_channels')
         hash_val = ""
@@ -900,3 +938,4 @@ class UserSignalForm(ModelForm):
 class UserSignalUpdateForm(ModelForm):
     class Meta:
         model = UserSignal
+

@@ -61,7 +61,6 @@ class SummaryTable:
             table_attrs = ",".join([table_attrs, summary_attr_arg])
 
         cursor.execute("CREATE TABLE %(table)s (%(attrs)s)" % {'table': self.table_name, 'attrs': table_attrs})
-        transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
     def update_schema(self, check_dtypes=False, delete_orphans=False):
         """Update table if any summary attributes are missing.
@@ -108,7 +107,6 @@ class SummaryTable:
 
         cursor = get_summary_cursor()
         cursor.execute("ALTER TABLE {} ADD COLUMN {}".format(self.table_name, attr_slug))
-        transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
     def delete_attribute(self, attribute_name):
         """Delete attribute from the summary table.
@@ -134,7 +132,6 @@ class SummaryTable:
 
         cursor = get_summary_cursor()
         cursor.execute("DELETE FROM {} WHERE shot={}".format(self.table_name,  shot_number))
-        transaction.commit_unless_managed(using='summarydb')  # TODO: can drop w/ Django 1.6
 
     def get_attributes_from_table(self, filter_initial_attributes=False):
         """Get the attributes of the summary table.

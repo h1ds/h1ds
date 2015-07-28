@@ -181,6 +181,9 @@ DATA_BACKENDS = {
            'name': 'H1 Heliac',
            'description': 'Customised MDSplus backend for H1 Heliac'
            },
+    'hdf5': {'module': 'h1ds.backends.hdf5',
+             'name': 'HDF5',
+             'description': 'Generic HDF5 backend'}
     }
 
 DEFAULT_DATA_BACKEND = 'mds'

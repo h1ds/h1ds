@@ -165,6 +165,7 @@ Then, install the rest of the required software using the fabric script:
 
 .. code-block:: bash
 
+    (h1ds_development)$ cd $VIRTUAL_ENV/h1ds
     (h1ds_development)$ fab dev update
 
 .. note:: 

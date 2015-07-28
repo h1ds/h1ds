@@ -25,7 +25,6 @@ from django.utils.importlib import import_module
 from django.conf import settings
 from h1ds.base import BaseBackendShotManager
 
-
 def discretise_array(arr, eps=0, bits=0, maxcount=0, delta_encode=False):
     """
     Return  an integer  array  and  scales etc  in  a  dictionary -  the
@@ -204,3 +203,5 @@ def get_backend_shot_manager_for_device(device):
         msg = "Data backend module {} contains multiple subclasses of BaseBackendShotManager".format(
             data_backend_module)
     raise ImportError(msg)
+
+    

@@ -1,0 +1,12 @@
+[Unit]
+Description=H1DS task server
+Requires=${required_units}
+After=${after_units}
+
+[Service]
+User=${user}
+Group=${group}
+ExecStart=${deployment_dir}/tasks/tasks.sh
+
+[Install]
+WantedBy=multi-user.target

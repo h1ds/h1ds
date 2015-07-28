@@ -1,0 +1,12 @@
+[Unit]
+Description=Core H1DS Server
+Requires=${required_units}
+After=${after_units}
+
+[Service]
+User=${user}
+Group=${group}
+ExecStart=${deployment_dir}/gunicorn/h1ds.sh
+
+[Install]
+WantedBy=multi-user.target

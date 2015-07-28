@@ -149,6 +149,8 @@ class DataSerializer(serializers.Serializer):
     value_dtype = serializers.CharField()
     dimension_dtype = serializers.CharField()
     metadata = serializers.WritableField()
+    value_labels = serializers.WritableField()
+    dimension_labels = serializers.WritableField()
 
 
 class SubTreeSerializer(serializers.HyperlinkedModelSerializer):
@@ -209,12 +211,13 @@ class TreeSerializer(serializers.HyperlinkedModelSerializer):
     """
 
     name = serializers.CharField()
+    data_backend = serializers.CharField()
     #shot = ShotSerializer()
     #root_nodes = NodeSerializer(many=True)
 
     class Meta:
         model = Tree
-        fields = ('name', )
+        fields = ('name', 'data_backend', )
 
 class DeviceSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField()

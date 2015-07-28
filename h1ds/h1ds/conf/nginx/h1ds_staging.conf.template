@@ -1,9 +1,9 @@
 server {
     listen 80;
-    server_name h1ds.anu.edu.au;
+    server_name __servername__;
     access_log /var/log/nginx/h1ds.access.log;
     error_log /var/log/nginx/h1ds.error.log;
-    rewrite ^/mdsplus/(.*)$ http://h1ds.anu.edu.au/data/$1 permanent;
+    rewrite ^/mdsplus/(.*)$ http://__servername__/data/$1 permanent;
 
     #pagespeed on;
     #pagespeed FileCachePath /var/ngx_pagespeed_cache;
