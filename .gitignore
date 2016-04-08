@@ -9,6 +9,9 @@
 \#*
 *.db
 
+# PyCharm files
+.idea/
+
 celery
 celerybeat-schedule
 
