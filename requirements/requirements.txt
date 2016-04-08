@@ -1,4 +1,4 @@
-distribute==0.6.49
+#distribute==0.6.49
 numpy==1.8.1
 supervisor==3.0
 django==1.6.4
