@@ -17,6 +17,7 @@ from h1ds.base import BaseTreeLoader
 
 #from IDAM_base import BaseDataInterface
 #from IDAM_base import BaseTreeLoader
+from django.core.cache import cache
 
 
 # TODO: this should be in treeloader (see hdf5.py)
@@ -27,7 +28,8 @@ def save_tree(tree):
 class TreeLoader(BaseTreeLoader):
 
     def load(self, tree):
-        os.environ[tree.name + "_path"] = tree.configuration
+        # TODO: load tree file into cache
+        pass
 
 
 
@@ -44,20 +46,31 @@ class DataInterface(BaseDataInterface):
         """Get the corresponding IDAM node for this H1DS tree node."""
 
         if not hasattr(self, '_idam_node'):
-            shot, tree, path = self._get_idam_node_info()
-            print tree
+            #shot, tree, path = self._get_idam_node_info()
+            #print tree
             try:
-                tree = xpadsource.XPadSource(path)
+                _idam_node = xpadsource.XPadSource(self.tree.configuration)
             except TreeException:
                 # Tree doesn't exist for this shot.
                 # Raise django exception, rather than backend specific
                 # exception
                 raise ObjectDoesNotExist
-            if path == "":
-                self._idam_node = idam_tree.getDefault()
-            else:
-                dir(tree)
-                self._idam_node = idam_tree.getNode(path)
+            print('PATH')
+            print(self.path)
+            for path_element in self.path:
+                found = False
+                for child in _idam_node.children:
+                    if child.label.lower() == path_element.lower():
+                        _idam_node = child
+                        found = True
+                        break
+                #for var_name in _idam_node.varNames:
+                #    if var_name.lower() == path_element.lower():
+                        
+                #if not found:
+                #    raise Exception()
+            self._idam_node = _idam_node
+            self._value = None
         return self._idam_node
 
     def get_name(self):
@@ -69,7 +82,19 @@ class DataInterface(BaseDataInterface):
         #if not self.parent:
         #    return None
 	## return: return array or scalar 
+        if self._value is not None:
+            return self._value
         idam_node = self._get_idam_node()
+        if len(self.path) == 0:
+            self._value = []
+            return self._value
+        upper_path_name = self.path[-1].replace('---', '/').upper()
+        if upper_path_name in idam_node.varNames:
+            self._value = idam_node.read(upper_path_name, str(self.shot)).data
+            return self._value
+        else:
+            self._value = []
+            return self._value
         try:
             #primary_data = mds_node.getData().data()
             # quantity, shot_no: both are strings. 
@@ -94,8 +119,11 @@ class DataInterface(BaseDataInterface):
         # Question: What to do with TdiException?
         #except (TreeNoDataException, TdiException, AttributeError):
         except (TreeNoDataException, AttributeError):
+            print('except attribute error')
             primary_data = None
-        if np.isscalar(primary_data) or primary_data is None:
+        if primary_data is None:
+            return []
+        if np.isscalar(primary_data):
             return [primary_data]
         elif len(primary_data.shape) == 1:
             return np.array([primary_data])
@@ -104,24 +132,34 @@ class DataInterface(BaseDataInterface):
 
     def get_dimension(self):
         """Get dimension of raw data (i.e. no filters)."""
-        #if not self.parent:  # top level
-        #    return []  # np.array([])
-	## return: numpy array
         idam_node = self._get_idam_node()
+        if len(self.path) == 0:
+            return []
+        upper_path_name = self.path[-1].replace('---', '/').upper()
+        if upper_path_name in idam_node.varNames:
+            return idam_node.read(upper_path_name, str(self.shot)).time
+        else:
+            return []
         try:
             val = self.get_value()
+            print('VALUE...')
+            print(type(val))
+            print(val)
             shape = val.shape
+            print(shape)
             if len(shape) == 1:
-                raw_dim = [mds_node.getDimensionAt().data()]
+                raw_dim = [np.arange(len(val))]
             else:
                 dim_list = []
-                for i in range(len(shape)):
-                    dim_list.append(mds_node.getDimensionAt(i).data())
+                #for i in range(len(shape)):
+                #    dim_list.append(np.arange(len(val[i])))
                 raw_dim = np.array(dim_list)
         # Question: What to do with TdiException?
         #except TdiException:
         except TreeNoDataException:
             raw_dim = []  # np.array([])
+        except AttributeError:
+            raw_dim = []
         return raw_dim
 
     def get_value_units(self):
@@ -153,7 +191,7 @@ class DataInterface(BaseDataInterface):
                 dim_units = units_list
         # Question: What to do with TdiException?
         #except TdiException:
-        except TreeNoDataException:
+        except (TreeNoDataException, AttributeError):
             dim_units = ""
         return dim_units
 
@@ -181,10 +219,9 @@ class DataInterface(BaseDataInterface):
     def get_children(self):
         # Question: how to deal with the stuff in the for loop?
         #           shot is fine. but tree and path?
-        try:
-            idam_node = self._get_idam_node()
-        except ObjectDoesNotExist:
-            return []
+        idam_node = self._get_idam_node()
+        #except ObjectDoesNotExist:
+        #    return []
         try:
             idam_descendants = idam_node.children
             node_names = [n.label for n in idam_descendants]
@@ -195,6 +232,10 @@ class DataInterface(BaseDataInterface):
         children = []
         for child_name in node_names:
             children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [child_name]))
+        for varName in idam_node.varNames:
+            slug_name = varName.replace('/', '---')
+            children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [slug_name]))
+            
         return children
 
 
