@@ -183,8 +183,11 @@ DATA_BACKENDS = {
            },
     'hdf5': {'module': 'h1ds.backends.hdf5',
              'name': 'HDF5',
-             'description': 'Generic HDF5 backend'}
-    }
+             'description': 'Generic HDF5 backend'},
+    'idam': {'module': 'h1ds.backends.idam',
+             'name': 'IDAM',
+             'description': 'IDAM backend backend'}
+}
 
 DEFAULT_DATA_BACKEND = 'mds'
 
