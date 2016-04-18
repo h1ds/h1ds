@@ -59,7 +59,12 @@ class DataInterface(BaseDataInterface):
             print(self.path)
             for path_element in self.path:
                 found = False
-                for child in _idam_node.children:
+                try:
+                    children = _idam_node.children
+                except AttributeError:
+                    children = []
+
+                for child in children:
                     if child.label.lower() == path_element.lower():
                         _idam_node = child
                         found = True
@@ -82,15 +87,31 @@ class DataInterface(BaseDataInterface):
         #if not self.parent:
         #    return None
 	## return: return array or scalar 
+        print('path', self.path)
         if self._value is not None:
             return self._value
         idam_node = self._get_idam_node()
         if len(self.path) == 0:
             self._value = []
             return self._value
-        upper_path_name = self.path[-1].replace('---', '/').upper()
-        if upper_path_name in idam_node.varNames:
-            self._value = idam_node.read(upper_path_name, str(self.shot)).data
+        path_name = self.path[-1].replace('---', '/')
+        print('path name')
+        print(path_name)
+        var_names = idam_node.varNames
+        upper_varnames = list(map(str.upper, var_names))
+        index = 0
+        try:
+            index = upper_varnames.index(path_name.upper())
+        except ValueError:
+            self._value = []
+            return self._value
+        self._value = [idam_node.read(var_names[index], str(self.shot)).data]
+        return self._value
+
+        #####
+        if path_name in idam_node.varNames:
+            print('name found')
+            self._value = [idam_node.read(path_name, str(self.shot)).data]
             return self._value
         else:
             self._value = []
@@ -135,9 +156,19 @@ class DataInterface(BaseDataInterface):
         idam_node = self._get_idam_node()
         if len(self.path) == 0:
             return []
-        upper_path_name = self.path[-1].replace('---', '/').upper()
-        if upper_path_name in idam_node.varNames:
-            return idam_node.read(upper_path_name, str(self.shot)).time
+        path_name = self.path[-1].replace('---', '/')
+        var_names = idam_node.varNames
+        upper_varnames = list(map(str.upper, var_names))
+        index = 0
+        try:
+            index = upper_varnames.index(path_name.upper())
+        except ValueError:
+            return []
+        return [idam_node.read(var_names[index], str(self.shot)).time]
+
+
+        if path_name in idam_node.varNames:
+            return [idam_node.read(path_name, str(self.shot)).time]
         else:
             return []
         try:
