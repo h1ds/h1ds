@@ -48,13 +48,21 @@ class DataInterface(BaseDataInterface):
         if not hasattr(self, '_idam_node'):
             #shot, tree, path = self._get_idam_node_info()
             #print tree
-            try:
-                _idam_node = xpadsource.XPadSource(self.tree.configuration)
-            except TreeException:
-                # Tree doesn't exist for this shot.
-                # Raise django exception, rather than backend specific
-                # exception
-                raise ObjectDoesNotExist
+            cache_name = '-idam-{}-{}'.format(self.shot,self.tree.configuration)
+            print('cache name')
+            print(cache_name)
+            _idam_node = cache.get(cache_name)
+            if _idam_node is None:
+                try:
+                    _idam_node = xpadsource.XPadSource(self.tree.configuration)
+                    print('IDAM SOURCE')
+                    print(_idam_node)
+                    cache.set(cache_name, _idam_node)
+                except TreeException:
+                    # Tree doesn't exist for this shot.
+                    # Raise django exception, rather than backend specific
+                    # exception
+                    raise ObjectDoesNotExist
             print('PATH')
             print(self.path)
             for path_element in self.path:
@@ -77,6 +85,15 @@ class DataInterface(BaseDataInterface):
             self._idam_node = _idam_node
             self._value = None
         return self._idam_node
+
+    def read_data(self,idam_node, path, shot):
+        # cache reponses
+        cache_name = '-idam-read-{}-{}-{}'.format(self.shot,self.tree.configuration, path)
+        response = cache.get(cache_name)
+        if response is None:
+            response = idam_node.read(path, shot)
+            cache.set(cache_name, response)
+        return response
 
     def get_name(self):
         node = self._get_idam_node()
@@ -105,13 +122,14 @@ class DataInterface(BaseDataInterface):
         except ValueError:
             self._value = []
             return self._value
-        self._value = [idam_node.read(var_names[index], str(self.shot)).data]
+        #self._value = [idam_node.read(var_names[index], str(self.shot)).data]
+        self._value = [self.read_data(idam_node, var_names[index], str(self.shot)).data]
         return self._value
 
         #####
         if path_name in idam_node.varNames:
             print('name found')
-            self._value = [idam_node.read(path_name, str(self.shot)).data]
+            self._value = [self.read_data(idam_node, path_name, str(self.shot)).data]
             return self._value
         else:
             self._value = []
@@ -164,11 +182,11 @@ class DataInterface(BaseDataInterface):
             index = upper_varnames.index(path_name.upper())
         except ValueError:
             return []
-        return [idam_node.read(var_names[index], str(self.shot)).time]
+        return [self.read_data(idam_node, var_names[index], str(self.shot)).time]
 
 
         if path_name in idam_node.varNames:
-            return [idam_node.read(path_name, str(self.shot)).time]
+            return [self.read_data(idam_node, path_name, str(self.shot)).time]
         else:
             return []
         try:
