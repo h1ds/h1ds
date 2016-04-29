@@ -8,6 +8,8 @@ import numpy as np
 #from django.conf import settings
 #from django.core.exceptions import ObjectDoesNotExist
 
+from django.conf import settings
+
 from h1ds.lib.idam.exceptions import TreeNoDataException, TreeException
 from h1ds.lib.idam import xpadsource
 
@@ -48,7 +50,10 @@ class DataInterface(BaseDataInterface):
         if not hasattr(self, '_idam_node'):
             #shot, tree, path = self._get_idam_node_info()
             #print tree
-            cache_name = '-idam-{}-{}'.format(self.shot,self.tree.configuration)
+            if settings.DEBUG:
+                cache_name = '-debug-idam-{}-{}'.format(self.shot,self.tree.configuration)
+            else:
+                cache_name = '-idam-{}-{}'.format(self.shot,self.tree.configuration)
             print('cache name')
             print(cache_name)
             _idam_node = cache.get(cache_name)
@@ -271,19 +276,29 @@ class DataInterface(BaseDataInterface):
         idam_node = self._get_idam_node()
         #except ObjectDoesNotExist:
         #    return []
+        children = []
+
         try:
             idam_descendants = idam_node.children
             node_names = [n.label for n in idam_descendants]
-        except:
-            node_names = []
+            for child in idam_descendants:
+                children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [child.label]))
+                
+        except AttributeError:
+            #node_names = []
+            for var_name in idam_node.varNames:
+                slug_name = var_name.replace('/', '---')
+                children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [slug_name]))
+
+
         # end   try:
 
-        children = []
-        for child_name in node_names:
-            children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [child_name]))
-        for varName in idam_node.varNames:
-            slug_name = varName.replace('/', '---')
-            children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [slug_name]))
+        # children = []
+        # for child_name in node_names:
+        #     children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [child_name]))
+        # for varName in idam_node.varNames:
+        #     slug_name = varName.replace('/', '---')
+        #     children.append(DataInterface(shot=self.shot, tree=self.tree, path=self.path + [slug_name]))
             
         return children
 
